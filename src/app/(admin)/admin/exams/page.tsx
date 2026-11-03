@@ -50,6 +50,29 @@ import {
   getReadinessIssueLabel,
 } from "@/lib/examStudio/readinessUi";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import {
+  PART_GROUP_LABEL,
+  allowedExamTypes,
+  defaultExamMinutes,
+  durationBreakdown,
+  durationLocked,
+  examTypeFor,
+  examTypeLabel,
+  type ExamType,
+  type PartGroup,
+} from "@/lib/admin/examDuration";
+
+/** A new exam starts as an L&R full test; its length follows the product and type. */
+const newExamForm = () => ({
+  title: "",
+  description: "",
+  familyCode: "TOEIC",
+  variantCode: "TOEIC_LR",
+  type: "FULL_TEST" as ExamType,
+  partGroup: "LISTENING" as PartGroup,
+  difficulty: "medium" as "easy" | "medium" | "hard",
+  durationMinutes: defaultExamMinutes("TOEIC_LR", "FULL_TEST", "LISTENING"),
+});
 
 const TOEIC_PARTS = [
   { part: 1, label: "Part 1: Mô tả hình ảnh (Photographs)", type: "LISTENING" },
@@ -265,15 +288,17 @@ export default function AdminExamsPage() {
   } | null>(null);
 
   // Form states: Exam
-  const [examForm, setExamForm] = useState({
-    title: "",
-    description: "",
-    familyCode: "TOEIC",
-    variantCode: "TOEIC_LR",
-    type: "PRACTICE_BY_PART" as "FULL_TEST" | "PRACTICE_BY_PART",
-    difficulty: "medium" as "easy" | "medium" | "hard",
-    durationMinutes: 45,
-  });
+  const [examForm, setExamForm] = useState(newExamForm);
+  /** Product, type or Part group changed: the length follows them. */
+  const reshapeExamForm = (next: Partial<ReturnType<typeof newExamForm>>) => {
+    const merged = { ...examForm, ...next };
+    const type = examTypeFor(merged.variantCode, merged.type);
+    setExamForm({
+      ...merged,
+      type,
+      durationMinutes: defaultExamMinutes(merged.variantCode, type, merged.partGroup),
+    });
+  };
 
   // Form states: Group
   const [groupForm, setGroupForm] = useState({
@@ -384,23 +409,20 @@ export default function AdminExamsPage() {
 
   // Mutations
   const createExamMutation = useMutation({
-    mutationFn: async (dto: any) =>
+    mutationFn: async (form: ReturnType<typeof newExamForm>) =>
       axiosClient.post("/admin/exams", {
-        ...dto,
-        durationSeconds: dto.durationMinutes * 60,
+        title: form.title,
+        description: form.description,
+        familyCode: form.familyCode,
+        variantCode: form.variantCode,
+        type: form.type,
+        difficulty: form.difficulty,
+        durationSeconds: form.durationMinutes * 60,
       }),
     onSuccess: (data: any) => {
       toast.success("Tạo bộ đề thi mới thành công!");
       setIsExamModalOpen(false);
-      setExamForm({
-        title: "",
-        description: "",
-        familyCode: "TOEIC",
-        variantCode: "TOEIC_LR",
-        type: "PRACTICE_BY_PART",
-        difficulty: "medium",
-        durationMinutes: 45,
-      });
+      setExamForm(newExamForm());
       queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
       if (data?.id) setSelectedExamId(data.id);
     },
@@ -1489,6 +1511,7 @@ export default function AdminExamsPage() {
                 min={5}
                 max={240}
                 value={Math.round(examDetail.durationSeconds / 60)}
+                readOnly={durationLocked(examDetail.variantCode ?? "TOEIC_LR", examDetail.type)}
                 onChange={(e) => {
                   queryClient.setQueryData(
                     ["admin-exam-detail", selectedExamId],
@@ -2378,15 +2401,7 @@ export default function AdminExamsPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => {
-              setExamForm({
-                title: "",
-                description: "",
-                familyCode: "TOEIC",
-                variantCode: "TOEIC_LR",
-                type: "PRACTICE_BY_PART",
-                difficulty: "medium",
-                durationMinutes: 45,
-              });
+              setExamForm(newExamForm());
               setIsExamModalOpen(true);
             }}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -2731,8 +2746,7 @@ export default function AdminExamsPage() {
                   <select
                     value={examForm.familyCode}
                     onChange={(e) =>
-                      setExamForm({
-                        ...examForm,
+                      reshapeExamForm({
                         familyCode: e.target.value,
                         variantCode: "TOEIC_LR",
                       })
@@ -2752,7 +2766,7 @@ export default function AdminExamsPage() {
                   <select
                     value={examForm.variantCode}
                     onChange={(e) =>
-                      setExamForm({ ...examForm, variantCode: e.target.value })
+                      reshapeExamForm({ variantCode: e.target.value })
                     }
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
@@ -2771,14 +2785,15 @@ export default function AdminExamsPage() {
                   <select
                     value={examForm.type}
                     onChange={(e) =>
-                      setExamForm({ ...examForm, type: e.target.value as any })
+                      reshapeExamForm({ type: e.target.value as ExamType })
                     }
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
-                    <option value="PRACTICE_BY_PART">
-                      Luyện tập theo Part
-                    </option>
-                    <option value="FULL_TEST">Full Test 200 câu</option>
+                    {allowedExamTypes(examForm.variantCode).map((type) => (
+                      <option key={type} value={type}>
+                        {examTypeLabel(examForm.variantCode, type)}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -2803,23 +2818,51 @@ export default function AdminExamsPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Thời lượng làm bài (phút)
-                </label>
-                <input
-                  type="number"
-                  min={5}
-                  max={240}
-                  value={examForm.durationMinutes}
-                  onChange={(e) =>
-                    setExamForm({
-                      ...examForm,
-                      durationMinutes: Number(e.target.value),
-                    })
-                  }
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                {!durationLocked(examForm.variantCode, examForm.type) && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Nhóm Part
+                    </label>
+                    <select
+                      value={examForm.partGroup}
+                      onChange={(e) =>
+                        reshapeExamForm({ partGroup: e.target.value as PartGroup })
+                      }
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
+                    >
+                      {(Object.keys(PART_GROUP_LABEL) as PartGroup[]).map((group) => (
+                        <option key={group} value={group}>
+                          {PART_GROUP_LABEL[group]}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                <div className={durationLocked(examForm.variantCode, examForm.type) ? "col-span-2" : ""}>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Thời lượng làm bài (phút)
+                  </label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={240}
+                    value={examForm.durationMinutes}
+                    readOnly={durationLocked(examForm.variantCode, examForm.type)}
+                    onChange={(e) =>
+                      setExamForm({
+                        ...examForm,
+                        durationMinutes: Number(e.target.value),
+                      })
+                    }
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400 read-only:bg-slate-50 read-only:text-slate-600"
+                  />
+                  {durationLocked(examForm.variantCode, examForm.type) && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Theo cấu trúc ETS: {durationBreakdown(examForm.variantCode)}.
+                    </p>
+                  )}
+                </div>
               </div>
 
               <div>

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { SPEAKING_GROUPS, WRITING_GROUPS, groupIndexOf, groupLabel, questionsOf, roomStep, secondsLeft, speakingTimeLabel, type RoomComponent, isExamRoomPath, liveSession, sessionOptionDetail } from "./assessmentRoom.ts";
+import { SPEAKING_GROUPS, WRITING_GROUPS, examSecondsLeft, groupIndexOf, groupLabel, questionsOf, roomStep, secondsLeft, speakingTimeLabel, type RoomComponent, isExamRoomPath, liveSession, sessionOptionDetail } from "./assessmentRoom.ts";
 
 const part = (kind: string, order: number, status: string, extra: Partial<RoomComponent> = {}): RoomComponent => ({
   assessmentComponentId: order * 10,
@@ -113,4 +113,31 @@ test("a session between sections has no clock and stays offered", () => {
 test("the restore option names the section and the minutes left", () => {
   const detail = sessionOptionDetail(session, Date.parse("2026-11-02T10:30:30Z"));
   assert.match(detail, /phần Writing, còn khoảng 30 phút/);
+});
+
+test("the exam clock adds the running section to the full limit of the sections not opened", () => {
+  const now = Date.parse("2026-11-03T08:05:00Z");
+  const sections = [
+    { status: "IN_PROGRESS", deadlineAt: "2026-11-03T08:20:00Z", timeLimitSeconds: 1200 },
+    { status: "NOT_STARTED", deadlineAt: null, timeLimitSeconds: 3600 },
+  ];
+  // 15 minutes left of Speaking plus all 60 of Writing: 75 of the 80 minutes.
+  assert.equal(examSecondsLeft(sections, now), 75 * 60);
+});
+
+test("a 4-skill exam before it starts has 200 minutes", () => {
+  const sections = [
+    { status: "NOT_STARTED", deadlineAt: null, timeLimitSeconds: 7200 },
+    { status: "NOT_STARTED", deadlineAt: null, timeLimitSeconds: 1200 },
+    { status: "NOT_STARTED", deadlineAt: null, timeLimitSeconds: 3600 },
+  ];
+  assert.equal(examSecondsLeft(sections, Date.now()), 200 * 60);
+});
+
+test("a finished section adds nothing", () => {
+  const sections = [
+    { status: "COMPLETED", deadlineAt: "2026-11-03T08:20:00Z", timeLimitSeconds: 1200 },
+    { status: "IN_PROGRESS", deadlineAt: "2026-11-03T09:20:00Z", timeLimitSeconds: 3600 },
+  ];
+  assert.equal(examSecondsLeft(sections, Date.parse("2026-11-03T09:00:00Z")), 20 * 60);
 });

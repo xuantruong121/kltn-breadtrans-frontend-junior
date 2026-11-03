@@ -12,6 +12,8 @@ type Props = {
   marked: Set<number>;
   currentQuestionId: number | null;
   timerValue: string;
+  timerLabel?: string;
+  timerNote?: string;
   saveStatus: string;
   saveError: boolean;
   saving: boolean;
@@ -35,6 +37,8 @@ export const ToeicQuestionNavigator = memo(function ToeicQuestionNavigator({
   marked,
   currentQuestionId,
   timerValue,
+  timerLabel,
+  timerNote,
   saveStatus,
   saveError,
   saving,
@@ -62,6 +66,8 @@ export const ToeicQuestionNavigator = memo(function ToeicQuestionNavigator({
         ),
       }))}
       timerValue={timerValue}
+      timerLabel={timerLabel}
+      timerNote={timerNote}
       saveStatus={saveStatus}
       saveError={saveError}
       saving={saving}

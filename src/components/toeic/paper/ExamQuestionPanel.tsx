@@ -16,6 +16,10 @@ export type PanelSection = { key: string | number; label: string; questions: Pan
 type Props = {
   sections: PanelSection[];
   timerValue: string;
+  /** What the main clock counts; the whole exam when it has several sections. */
+  timerLabel?: string;
+  /** A second line under the clock, e.g. the running section's own time. */
+  timerNote?: string;
   saveStatus: string;
   saveError: boolean;
   saving: boolean;
@@ -37,6 +41,8 @@ type Props = {
 export function ExamQuestionPanel({
   sections,
   timerValue,
+  timerLabel = "Thời gian còn lại",
+  timerNote,
   saveStatus,
   saveError,
   saving,
@@ -51,10 +57,11 @@ export function ExamQuestionPanel({
 }: Props) {
   return (
     <div className="flex h-full flex-col">
-      <p className="text-sm text-slate-600 dark:text-slate-300">Thời gian còn lại:</p>
-      <p role="timer" aria-label="Thời gian còn lại" className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
+      <p className="text-sm text-slate-600 dark:text-slate-300">{timerLabel}:</p>
+      <p role="timer" aria-label={timerLabel} className="text-2xl font-bold tabular-nums text-slate-900 dark:text-white">
         {timerValue}
       </p>
+      {timerNote && <p className="text-sm tabular-nums text-slate-600 dark:text-slate-300">{timerNote}</p>}
       <button
         type="button"
         onClick={onSubmit}

@@ -52,6 +52,20 @@ export function secondsLeft(deadlineAt: string | null | undefined, nowMs: number
   return Math.max(0, (Date.parse(deadlineAt) - nowMs) / 1000);
 }
 
+/**
+ * Time left of the whole exam (S&W 80, 4 skills 200 minutes): the clock of a
+ * section already running plus the full limit of every section not opened yet.
+ */
+export function examSecondsLeft(
+  sections: ReadonlyArray<Pick<RoomComponent, "status" | "deadlineAt" | "timeLimitSeconds">>,
+  nowMs: number,
+): number {
+  return sections.reduce((sum, section) => {
+    if (section.status === "COMPLETED") return sum;
+    return sum + (secondsLeft(section.deadlineAt, nowMs) ?? section.timeLimitSeconds ?? 0);
+  }, 0);
+}
+
 /** The exam goes on in these pages, so fullscreen stays between them. */
 const EXAM_ROOM_PATH = /^\/toeic\/(attempts\/[^/]+|assessments\/[^/]+\/attempts\/[^/]+)\/?$/;
 
@@ -103,6 +117,8 @@ export type RoomComponent = {
   order: number;
   status: string;
   deadlineAt?: string | null;
+  /** The section's own limit: Speaking 20, Writing 60, L&R its paper (120) minutes. */
+  timeLimitSeconds?: number | null;
   childAttemptId?: number | null;
   childStatus?: string | null;
 };

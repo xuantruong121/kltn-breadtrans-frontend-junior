@@ -9,6 +9,7 @@ import { ExamRestoreDialog, type RestoreOption } from "@/components/toeic/paper/
 import { formatMinutes } from "@/lib/toeic/examPaper";
 import {
   SECTION_LABEL,
+  examSecondsLeft,
   groupIndexOf,
   groupLabel,
   liveSession,
@@ -99,6 +100,8 @@ export function AssessmentRoom({
   }, [left, expired, component.deadlineAt, onSubmit]);
 
   const label = SECTION_LABEL[component.kind] ?? "Phần thi";
+  // The main clock is the whole exam; the section still closes on its own clock.
+  const examLeft = examSecondsLeft(sections, nowMs);
   const group = groups[activeGroup];
   const unanswered = totalQuestions - answered.size;
 
@@ -158,7 +161,9 @@ export function AssessmentRoom({
           current: n === currentNumber,
         })),
       }))}
-      timerValue={formatMinutes(left)}
+      timerValue={formatMinutes(examLeft)}
+      timerLabel="Thời gian còn lại của đề"
+      timerNote={`Phần ${label}: ${formatMinutes(left)}`}
       saveStatus={save.status}
       saveError={Boolean(save.error)}
       saving={false}
@@ -199,7 +204,10 @@ export function AssessmentRoom({
                 className="flex items-center gap-1 rounded-xl border border-slate-700 bg-slate-800/90 px-2 py-1 text-xs font-bold tabular-nums text-white sm:gap-1.5 sm:px-3 lg:hidden"
               >
                 <Clock3 size={14} className="text-amber-400" />
-                {formatMinutes(left)}
+                {formatMinutes(examLeft)}
+                <span className="hidden font-semibold text-slate-300 sm:inline">
+                  · {label} {formatMinutes(left)}
+                </span>
               </div>
               <button
                 type="button"
