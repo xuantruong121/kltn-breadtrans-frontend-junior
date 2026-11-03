@@ -77,6 +77,36 @@ test("separate provenance lines for the answer, the explanation and the photo", 
   assert.deepEqual(vision, ["Ảnh Part 1: Gemini gemini-v Vision, cần admin xác nhận"]);
 });
 
+test("a confirmed group stops asking for the admin", () => {
+  const confirmed = (fromStatus: GroupReview["status"]) => ({
+    by: 1,
+    at: "t",
+    contentHash: "h",
+    method: fromStatus === "NEEDS_ADMIN_CONFIRM" ? ("AFTER_VISION" as const) : ("AFTER_DEGRADED_REVIEW" as const),
+    fromStatus,
+  });
+  const vision = provenanceLines(
+    review({
+      status: "ADMIN_CONFIRMED",
+      steps: {
+        part1VisionReview: step({ provider: "gemini", model: "gemini-v", reviewKind: "SAME_PROVIDER" }),
+      },
+      confirmed: confirmed("NEEDS_ADMIN_CONFIRM"),
+    }),
+  );
+  assert.deepEqual(vision, ["Ảnh Part 1: Gemini gemini-v Vision", "Xác nhận sau kiểm tra Vision"]);
+  const [solve] = provenanceLines(
+    review({
+      status: "ADMIN_CONFIRMED",
+      steps: {
+        independentSolve: step({ provider: "gemini", model: "gemini-x", reviewKind: "SAME_PROVIDER" }),
+      },
+      confirmed: confirmed("REVIEWED_DEGRADED"),
+    }),
+  );
+  assert.equal(solve, "Đáp án: kiểm tra bởi Gemini gemini-x, cùng hãng với model sinh đề");
+});
+
 test("a same-vendor solve uses the real provider, not a fixed Gemini wording", () => {
   const [line] = provenanceLines(
     review({

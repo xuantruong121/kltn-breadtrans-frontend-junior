@@ -131,6 +131,8 @@ function stepFailure(step: ReviewStep) {
 export function provenanceLines(review: GroupReview | null | undefined): string[] {
   if (!review) return [];
   const lines: string[] = [];
+  // Once an admin has confirmed, the step lines stop asking for it.
+  const ask = review.confirmed ? "" : ", cần admin xác nhận";
   const solve = review.steps.independentSolve;
   if (solve)
     lines.push(
@@ -138,7 +140,7 @@ export function provenanceLines(review: GroupReview | null | undefined): string[
         ? `Đáp án: chưa kiểm định được (${stepFailure(solve)})`
         : solve.reviewKind === "INDEPENDENT"
           ? `Đáp án: kiểm định độc lập bởi ${providerModel(solve)}`
-          : `Đáp án: kiểm tra bởi ${providerModel(solve)}, cùng hãng với model sinh đề, cần admin xác nhận`,
+          : `Đáp án: kiểm tra bởi ${providerModel(solve)}, cùng hãng với model sinh đề${ask}`,
     );
   const explanation = review.steps.explanationCheck;
   if (explanation)
@@ -154,7 +156,7 @@ export function provenanceLines(review: GroupReview | null | undefined): string[
     lines.push(
       vision.status !== "OK"
         ? `Ảnh Part 1: chưa kiểm tra được bằng Vision (${stepFailure(vision)})`
-        : `Ảnh Part 1: ${providerModel(vision)} Vision, cần admin xác nhận`,
+        : `Ảnh Part 1: ${providerModel(vision)} Vision${ask}`,
     );
   if (review.confirmed)
     lines.push(`${CONFIRMATION_LABEL[review.confirmed.method]}`);
