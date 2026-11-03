@@ -32,8 +32,6 @@ import {
   type WritingEvaluation,
 } from "@/lib/api/services/writing.service";
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
-import { ToeicWritingExamStrip } from "@/components/toeic/ToeicWritingExamStrip";
-import axiosClient from "@/lib/api/axiosClient";
 import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
@@ -51,39 +49,9 @@ export default function WritingDetailPage(props: {
   const topicId = Number(params.id);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const parentAttemptId = searchParams.get("parentAttemptId");
-  const parentComponentId = searchParams.get("parentComponentId");
   // The task of a multi-task exercise being answered (?q=<questionId>).
   const requestedTaskId = Number(searchParams.get("q")) || null;
-  const examParentContext =
-    parentAttemptId && parentComponentId
-      ? {
-          attemptId: Number(parentAttemptId),
-          componentId: Number(parentComponentId),
-        }
-      : undefined;
-  const parentAssessmentId = searchParams.get("parentAssessmentId");
-  // TOEIC Writing in an assessment: the 8 task quizzes and which are written.
-  const { data: parentAttempt } = useQuery({
-    queryKey: ["toeic-assessment-attempt", Number(parentAttemptId)],
-    queryFn: async () =>
-      (await axiosClient.get(
-        `/toeic/assessments/attempts/${parentAttemptId}`,
-      )) as any,
-    enabled: Boolean(examParentContext),
-  });
-  const examComponent = parentAttempt?.components?.find(
-    (c: any) => c.assessmentComponentId === Number(parentComponentId),
-  );
-  const examQuizIds: number[] = examComponent?.writingQuizIds ?? [];
-  const writtenQuizIds: number[] = examComponent?.writtenQuizIds ?? [];
-  const examHref = (quizId: number) =>
-    `/writing/${quizId}?parentAssessmentId=${parentAssessmentId}&parentAttemptId=${parentAttemptId}&parentComponentId=${parentComponentId}`;
-  const inExam = Boolean(examParentContext);
-  const exitHref =
-    inExam && parentAssessmentId
-      ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
-        : "/writing";
+  const exitHref = "/writing";
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
@@ -133,7 +101,7 @@ export default function WritingDetailPage(props: {
     refetch: refetchTopic,
   } = useQuery({
     queryKey: ["writing-topic", topicId],
-    queryFn: () => writingService.getQuizDetails(topicId, examParentContext),
+    queryFn: () => writingService.getQuizDetails(topicId),
     enabled: !!topicId,
   });
   const exercise = topicData?.exercise;
@@ -165,7 +133,7 @@ export default function WritingDetailPage(props: {
   }, [exercise, requestedTaskId, currentTask, searchParams, router, topicId]);
 
   const isPictureTask =
-    !inExam && Boolean(exercise && currentTask) && isPictureQuiz(topic ?? {});
+    Boolean(exercise && currentTask) && isPictureQuiz(topic ?? {});
 
   const wordCount = countWritingWords(content);
   const charCount = content.length;
@@ -269,17 +237,9 @@ export default function WritingDetailPage(props: {
         topicId,
         attempt.text,
         attempt.id,
-        examParentContext,
+        undefined,
         currentTask?.id,
       );
-      if (parentAttemptId && parentComponentId) {
-        await axiosClient
-          .post(
-            `/toeic/assessments/attempts/${parentAttemptId}/components/${parentComponentId}/complete`,
-            {},
-          )
-          .catch(() => undefined);
-      }
       // Empty the editor first, or the pending 300 ms draft save writes the
       // submitted text back as a draft.
       setContent("");
@@ -307,25 +267,6 @@ export default function WritingDetailPage(props: {
         }),
         queryClient.invalidateQueries({ queryKey: ["learning-history"] }),
       ]);
-      if (inExam && examQuizIds.length > 0) {
-        // Exam flow: go straight to the next unwritten task; results are
-        // reviewed on the assessment page once the section is done.
-        await queryClient.invalidateQueries({
-          queryKey: ["toeic-assessment-attempt", Number(parentAttemptId)],
-        });
-        const done = new Set([...writtenQuizIds, topicId]);
-        const after = examQuizIds.slice(examQuizIds.indexOf(topicId) + 1);
-        const nextQuiz =
-          after.find((id) => !done.has(id)) ??
-          examQuizIds.find((id) => !done.has(id));
-        toast.success(
-          nextQuiz
-            ? "Đã nộp câu này. Chuyển sang câu tiếp theo."
-            : "Đã nộp đủ phần Viết.",
-        );
-        router.push(nextQuiz ? examHref(nextQuiz) : exitHref);
-        return;
-      }
       if (isPictureTask) {
         setPictureResult(result);
         await queryClient.invalidateQueries({ queryKey: ["writing-topic", topicId] });
@@ -357,13 +298,11 @@ export default function WritingDetailPage(props: {
         <PracticeHeader
           title={topic?.title ? quizDisplayTitle(topicId, topic.title) : "Luyện viết"}
           category={
-            inExam && examQuizIds.length
-              ? `Câu ${examQuizIds.indexOf(topicId) + 1}/${examQuizIds.length}`
-              : isPictureTask
-                ? "Viết câu theo tranh"
-                : topic?.taskType || topic?.type || "Writing"
+            isPictureTask
+              ? "Viết câu theo tranh"
+              : topic?.taskType || topic?.type || "Writing"
           }
-          activityLabel={inExam ? "TOEIC Writing" : "Luyện viết"}
+          activityLabel="Luyện viết"
           onExit={() => confirmExit(exitHref)}
           exitLabel="Thoát"
           statusContent={
@@ -376,14 +315,6 @@ export default function WritingDetailPage(props: {
         />
 
         <main className="max-w-6xl mx-auto w-full space-y-6 pb-20 px-4 sm:px-6 pt-6 flex-1">
-          {inExam && examQuizIds.includes(topicId) && (
-            <ToeicWritingExamStrip
-              quizIds={examQuizIds}
-              currentQuizId={topicId}
-              writtenQuizIds={writtenQuizIds}
-              hrefFor={examHref}
-            />
-          )}
           {/* 2. 2-COLUMN MAIN LAYOUT */}
           {isPictureTask && exercise && currentTask ? (
             <PictureWritingWorkspace
@@ -412,7 +343,7 @@ export default function WritingDetailPage(props: {
             <div className="grid grid-cols-12 gap-6 items-start">
               {/* LEFT COLUMN: PROMPT, EDITOR & FEEDBACK */}
               <div
-                className={`col-span-12 space-y-6 ${inExam ? "lg:col-span-10 lg:col-start-2" : "lg:col-span-8"}`}
+                className="col-span-12 space-y-6 lg:col-span-8"
               >
                 {/* HEADER PROMPT */}
                 <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
@@ -710,8 +641,7 @@ export default function WritingDetailPage(props: {
                 </AnimatePresence>
               </div>
 
-              {/* RIGHT COLUMN: USEFUL PHRASES & RUBRICS (practice only: no coaching during an exam) */}
-              {!inExam && (
+              {/* RIGHT COLUMN: USEFUL PHRASES & RUBRICS */}
                 <div className="col-span-12 lg:col-span-4 space-y-6">
                   <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
                     <h3 className="font-extrabold text-slate-900 dark:text-slate-100 text-base flex items-center gap-2">
@@ -739,7 +669,6 @@ export default function WritingDetailPage(props: {
                     </div>
                   </div>
                 </div>
-              )}
             </div>
 
           )}

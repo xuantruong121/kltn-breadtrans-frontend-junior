@@ -10,6 +10,8 @@ export type ExamAiCandidateQuestion = {
 };
 
 export type ExamAiCandidateGroup = {
+  /** Written by the stand-in provider, so it deserves a closer look. */
+  standIn?: boolean;
   candidateKey: string;
   part: number;
   groupOrder: number;
@@ -22,6 +24,7 @@ export type ExamAiCandidateGroup = {
 };
 
 export type ExamAiCandidateTask = {
+  email?: string | null;
   candidateKey: string;
   taskNumber: number;
   title: string | null;
@@ -42,6 +45,7 @@ export type ExamAiFailedUnit = {
 };
 
 export type ExamAiCandidate = {
+  standIn?: boolean;
   lrGroups: ExamAiCandidateGroup[];
   speaking: ExamAiCandidateTask[];
   writing: ExamAiCandidateTask[];
@@ -51,6 +55,7 @@ export type ExamAiCandidate = {
 };
 
 export type ExamAiJobStatus = {
+  missingMedia?: Array<{ label: string; brief: string | null }>;
   id: string;
   status:
     | "QUEUED"

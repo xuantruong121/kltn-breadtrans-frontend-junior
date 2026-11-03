@@ -21,6 +21,11 @@ import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import Link from "next/link";
+import {
+  speakingSetDisplayTitle,
+  speakingSetsMatchingTitle,
+} from "@/lib/catalog/displayTitles";
+import { AdminImageThumb } from "@/components/admin/AdminImageThumb";
 import { useRouter } from "next/navigation";
 import {
   STATUS_LABELS,
@@ -81,6 +86,7 @@ export default function AdminSpeakingPage() {
       track: trackFilter,
       status: statusFilter,
       sort: sortBy === "UPDATED" ? "NEWEST" : sortBy,
+      titleIds: speakingSetsMatchingTitle(searchTerm).join(",") || undefined,
     },
     initialPageSize: 12,
   });
@@ -584,12 +590,23 @@ export default function AdminSpeakingPage() {
                     {STATUS_LABELS[set.publicationStatus]}
                   </span>
                 </div>
+                {set.exercises?.find((exercise) => exercise.imageUrl)
+                  ?.imageUrl && (
+                  <AdminImageThumb
+                    src={
+                      set.exercises.find((exercise) => exercise.imageUrl)
+                        ?.imageUrl as string
+                    }
+                    alt={speakingSetDisplayTitle(set.id, set.title)}
+                    className="mt-3 h-24 w-full"
+                  />
+                )}
                 <h2 className="mt-3 line-clamp-2 font-semibold text-slate-950">
                   <Link
                     href={`/admin/speaking/${set.id}`}
                     className="hover:text-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
                   >
-                    {set.title}
+                    {speakingSetDisplayTitle(set.id, set.title)}
                   </Link>
                 </h2>
                 <p className="mt-1 line-clamp-2 text-sm text-slate-600">

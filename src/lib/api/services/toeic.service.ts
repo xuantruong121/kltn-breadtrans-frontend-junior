@@ -432,9 +432,10 @@ export const toeicService = {
   completeAssessmentComponent: async (
     attemptId: number,
     componentId: number,
+    body: { writingAnswers?: Array<{ quizId: number; text: string }> } = {},
   ): Promise<unknown> =>
     (await axiosClient.post(
       `/toeic/assessments/attempts/${attemptId}/components/${componentId}/complete`,
-      {},
+      body,
     )) as unknown,
 };

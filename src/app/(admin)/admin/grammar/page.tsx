@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Loader2, Lock, Plus, Search, Send, Trash2 } from "lucide-react";
+import { ArrowRight, FileStack, Loader2, Lock, Plus, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -15,6 +17,8 @@ import {
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
+import { BTN_AI } from "@/components/admin/cmsButtons";
+import { AiCreateDialog } from "@/components/admin/AiCreateDialog";
 
 type TopicSummary = {
   id: number;
@@ -35,6 +39,8 @@ const ICON_BTN =
 
 export default function AdminGrammarPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const [aiCreating, setAiCreating] = useState(false);
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState("ALL");
   const [status, setStatus] = useState<"ALL" | "DRAFT" | "PUBLISHED">("ALL");
@@ -74,13 +80,44 @@ export default function AdminGrammarPage() {
             {list.facets?.locked ? ` · ${list.facets.locked} đã có học viên làm` : ""}
           </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => setAiCreating(true)} className={BTN_AI}>
+          <FileStack size={16} aria-hidden="true" /> Tạo bằng AI
+        </button>
         <Link
           href="/admin/grammar/new"
           className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         >
           <Plus size={16} /> Tạo chủ đề
         </Link>
+        </div>
       </header>
+
+      {aiCreating && (
+        <AiCreateDialog
+          title="Tạo chủ đề ngữ pháp bằng AI"
+          nameLabel="Tên chủ đề"
+          namePlaceholder="Ví dụ: Câu điều kiện loại 2"
+          countLabel="Số câu hỏi"
+          maxCount={20}
+          defaultCount={10}
+          levels={GRAMMAR_LEVELS.map((level) => ({ value: level.value, label: level.label }))}
+          onClose={() => setAiCreating(false)}
+          onCreate={async ({ name, level, count }) => {
+            try {
+              const created = (await axiosClient.post("/grammar/topics", {
+                title: name,
+                level,
+                keyFormula: "",
+                description: "",
+              })) as unknown as { id: number };
+              router.push(`/admin/grammar/${created.id}?ai=${count}`);
+            } catch (err) {
+              toast.error(getApiErrorMessage(err, "Không tạo được chủ đề."));
+            }
+          }}
+        />
+      )}
 
       <div className="space-y-3">
         <label className="relative block">
@@ -191,7 +228,7 @@ export default function AdminGrammarPage() {
                 </div>
                 <h2 className="mt-3 line-clamp-2 font-semibold text-slate-950">
                   <Link href={`/admin/grammar/${topic.id}`} className="hover:text-blue-700">
-                    {topic.title}
+                    {grammarDisplayTitle(topic.id, topic.title)}
                   </Link>
                 </h2>
                 {topic.description && (

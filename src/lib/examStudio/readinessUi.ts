@@ -10,6 +10,13 @@ export function getPublishReadinessUi(
   issueCount: number,
 ) {
   const canPublish = learnerReady === true;
+  // No content issue was reported: what still blocks is a missing task.
+  if (!canPublish && issueCount === 0)
+    return {
+      canPublish,
+      label: "Chưa thể xuất bản",
+      helpText: "Hãy soạn đủ các câu Speaking và Writing trước.",
+    };
   const outstandingLabel =
     issueCount === 1
       ? "Còn 1 mục cần hoàn thiện"

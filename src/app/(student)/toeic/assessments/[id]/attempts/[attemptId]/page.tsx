@@ -1,33 +1,32 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { toeicService } from "@/lib/api/services/toeic.service";
+import { SpeakingRoom, type SpeakingComponent } from "@/components/toeic/assessment/SpeakingRoom";
+import { WritingRoom, type WritingComponent } from "@/components/toeic/assessment/WritingRoom";
+import { SECTION_LABEL, roomStep, type PreviousSession, type RoomComponent } from "@/lib/toeic/assessmentRoom";
+import { useLeaveFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { useCanonicalExamPath } from "@/lib/toeic/useCanonicalExamPath";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
-const componentLabels: Record<string, string> = {
-  LISTENING_READING: "Listening + Reading",
-  SPEAKING: "Speaking",
-  WRITING: "Writing",
+type Attempt = {
+  status: string;
+  assessment: { title: string };
+  previousSession?: PreviousSession | null;
+  components: Array<RoomComponent & Partial<SpeakingComponent> & Partial<WritingComponent>>;
 };
 
-const componentDetails: Record<string, string> = {
-  LISTENING_READING: "200 câu hỏi · khoảng 120 phút",
-  SPEAKING: "11 câu hỏi · khoảng 20 phút",
-  WRITING: "8 câu hỏi · 60 phút",
-};
-
-const statusLabels: Record<string, string> = {
-  NOT_STARTED: "Chưa bắt đầu",
-  IN_PROGRESS: "Đang làm",
-  COMPLETED: "Hoàn thành",
-};
-
+/**
+ * One exam, start to finish: the sections run in order, each opening from the
+ * end of the one before. The learner never picks a section, and the result
+ * page is the end of the road.
+ */
 export default function ToeicAssessmentAttemptPage({
   params,
 }: {
@@ -38,244 +37,121 @@ export default function ToeicAssessmentAttemptPage({
   const attemptId = Number(rawAttemptId);
   const router = useRouter();
   const client = useQueryClient();
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const queryKey = ["toeic-assessment-attempt", attemptId];
   const { data, isLoading } = useQuery({
-    queryKey: ["toeic-assessment-attempt", attemptId],
+    queryKey,
     queryFn: async () =>
-      (await axiosClient.get(
-        `/toeic/assessments/attempts/${attemptId}`,
-      )) as any,
+      (await axiosClient.get(`/toeic/assessments/attempts/${attemptId}`)) as unknown as Attempt,
     enabled: Number.isInteger(attemptId),
-    refetchInterval: 5000,
+    // A section ends in another room; a cached copy would reopen it on return.
+    gcTime: 0,
   });
-  const startComponent = useMutation({
+  const refresh = () => client.invalidateQueries({ queryKey });
+  const { path: canonicalDetailPath } = useCanonicalExamPath({ assessmentId: id });
+  const backHref = canonicalDetailPath ?? `/toeic/assessments/${id}`;
+  useLeaveFullscreen();
+
+  const startSection = useMutation({
     mutationFn: async (componentId: number) =>
-      (await axiosClient.post(
-        `/toeic/assessments/attempts/${attemptId}/components/${componentId}/start`,
-      )) as any,
-    onSuccess: async (result, componentId) => {
-      await client.invalidateQueries({
-        queryKey: ["toeic-assessment-attempt", attemptId],
-      });
-      const component = result.components?.find(
-        (item: any) => item.assessmentComponentId === componentId,
-      );
-      if (component?.childAttemptId) {
-        await toeicService.beginAttempt(component.childAttemptId);
-        router.push(
-          `/toeic/attempts/${component.childAttemptId}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}`,
-        );
-      } else if (
-        component?.kind === "SPEAKING" &&
-        component.sourceId &&
-        component.speakingExerciseIds?.[0]
-      ) {
-        router.push(
-          `/speaking/${component.speakingExerciseIds[0]}?set=${encodeURIComponent(String(component.sourceId))}&parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}&examExerciseIds=${component.speakingExerciseIds.join(",")}`,
-        );
-      } else if (
-        component?.kind === "WRITING" &&
-        component.writingQuizIds?.[0]
-      ) {
-        // Resume at the first task not yet written, not always task 1.
-        const written: number[] = component.writtenQuizIds ?? [];
-        const target =
-          component.writingQuizIds.find((quizId: number) => !written.includes(quizId)) ??
-          component.writingQuizIds[0];
-        router.push(
-          `/writing/${target}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}`,
-        );
-      }
-    },
-    onError: (err: any) =>
-      setError(getApiErrorMessage(err, "Không thể mở component.")),
+      axiosClient.post(`/toeic/assessments/attempts/${attemptId}/components/${componentId}/start`),
+    onError: (err: unknown) => setError(getApiErrorMessage(err, "Không mở được phần thi.")),
   });
-  // The back-link goes straight to the canonical product URL instead of the
-  // legacy aggregate URL, so normal runtime navigation needs no compatibility
-  // redirect. The legacy path stays as the fallback until the lookup settles.
-  const { path: canonicalDetailPath } = useCanonicalExamPath({
-    assessmentId: id,
-  });
+
+  const step = data ? roomStep(data) : null;
+  const leavingRef = useRef(false);
   useEffect(() => {
-    if (data?.status === "COMPLETED")
+    if (!step || leavingRef.current) return;
+    if (step.kind === "START") {
+      leavingRef.current = true;
+      const { component, previous } = step;
+      if (previous) toast.success(`Đã nộp phần ${SECTION_LABEL[previous.kind]}`);
+      void startSection
+        .mutateAsync(component.assessmentComponentId)
+        .then(refresh)
+        .catch(() => undefined)
+        .finally(() => {
+          leavingRef.current = false;
+        });
+    } else if (step.kind === "DONE") {
+      leavingRef.current = true;
       void client.invalidateQueries({ queryKey: ["toeic-assessment", id] });
-  }, [data?.status, client, id]);
+      router.replace(`/toeic/assessments/${id}/attempts/${attemptId}/result`);
+    } else if (step.kind === "LISTENING_READING" && step.component.childAttemptId) {
+      leavingRef.current = true;
+      const childAttemptId = step.component.childAttemptId;
+      const componentId = step.component.assessmentComponentId;
+      void toeicService
+        .beginAttempt(childAttemptId)
+        .then(() =>
+          router.replace(
+            `/toeic/attempts/${childAttemptId}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${componentId}`,
+          ),
+        )
+        .catch((err: unknown) => {
+          leavingRef.current = false;
+          setError(getApiErrorMessage(err, "Không mở được phần Listening & Reading."));
+        });
+    } else if (step.kind === "CLOSE_LISTENING_READING") {
+      leavingRef.current = true;
+      void toeicService
+        .completeAssessmentComponent(attemptId, step.component.assessmentComponentId)
+        .then(refresh)
+        .catch((err: unknown) => setError(getApiErrorMessage(err, "Chưa đóng được phần Listening & Reading.")))
+        .finally(() => {
+          leavingRef.current = false;
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per step
+  }, [step?.kind, step && "component" in step ? step.component.status : null]);
+
   if (isLoading)
     return (
-      <main className="mx-auto max-w-4xl p-8 text-sm text-slate-600 dark:text-slate-400">
-        Đang khôi phục tiến độ…
-      </main>
+      <div className="flex min-h-dvh items-center justify-center">
+        <Loader2 className="animate-spin text-blue-600" aria-label="Đang khôi phục bài thi" />
+      </div>
     );
-  if (!data)
+  if (!data || !step)
     return (
-      <main className="mx-auto max-w-4xl p-8 text-sm text-rose-700">
+      <main className="mx-auto max-w-xl px-5 py-24 text-center text-slate-700 dark:text-slate-300">
         Không tìm thấy lượt làm bài.
       </main>
-      );
-  const completedCount = data.components.filter(
-    (component: any) => component.status === "COMPLETED",
-  ).length;
-  const nextComponent = data.components.find(
-    (component: any) => component.status !== "COMPLETED",
-  );
-  const parentStatus = statusLabels[data.status] ?? "Đang làm";
+    );
+
+  const sections = [...data.components].sort((a, b) => a.order - b.order);
+  const title = data.assessment.title;
+
+  if (step.kind === "ROOM") {
+    const shared = {
+      title,
+      attemptId,
+      sections,
+      previousSession: data.previousSession ?? null,
+      onContinueSession: (other: number) => router.replace(`/toeic/assessments/${id}/attempts/${other}`),
+      onSubmitted: () => void refresh(),
+      onExit: () => router.push(backHref),
+    };
+    // Sessions share their sections, so the attempt is part of a room's identity.
+    const roomKey = `${attemptId}:${step.component.assessmentComponentId}`;
+    return step.component.kind === "SPEAKING" ? (
+      <SpeakingRoom key={roomKey} {...shared} component={step.component as SpeakingComponent} />
+    ) : (
+      <WritingRoom key={roomKey} {...shared} component={step.component as WritingComponent} />
+    );
+  }
+
   return (
-    <main className="mx-auto max-w-4xl space-y-6 px-5 py-10">
-      <Link
-        href={canonicalDetailPath ?? `/toeic/assessments/${id}`}
-        className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
-      >
-        <ArrowLeft size={16} /> Chi tiết bài thi
-      </Link>
-      <section className="rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-400">
-              TIẾN ĐỘ BÀI THI
-            </p>
-            <h1 className="mt-2 text-3xl font-bold text-slate-900">
-              {data.assessment.title}
-            </h1>
-          </div>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-bold ${data.status === "COMPLETED" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}
-            aria-label={`Trạng thái bài thi: ${parentStatus}`}
-          >
-            {parentStatus} · {completedCount}/{data.components.length} phần
-          </span>
-        </div>
-        {error && (
-          <p className="mt-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">
-            {error}
-          </p>
-        )}
-        <div className="mt-8 space-y-3">
-          {data.components.map((component: any, index: number) => {
-            const done = component.status === "COMPLETED";
-            const skill = data.result?.skills?.[index];
-            const isNext =
-              nextComponent?.assessmentComponentId === component.assessmentComponentId;
-            const componentStatus = statusLabels[component.status] ?? "Chưa bắt đầu";
-            return (
-              <div
-                key={component.id}
-                className="flex flex-wrap items-center gap-4 rounded-2xl border border-slate-200 p-4"
-              >
-                <div className="flex-1">
-                  <p className="font-semibold text-slate-900">
-                    {component.order}. {componentLabels[component.kind] ?? "Phần thi"}
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-slate-600 dark:text-slate-400">
-                    {componentDetails[component.kind] ?? "Theo cấu trúc bài thi"}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                    {done
-                      ? "Phần này đã hoàn thành"
-                      : component.status === "IN_PROGRESS"
-                        ? "Tiến độ đã lưu — có thể tiếp tục"
-                        : "Sẵn sàng để bắt đầu"}
-                  </p>
-                  {skill?.kind === "LISTENING_READING" && skill.complete && (
-                    <p className="mt-2 text-sm font-semibold text-slate-800">
-                      Listening {skill.listeningScore} · Reading {skill.readingScore} · Tổng {skill.totalScore}
-                      {component.childAttemptId && (
-                        <Link
-                          href={`/toeic/results/${component.childAttemptId}`}
-                          className="ml-2 font-semibold text-orange-700 hover:underline"
-                        >
-                          Xem kết quả L&amp;R
-                        </Link>
-                      )}
-                    </p>
-                  )}
-                  {skill?.kind === "SPEAKING" && skill.taskCount > 0 && (
-                    <p className="mt-2 text-sm font-semibold text-slate-800">
-                      {skill.meanScore !== null
-                        ? `Điểm luyện trung bình ${skill.meanScore}/10`
-                        : "Chưa có bài nói được chấm điểm"}
-                      {` · đã chấm ${skill.gradedCount}/${skill.taskCount} bài`}
-                      {skill.noSpeechCount > 0 ? ` · ${skill.noSpeechCount} bài không nhận ra lời nói` : ""}
-                    </p>
-                  )}
-                  {skill?.kind === "WRITING" && skill.taskCount > 0 && (
-                    <p className="mt-2 text-sm font-semibold text-slate-800">
-                      {skill.points}/{skill.maxPoints} điểm · đã chấm {skill.gradedCount}/{skill.taskCount} bài
-                    </p>
-                  )}
-                  {component.kind === "WRITING" &&
-                    component.writingQuizIds?.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {component.writingQuizIds.map((quizId: number, index: number) => {
-                          const written = (component.writtenQuizIds ?? []).includes(quizId);
-                          return (
-                            <Link
-                              key={quizId}
-                              href={`/writing/${quizId}?parentAssessmentId=${id}&parentAttemptId=${attemptId}&parentComponentId=${component.assessmentComponentId}`}
-                              className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${written ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-slate-200 text-slate-600 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"}`}
-                            >
-                              {written && <CheckCircle2 size={12} aria-hidden="true" />}
-                              Câu {index + 1}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
-                {done ? (
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-700">
-                    <CheckCircle2 size={16} /> {componentStatus}
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={startComponent.isPending}
-                    onClick={() => {
-                      // Fullscreen needs this click's user activation; the
-                      // L&R paper then opens inside the same document.
-                      if (component.kind === "LISTENING_READING")
-                        void document.documentElement
-                          .requestFullscreen?.()
-                          .catch(() => undefined);
-                      startComponent.mutate(component.assessmentComponentId);
-                    }}
-                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${isNext ? "bg-slate-900 text-white shadow-sm hover:bg-slate-700" : "border border-slate-200 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-700"}`}
-                    aria-label={`${isNext ? "Tiếp tục" : "Mở"} ${componentLabels[component.kind] ?? "phần thi"}`}
-                  >
-                    {startComponent.isPending ? (
-                      <Loader2 className="animate-spin" size={15} />
-                    ) : (
-                      <ExternalLink size={15} />
-                    )}{" "}
-                    {isNext
-                      ? component.status === "IN_PROGRESS"
-                        ? "Tiếp tục bài thi"
-                        : "Bắt đầu phần tiếp theo"
-                      : "Mở phần này"}
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-        {completedCount > 0 && (
-          <Link
-            href={`/toeic/assessments/${id}/attempts/${attemptId}/result`}
-            className="mt-6 inline-flex min-h-11 items-center rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-          >
-            Xem kết quả chi tiết
+    <main className="flex min-h-dvh flex-col items-center justify-center gap-3 px-5 text-center text-slate-700 dark:text-slate-300">
+      {error ? (
+        <>
+          <p role="alert">{error}</p>
+          <Link href={backHref} className="font-semibold text-blue-700 hover:underline dark:text-blue-300">
+            Về trang đề
           </Link>
-        )}
-        {data.status === "COMPLETED" && (
-          <p className="mt-6 text-sm text-slate-600">
-            Điểm trên là chỉ số luyện tập nội bộ của BreadTrans theo từng kỹ năng, không phải điểm thi chính thức của ETS
-            và không gộp thành một điểm tổng.
-          </p>
-        )}
-        <p className="mt-6 rounded-xl bg-slate-50 p-3 text-xs leading-5 text-slate-600">
-          Tiến độ được lưu theo từng phần. Bạn có thể rời bài và quay lại tiếp tục
-          bất cứ lúc nào.
-        </p>
-      </section>
+        </>
+      ) : (
+        <Loader2 className="animate-spin text-blue-600" aria-label="Đang mở bài thi" />
+      )}
     </main>
   );
 }

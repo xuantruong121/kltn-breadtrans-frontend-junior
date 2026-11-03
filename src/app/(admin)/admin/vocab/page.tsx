@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
+import { ArrowRight, FileStack, FileUp, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -12,6 +13,9 @@ import { VOCAB_LEVELS } from "@/components/admin/vocab/vocabCms";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
+import { BTN_AI, BTN_SECONDARY } from "@/components/admin/cmsButtons";
+import { AiCreateDialog } from "@/components/admin/AiCreateDialog";
+import VocabDocumentImport from "@/components/admin/vocab/VocabDocumentImport";
 
 type DeckSummary = {
   id: number;
@@ -34,6 +38,9 @@ const wordCount = (deck: DeckSummary) => deck._count?.words ?? deck.totalWords ?
 
 export default function AdminVocabPage() {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const [aiCreating, setAiCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("ALL");
   const [level, setLevel] = useState("ALL");
@@ -75,13 +82,54 @@ export default function AdminVocabPage() {
             {totalDecks} bộ · {published} đã xuất bản · {totalDecks - published} bản nháp
           </p>
         </div>
-        <Link
-          href="/admin/vocab/new"
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setImporting(true)}
+            className={BTN_SECONDARY}
+          >
+            <FileUp size={16} /> Tạo từ tài liệu
+          </button>
+          <button type="button" onClick={() => setAiCreating(true)} className={BTN_AI}>
+            <FileStack size={16} aria-hidden="true" /> Tạo bằng AI
+          </button>
+          <Link
+            href="/admin/vocab/new"
           className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
         >
-          <Plus size={16} /> Tạo bộ từ
-        </Link>
+            <Plus size={16} /> Tạo bộ từ
+          </Link>
+        </div>
       </header>
+
+      {importing && <VocabDocumentImport onClose={() => setImporting(false)} />}
+      {aiCreating && (
+        <AiCreateDialog
+          title="Tạo bộ từ bằng AI"
+          nameLabel="Chủ đề của bộ từ"
+          namePlaceholder="Ví dụ: Từ vựng họp hành"
+          countLabel="Số từ"
+          maxCount={30}
+          defaultCount={15}
+          levels={VOCAB_LEVELS.map((level) => ({ value: level, label: level }))}
+          onClose={() => setAiCreating(false)}
+          onCreate={async ({ name, level, count }) => {
+            try {
+              const created = (await axiosClient.post("/admin/vocab/topics", {
+                title: name,
+                description: "",
+                level,
+                categoryName: "600 TỪ VỰNG TOEIC",
+                isPro: false,
+              })) as unknown as { id: number };
+              refresh();
+              router.push(`/admin/vocab/${created.id}?ai=${count}`);
+            } catch (err) {
+              toast.error(getApiErrorMessage(err, "Không tạo được bộ từ."));
+            }
+          }}
+        />
+      )}
 
       <div className="space-y-3">
         <label className="relative block">

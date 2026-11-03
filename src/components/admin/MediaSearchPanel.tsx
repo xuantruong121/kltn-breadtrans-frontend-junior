@@ -7,7 +7,6 @@ import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const PROVIDER_LABEL: Record<string, string> = {
-  PEXELS: "Pexels",
   PIXABAY: "Pixabay",
   OPENVERSE: "Openverse",
   WIKIMEDIA_COMMONS: "Wikimedia Commons",

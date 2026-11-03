@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -22,6 +23,7 @@ import {
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   BTN_AI,
@@ -123,6 +125,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const [copyFrom, setCopyFrom] = useState<GrammarDraft | null>(null);
   const [panel, setPanel] = useState<"paste" | "ai" | null>(null);
   const [aiCount, setAiCount] = useState(5);
+  const [documentText, setDocumentText] = useState("");
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [editingCandidate, setEditingCandidate] = useState<number | null>(null);
   const [pendingQuestions, setPendingQuestions] = useState<GrammarDraft[]>([]);
@@ -261,13 +264,13 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   };
 
   /** Empty topic: AI writes the theory and the questions; otherwise it adds questions. */
-  const askAi = async () => {
+  const askAi = async (requested = aiCount) => {
     if (!form.title.trim()) {
       toast.error("Cần tên chủ đề để AI biết viết về gì.");
       return;
     }
     setBusy(true);
-    const count = Math.min(aiCount, aiMax);
+    const count = Math.min(requested, aiMax);
     try {
       if (aiDraftsWholeTopic) {
         const data = unwrap<any>(
@@ -275,6 +278,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             topicTitle: form.title.trim(),
             level: form.level,
             count,
+            sourceText: documentText || undefined,
           }),
         );
         setForm((current) => ({
@@ -303,6 +307,20 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       setBusy(false);
     }
   };
+
+  // "Tạo bằng AI" on the list opens the new topic with ?ai=<count>.
+  const aiStarted = useRef(false);
+  useEffect(() => {
+    if (!topic || aiStarted.current) return;
+    const count = Number(new URLSearchParams(window.location.search).get("ai"));
+    if (!count) return;
+    aiStarted.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    setAiCount(count);
+    setPanel("ai");
+    void askAi(count);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on arrival
+  }, [topic]);
 
   const move = async (index: number, direction: -1 | 1) => {
     if (!topic) return;
@@ -339,7 +357,9 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">
-            {topic ? topic.title : "Tạo chủ đề ngữ pháp"}
+            {topic
+              ? grammarDisplayTitle(topic.id, topic.title)
+              : "Tạo chủ đề ngữ pháp"}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             {topic ? (published ? "Đã xuất bản" : "Bản nháp") : "Chủ đề mới, chưa lưu"} ·{" "}
@@ -909,6 +929,9 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 >
                   <ClipboardPaste size={16} /> Dán nhiều câu
                 </button>
+                {aiDraftsWholeTopic && (
+                  <DocumentImportButton onText={setDocumentText} />
+                )}
                 <button
                   type="button"
                   onClick={() => setPanel(panel === "ai" ? null : "ai")}

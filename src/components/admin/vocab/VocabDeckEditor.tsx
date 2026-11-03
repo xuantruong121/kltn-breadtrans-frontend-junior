@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -265,6 +265,20 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     }
   };
 
+  // "Tạo bằng AI" on the list opens the new deck with ?ai=<count>.
+  const aiStarted = useRef(false);
+  useEffect(() => {
+    if (!deck || aiStarted.current) return;
+    const count = Number(new URLSearchParams(window.location.search).get("ai"));
+    if (!count) return;
+    aiStarted.current = true;
+    window.history.replaceState(null, "", window.location.pathname);
+    setAiCount(count);
+    setPanel("ai");
+    void askAi(count);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on arrival
+  }, [deck]);
+
   /** Sequential, so the words keep the order they were given in. */
   const addWords = async (
     rows: Array<Omit<DraftWord, "chosen">>,
@@ -300,7 +314,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     return added;
   };
 
-  const askAi = async () => {
+  const askAi = async (count = aiCount) => {
     const topic = form.title.trim();
     if (!topic) {
       toast.error("Cần tên bộ từ để AI biết chủ đề.");
@@ -313,7 +327,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           topic,
           level: cefrToScaleLevel(form.level),
           context: form.description.trim() || undefined,
-          count: aiCount,
+          count,
         }),
       );
       const known = new Set(

@@ -35,6 +35,10 @@ import {
 } from "@/lib/toeic/examPaper";
 import { ToeicExamPaper } from "@/components/toeic/paper/ToeicExamPaper";
 import { ToeicQuestionNavigator } from "@/components/toeic/paper/ToeicQuestionNavigator";
+import { ExamRestoreDialog, type RestoreOption } from "@/components/toeic/paper/ExamRestoreDialog";
+import axiosClient from "@/lib/api/axiosClient";
+import { liveSession, sessionOptionDetail, sessionOptionTitle, type PreviousSession } from "@/lib/toeic/assessmentRoom";
+import { enterFullscreen, exitFullscreen, useIsFullscreen, useLeaveFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { ToeicListeningBar } from "@/components/toeic/paper/ToeicListeningBar";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -70,8 +74,11 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const parentAttemptId = searchParams.get("parentAttemptId");
-  const parentComponentId = searchParams.get("parentComponentId");
   const parentAssessmentId = searchParams.get("parentAssessmentId");
+  const examRoom =
+    parentAttemptId && parentAssessmentId
+      ? `/toeic/assessments/${parentAssessmentId}/attempts/${parentAttemptId}`
+      : null;
 
   const [answers, setAnswers] = useState<Record<number, number> | null>(null);
   const [marked, setMarked] = useState<Set<number>>(new Set());
@@ -80,12 +87,14 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [checkpoint, setCheckpoint] = useState<Checkpoint | null>(null);
   const [confirmRestore, setConfirmRestore] = useState(false);
+  // The page clock starts a second after the paper opens; the offer needs the time now.
+  const [restoreAt, setRestoreAt] = useState(0);
   const [draftOffer, setDraftOffer] = useState<Checkpoint | null>(null);
   const [showSubmitSummary, setShowSubmitSummary] = useState(false);
   const [showExit, setShowExit] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
   const [showTop, setShowTop] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const isFullscreen = useIsFullscreen();
   const [nowMs, setNowMs] = useState(0);
   // Audio: one element for the whole attempt.
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -167,31 +176,8 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   );
 
   // ---------- Fullscreen: never left by the page except on purpose ----------
-  useEffect(() => {
-    const sync = () => setIsFullscreen(Boolean(document.fullscreenElement));
-    sync();
-    document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
-  }, []);
-  const enterFullscreen = () => void document.documentElement.requestFullscreen?.().catch(() => undefined);
-  const exitFullscreen = () => {
-    if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
-  };
-  // Leave fullscreen when the page is really gone. React Strict Mode mounts
-  // effects twice in development, so the exit waits a tick and is skipped
-  // when the page mounted again (a plain cleanup dropped fullscreen at once).
-  const mountTokenRef = useRef(0);
-  useEffect(() => {
-    const token = ++mountTokenRef.current;
-    const audio = audioRef.current;
-    return () => {
-      window.setTimeout(() => {
-        if (mountTokenRef.current !== token) return;
-        audio?.pause();
-        if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
-      }, 0);
-    };
-  }, []);
+  const pauseAudio = useCallback(() => audioRef.current?.pause(), []);
+  useLeaveFullscreen(pauseAudio);
 
   useEffect(() => {
     if (!attempt) return;
@@ -330,14 +316,55 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     setMarked(new Set(state.marked));
     scheduleSave(100);
   };
+  const { data: parentAttempt } = useQuery({
+    queryKey: ["exam-room-previous-session", parentAttemptId],
+    queryFn: async () =>
+      (await axiosClient.get(`/toeic/assessments/attempts/${parentAttemptId}`)) as unknown as {
+        previousSession?: PreviousSession | null;
+      },
+    enabled: Boolean(examRoom),
+  });
+  const session = liveSession(parentAttempt?.previousSession, nowMs);
   const restore = () => {
-    if (!checkpoint) return;
-    if (sameState(currentAnswers, marked, checkpoint.answers, checkpoint.marked)) {
-      toast("Bài làm đang giống bản đã lưu.");
-      return;
+    if (!session) {
+      if (!checkpoint) return;
+      if (sameState(currentAnswers, marked, checkpoint.answers, checkpoint.marked)) {
+        toast("Bài làm đang giống bản đã lưu.");
+        return;
+      }
     }
+    setRestoreAt(Date.now());
     setConfirmRestore(true);
   };
+  const restoreOptions: RestoreOption[] = [
+    ...(checkpoint
+      ? [
+          {
+            key: "save",
+            title: `Bản lưu lúc ${timeOf(checkpoint.savedAt)}`,
+            detail: "Các đáp án và đánh dấu đã thay đổi sau thời điểm đó sẽ bị thay bằng bản đã lưu.",
+            onPick: () => {
+              applyState(checkpoint);
+              setConfirmRestore(false);
+              toast.success("Đã khôi phục bản lưu.");
+            },
+          },
+        ]
+      : []),
+    ...(session
+      ? [
+          {
+            key: "session",
+            title: sessionOptionTitle(session),
+            detail: sessionOptionDetail(session, restoreAt),
+            onPick: () => {
+              setConfirmRestore(false);
+              router.replace(`/toeic/assessments/${parentAssessmentId}/attempts/${session.id}`);
+            },
+          },
+        ]
+      : []),
+  ];
 
   // ---------- Current question from scroll; deliberate jumps only ----------
   useEffect(() => {
@@ -520,7 +547,8 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const leave = () => {
     markTerminated();
     audioRef.current?.pause();
-    exitFullscreen();
+    // In a longer exam the next section stays fullscreen.
+    if (!examRoom) exitFullscreen();
     try {
       localStorage.removeItem(checkpointKey(attemptId));
       localStorage.removeItem(draftKey(attemptId));
@@ -535,16 +563,29 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     },
     onSuccess: () => {
       leave();
-      const query = [
-        parentAttemptId ? `parentAttemptId=${parentAttemptId}` : "",
-        parentComponentId ? `parentComponentId=${parentComponentId}` : "",
-        parentAssessmentId ? `parentAssessmentId=${parentAssessmentId}` : "",
-      ]
-        .filter(Boolean)
-        .join("&");
-      router.push(`/toeic/results/${attemptId}${query ? `?${query}` : ""}`);
+      // Inside a 4 Skills exam the next section follows; results come at the end.
+      router.push(examRoom ?? `/toeic/results/${attemptId}`);
     },
   });
+  // In a longer exam the clock moves on to the next section. The server closes
+  // an overdue paper when it is read, so saving what is left and reading it again
+  // ends the section; a save refused at the deadline must not hold that up.
+  const deadlineMs = attempt?.deadline ? Date.parse(attempt.deadline) : null;
+  const overdue = Boolean(examRoom && attempt?.status === "IN_PROGRESS" && deadlineMs && nowMs >= deadlineMs);
+  useEffect(() => {
+    if (!overdue) return;
+    const reread = () => void queryClient.invalidateQueries({ queryKey: ["toeic-attempt", attemptId] });
+    void Promise.race([
+      flushSave().catch(() => undefined),
+      new Promise((resolve) => window.setTimeout(resolve, 3000)),
+    ]).then(reread);
+    const timer = window.setInterval(reread, 5000);
+    return () => window.clearInterval(timer);
+  }, [overdue, flushSave, queryClient, attemptId]);
+  const closed = attempt?.status === "SUBMITTED";
+  useEffect(() => {
+    if (examRoom && closed) router.replace(examRoom);
+  }, [examRoom, closed, router]);
   const cancel = useMutation({
     mutationFn: () => toeicService.cancelAttempt(attemptId),
     onSuccess: () => {
@@ -589,7 +630,8 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
       saveStatus={saveStatus}
       saveError={saveState === "error"}
       saving={manualSave.isPending}
-      restoreDisabled={!checkpoint}
+      restoreDisabled={!checkpoint && !session}
+      restoreTitle={examRoom && !checkpoint && !session ? "Chưa có bản lưu hay phiên làm dở nào còn giờ" : undefined}
       submitting={submit.isPending}
       onJumpQuestion={jumpToQuestion}
       onSubmit={() => setShowSubmitSummary(true)}
@@ -771,46 +813,31 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
         </div>
       )}
 
-      {confirmRestore && checkpoint && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-          <div role="dialog" aria-modal="true" aria-labelledby="restore-title" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <h2 id="restore-title" className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Khôi phục bản lưu lúc {timeOf(checkpoint.savedAt)}?
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Các đáp án và đánh dấu đã thay đổi sau thời điểm đó sẽ bị thay bằng bản đã lưu.</p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setConfirmRestore(false)} className="min-h-10 rounded-md border border-slate-200 px-4 text-sm font-semibold text-slate-700 dark:border-slate-700 dark:text-slate-200">
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  applyState(checkpoint);
-                  setConfirmRestore(false);
-                  toast.success("Đã khôi phục bản lưu.");
-                }}
-                className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700"
-              >
-                Khôi phục
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {confirmRestore && <ExamRestoreDialog options={restoreOptions} onClose={() => setConfirmRestore(false)} />}
 
       {showExit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
           <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <AlertTriangle className="text-rose-600 dark:text-rose-400" />
-            <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-slate-100">Thoát và hủy lượt thi?</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Lượt thi đang làm dở sẽ bị hủy và các câu trả lời chưa nộp sẽ mất.</p>
+            <h2 className="mt-3 text-xl font-bold text-slate-900 dark:text-slate-100">{examRoom ? "Thoát khỏi phòng thi?" : "Thoát và hủy lượt thi?"}</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {examRoom
+                ? "Đồng hồ vẫn chạy khi bạn rời đi. Lần sau bấm Bắt đầu làm bài để mở phiên mới, rồi bấm Khôi phục dưới nút Nộp bài để quay lại phiên này khi còn giờ."
+                : "Lượt thi đang làm dở sẽ bị hủy và các câu trả lời chưa nộp sẽ mất."}
+            </p>
             <div className="mt-6 flex flex-col-reverse justify-end gap-2.5 sm:flex-row">
               <button type="button" onClick={() => setShowExit(false)} className="min-h-11 rounded-md border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                 Ở lại làm bài
               </button>
-              <button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-md bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60">
-                {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
-              </button>
+              {examRoom ? (
+                <button type="button" onClick={() => router.push("/exams")} className="min-h-11 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700">
+                  Thoát
+                </button>
+              ) : (
+                <button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-md bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60">
+                  {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
+                </button>
+              )}
             </div>
           </div>
         </div>

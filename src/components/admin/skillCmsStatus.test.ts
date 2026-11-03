@@ -7,6 +7,8 @@ import {
   latestAudioBadge,
   publishChecklist,
   trackNames,
+  writingCardLabel,
+  writingUsesPictures,
 } from "./skillCmsStatus.ts";
 
 test("latestAudioBadge: no recording reads as none", () => {
@@ -155,4 +157,21 @@ test("publishChecklist: per-question audio for dictation", () => {
     ],
   });
   assert.deepEqual(items.at(-1), { label: "Audio từng câu 1/2", done: false });
+});
+
+test("a sentence exercise stored as a picture type does not ask for an image", () => {
+  const noImage = [{ content: { imageUrl: "" } }];
+  assert.equal(writingUsesPictures("WRITING_PICTURE", noImage), false);
+  assert.equal(writingUsesPictures("WRITING_PICTURE", []), true);
+  assert.equal(
+    writingUsesPictures("WRITING_PICTURE", [{ content: { imageUrl: "https://a" } }]),
+    true,
+  );
+  assert.equal(writingUsesPictures("WRITING_EMAIL", []), false);
+  assert.equal(writingCardLabel({ type: "WRITING_PICTURE" }), "Viết câu");
+  assert.equal(
+    writingCardLabel({ type: "WRITING_PICTURE", thumbnailUrl: "https://a" }),
+    "Viết theo tranh",
+  );
+  assert.equal(writingCardLabel({ type: "WRITING_EMAIL" }), "Viết email");
 });

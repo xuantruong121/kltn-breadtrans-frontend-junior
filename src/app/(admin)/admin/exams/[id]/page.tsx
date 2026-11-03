@@ -7,6 +7,10 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { adminExamService } from "@/lib/api/services/adminExam.service";
 import { ExamOutline } from "@/components/admin/exam/ExamOutline";
+import {
+  ExamRetireAction,
+  examStatusLabel,
+} from "@/components/admin/exam/ExamRetireAction";
 import { getPublishReadinessUi } from "@/lib/examStudio/readinessUi";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
@@ -77,6 +81,9 @@ export default function ExamStudioPage({
       toast.error(getApiErrorMessage(err, "Không thể tạo phiên bản mới")),
   });
 
+  const refreshExam = () =>
+    void queryClient.invalidateQueries({ queryKey: ["admin-exam-studio", examId] });
+
   const issues = useMemo(
     () =>
       (exam?.validation?.issues ?? []).map((issue) => ({
@@ -120,7 +127,7 @@ export default function ExamStudioPage({
           <span
             className={`rounded-full border px-2 py-0.5 text-xs font-medium ${isPublished ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300" : "border-slate-200 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"}`}
           >
-            {isPublished ? "Đã xuất bản" : "Bản nháp"}
+            {examStatusLabel(exam.publicationStatus)}
           </span>
         </div>
 
@@ -149,11 +156,26 @@ export default function ExamStudioPage({
           >
             Nhân bản đề
           </button>
-          {isPublished ? (
+          {exam.publicationStatus === "ARCHIVED" ? (
+            <ExamRetireAction
+              examId={examId}
+              status={exam.publicationStatus}
+              sharedLrExams={exam.sharedLrExams}
+              onChanged={refreshExam}
+            />
+          ) : isPublished ? (
             hasAttempts ? (
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                Đề đã có lượt làm · nội dung bị khóa
-              </span>
+              <>
+                <span className="text-xs text-slate-600 dark:text-slate-400">
+                  Đề đã có lượt làm · nội dung bị khóa
+                </span>
+                <ExamRetireAction
+                  examId={examId}
+                  status={exam.publicationStatus}
+                  sharedLrExams={exam.sharedLrExams}
+                  onChanged={refreshExam}
+                />
+              </>
             ) : (
               <button
                 type="button"
@@ -209,7 +231,7 @@ export default function ExamStudioPage({
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <InfoRow label="Tên đề" value={exam.title} />
           <InfoRow label="Dạng đề" value={variantLabel(exam.variantCode)} />
-          <InfoRow label="Trạng thái" value={isPublished ? "Đã xuất bản" : "Bản nháp"} />
+          <InfoRow label="Trạng thái" value={examStatusLabel(exam.publicationStatus)} />
           <InfoRow
             label="Thời lượng"
             value={

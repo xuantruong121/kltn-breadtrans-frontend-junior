@@ -70,6 +70,62 @@ export interface AdminLearnerLookup {
   activeSubscription: AdminSubscriptionItem | null;
 }
 
+export interface PlanEntitlementRow {
+  id: number;
+  featureKey: string;
+  enabled: boolean;
+  limitValue: number | null;
+  unit: string | null;
+  period: string | null;
+}
+
+export interface PlanVersionRow {
+  id: number;
+  planCode: string;
+  version: number;
+  displayName: string | null;
+  description: string | null;
+  durationDays: number | null;
+  priceVnd: number | null;
+  status: "DRAFT" | "PUBLISHED" | "RETIRED";
+  isCurrent: boolean;
+  publishedAt: string | null;
+  entitlements: PlanEntitlementRow[];
+}
+
+export interface PlanCatalogRow {
+  id: number;
+  code: string;
+  displayName: string;
+  versions: PlanVersionRow[];
+}
+
+export type PlanDraftInput = Partial<
+  Pick<PlanVersionRow, "displayName" | "description" | "durationDays" | "priceVnd">
+>;
+
+export const adminPlanCatalogService = {
+  list: () =>
+    axiosClient.get("/admin/plan-catalog") as unknown as Promise<PlanCatalogRow[]>,
+  createDraft: (code: string, input: PlanDraftInput) =>
+    axiosClient.post(`/admin/plan-catalog/plans/${code}/versions`, input),
+  updateDraft: (id: number, input: PlanDraftInput) =>
+    axiosClient.patch(`/admin/plan-catalog/versions/${id}`, input),
+  updateEntitlement: (
+    versionId: number,
+    entitlementId: number,
+    input: { enabled?: boolean; limitValue?: number | null },
+  ) =>
+    axiosClient.patch(
+      `/admin/plan-catalog/versions/${versionId}/entitlements/${entitlementId}`,
+      input,
+    ),
+  publish: (id: number) =>
+    axiosClient.post(`/admin/plan-catalog/versions/${id}/publish`),
+  retire: (id: number) =>
+    axiosClient.post(`/admin/plan-catalog/versions/${id}/retire`),
+};
+
 export const adminSubscriptionService = {
   list: (params?: {
     status?: AdminSubscriptionStatusFilter;

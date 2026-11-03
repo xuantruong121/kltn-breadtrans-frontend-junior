@@ -19,6 +19,7 @@ import {
   resolveAssessmentReadiness,
   type ToeicAssessmentComponentView,
 } from "@/lib/toeic/detailPresentation";
+import { enterFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 type AssessmentDetail = {
@@ -51,9 +52,13 @@ export default function ToeicAssessmentDetail({
   // route as before this page was moved onto the shared detail shell.
   const start = useMutation({
     mutationFn: async () =>
+      // Every press is a new session; the key only stops one press from opening
+      // two. An unfinished session is reached from Khôi phục inside the room.
       (await axiosClient.post(`/toeic/assessments/${id}/attempts`, {
-        idempotencyKey: `learner-${id}`,
-      })) as unknown as { id: number },
+        idempotencyKey: crypto.randomUUID(),
+      })) as unknown as {
+        id: number;
+      },
     onSuccess: (attempt) =>
       router.push(`/toeic/assessments/${id}/attempts/${attempt.id}`),
     onError: (err: unknown) => {
@@ -79,7 +84,6 @@ export default function ToeicAssessmentDetail({
   const structureRows = buildAssessmentStructureRows(components);
   const facts = buildAssessmentSummaryFacts(components, data.productFamily);
   const readiness = resolveAssessmentReadiness(components);
-  const isCompleted = data.attempt?.status === "COMPLETED";
 
   // Each skill's size and time are already on its "Cấu trúc đề" card; the
   // side panel repeats only a single total, when every skill shares a unit.
@@ -116,33 +120,25 @@ export default function ToeicAssessmentDetail({
       summaryHeading="Thông tin bài thi"
       summaryRows={summaryRows}
       notices={
-        <>
-          {data.attempt && !isCompleted && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50/80 dark:border-amber-900/50 dark:bg-amber-950/30 p-3 text-sm text-amber-900 dark:text-amber-200 font-medium">
-              Bạn đang có một lượt thi dở dang cho đề này. Bấm để tiếp tục làm
-              tiếp.
-            </div>
-          )}
-          {!readiness.ready && (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 p-3 text-sm text-rose-800 dark:text-rose-200 font-medium">
-              <p>Đề thi này chưa đủ điều kiện để bắt đầu.</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-4 font-medium">
-                {readiness.reasons.map((reason) => (
-                  <li key={reason}>{reason}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </>
+        !readiness.ready && (
+          <div className="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 p-3 text-sm text-rose-800 dark:text-rose-200 font-medium">
+            <p>Đề thi này chưa đủ điều kiện để bắt đầu.</p>
+            <ul className="mt-1 list-disc space-y-0.5 pl-4 font-medium">
+              {readiness.reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+        )
       }
       cta={{
-        label: isCompleted
-          ? "Đã hoàn thành"
-          : data.attempt
-            ? "Tiếp tục làm bài"
-            : "Bắt đầu làm bài",
-        onClick: () => start.mutate(),
-        disabled: isCompleted || !readiness.ready,
+        label: "Bắt đầu làm bài",
+        onClick: () => {
+          // Fullscreen must come from this click; the room keeps the same document.
+          enterFullscreen();
+          start.mutate();
+        },
+        disabled: !readiness.ready,
         pending: start.isPending,
       }}
       ctaError={error || null}

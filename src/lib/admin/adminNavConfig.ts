@@ -102,6 +102,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         iconName: "Layers",
       },
       {
+        id: "dictionary",
+        href: "/admin/dictionary",
+        label: "Kho từ điển",
+        iconName: "BookText",
+      },
+      {
         id: "grammar",
         href: "/admin/grammar",
         label: "Ngữ pháp",

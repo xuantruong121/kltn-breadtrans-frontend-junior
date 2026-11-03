@@ -6,7 +6,8 @@ export type AdminExamDetail = {
   description?: string | null;
   familyCode?: string;
   variantCode?: string;
-  publicationStatus: "DRAFT" | "PUBLISHED";
+  publicationStatus: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  sharedLrExams?: number;
   durationSeconds?: number;
   totalQuestions?: number;
   totalGroups?: number;
@@ -56,6 +57,14 @@ export const adminExamService = {
 
   async unpublish(id: number) {
     return axiosClient.post(`/admin/exams/${id}/unpublish`);
+  },
+
+  async retire(id: number) {
+    return axiosClient.post(`/admin/exams/${id}/retire`);
+  },
+
+  async restore(id: number) {
+    return axiosClient.post(`/admin/exams/${id}/restore`);
   },
 
   async duplicate(id: number) {

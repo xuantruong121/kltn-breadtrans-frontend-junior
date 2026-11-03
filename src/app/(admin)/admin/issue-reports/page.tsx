@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   Loader2,
   Search,
   XCircle,
@@ -36,6 +38,18 @@ const areaLabels: Record<string, string> = {
   OTHER: "Khác",
 };
 
+const categoryLabels: Record<string, string> = {
+  CONTENT_ERROR: "Sai nội dung",
+  ANSWER_ERROR: "Sai đáp án",
+  EXPLANATION_ERROR: "Sai giải thích",
+  AUDIO_ERROR: "Lỗi âm thanh",
+  IMAGE_ERROR: "Lỗi hình ảnh",
+  SCORING_ERROR: "Sai điểm",
+  TECHNICAL_ERROR: "Lỗi kỹ thuật",
+  ACCESSIBILITY: "Khó sử dụng",
+  OTHER: "Khác",
+};
+
 export default function IssueReportsPage() {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<IssueReportStatus | "">("");
@@ -52,6 +66,16 @@ export default function IssueReportsPage() {
         search: search || undefined,
       }),
   });
+  const detail = useQuery({
+    queryKey: ["admin-issue-report", selected?.id],
+    enabled: selected !== null,
+    queryFn: () => issueReportService.get(selected!.id),
+  });
+  const adminHref = detail.data?.adminHref;
+  const route = detail.data?.route;
+  const closingNoteReady = resolutionNote.trim().length >= 5;
+  const close = (id: number, nextStatus: IssueReportStatus) =>
+    update.mutate({ id, status: nextStatus, resolutionNote });
   const update = useMutation({
     mutationFn: (input: {
       id: number;
@@ -281,7 +305,9 @@ export default function IssueReportsPage() {
             <dl className="mt-5 grid gap-3 rounded-xl bg-slate-50 p-4 text-sm">
               <div>
                 <dt className="font-semibold text-slate-600 dark:text-slate-400">Phân loại</dt>
-                <dd className="text-slate-900">{selected.category}</dd>
+                <dd className="text-slate-900">
+                  {categoryLabels[selected.category] ?? selected.category}
+                </dd>
               </div>
               <div>
                 <dt className="font-semibold text-slate-600 dark:text-slate-400">Mức độ</dt>
@@ -305,6 +331,27 @@ export default function IssueReportsPage() {
                     "Không rõ"}
                 </dd>
               </div>
+              {(adminHref || route) && (
+                <div>
+                  <dt className="font-semibold text-slate-600 dark:text-slate-400">
+                    Nội dung bị báo
+                  </dt>
+                  <dd className="text-slate-900">
+                    {adminHref ? (
+                      <Link
+                        href={adminHref}
+                        className="inline-flex items-center gap-1 font-semibold text-blue-700 hover:underline"
+                      >
+                        Mở nội dung
+                        <ExternalLink size={14} />
+                      </Link>
+                    ) : (
+                      <span className="break-all">{route}</span>
+                    )}
+                    {selected.questionId ? ` · Câu #${selected.questionId}` : ""}
+                  </dd>
+                </div>
+              )}
             </dl>
             <label className="mt-5 block text-sm font-semibold text-slate-800">
               Ghi chú xử lý
@@ -313,7 +360,7 @@ export default function IssueReportsPage() {
                 onChange={(e) => setResolutionNote(e.target.value)}
                 rows={4}
                 className="mt-1.5 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-                placeholder="Ghi lại cách đã xử lý hoặc lý do từ chối..."
+                placeholder="Học viên sẽ nhận được ghi chú này khi báo lỗi được đóng."
               />
             </label>
             <div className="mt-4 flex flex-wrap justify-end gap-2">
@@ -333,14 +380,24 @@ export default function IssueReportsPage() {
               </button>
               <button
                 type="button"
-                disabled={update.isPending || resolutionNote.trim().length < 5}
-                onClick={() =>
-                  update.mutate({
-                    id: selected.id,
-                    status: "RESOLVED",
-                    resolutionNote,
-                  })
-                }
+                disabled={update.isPending || !closingNoteReady}
+                onClick={() => close(selected.id, "DUPLICATE")}
+                className="min-h-11 rounded-xl border border-slate-300 px-4 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Trùng
+              </button>
+              <button
+                type="button"
+                disabled={update.isPending || !closingNoteReady}
+                onClick={() => close(selected.id, "REJECTED")}
+                className="min-h-11 rounded-xl border border-rose-200 px-4 font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+              >
+                Từ chối
+              </button>
+              <button
+                type="button"
+                disabled={update.isPending || !closingNoteReady}
+                onClick={() => close(selected.id, "RESOLVED")}
                 className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 font-bold text-white hover:bg-emerald-800 disabled:opacity-50"
               >
                 <CheckCircle2 size={17} />

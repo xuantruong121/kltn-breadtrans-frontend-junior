@@ -3,7 +3,8 @@
 import { memo } from "react";
 
 import type { ToeicQuestionGroup } from "@/lib/api/services/toeic.service";
-import { isPassageWorthShowing, splitPassageDocuments, type PaperPart } from "@/lib/toeic/examPaper";
+import { isListeningGraphic, isPassageWorthShowing, splitPassageDocuments, type PaperPart } from "@/lib/toeic/examPaper";
+import { ToeicGraphic } from "./ToeicGraphic";
 import { ToeicPaperQuestion } from "./ToeicPaperQuestion";
 
 /** One short direction per Part, shown once above its questions. */
@@ -25,9 +26,12 @@ type Props = {
   lockedReason: string | null;
   onSelect: (questionId: number, optionIndex: number) => void;
   onToggleMark: (questionId: number) => void;
+  /** Admin preview only: link from a question to where it is edited. */
+  editHrefFor?: (questionNumber: number) => string;
 };
 
 function Passage({ text }: { text: string }) {
+  if (isListeningGraphic(text)) return <ToeicGraphic text={text} />;
   return (
     <div className="space-y-3">
       {splitPassageDocuments(text).map((doc, index) => (
@@ -47,6 +51,7 @@ const Group = memo(function Group({
   disabled,
   onSelect,
   onToggleMark,
+  editHrefFor,
 }: {
   group: ToeicQuestionGroup;
   answers: Record<number, number>;
@@ -54,6 +59,7 @@ const Group = memo(function Group({
   disabled: boolean;
   onSelect: Props["onSelect"];
   onToggleMark: Props["onToggleMark"];
+  editHrefFor: Props["editHrefFor"];
 }) {
   const passage = isPassageWorthShowing(group.part, group.passageText) ? group.passageText : null;
   const numbers = group.questions.map((q) => q.questionNumber);
@@ -68,6 +74,7 @@ const Group = memo(function Group({
       marked={marked.has(q.id)}
       audioOnly={group.part <= 2}
       disabled={disabled}
+      editHref={editHrefFor?.(q.questionNumber)}
       onSelect={onSelect}
       onToggleMark={onToggleMark}
     />
@@ -102,7 +109,7 @@ const Group = memo(function Group({
 });
 
 /** The questions of ONE Part, in order, with shared context shown once per group. */
-export function ToeicExamPaper({ part, answers, marked, lockedReason, onSelect, onToggleMark }: Props) {
+export function ToeicExamPaper({ part, answers, marked, lockedReason, onSelect, onToggleMark, editHrefFor }: Props) {
   return (
     <div>
       <p className="mb-1 text-sm text-slate-600 dark:text-slate-300">{PART_DIRECTIONS[part.part]}</p>
@@ -118,6 +125,7 @@ export function ToeicExamPaper({ part, answers, marked, lockedReason, onSelect, 
           disabled={Boolean(lockedReason)}
           onSelect={onSelect}
           onToggleMark={onToggleMark}
+          editHrefFor={editHrefFor}
         />
       ))}
     </div>
