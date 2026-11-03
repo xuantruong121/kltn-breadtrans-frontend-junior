@@ -9,7 +9,13 @@ import {
   examAiService,
   type ExamAiCandidateGroup,
   type ExamAiCandidateTask,
+  type ExamAiSkipped,
 } from "@/lib/api/services/examAi.service";
+import { AnswerReviewPanel } from "@/components/admin/exam/AnswerReviewPanel";
+import {
+  skipReasonLabel,
+  type ConfirmationMethod,
+} from "@/lib/examAi/answerReview";
 import {
   candidateGroupState,
   matchesCandidateFilter,
@@ -140,12 +146,21 @@ export default function ExamAiCandidateWorkspacePage({
     setSelected((prev) => new Set([...prev, ...validUnappliedKeys]));
 
   const [applying, setApplying] = useState(false);
+  const [skipped, setSkipped] = useState<ExamAiSkipped[]>([]);
+  const [confirming, setConfirming] = useState<string | null>(null);
   const runApply = async () => {
     if (!selected.size) return;
     setApplying(true);
     try {
-      await examAiService.apply(jobId, Array.from(selected));
-      toast.success(`Đã áp dụng ${selected.size} nội dung vào bản nháp`);
+      const result = await examAiService.apply(jobId, Array.from(selected));
+      const held = result?.skipped ?? [];
+      setSkipped(held);
+      const written = selected.size - held.length;
+      if (held.length)
+        toast(
+          `Đã áp dụng ${written} nội dung; giữ lại ${held.length} nhóm chưa đạt kiểm định`,
+        );
+      else toast.success(`Đã áp dụng ${written} nội dung vào bản nháp`);
       setSelected(new Set());
       await queryClient.invalidateQueries({
         queryKey: ["exam-ai-candidate", jobId],
@@ -231,6 +246,24 @@ export default function ExamAiCandidateWorkspacePage({
       toast.error(getApiErrorMessage(err, "Không thể tạo lại Part"));
     } finally {
       setRegenerating(null);
+    }
+  };
+
+  const confirmGroup = async (
+    candidateKey: string,
+    method: ConfirmationMethod,
+  ) => {
+    setConfirming(candidateKey);
+    try {
+      await examAiService.confirmGroup(jobId, candidateKey, method);
+      toast.success("Đã ghi xác nhận cho nhóm");
+      await queryClient.invalidateQueries({
+        queryKey: ["exam-ai-candidate", jobId],
+      });
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "Không thể xác nhận nhóm"));
+    } finally {
+      setConfirming(null);
     }
   };
 
@@ -523,6 +556,29 @@ export default function ExamAiCandidateWorkspacePage({
                           </ul>
                         )}
 
+                        {group.part === 1 ? (
+                          <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                            Part 1: ảnh chỉ có sau khi áp dụng, nên kiểm tra
+                            Vision và xác nhận nằm trên trang bản nháp đề thi.
+                          </p>
+                        ) : (
+                          !group.applied && (
+                            <AnswerReviewPanel
+                              part={group.part}
+                              review={group.review}
+                              holdBack={
+                                group.applyDecision && !group.applyDecision.ok
+                                  ? skipReasonLabel(group.applyDecision.reason)
+                                  : null
+                              }
+                              busy={confirming === group.candidateKey}
+                              onConfirm={(method) =>
+                                confirmGroup(group.candidateKey, method)
+                              }
+                            />
+                          )
+                        )}
+
                         {isEditing ? (
                           <div className="mt-3 space-y-2">
                             {group.transcript !== null && (
@@ -744,6 +800,24 @@ export default function ExamAiCandidateWorkspacePage({
               </section>
             );
           })}
+
+          {skipped.length > 0 && (
+            <section
+              aria-label="Nhóm chưa được áp dụng"
+              className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+            >
+              <p className="font-semibold">
+                Lần áp dụng vừa rồi giữ lại {skipped.length} nhóm
+              </p>
+              <ul className="mt-1 space-y-0.5 text-xs">
+                {skipped.map((row) => (
+                  <li key={row.candidateKey}>
+                    {row.candidateKey}: {skipReasonLabel(row.reason)}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {/* Apply CTA */}
           <div className="sticky bottom-4 mt-8 flex items-center justify-between rounded-lg border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">

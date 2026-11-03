@@ -37,9 +37,11 @@ import {
 } from "@/components/admin/exam/ExamRetireAction";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import { formAudioPreviewSrc } from "@/lib/toeic/adminGroupAudio";
+import type { GroupReview } from "@/lib/examAi/answerReview";
 import {
   ExamGroupCard,
   type ExamCardQuestion,
+  type Part1ReviewAction,
 } from "@/components/admin/exam/ExamGroupCard";
 import { examGroupLabel, type GroupAction } from "@/lib/examStudio/examGroupCard";
 import AudioUploadField from "@/components/admin/AudioUploadField";
@@ -150,6 +152,7 @@ interface ExamGroup {
       questionStatus?: string;
       questionImageHash?: string;
       sceneSummary?: string;
+      review?: GroupReview | null;
     };
   } | null;
   questions: ExamQuestion[];
@@ -671,6 +674,39 @@ export default function AdminExamsPage() {
       toast.error(
         getApiErrorMessage(err, "Không thể phân tích ảnh lúc này."),
       ),
+  });
+
+  /** AI Part 1: re-run the Vision check, or confirm the current content. */
+  const part1ReviewMutation = useMutation({
+    mutationFn: async ({
+      groupId,
+      action,
+    }: {
+      groupId: number;
+      action: Part1ReviewAction;
+    }) => {
+      if (!selectedExamId) return null;
+      const base = `/admin/exams/${selectedExamId}/ai/groups/${groupId}/image-review`;
+      return action === "recheck"
+        ? axiosClient.post(base)
+        : axiosClient.post(`${base}/confirm`, { method: action });
+    },
+    onSuccess: (_res, variables) => {
+      toast.success(
+        variables.action === "recheck"
+          ? "Đã kiểm tra lại câu Part 1 bằng Vision."
+          : "Đã ghi xác nhận cho nhóm Part 1.",
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
+    },
+    onError: (err: any) => {
+      toast.error(getApiErrorMessage(err, "Không thể xử lý kiểm định Part 1."));
+      queryClient.invalidateQueries({
+        queryKey: ["admin-exam-detail", selectedExamId],
+      });
+    },
   });
 
   const openImageSearch = (group: ExamGroup) => {
@@ -1270,9 +1306,13 @@ export default function AdminExamsPage() {
                     focusedQuestion={focusedQuestion}
                     busy={
                       regenerateMediaMutation.isPending ||
-                      visionMutation.isPending
+                      visionMutation.isPending ||
+                      part1ReviewMutation.isPending
                     }
                     onAction={runGroupAction}
+                    onPart1Review={(target, action) =>
+                      part1ReviewMutation.mutate({ groupId: target.id, action })
+                    }
                     onEditQuestion={openEditQuestion}
                     onDeleteQuestion={(question) =>
                       setPendingDeleteQuestion({

@@ -24,6 +24,11 @@ import {
   type GroupAction,
 } from "@/lib/examStudio/examGroupCard";
 import { groupAudioSrc } from "@/lib/toeic/adminGroupAudio";
+import { AnswerReviewPanel } from "@/components/admin/exam/AnswerReviewPanel";
+import type {
+  ConfirmationMethod,
+  GroupReview,
+} from "@/lib/examAi/answerReview";
 import { isPassageWorthShowing } from "@/lib/toeic/examPaper";
 
 export type ExamCardQuestion = {
@@ -44,11 +49,18 @@ export type ExamCardGroup = {
   passageText?: string | null;
   transcriptText?: string | null;
   mediaMetadata?: {
+    source?: string;
     audio?: { stale?: boolean } | null;
-    image?: { stale?: boolean } | null;
+    image?: {
+      stale?: boolean;
+      questionStatus?: string;
+      review?: GroupReview | null;
+    } | null;
   } | null;
   questions: ExamCardQuestion[];
 };
+
+export type Part1ReviewAction = "recheck" | ConfirmationMethod;
 
 type Props<G extends ExamCardGroup> = {
   group: G;
@@ -59,6 +71,8 @@ type Props<G extends ExamCardGroup> = {
   onAction: (action: GroupAction, group: G) => void;
   onEditQuestion: (group: G, question: ExamCardQuestion) => void;
   onDeleteQuestion: (question: ExamCardQuestion) => void;
+  /** AI-written Part 1: re-run the Vision check or record a confirmation. */
+  onPart1Review?: (group: G, action: Part1ReviewAction) => void;
 };
 
 const MENU: Record<GroupAction, { icon: LucideIcon; label: string }> = {
@@ -194,8 +208,13 @@ export function ExamGroupCard<G extends ExamCardGroup>({
   onAction,
   onEditQuestion,
   onDeleteQuestion,
+  onPart1Review,
 }: Props<G>) {
   const audioSrc = groupAudioSrc(group);
+  const aiPart1 =
+    group.part === 1 &&
+    group.mediaMetadata?.source === "AI_GENERATED" &&
+    Boolean(group.imageUrl);
   const showScript = group.part >= 3 && group.part <= 4 && group.transcriptText;
   const showPassage = isPassageWorthShowing(group.part, group.passageText);
   const multiple = group.questions.length > 1;
@@ -287,6 +306,29 @@ export function ExamGroupCard<G extends ExamCardGroup>({
       </div>
 
       <MissingMedia group={group} readOnly={readOnly} onAction={onAction} />
+
+      {aiPart1 && (
+        <AnswerReviewPanel
+          part={1}
+          review={group.mediaMetadata?.image?.review}
+          holdBack={
+            group.mediaMetadata?.image?.questionStatus === "FAILED"
+              ? "câu bị Vision đánh FAILED; hãy sửa hoặc tạo lại câu"
+              : null
+          }
+          busy={busy}
+          onRecheck={
+            !readOnly && onPart1Review
+              ? () => onPart1Review(group, "recheck")
+              : undefined
+          }
+          onConfirm={
+            !readOnly && onPart1Review
+              ? (method) => onPart1Review(group, method)
+              : undefined
+          }
+        />
+      )}
 
       {audioSrc && (
         <audio
