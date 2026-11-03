@@ -32,13 +32,100 @@ export function getTypeSpecificQuestFallback(type?: string): { actionLabel: stri
     case "DO_LISTENING":
       return { actionLabel: "Luyện nghe", actionUrl: "/listening" };
     case "COMPLETE_QUIZ":
-      return { actionLabel: "Làm bài kiểm tra", actionUrl: "/exams" };
+      // Advances only on standalone Listening, Reading or Writing practice
+      // (backend reward-eligibility.ts); a TOEIC exam never counts.
+      return { actionLabel: "Luyện kỹ năng", actionUrl: "/listening" };
     case "DO_SPEAKING":
     case "PRACTICE_SPEAKING":
       return { actionLabel: "Luyện nói", actionUrl: "/speaking" };
     default:
       return { actionLabel: "Khám phá bài học", actionUrl: "/dashboard" };
   }
+}
+
+type PlannerSkill = "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+
+const SKILL_ROUTE: Record<PlannerSkill, string> = {
+  LISTENING: "/listening",
+  READING: "/reading",
+  WRITING: "/writing",
+  SPEAKING: "/speaking",
+};
+
+/** The practice that advances each quest, in the order the planner is tried. */
+const QUEST_SKILLS: Record<string, PlannerSkill[]> = {
+  DO_LISTENING: ["LISTENING"],
+  COMPLETE_QUIZ: ["LISTENING", "READING", "WRITING"],
+  DO_SPEAKING: ["SPEAKING"],
+  PRACTICE_SPEAKING: ["SPEAKING"],
+};
+
+const PLANNED_LABEL: Record<string, string> = {
+  DO_LISTENING: "Luyện nghe ngay",
+  COMPLETE_QUIZ: "Luyện kỹ năng ngay",
+  DO_SPEAKING: "Luyện nói ngay",
+  PRACTICE_SPEAKING: "Luyện nói ngay",
+};
+
+export type QuestActionInput = {
+  type?: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  quest?: { type?: string } | null;
+};
+
+export type PlannedPracticeInput = {
+  skill: string;
+  route: string;
+  isLocked: boolean;
+  isCompleted: boolean;
+};
+
+function opensQuestSkill(route: string, skills: PlannerSkill[]) {
+  return skills.some((skill) => {
+    const base = SKILL_ROUTE[skill];
+    return route === base || route.startsWith(base + "/") || route.startsWith(base + "?");
+  });
+}
+
+/**
+ * Where a daily-quest button goes: today's planned practice for the quest's
+ * skills first, then the backend's link if it opens one of those skills, then
+ * the skill's home. A quest button never opens a page whose activity cannot
+ * advance that quest.
+ */
+export function resolveQuestAction(
+  item: QuestActionInput,
+  planned?: PlannedPracticeInput[],
+): { actionLabel: string; actionUrl: string } {
+  const type = (item.type ?? item.quest?.type ?? "").toUpperCase();
+  const candidateUrl = item.actionUrl?.trim() || "";
+  const candidateLabel = item.actionLabel?.trim() || "";
+  const skills = QUEST_SKILLS[type];
+
+  if (skills) {
+    for (const skill of skills) {
+      const next = planned?.find(
+        (row) =>
+          row.skill === skill &&
+          !row.isLocked &&
+          !row.isCompleted &&
+          isSafeInternalRoute(row.route) &&
+          opensQuestSkill(row.route, [skill]),
+      );
+      if (next) return { actionLabel: PLANNED_LABEL[type], actionUrl: next.route };
+    }
+    const fallback = getTypeSpecificQuestFallback(type);
+    if (candidateUrl && isSafeInternalRoute(candidateUrl) && opensQuestSkill(candidateUrl, skills))
+      return { actionLabel: fallback.actionLabel, actionUrl: candidateUrl };
+    return fallback;
+  }
+
+  if (candidateUrl && isSafeInternalRoute(candidateUrl)) {
+    return { actionLabel: candidateLabel || "Tiếp tục học", actionUrl: candidateUrl };
+  }
+  const fallback = getTypeSpecificQuestFallback(type);
+  return { actionLabel: candidateLabel || fallback.actionLabel, actionUrl: fallback.actionUrl };
 }
 
 export function clampPercentage(value: number, max: number): number {

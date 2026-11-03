@@ -32,7 +32,7 @@ import {
   gamificationService,
   TodayQuestItem,
 } from "@/lib/api/services/gamification.service";
-import { userService, UserProfile, type DailyPracticeResponse } from "@/lib/api/services/user.service";
+import { userService, UserProfile } from "@/lib/api/services/user.service";
 import { diagnosticBadgeLabel } from "@/lib/diagnostic/diagnosticUiLogic";
 import {
   planService,
@@ -57,9 +57,8 @@ import {
   getVietnamDayOfWeek,
   getVietnamFormattedDate,
   getVietnamGreeting,
-  getTypeSpecificQuestFallback,
-  isSafeInternalRoute,
   matchPartActivity,
+  resolveQuestAction,
   SKILL_DETAIL_CONFIGS,
   type SkillKey,
 } from "./dashboardUtils";
@@ -85,55 +84,6 @@ function getQuestProgressText(item: TodayQuestItem): string {
   return `${current}/${target}`;
 }
 
-function resolveQuestAction(item: TodayQuestItem, dailyPractice?: DailyPracticeResponse) {
-  const questObj = item.quest || item;
-  const type = (item.type ?? questObj?.type ?? "").toUpperCase();
-  const candidateUrl = item.actionUrl?.trim() || "";
-  const candidateLabel = item.actionLabel?.trim() || "";
-
-  const plannerSkill = type === "DO_LISTENING" ? "LISTENING" : type === "DO_SPEAKING" || type === "PRACTICE_SPEAKING" ? "SPEAKING" : null;
-  const plannerItem = plannerSkill
-    ? dailyPractice?.items.find(
-        (planned) =>
-          planned.skill === plannerSkill &&
-          !planned.isLocked &&
-          !planned.isCompleted &&
-          isSafeInternalRoute(planned.route) &&
-          (plannerSkill === "LISTENING"
-            ? planned.route.startsWith("/listening")
-            : planned.route.startsWith("/speaking")),
-      )
-    : undefined;
-  if (plannerItem) {
-    return {
-      actionLabel: plannerSkill === "LISTENING" ? "Luyện nghe ngay" : "Luyện nói ngay",
-      actionUrl: plannerItem.route,
-    };
-  }
-
-  // Guard against legacy backend actionUrl incorrectly pointing COMPLETE_QUIZ to listening
-  if (type === "COMPLETE_QUIZ" && candidateUrl === "/listening") {
-    return {
-      actionLabel:
-        candidateLabel === "Luyện nghe" ? "Làm bài kiểm tra" : (candidateLabel || "Làm bài kiểm tra"),
-      actionUrl: "/exams",
-    };
-  }
-
-  if (candidateUrl && isSafeInternalRoute(candidateUrl)) {
-    return {
-      actionLabel: candidateLabel || "Tiếp tục học",
-      actionUrl: candidateUrl,
-    };
-  }
-
-  const fallback = getTypeSpecificQuestFallback(type);
-  return {
-    actionLabel: candidateLabel || fallback.actionLabel,
-    actionUrl: fallback.actionUrl,
-  };
-}
-
 function getQuestCategoryMeta(type?: string) {
   const upper = (type || "").toUpperCase();
   switch (upper) {
@@ -156,7 +106,7 @@ function getQuestCategoryMeta(type?: string) {
       };
     case "COMPLETE_QUIZ":
       return {
-        label: "Bài kiểm tra",
+        label: "Luyện kỹ năng",
         badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
         btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
         progressFill: "bg-blue-500",
@@ -1465,7 +1415,7 @@ export default function DashboardPage() {
                   typeof item.progressPercent === "number"
                     ? Math.min(100, Math.max(0, item.progressPercent))
                     : clampPercentage(item.currentValue, targetValue);
-                const { actionLabel, actionUrl } = resolveQuestAction(item, dailyPractice);
+                const { actionLabel, actionUrl } = resolveQuestAction(item, dailyPractice?.items);
                 const categoryMeta = getQuestCategoryMeta(item.type ?? questObj?.type);
                 const CategoryIcon = categoryMeta.icon;
 
