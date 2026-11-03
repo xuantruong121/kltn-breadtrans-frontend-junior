@@ -23,6 +23,22 @@ export type StatusFilter = "ALL" | LearningStatus;
 
 export const DEFAULT_CATALOG_SORT: CatalogSort = "EASY_TO_HARD";
 
+/**
+ * A filter chosen in a link (the dashboard's "Bắt đầu" rows send
+ * `?difficulty=`, `?mode=` or `?paper=`). Anything not in `allowed` keeps the
+ * catalog unfiltered rather than showing an empty list.
+ */
+export function filterFromParam<T extends string>(
+  value: string | null | undefined,
+  allowed: readonly T[],
+  fallback: T,
+): T {
+  const wanted = (value ?? "").trim().toUpperCase();
+  return (allowed as readonly string[]).includes(wanted) ? (wanted as T) : fallback;
+}
+
+export const DIFFICULTY_PARAMS = ["STARTER", "BASIC", "INTERMEDIATE", "ADVANCED"] as const;
+
 export const BAND_LABEL: Record<PracticeLevel, string> = {
   STARTER: "Mất gốc",
   BASIC: "Cơ bản",

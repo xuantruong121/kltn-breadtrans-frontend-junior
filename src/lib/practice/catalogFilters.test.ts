@@ -2,7 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  DIFFICULTY_PARAMS,
   catalogLevelBand,
+  filterFromParam,
   catalogLevelLabel,
   matchesDifficultyFilter,
   parseCatalogSort,
@@ -61,4 +63,11 @@ test("the default sort is Dễ → Khó", () => {
   assert.equal(parseCatalogSort(null), "EASY_TO_HARD");
   assert.equal(parseCatalogSort("NAME_ASC"), "EASY_TO_HARD");
   assert.equal(parseCatalogSort("HARD_TO_EASY"), "HARD_TO_EASY");
+});
+
+test("a filter in a link opens the catalog filtered, and an unknown one does not empty it", () => {
+  assert.equal(filterFromParam("advanced", DIFFICULTY_PARAMS, "ALL"), "ADVANCED");
+  assert.equal(filterFromParam("DICTATION", ["COMPREHENSION", "DICTATION", "DIALOGUE"], "ALL"), "DICTATION");
+  assert.equal(filterFromParam("MINI", ["TOEIC_LR", "TOEIC_SW", "TOEIC_4_SKILLS"], "ALL"), "ALL");
+  assert.equal(filterFromParam(null, DIFFICULTY_PARAMS, "ALL"), "ALL");
 });

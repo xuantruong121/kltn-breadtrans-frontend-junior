@@ -256,7 +256,6 @@ export const SKILL_DETAIL_CONFIGS: Record<SkillKey, SkillDetailConfig> = {
       { id: "exam-lr", name: "TOEIC Listening & Reading (200 câu)", href: "/exams?paper=TOEIC_LR" },
       { id: "exam-sw", name: "TOEIC Speaking & Writing (19 bài)", href: "/exams?paper=TOEIC_SW" },
       { id: "exam-4s", name: "TOEIC 4 kỹ năng (Full Bundle)", href: "/exams?paper=TOEIC_4_SKILLS" },
-      { id: "exam-mini", name: "TOEIC Mini Practice (Rút gọn)", href: "/exams" },
     ],
   },
   reading: {
@@ -310,7 +309,7 @@ export const SKILL_DETAIL_CONFIGS: Record<SkillKey, SkillDetailConfig> = {
       { id: "speak-pronunciation", name: "Nền tảng phát âm (Pronunciation)", href: "/speaking" },
       { id: "speak-question-response", name: "Phản hồi câu hỏi (Question & Response)", href: "/speaking" },
       { id: "speak-opinion", name: "Trình bày quan điểm (Express Opinion)", href: "/speaking" },
-      { id: "speak-toeic", name: "Nhiệm vụ TOEIC Speaking", href: "/speaking?category=TOEIC" },
+      { id: "speak-toeic", name: "Nhiệm vụ TOEIC Speaking", href: "/speaking" },
     ],
   },
   writing: {
@@ -370,9 +369,6 @@ export function matchPartActivity(
       }
       if (partId === "exam-4s") {
         return title.includes("4 kỹ năng") || title.includes("full bundle") || title.includes("4 skill");
-      }
-      if (partId === "exam-mini") {
-        return title.includes("mini") || title.includes("rút gọn");
       }
       return false;
 

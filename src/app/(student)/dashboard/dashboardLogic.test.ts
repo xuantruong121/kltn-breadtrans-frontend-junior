@@ -216,7 +216,11 @@ test("SKILL_DETAIL_CONFIGS defines valid data for all 6 core skills", () => {
   // Exam specific checks matching BreadTrans test formats
   const exam = SKILL_DETAIL_CONFIGS.exam;
   assert.equal(exam.title, "LUYỆN ĐỀ");
-  assert.equal(exam.parts.length, 4);
+  // Only papers the catalog has; there is no "mini" TOEIC product.
+  assert.deepEqual(
+    exam.parts.map((p) => p.href),
+    ["/exams?paper=TOEIC_LR", "/exams?paper=TOEIC_SW", "/exams?paper=TOEIC_4_SKILLS"],
+  );
 
   // Reading specific checks matching BreadTrans levels
   const reading = SKILL_DETAIL_CONFIGS.reading;

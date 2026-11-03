@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { Suspense, useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -27,9 +27,10 @@ import {
   ShieldCheck,
   BarChart3,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { examService } from "@/lib/api/services/exam.service";
+import { filterFromParam } from "@/lib/practice/catalogFilters";
 import { Pagination } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
@@ -269,14 +270,28 @@ const CERTIFICATES: CertificateMeta[] = [
   },
 ];
 
+const PAPER_PARAMS = ["TOEIC_LR", "TOEIC_SW", "TOEIC_4_SKILLS"] as const;
+
 export default function ExamPracticeHubPage() {
+  return (
+    <Suspense fallback={null}>
+      <ExamPracticeHub />
+    </Suspense>
+  );
+}
+
+function ExamPracticeHub() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const [selectedCert, setSelectedCert] = useState<CertificateId>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
   const [searchQuery, setSearchQuery] = useState("");
-  const [paperFilter, setPaperFilter] = useState<PaperFilter>("ALL");
+  // The dashboard links here with ?paper=.
+  const [paperFilter, setPaperFilter] = useState<PaperFilter>(() =>
+    filterFromParam<PaperFilter>(searchParams.get("paper"), PAPER_PARAMS, "ALL"),
+  );
   const [launchingDestination, setLaunchingDestination] = useState<string | null>(null);
   const [notifiedCerts, setNotifiedCerts] = useState<Set<string>>(new Set());
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -686,6 +701,7 @@ export default function ExamPracticeHubPage() {
                       setPaperFilter(value);
                       setCurrentPage(1);
                     }}
+                    aria-pressed={paperFilter === value}
                     className={`min-h-10 rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer ${
                       paperFilter === value
                         ? "border-slate-900 bg-slate-900 text-white dark:border-amber-500 dark:bg-amber-500"
