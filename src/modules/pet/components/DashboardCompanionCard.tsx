@@ -295,8 +295,8 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                 />
               </div>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                Còn {levelProgress.expToNext} EXP. Thú cưng nhận EXP khi được cho ăn ({pet.dailyRewardLimit ?? 3} lượt
-                đầu mỗi ngày).
+                Còn {levelProgress.expToNext} EXP. Nhận EXP khi luyện bài (+10, tối đa 50/ngày) và khi được cho
+                ăn ({pet.dailyRewardLimit ?? 3} lượt đầu mỗi ngày).
               </p>
             </div>
 
