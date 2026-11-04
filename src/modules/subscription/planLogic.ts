@@ -132,6 +132,7 @@ export const PLAN_QUERY_KEYS = {
   effectivePlan: ["effective-plan"] as const,
   myPurchases: ["my-plan-purchases"] as const,
   purchaseDetail: (id: number) => ["plan-purchase-detail", id] as const,
+  renewalPreview: (planVersionId: number) => ["plan-renewal-preview", planVersionId] as const,
   vocabTopics: ["vocab-topics"] as const,
   readingExercises: ["reading-exercises"] as const,
   // Must match the key used by the Listening catalog query. Keeping this
@@ -148,6 +149,29 @@ export interface PlanCardCtaState {
   disabled: boolean;
   isCurrent: boolean;
   statusVariant?: "current" | "primary" | "disabled" | "coming_soon";
+  /** One line under the button: when the plan starts, days converted, or why it cannot be bought. */
+  note?: string | null;
+}
+
+/** GET /plan-purchases/renewal-preview/:planVersionId */
+export interface RenewalPreview {
+  kind: "NEW" | "RENEW" | "UPGRADE" | "REFUSED";
+  startsAt: string | null;
+  endsAt: string | null;
+  convertedDays: number;
+  message: string | null;
+}
+
+const formatDay = (iso: string) => {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
+/** Converted days shown to the learner: at most one decimal, comma separator. */
+export function formatConvertedDays(days: number): string {
+  return (Math.round(days * 10) / 10).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
 }
 
 export interface PlusPricingDisplay {
@@ -439,12 +463,59 @@ export function getPlanCardCta(
   purchasablePlusVersion: PurchasablePlanVersionInfo | null | undefined,
   isAuthenticatedParam?: boolean,
   purchasableProVersion?: PurchasablePlanVersionInfo | null,
+  /** The server's answer for this card's plan version, when the learner has a paid plan. */
+  renewal?: RenewalPreview | null,
 ): PlanCardCtaState {
   const current = resolveEffectivePlanDisplay(effectivePlan);
   const isAuthenticated =
     isAuthenticatedParam !== undefined
       ? isAuthenticatedParam
       : effectivePlan !== null && effectivePlan !== undefined;
+
+  // A learner with a paid plan: renew it (queued after it), move up now, or
+  // wait. The server decides; the card only says what that decision means.
+  if (
+    targetPlan !== "FREE" &&
+    isAuthenticated &&
+    current.isPaid &&
+    renewal
+  ) {
+    const isCurrent = current.planCode === targetPlan;
+    if (renewal.kind === "RENEW" && renewal.startsAt) {
+      return {
+        label: "Gia hạn thêm",
+        disabled: false,
+        isCurrent,
+        statusVariant: "primary",
+        note: `Gói mới bắt đầu ngày ${formatDay(renewal.startsAt)}, ngay khi gói hiện tại hết hạn.`,
+      };
+    }
+    if (renewal.kind === "UPGRADE") {
+      return {
+        label: targetPlan === "PRO" ? "Nâng lên Pro ngay" : "Nâng cấp ngay",
+        disabled: false,
+        isCurrent,
+        statusVariant: "primary",
+        note:
+          renewal.convertedDays > 0
+            ? `Dùng ngay hôm nay, cộng thêm ${formatConvertedDays(renewal.convertedDays)} ngày quy đổi từ gói hiện tại.`
+            : "Dùng ngay hôm nay.",
+      };
+    }
+    if (renewal.kind === "REFUSED") {
+      return {
+        label: isCurrent
+          ? "Gói hiện tại"
+          : current.planCode === "PRO" && targetPlan === "PLUS"
+            ? "Đang dùng Pro"
+            : "Chưa thể mua",
+        disabled: true,
+        isCurrent,
+        statusVariant: isCurrent ? "current" : "disabled",
+        note: renewal.message,
+      };
+    }
+  }
 
   if (targetPlan === "FREE") {
     if (!isAuthenticated) {
@@ -478,6 +549,17 @@ export function getPlanCardCta(
         disabled: true,
         isCurrent: true,
         statusVariant: "current",
+      };
+    }
+
+    // PLUS is never bought over a running PRO (the server refuses it too).
+    if (isAuthenticated && current.isPaid && current.planCode === "PRO") {
+      return {
+        label: "Đang dùng Pro",
+        disabled: true,
+        isCurrent: false,
+        statusVariant: "disabled",
+        note: "Có thể mua Plus sau khi gói Pro hết hạn.",
       };
     }
 

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Check, Minus, Star } from "lucide-react";
-import type { EffectivePlan, PurchasablePlanVersionInfo } from "../planLogic";
+import type { EffectivePlan, PurchasablePlanVersionInfo, RenewalPreview } from "../planLogic";
 import {
   getPlanCardCta,
   getPlusPricingDisplay,
@@ -21,6 +21,8 @@ export interface PlanCardProps {
   isAuthenticated?: boolean;
   isLoadingCatalog?: boolean;
   isCatalogError?: boolean;
+  /** Server answer for this card's plan version when the learner already pays. */
+  renewalPreview?: RenewalPreview | null;
 }
 
 export const PlanCard: React.FC<PlanCardProps> = ({
@@ -35,6 +37,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   isAuthenticated = false,
   isLoadingCatalog = false,
   isCatalogError = false,
+  renewalPreview = null,
 }) => {
   const current = resolveEffectivePlanDisplay(effectivePlan);
   const cta = getPlanCardCta(
@@ -43,7 +46,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     purchasablePlusVersion,
     isAuthenticated,
     purchasableProVersion,
+    renewalPreview,
   );
+  const note = cta.note ? (
+    <p className="mt-2.5 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-400">{cta.note}</p>
+  ) : null;
 
   if (planType === "FREE") {
     return (
@@ -218,13 +225,22 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         <div className="mt-8 pt-4">
           {isLoadingCatalog ? (
             <div className="w-full min-h-12 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
-          ) : cta.isCurrent ? (
+          ) : cta.isCurrent && !cta.disabled ? (
+            <button
+              type="button"
+              onClick={onSelectPlus}
+              disabled={isPurchasing}
+              className="w-full min-h-12 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isPurchasing ? "Đang xử lý..." : cta.label}
+            </button>
+          ) : cta.isCurrent || cta.disabled ? (
             <button
               type="button"
               disabled
               className="w-full min-h-12 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 cursor-not-allowed"
             >
-              Gói hiện tại
+              {cta.label}
             </button>
           ) : isCatalogError ? (
             <button
@@ -252,6 +268,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               {cta.label}
             </button>
           )}
+          {note}
         </div>
       </div>
     );
@@ -326,6 +343,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         >
           {isPurchasing ? "Đang xử lý..." : cta.label}
         </button>
+        {note}
       </div>
     </div>
   );

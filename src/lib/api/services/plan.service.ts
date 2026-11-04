@@ -9,6 +9,7 @@ import type {
   PlanPurchasePayment,
   EffectivePlanEntitlement,
   SubscriptionStatus,
+  RenewalPreview,
 } from "@/modules/subscription/planLogic";
 import {
   formatVnd,
@@ -33,6 +34,7 @@ export type {
   PlanPurchasePayment,
   EffectivePlanEntitlement,
   SubscriptionStatus,
+  RenewalPreview,
 };
 
 export {
@@ -114,6 +116,15 @@ export const planService = {
    */
   getMyPurchases: async (): Promise<PlanPurchase[]> => {
     return await axiosClient.get("/plan-purchases/me");
+  },
+
+  /**
+   * GET /plan-purchases/renewal-preview/:planVersionId
+   * Where buying this version now would sit: now, queued after the running
+   * plan, or as an upgrade with the running plan's days converted.
+   */
+  getRenewalPreview: async (planVersionId: number): Promise<RenewalPreview> => {
+    return await axiosClient.get(`/plan-purchases/renewal-preview/${planVersionId}`);
   },
 
   /**

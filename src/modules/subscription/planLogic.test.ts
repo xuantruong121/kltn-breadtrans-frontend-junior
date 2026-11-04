@@ -994,3 +994,69 @@ describe("19. Phase PAY-UI Version Independence & Double-Click Protection", () =
     assert.equal(callCount, 1, "Double click must trigger only one purchase creation");
   });
 });
+
+describe("Renewing early and moving up (renewal preview from the server)", () => {
+  const paidPro = (): EffectivePlan => {
+    const plan = makePaidPlusPlan();
+    return { ...plan, plan: { ...plan.plan, code: "PRO", displayName: "BreadTrans Pro" } };
+  };
+
+  test("PLUS running, PLUS card: renew is offered with the date the new plan starts", () => {
+    const cta = getPlanCardCta("PLUS", makePaidPlusPlan(), null, true, null, {
+      kind: "RENEW",
+      startsAt: "2026-12-04T12:00:00.000Z",
+      endsAt: "2027-01-03T12:00:00.000Z",
+      convertedDays: 0,
+      message: null,
+    });
+    assert.equal(cta.label, "Gia hạn thêm");
+    assert.equal(cta.disabled, false);
+    assert.equal(cta.isCurrent, true);
+    assert.match(cta.note ?? "", /04\/12\/2026/);
+  });
+
+  test("PLUS running, PRO card: move up now with the converted days, one decimal", () => {
+    const cta = getPlanCardCta("PRO", makePaidPlusPlan(), null, true, null, {
+      kind: "UPGRADE",
+      startsAt: "2026-11-04T12:00:00.000Z",
+      endsAt: "2026-12-09T03:00:00.000Z",
+      convertedDays: 4.63,
+      message: null,
+    });
+    assert.equal(cta.label, "Nâng lên Pro ngay");
+    assert.equal(cta.disabled, false);
+    assert.match(cta.note ?? "", /4,6 ngày/);
+  });
+
+  test("a refusal from the server is shown as is and cannot be clicked", () => {
+    const message = "Bạn đã có một gói gia hạn đang chờ bắt đầu.";
+    const cta = getPlanCardCta("PLUS", makePaidPlusPlan(), null, true, null, {
+      kind: "REFUSED",
+      startsAt: null,
+      endsAt: null,
+      convertedDays: 0,
+      message,
+    });
+    assert.equal(cta.disabled, true);
+    assert.equal(cta.note, message);
+  });
+
+  test("PRO running: the PLUS card never offers a purchase, even before the preview loads", () => {
+    const cta = getPlanCardCta("PLUS", paidPro(), { id: 5, priceVnd: 69000, durationDays: 30, currency: "VND" }, true);
+    assert.equal(cta.disabled, true);
+    assert.equal(cta.label, "Đang dùng Pro");
+  });
+
+  test("without a paid plan the preview changes nothing", () => {
+    const purchasable = { id: 5, priceVnd: 69000, durationDays: 30, currency: "VND" };
+    const cta = getPlanCardCta("PLUS", makeEffectivePlan(), purchasable, true, null, {
+      kind: "NEW",
+      startsAt: "2026-11-04T12:00:00.000Z",
+      endsAt: "2026-12-04T12:00:00.000Z",
+      convertedDays: 0,
+      message: null,
+    });
+    assert.equal(cta.label, "Nâng cấp Plus");
+    assert.equal(cta.disabled, false);
+  });
+});

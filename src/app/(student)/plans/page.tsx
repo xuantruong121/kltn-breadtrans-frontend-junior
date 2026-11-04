@@ -98,6 +98,22 @@ function PlansPageContent() {
     return { id: cv.id, version: cv.version, priceVnd: cv.priceVnd, currency: cv.currency, durationDays: cv.durationDays };
   }, [catalogData]);
 
+  // A learner who already pays: ask the server where each plan would sit
+  // (renewal queued after the running plan, or an upgrade with converted days).
+  const hasPaidPlan = resolveEffectivePlanDisplay(effectivePlan).isPaid;
+  const { data: plusRenewal } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.renewalPreview(purchasablePlusVersion?.id ?? 0),
+    queryFn: () => planService.getRenewalPreview(purchasablePlusVersion!.id),
+    enabled: !!user && hasPaidPlan && !!purchasablePlusVersion,
+    staleTime: 30 * 1000,
+  });
+  const { data: proRenewal } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.renewalPreview(purchasableProVersion?.id ?? 0),
+    queryFn: () => planService.getRenewalPreview(purchasableProVersion!.id),
+    enabled: !!user && hasPaidPlan && !!purchasableProVersion,
+    staleTime: 30 * 1000,
+  });
+
   // Purchase creation mutation
   const purchaseMutation = useMutation({
     mutationFn: async (planVersionId: number) => {
@@ -112,6 +128,7 @@ function PlansPageContent() {
       // Refresh idempotency key for next purchase attempt
       currentIdempotencyKeyRef.current = generateIdempotencyKey();
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.myPurchases });
+      queryClient.invalidateQueries({ queryKey: ["plan-renewal-preview"] });
       setActivePurchaseId(purchase.id);
       setActivePurchasePlanCode(purchase.planCode === "PRO" ? "PRO" : "PLUS");
     },
@@ -256,6 +273,7 @@ function PlansPageContent() {
           isAuthenticated={!!user}
           isLoadingCatalog={isLoadingCatalog}
           isCatalogError={isCatalogError}
+          renewalPreview={hasPaidPlan ? plusRenewal : null}
         />
 
         <PlanCard
@@ -268,6 +286,7 @@ function PlansPageContent() {
           isLoadingCatalog={isLoadingCatalog}
           isCatalogError={isCatalogError}
           isAuthenticated={!!user}
+          renewalPreview={hasPaidPlan ? proRenewal : null}
         />
       </section>
 
