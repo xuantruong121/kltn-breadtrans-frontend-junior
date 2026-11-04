@@ -212,7 +212,7 @@ const FloatingCompanionPetInner: React.FC = () => {
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));
   const exp = pet?.exp ?? 0;
-  const expPercentage = petLevelProgress(exp).percent;
+  const expPercentage = petLevelProgress(exp, level).percent;
 
   return (
     <div

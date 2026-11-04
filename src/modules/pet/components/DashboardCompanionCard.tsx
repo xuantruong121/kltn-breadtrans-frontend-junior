@@ -81,7 +81,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
   }, [pet, userBalance]);
 
   const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
-  const levelProgress = petLevelProgress(pet?.exp);
+  const levelProgress = petLevelProgress(pet?.exp, pet?.level);
   const petDisplayName = pet?.name || speciesInfo.speciesName || "Bready";
   const satietyText = useMemo(() => {
     return getPetStatusCopy({

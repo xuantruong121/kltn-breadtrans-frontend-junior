@@ -52,7 +52,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
 
   const level = pet?.level ?? 1;
   const exp = pet?.exp ?? 0;
-  const expPercentage = petLevelProgress(exp).percent;
+  const expPercentage = petLevelProgress(exp, level).percent;
 
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));

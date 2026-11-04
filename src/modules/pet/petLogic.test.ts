@@ -359,3 +359,15 @@ test("petLevelProgress follows the backend rule floor(exp / 1000) + 1", () => {
   assert.equal(petLevelProgress(undefined).percent, 0);
   assert.equal(petLevelProgress(-50).level, 1);
 });
+
+test("petLevelProgress keeps a stored level that ran ahead of its EXP", () => {
+  // Demo pet stored at Cấp 4 with 60 EXP: next is Cấp 5 at 4,000 EXP.
+  const demo = petLevelProgress(60, 4);
+  assert.equal(demo.level, 4);
+  assert.equal(demo.nextLevel, 5);
+  assert.equal(demo.expInLevel, 0);
+  assert.equal(demo.expToNext, 3940);
+  assert.equal(demo.percent, 0);
+  // A consistent pet reads the same with or without its stored level.
+  assert.deepEqual(petLevelProgress(1235, 2), petLevelProgress(1235));
+});
