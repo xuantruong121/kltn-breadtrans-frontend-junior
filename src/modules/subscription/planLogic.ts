@@ -217,6 +217,8 @@ export interface PlusPricingDisplay {
   priceText: string;
   durationText: string;
   isPurchasable: boolean;
+  /** Longer terms: what 30 days come to, e.g. "≈ 62.000 ₫ / 30 ngày". */
+  perMonthText?: string;
 }
 
 export interface PaymentStatusBadge {
@@ -482,6 +484,13 @@ export function getPlusPricingDisplay(
       priceText: formatVnd(version.priceVnd),
       durationText: ` / ${version.durationDays} ngày`,
       isPurchasable: true,
+      ...(version.durationDays > 30
+        ? {
+            perMonthText: `≈ ${formatVnd(
+              Math.round((version.priceVnd * 30) / version.durationDays / 1000) * 1000,
+            )} / 30 ngày`,
+          }
+        : {}),
     };
   }
 
@@ -849,4 +858,67 @@ export function shouldNotifyPaymentCompletion(
   }
 
   return true;
+}
+
+/** A sold term of a plan, as the public catalog lists it. */
+export type PlanTermVersion = {
+  id: number;
+  priceVnd: number;
+  currency: string;
+  durationDays: number;
+};
+
+type CatalogPlanLike = {
+  code: string;
+  purchasable: boolean;
+  currentVersion: PlanTermVersion | null;
+  versions?: PlanTermVersion[];
+};
+
+/** Terms (in days) any paid plan sells, shortest first; [30] for an older server. */
+export function availablePlanTerms(plans: CatalogPlanLike[] | undefined): number[] {
+  const days = new Set<number>();
+  for (const plan of plans ?? []) {
+    if (plan.code === "FREE" || !plan.purchasable) continue;
+    for (const v of plan.versions ?? (plan.currentVersion ? [plan.currentVersion] : []))
+      days.add(v.durationDays);
+  }
+  return [...days].sort((a, b) => a - b);
+}
+
+/**
+ * The version of `code` sold for `days`, or null when that term is not on
+ * sale. A server without `versions` only sells its currentVersion.
+ */
+export function pickPlanTerm(
+  plans: CatalogPlanLike[] | undefined,
+  code: "PLUS" | "PRO",
+  days: number,
+): PurchasablePlanVersionInfo | null {
+  const plan = plans?.find((p) => p.code === code);
+  if (!plan || !plan.purchasable) return null;
+  const list = plan.versions ?? (plan.currentVersion ? [plan.currentVersion] : []);
+  const v = list.find((item) => item.durationDays === days);
+  return v
+    ? { id: v.id, priceVnd: v.priceVnd, currency: v.currency, durationDays: v.durationDays }
+    : null;
+}
+
+/**
+ * Whole-percent saving of a longer term against buying the shortest term
+ * again for the same number of days, or null when there is none.
+ */
+export function termSavingPercent(
+  plans: CatalogPlanLike[] | undefined,
+  code: "PLUS" | "PRO",
+  days: number,
+): number | null {
+  const [shortest] = availablePlanTerms(plans);
+  if (!shortest || days <= shortest) return null;
+  const base = pickPlanTerm(plans, code, shortest);
+  const term = pickPlanTerm(plans, code, days);
+  if (!base?.priceVnd || !base.durationDays || !term?.priceVnd) return null;
+  const full = (base.priceVnd * days) / base.durationDays;
+  const saved = Math.floor((1 - term.priceVnd / full) * 100);
+  return saved > 0 ? saved : null;
 }

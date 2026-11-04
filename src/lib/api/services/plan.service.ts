@@ -73,6 +73,8 @@ export interface PublicPlanCatalogItem {
   description: string | null;
   purchasable: boolean;
   currentVersion: PublicPlanVersionSummary | null;
+  /** Every term on sale (30, 90, 180 days), shortest first. */
+  versions?: PublicPlanVersionSummary[];
 }
 
 export interface PublicPlanCatalogResponse {

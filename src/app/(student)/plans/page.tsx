@@ -18,6 +18,9 @@ import {
   preparePurchasePayload,
   resolveEffectivePlanDisplay,
   getLoginRedirectUrl,
+  availablePlanTerms,
+  pickPlanTerm,
+  termSavingPercent,
   type PurchasablePlanVersionInfo,
 } from "@/modules/subscription/planLogic";
 import { PlanCard } from "@/modules/subscription/components/PlanCard";
@@ -75,29 +78,19 @@ function PlansPageContent() {
     staleTime: 60 * 1000,
   });
 
-  // Authoritative discovery: Derives purchasable terms strictly from backend catalog
-  const purchasablePlusVersion = React.useMemo<PurchasablePlanVersionInfo | null>(() => {
-    if (!catalogData?.plans) return null;
-    const plusPlan = catalogData.plans.find((p) => p.code === "PLUS");
-    if (!plusPlan || !plusPlan.purchasable || !plusPlan.currentVersion) {
-      return null;
-    }
-    const cv = plusPlan.currentVersion;
-    return {
-      id: cv.id,
-      version: cv.version,
-      priceVnd: cv.priceVnd,
-      currency: cv.currency,
-      durationDays: cv.durationDays,
-    };
-  }, [catalogData]);
-  const purchasableProVersion = React.useMemo<PurchasablePlanVersionInfo | null>(() => {
-    if (!catalogData?.plans) return null;
-    const proPlan = catalogData.plans.find((p) => p.code === "PRO");
-    if (!proPlan || !proPlan.purchasable || !proPlan.currentVersion) return null;
-    const cv = proPlan.currentVersion;
-    return { id: cv.id, version: cv.version, priceVnd: cv.priceVnd, currency: cv.currency, durationDays: cv.durationDays };
-  }, [catalogData]);
+  // Authoritative discovery: derives purchasable terms strictly from the
+  // backend catalog. A plan sells 30, 90 and 180 days; the learner picks one.
+  const terms = React.useMemo(() => availablePlanTerms(catalogData?.plans), [catalogData]);
+  const [chosenTerm, setChosenTerm] = useState<number | null>(null);
+  const termDays = chosenTerm !== null && terms.includes(chosenTerm) ? chosenTerm : (terms[0] ?? 30);
+  const purchasablePlusVersion = React.useMemo<PurchasablePlanVersionInfo | null>(
+    () => pickPlanTerm(catalogData?.plans, "PLUS", termDays),
+    [catalogData, termDays],
+  );
+  const purchasableProVersion = React.useMemo<PurchasablePlanVersionInfo | null>(
+    () => pickPlanTerm(catalogData?.plans, "PRO", termDays),
+    [catalogData, termDays],
+  );
 
   // A learner who already pays: ask the server where each plan would sit
   // (renewal queued after the running plan, or an upgrade with converted days).
@@ -160,10 +153,10 @@ function PlansPageContent() {
     }
 
     // Check if there is already an open pending purchase in history
+    // Only for the same plan and term: a 30-day pending payment must not
+    // open when the learner chose 90 days.
     const openPending = myPurchases?.find(
-      (p) =>
-      p.planCode === targetPlan &&
-        p.isActivePaymentIntent === true,
+      (p) => p.planVersionId === version.id && p.isActivePaymentIntent === true,
     );
     if (openPending) {
       setActivePurchaseId(openPending.id);
@@ -253,6 +246,50 @@ function PlansPageContent() {
             <RotateCw size={13} />
             <span>Thử lại</span>
           </button>
+        </div>
+      )}
+
+      {/* ── Term picker: 30 / 90 / 180 days ─────────────────────── */}
+      {terms.length > 1 && (
+        <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+          <span id="plan-term-label" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Thời hạn gói
+          </span>
+          <div
+            role="radiogroup"
+            aria-labelledby="plan-term-label"
+            className="inline-flex rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900"
+          >
+            {terms.map((days) => {
+              const saving = termSavingPercent(catalogData?.plans, "PLUS", days);
+              const active = days === termDays;
+              return (
+                <button
+                  key={days}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setChosenTerm(days)}
+                  className={`min-h-10 rounded-lg px-3 text-sm font-semibold transition-colors sm:px-4 ${
+                    active
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {days} ngày
+                  {saving && (
+                    <span
+                      className={`ml-1.5 text-xs font-bold ${
+                        active ? "text-emerald-300 dark:text-emerald-700" : "text-emerald-700 dark:text-emerald-400"
+                      }`}
+                    >
+                      -{saving}%
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

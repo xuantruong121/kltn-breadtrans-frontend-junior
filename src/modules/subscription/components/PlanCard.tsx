@@ -176,13 +176,18 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 </p>
               </div>
             ) : plusPricing.isPurchasable ? (
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl sm:text-4xl font-black tracking-tight text-amber-700 dark:text-amber-400">
-                  {plusPricing.priceText}
-                </span>
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                  {plusPricing.durationText}
-                </span>
+              <div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-black tracking-tight text-amber-700 dark:text-amber-400">
+                    {plusPricing.priceText}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                    {plusPricing.durationText}
+                  </span>
+                </div>
+                {plusPricing.perMonthText && (
+                  <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">{plusPricing.perMonthText}</p>
+                )}
               </div>
             ) : (
               <div>
@@ -307,13 +312,18 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <div className="h-3.5 w-24 bg-slate-100 dark:bg-slate-800 rounded-md" />
             </div>
           ) : proPricing.isPurchasable ? (
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
-                {proPricing.priceText}
-              </span>
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                {proPricing.durationText}
-              </span>
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
+                  {proPricing.priceText}
+                </span>
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  {proPricing.durationText}
+                </span>
+              </div>
+              {proPricing.perMonthText && (
+                <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">{proPricing.perMonthText}</p>
+              )}
             </div>
           ) : (
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-600 dark:text-slate-400">
