@@ -35,9 +35,20 @@ export const EMPTY_PROMO_DRAFT: PromoCodeDraft = {
   note: "",
 };
 
+/** Today in Vietnam as yyyy-mm-dd, the earliest expiry date the form offers. */
+export function todayVn(now = new Date()): string {
+  return new Date(now.getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
+}
+
+/** Keeps only digits: a count or a percent cannot be negative or fractional. */
+export function digitsOnly(value: string): string {
+  return value.replace(/\D+/g, "");
+}
+
 /** Form → request body, or the first problem in Vietnamese. */
 export function promoDraftToBody(
   draft: PromoCodeDraft,
+  now = new Date(),
 ):
   | { ok: true; body: Record<string, unknown> }
   | { ok: false; error: string } {
@@ -59,6 +70,9 @@ export function promoDraftToBody(
     // day in Vietnam time.
     const end = new Date(`${draft.validTo}T23:59:59+07:00`);
     if (Number.isNaN(end.getTime())) return { ok: false, error: "Ngày hết hạn không hợp lệ." };
+    if (end.getTime() <= now.getTime()) {
+      return { ok: false, error: "Ngày hết hạn đã qua. Chọn hôm nay hoặc một ngày sau." };
+    }
     validTo = end.toISOString();
   }
   return {

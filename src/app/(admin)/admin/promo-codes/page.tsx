@@ -8,7 +8,9 @@ import axiosClient from "@/lib/api/axiosClient";
 import { formatVnd } from "@/modules/subscription/planLogic";
 import {
   EMPTY_PROMO_DRAFT,
+  digitsOnly,
   promoDraftToBody,
+  todayVn,
   promoStatus,
   type AdminPromoCode,
   type PromoCodeDraft,
@@ -99,7 +101,7 @@ export default function PromoCodesPage() {
           </label>
           <label className="text-sm font-medium text-slate-700">
             Giảm (%)
-            <input className={INPUT} type="number" min={1} max={90} value={draft.percentOff} onChange={(e) => set("percentOff")(e.target.value)} />
+            <input className={INPUT} inputMode="numeric" maxLength={2} value={draft.percentOff} onChange={(e) => set("percentOff")(digitsOnly(e.target.value))} />
           </label>
           <label className="text-sm font-medium text-slate-700">
             Gói áp dụng
@@ -111,11 +113,11 @@ export default function PromoCodesPage() {
           </label>
           <label className="text-sm font-medium text-slate-700">
             Hết hạn (hết ngày)
-            <input className={INPUT} type="date" value={draft.validTo} onChange={(e) => set("validTo")(e.target.value)} />
+            <input className={INPUT} type="date" min={todayVn()} value={draft.validTo} onChange={(e) => set("validTo")(e.target.value)} />
           </label>
           <label className="text-sm font-medium text-slate-700">
             Lượt tối đa
-            <input className={INPUT} type="number" min={1} value={draft.maxRedemptions} onChange={(e) => set("maxRedemptions")(e.target.value)} placeholder="Không giới hạn" />
+            <input className={INPUT} inputMode="numeric" maxLength={6} value={draft.maxRedemptions} onChange={(e) => set("maxRedemptions")(digitsOnly(e.target.value))} placeholder="Không giới hạn" />
           </label>
           <label className="text-sm font-medium text-slate-700 sm:col-span-2 lg:col-span-4">
             Ghi chú
