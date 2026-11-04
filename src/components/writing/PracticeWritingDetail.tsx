@@ -9,7 +9,14 @@ import type { PracticeWritingDetail as Detail } from "@/lib/api/services/writing
  * the task's own rubric, corrections that quote the learner's text, and the
  * deterministic word-count and keyword checks.
  */
-export function PracticeWritingDetail({ detail }: { detail: Detail }) {
+export function PracticeWritingDetail({
+  detail,
+  sample = false,
+}: {
+  detail: Detail;
+  /** A fixed sample, not the learner's own text. */
+  sample?: boolean;
+}) {
   const [minWords, maxWords] = detail.wordRange ?? [null, null];
   const inRange =
     detail.wordCount != null &&
@@ -39,7 +46,7 @@ export function PracticeWritingDetail({ detail }: { detail: Detail }) {
 
       <section aria-labelledby="writing-corrections">
         <h4 id="writing-corrections" className="text-sm font-bold text-slate-900 dark:text-slate-100">
-          Lỗi cần sửa trong bài của bạn
+          {sample ? "Lỗi cần sửa trong bài" : "Lỗi cần sửa trong bài của bạn"}
         </h4>
         {detail.corrections.length === 0 ? (
           <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">

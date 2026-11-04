@@ -1628,7 +1628,7 @@ export default function SpeakingExerciseDetailPage() {
   if (loadError?.kind === "LEVEL_LOCKED")
     return <LevelLockedScreen lock={loadError} backHref={exitHref} />;
   if (loadError?.kind === "LOCKED")
-    return <PlanLockedScreen plan={loadError.requiredPlan} backHref={exitHref} />;
+    return <PlanLockedScreen plan={loadError.requiredPlan} backHref={exitHref} sample="SPEAKING" />;
 
   if (isLoading || !minLaunchReady) {
     return (
