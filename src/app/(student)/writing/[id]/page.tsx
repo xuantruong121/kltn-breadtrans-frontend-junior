@@ -153,7 +153,7 @@ export default function WritingDetailPage(props: {
   if (loadError?.kind === "LEVEL_LOCKED")
     return <LevelLockedScreen lock={loadError} backHref="/writing" />;
   if (loadError?.kind === "LOCKED")
-    return <PlanLockedScreen plan={loadError.requiredPlan} backHref="/writing" />;
+    return <PlanLockedScreen plan={loadError.requiredPlan} backHref="/writing" sample="WRITING" />;
 
   if (isLoading || !minLaunchReady) {
     return (

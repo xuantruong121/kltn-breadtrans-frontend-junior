@@ -3,19 +3,27 @@
 import Link from "next/link";
 import { Lock } from "lucide-react";
 import { plansHrefFor } from "@/modules/subscription/practicePlan";
+import { SampleGradedResult } from "./SampleGradedResult";
 
 /** Shown instead of an exercise the learner's plan does not open. */
 export function PlanLockedScreen({
   plan,
   backHref,
+  sample,
 }: {
   plan: "PLUS" | "PRO";
   /** Where "Quay lại danh sách" goes. */
   backHref: string;
+  /** Show a fixed sample graded result for this skill. */
+  sample?: "SPEAKING" | "WRITING";
 }) {
   return (
-    <div className="fixed inset-0 z-[45] flex h-dvh w-screen items-center justify-center bg-slate-50 p-6 text-center dark:bg-slate-950">
-      <div className="w-full max-w-md space-y-4 rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-lg sm:p-8 dark:border-amber-800/80 dark:bg-slate-900">
+    <div
+      className={`fixed inset-0 z-[45] flex h-dvh w-screen justify-center overflow-y-auto bg-slate-50 p-4 text-center sm:p-6 dark:bg-slate-950 ${
+        sample ? "items-start" : "items-center"
+      }`}
+    >
+      <div className={`my-auto w-full ${sample ? "max-w-2xl" : "max-w-md"} space-y-4 rounded-2xl border border-amber-200 bg-white p-6 text-center shadow-lg sm:p-8 dark:border-amber-800/80 dark:bg-slate-900`}>
         <Lock className="mx-auto size-7 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         <div>
           <h2 className="text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">
@@ -27,6 +35,7 @@ export function PlanLockedScreen({
               : "Bài luyện này có trong hệ thống và mở cho gói PLUS hoặc PRO."}
           </p>
         </div>
+        {sample && <SampleGradedResult skill={sample} />}
         <div className="flex flex-col gap-2.5 pt-2 sm:flex-row">
           <Link
             href={backHref}

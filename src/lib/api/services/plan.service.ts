@@ -9,6 +9,9 @@ import type {
   PlanPurchasePayment,
   EffectivePlanEntitlement,
   SubscriptionStatus,
+  RenewalPreview,
+  ExpirySummary,
+  PromoPreview,
 } from "@/modules/subscription/planLogic";
 import {
   formatVnd,
@@ -33,6 +36,9 @@ export type {
   PlanPurchasePayment,
   EffectivePlanEntitlement,
   SubscriptionStatus,
+  RenewalPreview,
+  ExpirySummary,
+  PromoPreview,
 };
 
 export {
@@ -51,6 +57,7 @@ export {
 export interface CreatePlanPurchaseInput {
   planVersionId: number;
   idempotencyKey: string;
+  promoCode?: string;
 }
 
 export interface PublicPlanVersionSummary {
@@ -69,6 +76,8 @@ export interface PublicPlanCatalogItem {
   description: string | null;
   purchasable: boolean;
   currentVersion: PublicPlanVersionSummary | null;
+  /** Every term on sale (30, 90, 180 days), shortest first. */
+  versions?: PublicPlanVersionSummary[];
 }
 
 export interface PublicPlanCatalogResponse {
@@ -105,6 +114,14 @@ export const planService = {
     return await axiosClient.post("/plan-purchases", {
       planVersionId: input.planVersionId,
       idempotencyKey: input.idempotencyKey,
+      ...(input.promoCode ? { promoCode: input.promoCode } : {}),
+    });
+  },
+
+  /** GET /plan-purchases/promo-preview: the price with a code, nothing bought. */
+  getPromoPreview: async (planVersionId: number, code: string): Promise<PromoPreview> => {
+    return await axiosClient.get("/plan-purchases/promo-preview", {
+      params: { planVersionId, code },
     });
   },
 
@@ -114,6 +131,20 @@ export const planService = {
    */
   getMyPurchases: async (): Promise<PlanPurchase[]> => {
     return await axiosClient.get("/plan-purchases/me");
+  },
+
+  /**
+   * GET /plan-purchases/renewal-preview/:planVersionId
+   * Where buying this version now would sit: now, queued after the running
+   * plan, or as an upgrade with the running plan's days converted.
+   */
+  /** GET /subscriptions/me/expiry-summary: days left, queued renewal, paid practice used. */
+  getExpirySummary: async (): Promise<ExpirySummary> => {
+    return await axiosClient.get("/subscriptions/me/expiry-summary");
+  },
+
+  getRenewalPreview: async (planVersionId: number): Promise<RenewalPreview> => {
+    return await axiosClient.get(`/plan-purchases/renewal-preview/${planVersionId}`);
   },
 
   /**

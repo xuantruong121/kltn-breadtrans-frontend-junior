@@ -139,6 +139,20 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         iconName: "CreditCard",
         roles: ["ADMIN"],
       },
+      {
+        id: "retention",
+        href: "/admin/retention",
+        label: "Giữ chân & gia hạn",
+        iconName: "TrendingUp",
+        roles: ["ADMIN"],
+      },
+      {
+        id: "promo-codes",
+        href: "/admin/promo-codes",
+        label: "Mã giảm giá",
+        iconName: "TicketPercent",
+        roles: ["ADMIN"],
+      },
     ],
   },
   {

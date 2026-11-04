@@ -6,6 +6,7 @@ import QueryProvider from "@/lib/providers/QueryProvider";
 import SocketProvider from "@/lib/providers/SocketProvider";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { Toaster } from "react-hot-toast";
+import { ReferralCapture } from "@/components/referral/ReferralCapture";
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
@@ -70,6 +71,7 @@ export default function RootLayout({
           <ThemeProvider>
             <SocketProvider>
               {children}
+              <ReferralCapture />
               <Toaster
                 position="top-center"
                 toastOptions={{

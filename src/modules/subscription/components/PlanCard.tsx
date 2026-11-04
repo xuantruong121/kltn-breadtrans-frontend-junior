@@ -2,8 +2,9 @@
 
 import React from "react";
 import { Check, Minus, Star } from "lucide-react";
-import type { EffectivePlan, PurchasablePlanVersionInfo } from "../planLogic";
+import type { EffectivePlan, PurchasablePlanVersionInfo, RenewalPreview } from "../planLogic";
 import {
+  formatVnd,
   getPlanCardCta,
   getPlusPricingDisplay,
   resolveEffectivePlanDisplay,
@@ -21,6 +22,10 @@ export interface PlanCardProps {
   isAuthenticated?: boolean;
   isLoadingCatalog?: boolean;
   isCatalogError?: boolean;
+  /** Server answer for this card's plan version when the learner already pays. */
+  renewalPreview?: RenewalPreview | null;
+  /** A promo code the server accepted for this card's plan version. */
+  promo?: { amountVnd: number; discountVnd: number; code: string } | null;
 }
 
 export const PlanCard: React.FC<PlanCardProps> = ({
@@ -35,6 +40,8 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   isAuthenticated = false,
   isLoadingCatalog = false,
   isCatalogError = false,
+  renewalPreview = null,
+  promo = null,
 }) => {
   const current = resolveEffectivePlanDisplay(effectivePlan);
   const cta = getPlanCardCta(
@@ -43,7 +50,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     purchasablePlusVersion,
     isAuthenticated,
     purchasableProVersion,
+    renewalPreview,
   );
+  const note = cta.note ? (
+    <p className="mt-2.5 text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-400">{cta.note}</p>
+  ) : null;
 
   if (planType === "FREE") {
     return (
@@ -169,13 +180,24 @@ export const PlanCard: React.FC<PlanCardProps> = ({
                 </p>
               </div>
             ) : plusPricing.isPurchasable ? (
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-3xl sm:text-4xl font-black tracking-tight text-amber-700 dark:text-amber-400">
-                  {plusPricing.priceText}
-                </span>
-                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                  {plusPricing.durationText}
-                </span>
+              <div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-black tracking-tight text-amber-700 dark:text-amber-400">
+                    {promo ? formatVnd(promo.amountVnd) : plusPricing.priceText}
+                  </span>
+                  <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                    {plusPricing.durationText}
+                  </span>
+                </div>
+                {promo && (
+                    <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                      <span className="text-slate-500 line-through dark:text-slate-400">{plusPricing.priceText}</span>{" "}
+                      giảm {formatVnd(promo.discountVnd)} với mã {promo.code}
+                    </p>
+                  )}
+                  {plusPricing.perMonthText && !promo && (
+                  <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">{plusPricing.perMonthText}</p>
+                )}
               </div>
             ) : (
               <div>
@@ -218,13 +240,22 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         <div className="mt-8 pt-4">
           {isLoadingCatalog ? (
             <div className="w-full min-h-12 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
-          ) : cta.isCurrent ? (
+          ) : cta.isCurrent && !cta.disabled ? (
+            <button
+              type="button"
+              onClick={onSelectPlus}
+              disabled={isPurchasing}
+              className="w-full min-h-12 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isPurchasing ? "Đang xử lý..." : cta.label}
+            </button>
+          ) : cta.isCurrent || cta.disabled ? (
             <button
               type="button"
               disabled
               className="w-full min-h-12 rounded-xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-bold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 cursor-not-allowed"
             >
-              Gói hiện tại
+              {cta.label}
             </button>
           ) : isCatalogError ? (
             <button
@@ -252,6 +283,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               {cta.label}
             </button>
           )}
+          {note}
         </div>
       </div>
     );
@@ -290,13 +322,24 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <div className="h-3.5 w-24 bg-slate-100 dark:bg-slate-800 rounded-md" />
             </div>
           ) : proPricing.isPurchasable ? (
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
-                {proPricing.priceText}
-              </span>
-              <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                {proPricing.durationText}
-              </span>
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
+                  {promo ? formatVnd(promo.amountVnd) : proPricing.priceText}
+                </span>
+                <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                  {proPricing.durationText}
+                </span>
+              </div>
+              {promo && (
+                  <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                    <span className="text-slate-500 line-through dark:text-slate-400">{proPricing.priceText}</span>{" "}
+                    giảm {formatVnd(promo.discountVnd)} với mã {promo.code}
+                  </p>
+                )}
+                {proPricing.perMonthText && !promo && (
+                <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">{proPricing.perMonthText}</p>
+              )}
             </div>
           ) : (
             <span className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-600 dark:text-slate-400">
@@ -326,6 +369,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         >
           {isPurchasing ? "Đang xử lý..." : cta.label}
         </button>
+        {note}
       </div>
     </div>
   );

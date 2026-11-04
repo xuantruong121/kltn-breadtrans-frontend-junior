@@ -3,7 +3,7 @@
 import React, { useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, ShieldCheck, AlertCircle, RotateCw } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, RotateCw, TicketPercent, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import {
@@ -18,12 +18,20 @@ import {
   preparePurchasePayload,
   resolveEffectivePlanDisplay,
   getLoginRedirectUrl,
+  availablePlanTerms,
+  pickPlanTerm,
+  termSavingPercent,
+  normalizePromoCode,
+  formatVnd,
+  type PromoPreview,
   type PurchasablePlanVersionInfo,
 } from "@/modules/subscription/planLogic";
 import { PlanCard } from "@/modules/subscription/components/PlanCard";
 import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentModal";
 import { PlanComparisonTable } from "@/modules/subscription/components/PlanComparisonTable";
 import { PlanFaqAccordion } from "@/modules/subscription/components/PlanFaqAccordion";
+import { PlanExpiryBanner } from "@/modules/subscription/components/PlanExpiryBanner";
+import { ReferralCard } from "@/components/referral/ReferralCard";
 
 function PlansPageContent() {
   const router = useRouter();
@@ -74,37 +82,64 @@ function PlansPageContent() {
     staleTime: 60 * 1000,
   });
 
-  // Authoritative discovery: Derives purchasable terms strictly from backend catalog
-  const purchasablePlusVersion = React.useMemo<PurchasablePlanVersionInfo | null>(() => {
-    if (!catalogData?.plans) return null;
-    const plusPlan = catalogData.plans.find((p) => p.code === "PLUS");
-    if (!plusPlan || !plusPlan.purchasable || !plusPlan.currentVersion) {
-      return null;
-    }
-    const cv = plusPlan.currentVersion;
-    return {
-      id: cv.id,
-      version: cv.version,
-      priceVnd: cv.priceVnd,
-      currency: cv.currency,
-      durationDays: cv.durationDays,
-    };
-  }, [catalogData]);
-  const purchasableProVersion = React.useMemo<PurchasablePlanVersionInfo | null>(() => {
-    if (!catalogData?.plans) return null;
-    const proPlan = catalogData.plans.find((p) => p.code === "PRO");
-    if (!proPlan || !proPlan.purchasable || !proPlan.currentVersion) return null;
-    const cv = proPlan.currentVersion;
-    return { id: cv.id, version: cv.version, priceVnd: cv.priceVnd, currency: cv.currency, durationDays: cv.durationDays };
-  }, [catalogData]);
+  // Authoritative discovery: derives purchasable terms strictly from the
+  // backend catalog. A plan sells 30, 90 and 180 days; the learner picks one.
+  const terms = React.useMemo(() => availablePlanTerms(catalogData?.plans), [catalogData]);
+  const [chosenTerm, setChosenTerm] = useState<number | null>(null);
+  const termDays = chosenTerm !== null && terms.includes(chosenTerm) ? chosenTerm : (terms[0] ?? 30);
+  const purchasablePlusVersion = React.useMemo<PurchasablePlanVersionInfo | null>(
+    () => pickPlanTerm(catalogData?.plans, "PLUS", termDays),
+    [catalogData, termDays],
+  );
+  const purchasableProVersion = React.useMemo<PurchasablePlanVersionInfo | null>(
+    () => pickPlanTerm(catalogData?.plans, "PRO", termDays),
+    [catalogData, termDays],
+  );
+
+  // Promo code: typed (or prefilled from a win-back link ?promo=CODE), then
+  // priced by the server for each plan of the chosen term.
+  const [promoInput, setPromoInput] = useState(() => searchParams.get("promo") ?? "");
+  const [appliedCode, setAppliedCode] = useState<string | null>(() =>
+    normalizePromoCode(searchParams.get("promo") ?? "") || null,
+  );
+  const promoQuery = (version: PurchasablePlanVersionInfo | null) => ({
+    queryKey: PLAN_QUERY_KEYS.promoPreview(version?.id ?? 0, appliedCode ?? ""),
+    queryFn: () => planService.getPromoPreview(version!.id, appliedCode!),
+    enabled: !!user && !!appliedCode && !!version,
+    staleTime: 30 * 1000,
+  });
+  const { data: plusPromo, isFetching: plusPromoLoading } = useQuery(promoQuery(purchasablePlusVersion));
+  const { data: proPromo, isFetching: proPromoLoading } = useQuery(promoQuery(purchasableProVersion));
+  const promoFor = (preview: PromoPreview | undefined) =>
+    appliedCode && preview?.valid
+      ? { amountVnd: preview.amountVnd, discountVnd: preview.discountVnd, code: preview.code }
+      : null;
+
+  // A learner who already pays: ask the server where each plan would sit
+  // (renewal queued after the running plan, or an upgrade with converted days).
+  const hasPaidPlan = resolveEffectivePlanDisplay(effectivePlan).isPaid;
+  const { data: plusRenewal } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.renewalPreview(purchasablePlusVersion?.id ?? 0),
+    queryFn: () => planService.getRenewalPreview(purchasablePlusVersion!.id),
+    enabled: !!user && hasPaidPlan && !!purchasablePlusVersion,
+    staleTime: 30 * 1000,
+  });
+  const { data: proRenewal } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.renewalPreview(purchasableProVersion?.id ?? 0),
+    queryFn: () => planService.getRenewalPreview(purchasableProVersion!.id),
+    enabled: !!user && hasPaidPlan && !!purchasableProVersion,
+    staleTime: 30 * 1000,
+  });
 
   // Purchase creation mutation
   const purchaseMutation = useMutation({
-    mutationFn: async (planVersionId: number) => {
-      // Prepare strictly validated payload: ONLY planVersionId and idempotencyKey
+    mutationFn: async ({ planVersionId, promoCode }: { planVersionId: number; promoCode?: string }) => {
+      // Strictly validated payload: planVersionId, idempotencyKey and at most
+      // a code name; the server sets every price.
       const payload = preparePurchasePayload(
         planVersionId,
         currentIdempotencyKeyRef.current,
+        promoCode,
       );
       return await planService.createPurchase(payload);
     },
@@ -112,6 +147,8 @@ function PlansPageContent() {
       // Refresh idempotency key for next purchase attempt
       currentIdempotencyKeyRef.current = generateIdempotencyKey();
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.myPurchases });
+      queryClient.invalidateQueries({ queryKey: ["plan-renewal-preview"] });
+      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.expirySummary });
       setActivePurchaseId(purchase.id);
       setActivePurchasePlanCode(purchase.planCode === "PRO" ? "PRO" : "PLUS");
     },
@@ -141,10 +178,16 @@ function PlansPageContent() {
     }
 
     // Check if there is already an open pending purchase in history
+    // A code is sent only when the server accepted it for this plan.
+    const promoCode = promoFor(targetPlan === "PRO" ? proPromo : plusPromo)?.code;
+
+    // Only for the same plan, term and code: a 30-day pending payment must not
+    // open when the learner chose 90 days or added a code.
     const openPending = myPurchases?.find(
       (p) =>
-      p.planCode === targetPlan &&
-        p.isActivePaymentIntent === true,
+        p.planVersionId === version.id &&
+        p.isActivePaymentIntent === true &&
+        (p.promoCode ?? null) === (promoCode ?? null),
     );
     if (openPending) {
       setActivePurchaseId(openPending.id);
@@ -152,7 +195,7 @@ function PlansPageContent() {
       return;
     }
 
-    purchaseMutation.mutate(version.id);
+    purchaseMutation.mutate({ planVersionId: version.id, promoCode });
   };
 
   const handleInitiatePlusPurchase = () => handleInitiatePurchase("PLUS", purchasablePlusVersion);
@@ -163,7 +206,8 @@ function PlansPageContent() {
     const version = activePurchasePlanCode === "PRO" ? purchasableProVersion : purchasablePlusVersion;
     if (!version || purchaseMutation.isPending) return;
     currentIdempotencyKeyRef.current = generateIdempotencyKey();
-    purchaseMutation.mutate(version.id);
+    const promoCode = promoFor(activePurchasePlanCode === "PRO" ? proPromo : plusPromo)?.code;
+    purchaseMutation.mutate({ planVersionId: version.id, promoCode });
   };
 
   const planDisplay = resolveEffectivePlanDisplay(effectivePlan);
@@ -216,6 +260,9 @@ function PlansPageContent() {
         </div>
       </header>
 
+      {/* On this page the cards below are the way to renew. */}
+      <PlanExpiryBanner showRenewLink={false} />
+
       {/* ── Catalog Error Banner ──────────────────────────────────── */}
       {isCatalogError && (
         <div className="rounded-2xl border border-amber-300 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/30 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
@@ -233,6 +280,128 @@ function PlansPageContent() {
           </button>
         </div>
       )}
+
+      {/* ── Term picker: 30 / 90 / 180 days ─────────────────────── */}
+      {terms.length > 1 && (
+        <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-center">
+          <span id="plan-term-label" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+            Thời hạn gói
+          </span>
+          <div
+            role="radiogroup"
+            aria-labelledby="plan-term-label"
+            className="inline-flex rounded-xl border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900"
+          >
+            {terms.map((days) => {
+              const saving = termSavingPercent(catalogData?.plans, "PLUS", days);
+              const active = days === termDays;
+              return (
+                <button
+                  key={days}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setChosenTerm(days)}
+                  className={`min-h-10 rounded-lg px-3 text-sm font-semibold transition-colors sm:px-4 ${
+                    active
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                      : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  {days} ngày
+                  {saving && (
+                    <span
+                      className={`ml-1.5 text-xs font-bold ${
+                        active ? "text-emerald-300 dark:text-emerald-700" : "text-emerald-700 dark:text-emerald-400"
+                      }`}
+                    >
+                      -{saving}%
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Promo code ───────────────────────────────────────────── */}
+      <section aria-labelledby="promo-title" className="mx-auto w-full max-w-xl">
+        <form
+          className="flex flex-col gap-2 sm:flex-row sm:items-end"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const code = normalizePromoCode(promoInput);
+            if (!user) {
+              router.push(getLoginRedirectUrl("plus"));
+              return;
+            }
+            setAppliedCode(code || null);
+          }}
+        >
+          <label className="flex-1">
+            <span id="promo-title" className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <TicketPercent size={16} strokeWidth={2} aria-hidden="true" />
+              Mã giảm giá
+            </span>
+            <input
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value)}
+              maxLength={40}
+              autoComplete="off"
+              placeholder="Nhập mã nếu có"
+              className="mt-1 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold uppercase tracking-wide text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={!normalizePromoCode(promoInput)}
+              className="h-11 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+            >
+              Áp dụng
+            </button>
+            {appliedCode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAppliedCode(null);
+                  setPromoInput("");
+                }}
+                aria-label="Bỏ mã giảm giá"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <X size={16} strokeWidth={2} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </form>
+        {appliedCode && user && (
+          <ul className="mt-2 space-y-1 text-sm" aria-live="polite">
+            {(
+              [
+                ["Plus", plusPromo, plusPromoLoading],
+                ["Pro", proPromo, proPromoLoading],
+              ] as const
+            ).map(([name, preview, loading]) => (
+              <li
+                key={name}
+                className={
+                  preview?.valid
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-slate-600 dark:text-slate-400"
+                }
+              >
+                {loading
+                  ? `${name}: đang kiểm tra mã…`
+                  : preview?.valid
+                    ? `${name}: giảm ${preview.percentOff}%, còn ${formatVnd(preview.amountVnd)}`
+                    : `${name}: ${preview?.message ?? "không áp dụng"}`}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {/* ── Plan Comparison Grid ─────────────────────────────────── */}
       <section
@@ -256,6 +425,8 @@ function PlansPageContent() {
           isAuthenticated={!!user}
           isLoadingCatalog={isLoadingCatalog}
           isCatalogError={isCatalogError}
+          renewalPreview={hasPaidPlan ? plusRenewal : null}
+          promo={promoFor(plusPromo)}
         />
 
         <PlanCard
@@ -268,8 +439,13 @@ function PlansPageContent() {
           isLoadingCatalog={isLoadingCatalog}
           isCatalogError={isCatalogError}
           isAuthenticated={!!user}
+          renewalPreview={hasPaidPlan ? proRenewal : null}
+          promo={promoFor(proPromo)}
         />
       </section>
+
+      {/* ── Invite friends: both get 7 days ──────────────────────── */}
+      {user && <ReferralCard />}
 
       {/* ── Feature Comparison Table (with Dropdown Toggle) ──────── */}
       <PlanComparisonTable />

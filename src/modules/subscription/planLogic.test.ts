@@ -11,6 +11,7 @@ import {
   resolveEffectivePlanDisplay,
   getPlusPricingDisplay,
   getPlanCardCta,
+  planExpiryBannerState,
   getPaymentStatusBadgeInfo,
   preparePurchasePayload,
   generateIdempotencyKey,
@@ -256,6 +257,14 @@ describe("4. Purchase Request Safety & Idempotency Key", () => {
     assert.equal((payload as any).amountVnd, undefined);
     assert.equal((payload as any).currency, undefined);
     assert.equal((payload as any).durationDays, undefined);
+  });
+
+  test("preparePurchasePayload names a promo code but never a price", () => {
+    const payload = preparePurchasePayload(5, "idem-key", " quaylai-7kq4m2 ");
+    assert.deepEqual(Object.keys(payload).sort(), ["idempotencyKey", "planVersionId", "promoCode"]);
+    assert.equal(payload.promoCode, "QUAYLAI-7KQ4M2");
+    assert.equal((payload as any).amountVnd, undefined);
+    assert.deepEqual(Object.keys(preparePurchasePayload(5, "idem-key", "  ")).sort(), ["idempotencyKey", "planVersionId"]);
   });
 
   test("preparePurchasePayload throws error on invalid planVersionId or empty key", () => {
@@ -992,5 +1001,121 @@ describe("19. Phase PAY-UI Version Independence & Double-Click Protection", () =
     initiatePurchase();
 
     assert.equal(callCount, 1, "Double click must trigger only one purchase creation");
+  });
+});
+
+describe("Renewing early and moving up (renewal preview from the server)", () => {
+  const paidPro = (): EffectivePlan => {
+    const plan = makePaidPlusPlan();
+    return { ...plan, plan: { ...plan.plan, code: "PRO", displayName: "BreadTrans Pro" } };
+  };
+
+  test("PLUS running, PLUS card: renew is offered with the date the new plan starts", () => {
+    const cta = getPlanCardCta("PLUS", makePaidPlusPlan(), null, true, null, {
+      kind: "RENEW",
+      startsAt: "2026-12-04T12:00:00.000Z",
+      endsAt: "2027-01-03T12:00:00.000Z",
+      convertedDays: 0,
+      message: null,
+    });
+    assert.equal(cta.label, "Gia hạn thêm");
+    assert.equal(cta.disabled, false);
+    assert.equal(cta.isCurrent, true);
+    assert.match(cta.note ?? "", /04\/12\/2026/);
+  });
+
+  test("PLUS running, PRO card: move up now with the converted days, one decimal", () => {
+    const cta = getPlanCardCta("PRO", makePaidPlusPlan(), null, true, null, {
+      kind: "UPGRADE",
+      startsAt: "2026-11-04T12:00:00.000Z",
+      endsAt: "2026-12-09T03:00:00.000Z",
+      convertedDays: 4.63,
+      message: null,
+    });
+    assert.equal(cta.label, "Nâng lên Pro ngay");
+    assert.equal(cta.disabled, false);
+    assert.match(cta.note ?? "", /4,6 ngày/);
+  });
+
+  test("a refusal from the server is shown as is and cannot be clicked", () => {
+    const message = "Bạn đã có một gói gia hạn đang chờ bắt đầu.";
+    const cta = getPlanCardCta("PLUS", makePaidPlusPlan(), null, true, null, {
+      kind: "REFUSED",
+      startsAt: null,
+      endsAt: null,
+      convertedDays: 0,
+      message,
+    });
+    assert.equal(cta.disabled, true);
+    assert.equal(cta.note, message);
+  });
+
+  test("PRO running: the PLUS card never offers a purchase, even before the preview loads", () => {
+    const cta = getPlanCardCta("PLUS", paidPro(), { id: 5, priceVnd: 69000, durationDays: 30, currency: "VND" }, true);
+    assert.equal(cta.disabled, true);
+    assert.equal(cta.label, "Đang dùng Pro");
+  });
+
+  test("without a paid plan the preview changes nothing", () => {
+    const purchasable = { id: 5, priceVnd: 69000, durationDays: 30, currency: "VND" };
+    const cta = getPlanCardCta("PLUS", makeEffectivePlan(), purchasable, true, null, {
+      kind: "NEW",
+      startsAt: "2026-11-04T12:00:00.000Z",
+      endsAt: "2026-12-04T12:00:00.000Z",
+      convertedDays: 0,
+      message: null,
+    });
+    assert.equal(cta.label, "Nâng cấp Plus");
+    assert.equal(cta.disabled, false);
+  });
+});
+
+describe("Plan expiry banner", () => {
+  const summary = (over: Record<string, unknown> = {}) => ({
+    isPaid: true,
+    planCode: "PLUS",
+    planName: "BreadTrans Plus",
+    endsAt: "2026-11-07T08:00:00.000Z",
+    daysLeft: 3,
+    queuedRenewal: null,
+    lockedAfterExpiry: [
+      { skill: "WRITING", levelGroup: "INTERMEDIATE", requiredPlan: "PLUS" as const, label: "Viết Trung cấp", count: 4 },
+      { skill: "SPEAKING", levelGroup: "INTERMEDIATE", requiredPlan: "PLUS" as const, label: "Nói Trung cấp", count: 2 },
+    ],
+    ...over,
+  });
+
+  test("last 7 days with nothing queued: days left and what will lock again", () => {
+    const state = planExpiryBannerState(summary());
+    assert.equal(state?.title, "Gói Plus còn 3 ngày");
+    assert.deepEqual(state?.items, ["Viết Trung cấp · 4 bài", "Nói Trung cấp · 2 bài"]);
+    assert.match(state?.body ?? "", /sẽ bị khoá lại/);
+  });
+
+  test("the last day says today; nothing used says only that renewing loses no day", () => {
+    const state = planExpiryBannerState(summary({ daysLeft: 0, lockedAfterExpiry: [] }));
+    assert.equal(state?.title, "Gói Plus hết hạn hôm nay");
+    assert.deepEqual(state?.items, []);
+    assert.doesNotMatch(state?.body ?? "", /bị khoá/);
+  });
+
+  test("hidden for FREE, for more than 7 days left, and once a renewal is queued", () => {
+    assert.equal(planExpiryBannerState(summary({ isPaid: false, daysLeft: null })), null);
+    assert.equal(planExpiryBannerState(summary({ daysLeft: 8 })), null);
+    assert.equal(
+      planExpiryBannerState(summary({ queuedRenewal: { planCode: "PLUS", startsAt: "2026-11-07T08:00:00.000Z", endsAt: "2026-12-07T08:00:00.000Z" } })),
+      null,
+    );
+    assert.equal(planExpiryBannerState(null), null);
+  });
+
+  test("a running trial shows its gradings left and offers to buy Plus", () => {
+    const state = planExpiryBannerState(
+      summary({ daysLeft: 2, trial: { endsAt: "2026-11-06T08:00:00.000Z", speakingLeft: 4, writingLeft: 0 } }),
+    );
+    assert.equal(state?.title, "Bạn đang dùng thử Plus · còn 2 ngày");
+    assert.match(state?.body ?? "", /Còn 4 lượt chấm Nói và 0 lượt chấm Viết/);
+    assert.equal(state?.actionLabel, "Mua gói Plus");
+    assert.equal(planExpiryBannerState(summary())?.actionLabel, "Gia hạn ngay");
   });
 });

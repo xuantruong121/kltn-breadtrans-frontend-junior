@@ -93,6 +93,10 @@ export interface PlanPurchase {
   version: number;
   status: PlanPurchaseStatus | string;
   amountVnd: number;
+  /** Plan price before a promo discount (servers before 2026-11-04 omit it). */
+  listPriceVnd?: number;
+  discountVnd?: number;
+  promoCode?: string | null;
   currency: string;
   durationDays: number;
   createdAt: string;
@@ -132,6 +136,9 @@ export const PLAN_QUERY_KEYS = {
   effectivePlan: ["effective-plan"] as const,
   myPurchases: ["my-plan-purchases"] as const,
   purchaseDetail: (id: number) => ["plan-purchase-detail", id] as const,
+  renewalPreview: (planVersionId: number) => ["plan-renewal-preview", planVersionId] as const,
+  expirySummary: ["plan-expiry-summary"] as const,
+  promoPreview: (planVersionId: number, code: string) => ["plan-promo-preview", planVersionId, code] as const,
   vocabTopics: ["vocab-topics"] as const,
   readingExercises: ["reading-exercises"] as const,
   // Must match the key used by the Listening catalog query. Keeping this
@@ -148,12 +155,88 @@ export interface PlanCardCtaState {
   disabled: boolean;
   isCurrent: boolean;
   statusVariant?: "current" | "primary" | "disabled" | "coming_soon";
+  /** One line under the button: when the plan starts, days converted, or why it cannot be bought. */
+  note?: string | null;
+}
+
+/** GET /plan-purchases/renewal-preview/:planVersionId */
+export interface RenewalPreview {
+  kind: "NEW" | "RENEW" | "UPGRADE" | "REFUSED";
+  startsAt: string | null;
+  endsAt: string | null;
+  convertedDays: number;
+  message: string | null;
+}
+
+const formatDay = (iso: string) => {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+
+/** GET /subscriptions/me/expiry-summary */
+export interface ExpirySummary {
+  isPaid: boolean;
+  planCode: string;
+  planName: string;
+  endsAt: string | null;
+  daysLeft: number | null;
+  queuedRenewal: { planCode: string; startsAt: string; endsAt: string } | null;
+  lockedAfterExpiry: Array<{
+    skill: string;
+    levelGroup: string;
+    requiredPlan: "PLUS" | "PRO";
+    label: string;
+    count: number;
+  }>;
+  /** A running free PLUS trial: gradings left on paid-level items. */
+  trial?: { endsAt: string; speakingLeft: number; writingLeft: number } | null;
+}
+
+export interface PlanExpiryBannerState {
+  title: string;
+  body: string;
+  items: string[];
+  /** The button: "Gia hạn ngay" for a paid plan, "Mua gói Plus" for a trial. */
+  actionLabel: string;
+}
+
+/**
+ * The banner shown in the last 7 days of a paid plan with no renewal queued:
+ * how long is left and what the learner used that FREE will lock again.
+ */
+export function planExpiryBannerState(summary: ExpirySummary | null | undefined): PlanExpiryBannerState | null {
+  if (summary?.trial) {
+    const left = summary.daysLeft !== null && summary.daysLeft > 0 ? `còn ${summary.daysLeft} ngày` : "hết hạn hôm nay";
+    return {
+      title: `Bạn đang dùng thử Plus · ${left}`,
+      body: `Còn ${summary.trial.speakingLeft} lượt chấm Nói và ${summary.trial.writingLeft} lượt chấm Viết ở mức trả phí. Mua gói Plus để học tiếp không giới hạn lượt chấm; dữ liệu học của bạn được giữ nguyên.`,
+      items: [],
+      actionLabel: "Mua gói Plus",
+    };
+  }
+  if (!summary?.isPaid || summary.daysLeft === null || summary.daysLeft > 7 || summary.queuedRenewal) return null;
+  const name = summary.planName.replace(/^BreadTrans\s+/, "");
+  const title = summary.daysLeft <= 0 ? `Gói ${name} hết hạn hôm nay` : `Gói ${name} còn ${summary.daysLeft} ngày`;
+  const items = summary.lockedAfterExpiry.slice(0, 4).map((group) => `${group.label} · ${group.count} bài`);
+  const body = items.length
+    ? "Khi gói hết hạn, các phần bạn đã luyện trong kỳ này sẽ bị khoá lại. Gia hạn bây giờ không mất ngày nào: gói mới bắt đầu đúng lúc gói hiện tại kết thúc."
+    : "Gia hạn bây giờ không mất ngày nào: gói mới bắt đầu đúng lúc gói hiện tại kết thúc.";
+  return { title, body, items, actionLabel: "Gia hạn ngay" };
+}
+
+/** Converted days shown to the learner: at most one decimal, comma separator. */
+export function formatConvertedDays(days: number): string {
+  return (Math.round(days * 10) / 10).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
 }
 
 export interface PlusPricingDisplay {
   priceText: string;
   durationText: string;
   isPurchasable: boolean;
+  /** Longer terms: what 30 days come to, e.g. "≈ 62.000 ₫ / 30 ngày". */
+  perMonthText?: string;
 }
 
 export interface PaymentStatusBadge {
@@ -419,6 +502,13 @@ export function getPlusPricingDisplay(
       priceText: formatVnd(version.priceVnd),
       durationText: ` / ${version.durationDays} ngày`,
       isPurchasable: true,
+      ...(version.durationDays > 30
+        ? {
+            perMonthText: `≈ ${formatVnd(
+              Math.round((version.priceVnd * 30) / version.durationDays / 1000) * 1000,
+            )} / 30 ngày`,
+          }
+        : {}),
     };
   }
 
@@ -439,12 +529,59 @@ export function getPlanCardCta(
   purchasablePlusVersion: PurchasablePlanVersionInfo | null | undefined,
   isAuthenticatedParam?: boolean,
   purchasableProVersion?: PurchasablePlanVersionInfo | null,
+  /** The server's answer for this card's plan version, when the learner has a paid plan. */
+  renewal?: RenewalPreview | null,
 ): PlanCardCtaState {
   const current = resolveEffectivePlanDisplay(effectivePlan);
   const isAuthenticated =
     isAuthenticatedParam !== undefined
       ? isAuthenticatedParam
       : effectivePlan !== null && effectivePlan !== undefined;
+
+  // A learner with a paid plan: renew it (queued after it), move up now, or
+  // wait. The server decides; the card only says what that decision means.
+  if (
+    targetPlan !== "FREE" &&
+    isAuthenticated &&
+    current.isPaid &&
+    renewal
+  ) {
+    const isCurrent = current.planCode === targetPlan;
+    if (renewal.kind === "RENEW" && renewal.startsAt) {
+      return {
+        label: "Gia hạn thêm",
+        disabled: false,
+        isCurrent,
+        statusVariant: "primary",
+        note: `Gói mới bắt đầu ngày ${formatDay(renewal.startsAt)}, ngay khi gói hiện tại hết hạn.`,
+      };
+    }
+    if (renewal.kind === "UPGRADE") {
+      return {
+        label: targetPlan === "PRO" ? "Nâng lên Pro ngay" : "Nâng cấp ngay",
+        disabled: false,
+        isCurrent,
+        statusVariant: "primary",
+        note:
+          renewal.convertedDays > 0
+            ? `Dùng ngay hôm nay, cộng thêm ${formatConvertedDays(renewal.convertedDays)} ngày quy đổi từ gói hiện tại.`
+            : "Dùng ngay hôm nay.",
+      };
+    }
+    if (renewal.kind === "REFUSED") {
+      return {
+        label: isCurrent
+          ? "Gói hiện tại"
+          : current.planCode === "PRO" && targetPlan === "PLUS"
+            ? "Đang dùng Pro"
+            : "Chưa thể mua",
+        disabled: true,
+        isCurrent,
+        statusVariant: isCurrent ? "current" : "disabled",
+        note: renewal.message,
+      };
+    }
+  }
 
   if (targetPlan === "FREE") {
     if (!isAuthenticated) {
@@ -478,6 +615,17 @@ export function getPlanCardCta(
         disabled: true,
         isCurrent: true,
         statusVariant: "current",
+      };
+    }
+
+    // PLUS is never bought over a running PRO (the server refuses it too).
+    if (isAuthenticated && current.isPaid && current.planCode === "PRO") {
+      return {
+        label: "Đang dùng Pro",
+        disabled: true,
+        isCurrent: false,
+        statusVariant: "disabled",
+        note: "Có thể mua Plus sau khi gói Pro hết hạn.",
       };
     }
 
@@ -639,7 +787,8 @@ export function getPaymentStatusBadgeInfo(
 export function preparePurchasePayload(
   planVersionId: number,
   idempotencyKey: string,
-): { planVersionId: number; idempotencyKey: string } {
+  promoCode?: string | null,
+): { planVersionId: number; idempotencyKey: string; promoCode?: string } {
   if (!Number.isInteger(planVersionId) || planVersionId <= 0) {
     throw new Error("Invalid planVersionId: must be a positive integer");
   }
@@ -647,10 +796,28 @@ export function preparePurchasePayload(
   if (!key) {
     throw new Error("idempotencyKey is required");
   }
+  // The server prices the code; the client only names it.
+  const code = normalizePromoCode(promoCode ?? "");
   return {
     planVersionId,
     idempotencyKey: key,
+    ...(code ? { promoCode: code } : {}),
   };
+}
+
+/** What the learner typed, as the server stores codes: no spaces, upper-case. */
+export function normalizePromoCode(code: string): string {
+  return code.trim().replace(/\s+/g, "").toUpperCase();
+}
+
+export interface PromoPreview {
+  valid: boolean;
+  message: string | null;
+  code: string;
+  percentOff: number | null;
+  listPriceVnd: number;
+  discountVnd: number;
+  amountVnd: number;
 }
 
 /**
@@ -728,4 +895,67 @@ export function shouldNotifyPaymentCompletion(
   }
 
   return true;
+}
+
+/** A sold term of a plan, as the public catalog lists it. */
+export type PlanTermVersion = {
+  id: number;
+  priceVnd: number;
+  currency: string;
+  durationDays: number;
+};
+
+type CatalogPlanLike = {
+  code: string;
+  purchasable: boolean;
+  currentVersion: PlanTermVersion | null;
+  versions?: PlanTermVersion[];
+};
+
+/** Terms (in days) any paid plan sells, shortest first; [30] for an older server. */
+export function availablePlanTerms(plans: CatalogPlanLike[] | undefined): number[] {
+  const days = new Set<number>();
+  for (const plan of plans ?? []) {
+    if (plan.code === "FREE" || !plan.purchasable) continue;
+    for (const v of plan.versions ?? (plan.currentVersion ? [plan.currentVersion] : []))
+      days.add(v.durationDays);
+  }
+  return [...days].sort((a, b) => a - b);
+}
+
+/**
+ * The version of `code` sold for `days`, or null when that term is not on
+ * sale. A server without `versions` only sells its currentVersion.
+ */
+export function pickPlanTerm(
+  plans: CatalogPlanLike[] | undefined,
+  code: "PLUS" | "PRO",
+  days: number,
+): PurchasablePlanVersionInfo | null {
+  const plan = plans?.find((p) => p.code === code);
+  if (!plan || !plan.purchasable) return null;
+  const list = plan.versions ?? (plan.currentVersion ? [plan.currentVersion] : []);
+  const v = list.find((item) => item.durationDays === days);
+  return v
+    ? { id: v.id, priceVnd: v.priceVnd, currency: v.currency, durationDays: v.durationDays }
+    : null;
+}
+
+/**
+ * Whole-percent saving of a longer term against buying the shortest term
+ * again for the same number of days, or null when there is none.
+ */
+export function termSavingPercent(
+  plans: CatalogPlanLike[] | undefined,
+  code: "PLUS" | "PRO",
+  days: number,
+): number | null {
+  const [shortest] = availablePlanTerms(plans);
+  if (!shortest || days <= shortest) return null;
+  const base = pickPlanTerm(plans, code, shortest);
+  const term = pickPlanTerm(plans, code, days);
+  if (!base?.priceVnd || !base.durationDays || !term?.priceVnd) return null;
+  const full = (base.priceVnd * days) / base.durationDays;
+  const saved = Math.floor((1 - term.priceVnd / full) * 100);
+  return saved > 0 ? saved : null;
 }

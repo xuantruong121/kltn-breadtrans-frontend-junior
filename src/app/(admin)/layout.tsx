@@ -27,6 +27,8 @@ import {
   Award,
   MessageSquare,
   Inbox,
+  TrendingUp,
+  TicketPercent,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -75,6 +77,8 @@ const NAV_ICONS: Record<string, NavItem["icon"]> = {
   PenTool,
   Settings,
   ShoppingBag,
+  TicketPercent,
+  TrendingUp,
   Users,
 };
 
