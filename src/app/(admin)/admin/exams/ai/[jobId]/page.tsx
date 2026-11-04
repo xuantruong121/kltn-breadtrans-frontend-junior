@@ -291,6 +291,16 @@ export default function ExamAiCandidateWorkspacePage({
   const isProcessing =
     status && ["QUEUED", "PROCESSING"].includes(status.status);
   const isFailed = status?.status === "FAILED";
+  // Every AI provider was out: the job resumes by itself at resumeAt.
+  const waitingQuota = status?.stage === "WAITING_QUOTA";
+  const resumeText = status?.resumeAt
+    ? new Date(status.resumeAt).toLocaleString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+      })
+    : null;
   const hasFailedUnits = failedUnits.length > 0;
 
   return (
@@ -315,6 +325,20 @@ export default function ExamAiCandidateWorkspacePage({
         <div className="mt-6 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
           <Loader2 size={15} className="animate-spin" />
           Đang tổng hợp dữ liệu bản nháp — trang sẽ tự cập nhật...
+        </div>
+      )}
+      {waitingQuota && (
+        <div className="mt-6 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+          <span>
+            Đang chờ hạn mức AI{resumeText ? `, tự chạy tiếp lúc ${resumeText}` : ""}. Phần đã soạn được giữ nguyên.
+          </span>
+          <button
+            type="button"
+            onClick={retryJob}
+            className="shrink-0 rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
+          >
+            Chạy lại ngay
+          </button>
         </div>
       )}
       {isFailed && (

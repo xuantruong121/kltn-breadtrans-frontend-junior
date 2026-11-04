@@ -82,6 +82,9 @@ export type ExamAiJobStatus = {
   examId?: number | null;
   progress?: unknown;
   error?: string | null;
+  /** e.g. GENERATING_TEXT, WAITING_QUOTA (every AI provider out, resumes at resumeAt). */
+  stage?: string;
+  resumeAt?: string | null;
 };
 
 export const examAiService = {
