@@ -40,6 +40,7 @@ import {
   getPreviousExerciseId,
 } from "@/lib/speaking/speakingPracticeLogic";
 import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
+import { speakingPollStep } from "@/lib/speaking/speakingPollLogic";
 import { resampleTo16kHz } from "@/lib/speaking/resampleAudio";
 import {
   createWorkletFlushController,
@@ -787,22 +788,24 @@ export default function SpeakingExerciseDetailPage() {
         setIsProlongedProcessing(true);
       }
 
-      // Conservative guard against infinite orphan polling (> 120 attempts / ~7-8 mins)
-      if (attempt > 120) {
+      // Grading retries can run ~21 minutes, so after the fast phase the page
+      // keeps checking every 30 s (speakingPollLogic) instead of stopping and
+      // leaving "đang chấm" on screen when the realtime event is missed.
+      const step = speakingPollStep(attempt, Date.now() - pollingStartTimeRef.current);
+      if (step.kind === "stop") return;
+      if (step.slowPhaseStarted) {
         submissionInFlightRef.current = false;
         stopInFlightRef.current = false;
         toast(
-          "Thời gian chấm điểm kéo dài hơn dự kiến. Kết quả sẽ được lưu vào lịch sử bài làm.",
+          "Thời gian chấm điểm kéo dài hơn dự kiến. Trang vẫn tiếp tục kiểm tra kết quả, và kết quả cũng được lưu vào lịch sử bài làm.",
           { icon: "ℹ️" },
         );
-        return;
       }
-
-      const intervalMs =
-        attempt === 0 ? 0 : attempt <= 5 ? 1000 : attempt <= 15 ? 2000 : 5000;
 
       pollingTimerRef.current = setTimeout(async () => {
         if (!isMountedRef.current) return;
+        // A newer recording replaced this one: its result must not overwrite the page.
+        if (currentSubmissionIdRef.current && currentSubmissionIdRef.current !== submissionId) return;
 
         try {
           const sub = await speakingService.getSubmission(submissionId);
@@ -878,7 +881,7 @@ export default function SpeakingExerciseDetailPage() {
             pollSubmissionStatus(submissionId, attempt + 1);
           }
         }
-      }, intervalMs);
+      }, step.delayMs);
     },
     [
       queryClient,
