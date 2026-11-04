@@ -31,6 +31,7 @@ import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentM
 import { PlanComparisonTable } from "@/modules/subscription/components/PlanComparisonTable";
 import { PlanFaqAccordion } from "@/modules/subscription/components/PlanFaqAccordion";
 import { PlanExpiryBanner } from "@/modules/subscription/components/PlanExpiryBanner";
+import { ReferralCard } from "@/components/referral/ReferralCard";
 
 function PlansPageContent() {
   const router = useRouter();
@@ -442,6 +443,9 @@ function PlansPageContent() {
           promo={promoFor(proPromo)}
         />
       </section>
+
+      {/* ── Invite friends: both get 7 days ──────────────────────── */}
+      {user && <ReferralCard />}
 
       {/* ── Feature Comparison Table (with Dropdown Toggle) ──────── */}
       <PlanComparisonTable />

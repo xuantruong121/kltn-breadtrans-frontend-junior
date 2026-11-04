@@ -1108,4 +1108,14 @@ describe("Plan expiry banner", () => {
     );
     assert.equal(planExpiryBannerState(null), null);
   });
+
+  test("a running trial shows its gradings left and offers to buy Plus", () => {
+    const state = planExpiryBannerState(
+      summary({ daysLeft: 2, trial: { endsAt: "2026-11-06T08:00:00.000Z", speakingLeft: 4, writingLeft: 0 } }),
+    );
+    assert.equal(state?.title, "Bạn đang dùng thử Plus · còn 2 ngày");
+    assert.match(state?.body ?? "", /Còn 4 lượt chấm Nói và 0 lượt chấm Viết/);
+    assert.equal(state?.actionLabel, "Mua gói Plus");
+    assert.equal(planExpiryBannerState(summary())?.actionLabel, "Gia hạn ngay");
+  });
 });

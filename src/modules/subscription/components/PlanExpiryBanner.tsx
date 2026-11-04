@@ -53,7 +53,7 @@ export function PlanExpiryBanner({ showRenewLink = true }: { showRenewLink?: boo
             href="/plans"
             className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 px-4 text-sm font-extrabold text-white shadow-xs transition-colors hover:bg-amber-600"
           >
-            Gia hạn ngay
+            {state.actionLabel}
           </Link>
         )}
       </div>

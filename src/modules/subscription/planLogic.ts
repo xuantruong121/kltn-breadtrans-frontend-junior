@@ -190,12 +190,16 @@ export interface ExpirySummary {
     label: string;
     count: number;
   }>;
+  /** A running free PLUS trial: gradings left on paid-level items. */
+  trial?: { endsAt: string; speakingLeft: number; writingLeft: number } | null;
 }
 
 export interface PlanExpiryBannerState {
   title: string;
   body: string;
   items: string[];
+  /** The button: "Gia hạn ngay" for a paid plan, "Mua gói Plus" for a trial. */
+  actionLabel: string;
 }
 
 /**
@@ -203,6 +207,15 @@ export interface PlanExpiryBannerState {
  * how long is left and what the learner used that FREE will lock again.
  */
 export function planExpiryBannerState(summary: ExpirySummary | null | undefined): PlanExpiryBannerState | null {
+  if (summary?.trial) {
+    const left = summary.daysLeft !== null && summary.daysLeft > 0 ? `còn ${summary.daysLeft} ngày` : "hết hạn hôm nay";
+    return {
+      title: `Bạn đang dùng thử Plus · ${left}`,
+      body: `Còn ${summary.trial.speakingLeft} lượt chấm Nói và ${summary.trial.writingLeft} lượt chấm Viết ở mức trả phí. Mua gói Plus để học tiếp không giới hạn lượt chấm; dữ liệu học của bạn được giữ nguyên.`,
+      items: [],
+      actionLabel: "Mua gói Plus",
+    };
+  }
   if (!summary?.isPaid || summary.daysLeft === null || summary.daysLeft > 7 || summary.queuedRenewal) return null;
   const name = summary.planName.replace(/^BreadTrans\s+/, "");
   const title = summary.daysLeft <= 0 ? `Gói ${name} hết hạn hôm nay` : `Gói ${name} còn ${summary.daysLeft} ngày`;
@@ -210,7 +223,7 @@ export function planExpiryBannerState(summary: ExpirySummary | null | undefined)
   const body = items.length
     ? "Khi gói hết hạn, các phần bạn đã luyện trong kỳ này sẽ bị khoá lại. Gia hạn bây giờ không mất ngày nào: gói mới bắt đầu đúng lúc gói hiện tại kết thúc."
     : "Gia hạn bây giờ không mất ngày nào: gói mới bắt đầu đúng lúc gói hiện tại kết thúc.";
-  return { title, body, items };
+  return { title, body, items, actionLabel: "Gia hạn ngay" };
 }
 
 /** Converted days shown to the learner: at most one decimal, comma separator. */
