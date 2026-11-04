@@ -3,7 +3,7 @@
 import React, { useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, ShieldCheck, AlertCircle, RotateCw } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, RotateCw, TicketPercent, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
 import {
@@ -21,6 +21,9 @@ import {
   availablePlanTerms,
   pickPlanTerm,
   termSavingPercent,
+  normalizePromoCode,
+  formatVnd,
+  type PromoPreview,
   type PurchasablePlanVersionInfo,
 } from "@/modules/subscription/planLogic";
 import { PlanCard } from "@/modules/subscription/components/PlanCard";
@@ -92,6 +95,25 @@ function PlansPageContent() {
     [catalogData, termDays],
   );
 
+  // Promo code: typed (or prefilled from a win-back link ?promo=CODE), then
+  // priced by the server for each plan of the chosen term.
+  const [promoInput, setPromoInput] = useState(() => searchParams.get("promo") ?? "");
+  const [appliedCode, setAppliedCode] = useState<string | null>(() =>
+    normalizePromoCode(searchParams.get("promo") ?? "") || null,
+  );
+  const promoQuery = (version: PurchasablePlanVersionInfo | null) => ({
+    queryKey: PLAN_QUERY_KEYS.promoPreview(version?.id ?? 0, appliedCode ?? ""),
+    queryFn: () => planService.getPromoPreview(version!.id, appliedCode!),
+    enabled: !!user && !!appliedCode && !!version,
+    staleTime: 30 * 1000,
+  });
+  const { data: plusPromo, isFetching: plusPromoLoading } = useQuery(promoQuery(purchasablePlusVersion));
+  const { data: proPromo, isFetching: proPromoLoading } = useQuery(promoQuery(purchasableProVersion));
+  const promoFor = (preview: PromoPreview | undefined) =>
+    appliedCode && preview?.valid
+      ? { amountVnd: preview.amountVnd, discountVnd: preview.discountVnd, code: preview.code }
+      : null;
+
   // A learner who already pays: ask the server where each plan would sit
   // (renewal queued after the running plan, or an upgrade with converted days).
   const hasPaidPlan = resolveEffectivePlanDisplay(effectivePlan).isPaid;
@@ -110,11 +132,13 @@ function PlansPageContent() {
 
   // Purchase creation mutation
   const purchaseMutation = useMutation({
-    mutationFn: async (planVersionId: number) => {
-      // Prepare strictly validated payload: ONLY planVersionId and idempotencyKey
+    mutationFn: async ({ planVersionId, promoCode }: { planVersionId: number; promoCode?: string }) => {
+      // Strictly validated payload: planVersionId, idempotencyKey and at most
+      // a code name; the server sets every price.
       const payload = preparePurchasePayload(
         planVersionId,
         currentIdempotencyKeyRef.current,
+        promoCode,
       );
       return await planService.createPurchase(payload);
     },
@@ -153,10 +177,16 @@ function PlansPageContent() {
     }
 
     // Check if there is already an open pending purchase in history
-    // Only for the same plan and term: a 30-day pending payment must not
-    // open when the learner chose 90 days.
+    // A code is sent only when the server accepted it for this plan.
+    const promoCode = promoFor(targetPlan === "PRO" ? proPromo : plusPromo)?.code;
+
+    // Only for the same plan, term and code: a 30-day pending payment must not
+    // open when the learner chose 90 days or added a code.
     const openPending = myPurchases?.find(
-      (p) => p.planVersionId === version.id && p.isActivePaymentIntent === true,
+      (p) =>
+        p.planVersionId === version.id &&
+        p.isActivePaymentIntent === true &&
+        (p.promoCode ?? null) === (promoCode ?? null),
     );
     if (openPending) {
       setActivePurchaseId(openPending.id);
@@ -164,7 +194,7 @@ function PlansPageContent() {
       return;
     }
 
-    purchaseMutation.mutate(version.id);
+    purchaseMutation.mutate({ planVersionId: version.id, promoCode });
   };
 
   const handleInitiatePlusPurchase = () => handleInitiatePurchase("PLUS", purchasablePlusVersion);
@@ -175,7 +205,8 @@ function PlansPageContent() {
     const version = activePurchasePlanCode === "PRO" ? purchasableProVersion : purchasablePlusVersion;
     if (!version || purchaseMutation.isPending) return;
     currentIdempotencyKeyRef.current = generateIdempotencyKey();
-    purchaseMutation.mutate(version.id);
+    const promoCode = promoFor(activePurchasePlanCode === "PRO" ? proPromo : plusPromo)?.code;
+    purchaseMutation.mutate({ planVersionId: version.id, promoCode });
   };
 
   const planDisplay = resolveEffectivePlanDisplay(effectivePlan);
@@ -293,6 +324,84 @@ function PlansPageContent() {
         </div>
       )}
 
+      {/* ── Promo code ───────────────────────────────────────────── */}
+      <section aria-labelledby="promo-title" className="mx-auto w-full max-w-xl">
+        <form
+          className="flex flex-col gap-2 sm:flex-row sm:items-end"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const code = normalizePromoCode(promoInput);
+            if (!user) {
+              router.push(getLoginRedirectUrl("plus"));
+              return;
+            }
+            setAppliedCode(code || null);
+          }}
+        >
+          <label className="flex-1">
+            <span id="promo-title" className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              <TicketPercent size={16} strokeWidth={2} aria-hidden="true" />
+              Mã giảm giá
+            </span>
+            <input
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value)}
+              maxLength={40}
+              autoComplete="off"
+              placeholder="Nhập mã nếu có"
+              className="mt-1 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm font-semibold uppercase tracking-wide text-slate-900 placeholder:normal-case placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-400/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={!normalizePromoCode(promoInput)}
+              className="h-11 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+            >
+              Áp dụng
+            </button>
+            {appliedCode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAppliedCode(null);
+                  setPromoInput("");
+                }}
+                aria-label="Bỏ mã giảm giá"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                <X size={16} strokeWidth={2} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </form>
+        {appliedCode && user && (
+          <ul className="mt-2 space-y-1 text-sm" aria-live="polite">
+            {(
+              [
+                ["Plus", plusPromo, plusPromoLoading],
+                ["Pro", proPromo, proPromoLoading],
+              ] as const
+            ).map(([name, preview, loading]) => (
+              <li
+                key={name}
+                className={
+                  preview?.valid
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-slate-600 dark:text-slate-400"
+                }
+              >
+                {loading
+                  ? `${name}: đang kiểm tra mã…`
+                  : preview?.valid
+                    ? `${name}: giảm ${preview.percentOff}%, còn ${formatVnd(preview.amountVnd)}`
+                    : `${name}: ${preview?.message ?? "không áp dụng"}`}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {/* ── Plan Comparison Grid ─────────────────────────────────── */}
       <section
         aria-label="So sánh các gói dịch vụ"
@@ -316,6 +425,7 @@ function PlansPageContent() {
           isLoadingCatalog={isLoadingCatalog}
           isCatalogError={isCatalogError}
           renewalPreview={hasPaidPlan ? plusRenewal : null}
+          promo={promoFor(plusPromo)}
         />
 
         <PlanCard
@@ -329,6 +439,7 @@ function PlansPageContent() {
           isCatalogError={isCatalogError}
           isAuthenticated={!!user}
           renewalPreview={hasPaidPlan ? proRenewal : null}
+          promo={promoFor(proPromo)}
         />
       </section>
 

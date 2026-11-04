@@ -20,6 +20,8 @@ export type RenewalWeek = {
   renewed: MetricRate;
   early: MetricRate;
   wonBack: MetricRate;
+  /** Of those won back, how many paid with a promo code. */
+  wonBackWithCode?: number;
 };
 
 export type RetentionMetrics = {

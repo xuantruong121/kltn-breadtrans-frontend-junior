@@ -146,6 +146,13 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         iconName: "TrendingUp",
         roles: ["ADMIN"],
       },
+      {
+        id: "promo-codes",
+        href: "/admin/promo-codes",
+        label: "Mã giảm giá",
+        iconName: "TicketPercent",
+        roles: ["ADMIN"],
+      },
     ],
   },
   {

@@ -259,6 +259,14 @@ describe("4. Purchase Request Safety & Idempotency Key", () => {
     assert.equal((payload as any).durationDays, undefined);
   });
 
+  test("preparePurchasePayload names a promo code but never a price", () => {
+    const payload = preparePurchasePayload(5, "idem-key", " quaylai-7kq4m2 ");
+    assert.deepEqual(Object.keys(payload).sort(), ["idempotencyKey", "planVersionId", "promoCode"]);
+    assert.equal(payload.promoCode, "QUAYLAI-7KQ4M2");
+    assert.equal((payload as any).amountVnd, undefined);
+    assert.deepEqual(Object.keys(preparePurchasePayload(5, "idem-key", "  ")).sort(), ["idempotencyKey", "planVersionId"]);
+  });
+
   test("preparePurchasePayload throws error on invalid planVersionId or empty key", () => {
     assert.throws(() => preparePurchasePayload(0, "key"), /Invalid planVersionId/);
     assert.throws(() => preparePurchasePayload(-1, "key"), /Invalid planVersionId/);

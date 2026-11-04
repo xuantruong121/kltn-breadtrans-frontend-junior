@@ -151,7 +151,7 @@ export default function RetentionPage() {
                 Chỉ tính gói học viên tự mua. Gia hạn: mua gói tiếp trước 7
                 ngày sau khi hết hạn. Sớm: mua trước hoặc đúng ngày hết hạn,
                 kể cả nâng Plus lên Pro. Quay lại: chưa gia hạn sau 7 ngày,
-                mua lại trong 30 ngày.
+                mua lại trong 30 ngày (kèm số người dùng mã giảm giá).
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -183,7 +183,13 @@ export default function RetentionPage() {
                         </td>
                         <RateCell value={row.renewed} />
                         <RateCell value={row.early} />
-                        <RateCell value={row.wonBack} />
+                        <td className="whitespace-nowrap px-5 py-3 text-right tabular-nums">
+                          <span className="font-semibold text-slate-900">{formatRate(row.wonBack).percent}</span>
+                          <span className="ml-2 text-xs text-slate-500">{formatRate(row.wonBack).detail}</span>
+                          {(row.wonBackWithCode ?? 0) > 0 && (
+                            <span className="block text-xs text-emerald-700">{row.wonBackWithCode} dùng mã</span>
+                          )}
+                        </td>
                       </tr>
                     ))
                   )}

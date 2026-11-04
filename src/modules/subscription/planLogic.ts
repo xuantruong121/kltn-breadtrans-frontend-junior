@@ -93,6 +93,10 @@ export interface PlanPurchase {
   version: number;
   status: PlanPurchaseStatus | string;
   amountVnd: number;
+  /** Plan price before a promo discount (servers before 2026-11-04 omit it). */
+  listPriceVnd?: number;
+  discountVnd?: number;
+  promoCode?: string | null;
   currency: string;
   durationDays: number;
   createdAt: string;
@@ -134,6 +138,7 @@ export const PLAN_QUERY_KEYS = {
   purchaseDetail: (id: number) => ["plan-purchase-detail", id] as const,
   renewalPreview: (planVersionId: number) => ["plan-renewal-preview", planVersionId] as const,
   expirySummary: ["plan-expiry-summary"] as const,
+  promoPreview: (planVersionId: number, code: string) => ["plan-promo-preview", planVersionId, code] as const,
   vocabTopics: ["vocab-topics"] as const,
   readingExercises: ["reading-exercises"] as const,
   // Must match the key used by the Listening catalog query. Keeping this
@@ -769,7 +774,8 @@ export function getPaymentStatusBadgeInfo(
 export function preparePurchasePayload(
   planVersionId: number,
   idempotencyKey: string,
-): { planVersionId: number; idempotencyKey: string } {
+  promoCode?: string | null,
+): { planVersionId: number; idempotencyKey: string; promoCode?: string } {
   if (!Number.isInteger(planVersionId) || planVersionId <= 0) {
     throw new Error("Invalid planVersionId: must be a positive integer");
   }
@@ -777,10 +783,28 @@ export function preparePurchasePayload(
   if (!key) {
     throw new Error("idempotencyKey is required");
   }
+  // The server prices the code; the client only names it.
+  const code = normalizePromoCode(promoCode ?? "");
   return {
     planVersionId,
     idempotencyKey: key,
+    ...(code ? { promoCode: code } : {}),
   };
+}
+
+/** What the learner typed, as the server stores codes: no spaces, upper-case. */
+export function normalizePromoCode(code: string): string {
+  return code.trim().replace(/\s+/g, "").toUpperCase();
+}
+
+export interface PromoPreview {
+  valid: boolean;
+  message: string | null;
+  code: string;
+  percentOff: number | null;
+  listPriceVnd: number;
+  discountVnd: number;
+  amountVnd: number;
 }
 
 /**

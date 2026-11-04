@@ -11,6 +11,7 @@ import type {
   SubscriptionStatus,
   RenewalPreview,
   ExpirySummary,
+  PromoPreview,
 } from "@/modules/subscription/planLogic";
 import {
   formatVnd,
@@ -37,6 +38,7 @@ export type {
   SubscriptionStatus,
   RenewalPreview,
   ExpirySummary,
+  PromoPreview,
 };
 
 export {
@@ -55,6 +57,7 @@ export {
 export interface CreatePlanPurchaseInput {
   planVersionId: number;
   idempotencyKey: string;
+  promoCode?: string;
 }
 
 export interface PublicPlanVersionSummary {
@@ -111,6 +114,14 @@ export const planService = {
     return await axiosClient.post("/plan-purchases", {
       planVersionId: input.planVersionId,
       idempotencyKey: input.idempotencyKey,
+      ...(input.promoCode ? { promoCode: input.promoCode } : {}),
+    });
+  },
+
+  /** GET /plan-purchases/promo-preview: the price with a code, nothing bought. */
+  getPromoPreview: async (planVersionId: number, code: string): Promise<PromoPreview> => {
+    return await axiosClient.get("/plan-purchases/promo-preview", {
+      params: { planVersionId, code },
     });
   },
 

@@ -4,6 +4,7 @@ import React from "react";
 import { Check, Minus, Star } from "lucide-react";
 import type { EffectivePlan, PurchasablePlanVersionInfo, RenewalPreview } from "../planLogic";
 import {
+  formatVnd,
   getPlanCardCta,
   getPlusPricingDisplay,
   resolveEffectivePlanDisplay,
@@ -23,6 +24,8 @@ export interface PlanCardProps {
   isCatalogError?: boolean;
   /** Server answer for this card's plan version when the learner already pays. */
   renewalPreview?: RenewalPreview | null;
+  /** A promo code the server accepted for this card's plan version. */
+  promo?: { amountVnd: number; discountVnd: number; code: string } | null;
 }
 
 export const PlanCard: React.FC<PlanCardProps> = ({
@@ -38,6 +41,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   isLoadingCatalog = false,
   isCatalogError = false,
   renewalPreview = null,
+  promo = null,
 }) => {
   const current = resolveEffectivePlanDisplay(effectivePlan);
   const cta = getPlanCardCta(
@@ -179,13 +183,19 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <div>
                 <div className="flex items-baseline gap-1.5">
                   <span className="text-3xl sm:text-4xl font-black tracking-tight text-amber-700 dark:text-amber-400">
-                    {plusPricing.priceText}
+                    {promo ? formatVnd(promo.amountVnd) : plusPricing.priceText}
                   </span>
                   <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                     {plusPricing.durationText}
                   </span>
                 </div>
-                {plusPricing.perMonthText && (
+                {promo && (
+                    <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                      <span className="text-slate-500 line-through dark:text-slate-400">{plusPricing.priceText}</span>{" "}
+                      giảm {formatVnd(promo.discountVnd)} với mã {promo.code}
+                    </p>
+                  )}
+                  {plusPricing.perMonthText && !promo && (
                   <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">{plusPricing.perMonthText}</p>
                 )}
               </div>
@@ -315,13 +325,19 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-3xl sm:text-4xl font-black tracking-tight text-blue-600 dark:text-blue-400">
-                  {proPricing.priceText}
+                  {promo ? formatVnd(promo.amountVnd) : proPricing.priceText}
                 </span>
                 <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                   {proPricing.durationText}
                 </span>
               </div>
-              {proPricing.perMonthText && (
+              {promo && (
+                  <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                    <span className="text-slate-500 line-through dark:text-slate-400">{proPricing.priceText}</span>{" "}
+                    giảm {formatVnd(promo.discountVnd)} với mã {promo.code}
+                  </p>
+                )}
+                {proPricing.perMonthText && !promo && (
                 <p className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-400">{proPricing.perMonthText}</p>
               )}
             </div>
