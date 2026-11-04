@@ -17,6 +17,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
+import { AiReviewCostsSection } from "@/components/admin/AiReviewCostsSection";
 
 type SystemCostsResponse = {
   summary: {
@@ -665,6 +666,8 @@ export default function AdminCostsPage() {
           </div>
         </div>
       </section>
+
+      <AiReviewCostsSection />
 
       {/* Scalability Projection Table */}
       <section className="rounded-xl border border-slate-200/90 bg-white shadow-xs overflow-hidden">
