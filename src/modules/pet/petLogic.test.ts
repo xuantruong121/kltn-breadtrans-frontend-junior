@@ -17,6 +17,7 @@ import {
   getPetRecommendation,
   resolveFloatingPetUIState,
   getFloatingPetBoundingBox,
+  petLevelProgress,
 } from "./petLogic.ts";
 import { isLearningFocusRoute } from "../../lib/practice/focusMode.ts";
 
@@ -336,3 +337,25 @@ test("Student layout: companion uses the right floating slot", () => {
   }
 });
 
+
+test("petLevelProgress follows the backend rule floor(exp / 1000) + 1", () => {
+  assert.deepEqual(petLevelProgress(0), {
+    level: 1,
+    nextLevel: 2,
+    expInLevel: 0,
+    expPerLevel: 1000,
+    expToNext: 1000,
+    percent: 0,
+  });
+  const mid = petLevelProgress(1235);
+  assert.equal(mid.level, 2);
+  assert.equal(mid.expInLevel, 235);
+  assert.equal(mid.expToNext, 765);
+  assert.equal(mid.percent, 24);
+  // Exactly on a boundary the pet has just reached the next level.
+  assert.equal(petLevelProgress(2000).level, 3);
+  assert.equal(petLevelProgress(2000).expInLevel, 0);
+  // Missing or broken values never show a negative or NaN bar.
+  assert.equal(petLevelProgress(undefined).percent, 0);
+  assert.equal(petLevelProgress(-50).level, 1);
+});

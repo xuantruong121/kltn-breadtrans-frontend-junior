@@ -17,6 +17,7 @@ import {
   getPetStatusCopy,
   canFeedPet,
   PetVisualState,
+  petLevelProgress,
 } from "../petLogic";
 import { CompanionPet2D } from "./CompanionPet2D";
 
@@ -51,12 +52,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
 
   const level = pet?.level ?? 1;
   const exp = pet?.exp ?? 0;
-  // The backend promotes a pet every 1,000 EXP (floor(exp / 1000) + 1).
-  const expPerLevel = 1000;
-  const expPercentage = Math.min(
-    100,
-    Math.max(0, Math.round(((exp % expPerLevel) / expPerLevel) * 100)),
-  );
+  const expPercentage = petLevelProgress(exp).percent;
 
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));

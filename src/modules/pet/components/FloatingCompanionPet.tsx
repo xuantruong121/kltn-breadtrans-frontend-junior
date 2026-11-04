@@ -32,6 +32,7 @@ import {
   getPetRecommendation,
   resolveFloatingPetUIState,
   FloatingPetUIState,
+  petLevelProgress,
 } from "../petLogic";
 import { getSpeciesIdFromPetName, PET_SPECIES_LIST } from "../types";
 import { CompanionPet2D } from "./CompanionPet2D";
@@ -211,11 +212,7 @@ const FloatingCompanionPetInner: React.FC = () => {
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));
   const exp = pet?.exp ?? 0;
-  const expPerLevel = 1000;
-  const expPercentage = Math.min(
-    100,
-    Math.max(0, Math.round(((exp % expPerLevel) / expPerLevel) * 100)),
-  );
+  const expPercentage = petLevelProgress(exp).percent;
 
   return (
     <div
