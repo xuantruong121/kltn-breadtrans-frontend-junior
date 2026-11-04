@@ -19,11 +19,18 @@ export function candidateGroupState(
   return "ready";
 }
 
+/** Valid means no warning and, when the server decided, allowed to Apply. */
 export function selectAllValidKeys<
-  T extends CandidateLike & { candidateKey: string },
+  T extends CandidateLike & {
+    candidateKey: string;
+    applyDecision?: { ok: boolean };
+  },
 >(items: T[]): string[] {
   return items
-    .filter((item) => !item.issues.length && !item.applied)
+    .filter(
+      (item) =>
+        !item.issues.length && !item.applied && item.applyDecision?.ok !== false,
+    )
     .map((item) => item.candidateKey);
 }
 

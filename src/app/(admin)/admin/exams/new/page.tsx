@@ -127,7 +127,7 @@ export default function NewExamPage() {
         description: description.trim() || undefined,
         type: "FULL_TEST",
         difficulty,
-        durationSeconds: 7200,
+        // A full test takes its length from the ETS template on the server.
       });
       toast.success("Đã tạo bản nháp đề");
       router.push(`/admin/exams?exam=${result?.id || ""}`);

@@ -42,6 +42,14 @@ test("Candidate Workspace: select-all-valid only includes issue-free, unapplied 
   assert.deepEqual(selectAllValidKeys(items), ["A"]);
 });
 
+test("Candidate Workspace: select-all-valid skips groups the answer review holds back", () => {
+  const items = [
+    { candidateKey: "A", issues: [], applied: false, applyDecision: { ok: true } },
+    { candidateKey: "B", issues: [], applied: false, applyDecision: { ok: false } },
+  ];
+  assert.deepEqual(selectAllValidKeys(items), ["A"]);
+});
+
 test("Candidate Workspace: select-Part excludes already-applied items (idempotent selection)", () => {
   const items = [
     { candidateKey: "LR:P1:G1", issues: [], applied: true },

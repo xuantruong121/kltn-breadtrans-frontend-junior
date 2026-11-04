@@ -28,6 +28,8 @@ import {
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
   DEFAULT_CATALOG_SORT,
+  DIFFICULTY_PARAMS,
+  filterFromParam,
   matchesDifficultyFilter,
   matchesStatusFilter,
   sortByLevel,
@@ -78,8 +80,11 @@ function ReadingTopicsContent() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
+  // The dashboard links here with ?difficulty=.
   const [selectedDifficulty, setSelectedDifficulty] =
-    useState<DifficultyFilter>("ALL");
+    useState<DifficultyFilter>(() =>
+      filterFromParam<DifficultyFilter>(searchParams.get("difficulty"), DIFFICULTY_PARAMS, "ALL"),
+    );
   const [sortOrder, setSortOrder] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [authGate, setAuthGate] = useState<{

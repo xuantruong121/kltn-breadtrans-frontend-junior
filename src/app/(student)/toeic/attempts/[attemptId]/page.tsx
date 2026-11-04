@@ -37,7 +37,14 @@ import { ToeicExamPaper } from "@/components/toeic/paper/ToeicExamPaper";
 import { ToeicQuestionNavigator } from "@/components/toeic/paper/ToeicQuestionNavigator";
 import { ExamRestoreDialog, type RestoreOption } from "@/components/toeic/paper/ExamRestoreDialog";
 import axiosClient from "@/lib/api/axiosClient";
-import { liveSession, sessionOptionDetail, sessionOptionTitle, type PreviousSession } from "@/lib/toeic/assessmentRoom";
+import {
+  examSecondsLeft,
+  liveSession,
+  sessionOptionDetail,
+  sessionOptionTitle,
+  type PreviousSession,
+  type RoomComponent,
+} from "@/lib/toeic/assessmentRoom";
 import { enterFullscreen, exitFullscreen, useIsFullscreen, useLeaveFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { ToeicListeningBar } from "@/components/toeic/paper/ToeicListeningBar";
 
@@ -321,6 +328,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     queryFn: async () =>
       (await axiosClient.get(`/toeic/assessments/attempts/${parentAttemptId}`)) as unknown as {
         previousSession?: PreviousSession | null;
+        components?: RoomComponent[];
       },
     enabled: Boolean(examRoom),
   });
@@ -611,6 +619,10 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
         ? Math.max(0, (Date.parse(attempt.deadline) - nowMs) / 1000)
         : attempt.durationSeconds;
   const scopeLabel = fullTest ? "Full Test" : selectedParts.length ? `Luyện tập Part ${selectedParts.join(", ")}` : "Luyện tập toàn bộ đề";
+  // In a 4-skill exam this paper is one section: the main clock counts the whole
+  // exam (200 minutes), this paper keeps its own 120-minute deadline.
+  const laterSections = parentAttempt?.components?.filter((c) => c.kind !== "LISTENING_READING") ?? [];
+  const examRemaining = laterSections.length ? remaining + examSecondsLeft(laterSections, nowMs) : null;
   const saveStatus =
     saveState === "saving"
       ? "Đang lưu…"
@@ -626,7 +638,9 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
       answers={currentAnswers}
       marked={marked}
       currentQuestionId={currentQuestionId}
-      timerValue={formatMinutes(remaining)}
+      timerValue={formatMinutes(examRemaining ?? remaining)}
+      timerLabel={examRemaining !== null ? "Thời gian còn lại của đề" : undefined}
+      timerNote={examRemaining !== null ? `Phần Listening & Reading: ${formatMinutes(remaining)}` : undefined}
       saveStatus={saveStatus}
       saveError={saveState === "error"}
       saving={manualSave.isPending}
@@ -658,7 +672,10 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
                 className="flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-700 bg-slate-800/90 px-2 sm:px-3 py-1 text-xs font-bold tabular-nums text-white lg:hidden"
               >
                 <Clock3 size={14} className="text-amber-400" aria-hidden="true" />
-                {formatMinutes(remaining)}
+                {formatMinutes(examRemaining ?? remaining)}
+                {examRemaining !== null && (
+                  <span className="hidden font-semibold text-slate-300 sm:inline">· L&amp;R {formatMinutes(remaining)}</span>
+                )}
               </div>
               <button
                 type="button"

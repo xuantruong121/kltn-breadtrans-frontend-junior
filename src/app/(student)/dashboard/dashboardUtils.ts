@@ -31,14 +31,129 @@ export function getTypeSpecificQuestFallback(type?: string): { actionLabel: stri
       return { actionLabel: "Học từ vựng", actionUrl: "/flashcard" };
     case "DO_LISTENING":
       return { actionLabel: "Luyện nghe", actionUrl: "/listening" };
+    case "DO_READING":
+      return { actionLabel: "Luyện đọc", actionUrl: "/reading" };
+    case "DO_WRITING":
+      return { actionLabel: "Luyện viết", actionUrl: "/writing" };
+    case "PERFECT_QUIZ":
+      return { actionLabel: "Luyện nghe", actionUrl: "/listening" };
     case "COMPLETE_QUIZ":
-      return { actionLabel: "Làm bài kiểm tra", actionUrl: "/exams" };
+      // Advances only on standalone Listening, Reading or Writing practice
+      // (backend reward-eligibility.ts); a TOEIC exam never counts.
+      return { actionLabel: "Luyện kỹ năng", actionUrl: "/listening" };
     case "DO_SPEAKING":
-    case "PRACTICE_SPEAKING":
       return { actionLabel: "Luyện nói", actionUrl: "/speaking" };
+    case "PRACTICE_SPEAKING":
+      return { actionLabel: "Luyện phát âm", actionUrl: "/speaking" };
     default:
       return { actionLabel: "Khám phá bài học", actionUrl: "/dashboard" };
   }
+}
+
+type PlannerSkill = "LISTENING" | "READING" | "WRITING" | "SPEAKING";
+
+const SKILL_ROUTE: Record<PlannerSkill, string> = {
+  LISTENING: "/listening",
+  READING: "/reading",
+  WRITING: "/writing",
+  SPEAKING: "/speaking",
+};
+
+/** The practice that advances each quest, in the order the planner is tried. */
+const QUEST_SKILLS: Record<string, PlannerSkill[]> = {
+  DO_LISTENING: ["LISTENING"],
+  DO_READING: ["READING"],
+  DO_WRITING: ["WRITING"],
+  PERFECT_QUIZ: ["LISTENING", "READING"],
+  COMPLETE_QUIZ: ["LISTENING", "READING", "WRITING"],
+  DO_SPEAKING: ["SPEAKING"],
+  PRACTICE_SPEAKING: ["SPEAKING"],
+};
+
+const PLANNED_LABEL: Record<string, string> = {
+  DO_LISTENING: "Luyện nghe ngay",
+  DO_READING: "Luyện đọc ngay",
+  DO_WRITING: "Luyện viết ngay",
+  PERFECT_QUIZ: "Luyện ngay",
+  COMPLETE_QUIZ: "Luyện kỹ năng ngay",
+  DO_SPEAKING: "Luyện nói ngay",
+  PRACTICE_SPEAKING: "Luyện phát âm ngay",
+};
+
+/**
+ * A speaking exercise counts for one quest only (backend
+ * daily-quest-catalog.ts): read-aloud and drills for pronunciation, the rest
+ * for free speech. A planned item without a task type is not chosen for
+ * either, since it might count for the other one.
+ */
+const PRONUNCIATION_TASKS = ["READ_ALOUD", "PRONUNCIATION_DRILL"];
+function countsForQuest(type: string, taskType: string | null | undefined) {
+  if (type === "PRACTICE_SPEAKING") return Boolean(taskType) && PRONUNCIATION_TASKS.includes(taskType!);
+  if (type === "DO_SPEAKING") return Boolean(taskType) && !PRONUNCIATION_TASKS.includes(taskType!);
+  return true;
+}
+
+export type QuestActionInput = {
+  type?: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  quest?: { type?: string } | null;
+};
+
+export type PlannedPracticeInput = {
+  skill: string;
+  route: string;
+  isLocked: boolean;
+  isCompleted: boolean;
+  taskType?: string | null;
+};
+
+function opensQuestSkill(route: string, skills: PlannerSkill[]) {
+  return skills.some((skill) => {
+    const base = SKILL_ROUTE[skill];
+    return route === base || route.startsWith(base + "/") || route.startsWith(base + "?");
+  });
+}
+
+/**
+ * Where a daily-quest button goes: today's planned practice for the quest's
+ * skills first, then the backend's link if it opens one of those skills, then
+ * the skill's home. A quest button never opens a page whose activity cannot
+ * advance that quest.
+ */
+export function resolveQuestAction(
+  item: QuestActionInput,
+  planned?: PlannedPracticeInput[],
+): { actionLabel: string; actionUrl: string } {
+  const type = (item.type ?? item.quest?.type ?? "").toUpperCase();
+  const candidateUrl = item.actionUrl?.trim() || "";
+  const candidateLabel = item.actionLabel?.trim() || "";
+  const skills = QUEST_SKILLS[type];
+
+  if (skills) {
+    for (const skill of skills) {
+      const next = planned?.find(
+        (row) =>
+          row.skill === skill &&
+          !row.isLocked &&
+          !row.isCompleted &&
+          countsForQuest(type, row.taskType) &&
+          isSafeInternalRoute(row.route) &&
+          opensQuestSkill(row.route, [skill]),
+      );
+      if (next) return { actionLabel: PLANNED_LABEL[type], actionUrl: next.route };
+    }
+    const fallback = getTypeSpecificQuestFallback(type);
+    if (candidateUrl && isSafeInternalRoute(candidateUrl) && opensQuestSkill(candidateUrl, skills))
+      return { actionLabel: fallback.actionLabel, actionUrl: candidateUrl };
+    return fallback;
+  }
+
+  if (candidateUrl && isSafeInternalRoute(candidateUrl)) {
+    return { actionLabel: candidateLabel || "Tiếp tục học", actionUrl: candidateUrl };
+  }
+  const fallback = getTypeSpecificQuestFallback(type);
+  return { actionLabel: candidateLabel || fallback.actionLabel, actionUrl: fallback.actionUrl };
 }
 
 export function clampPercentage(value: number, max: number): number {
@@ -169,7 +284,6 @@ export const SKILL_DETAIL_CONFIGS: Record<SkillKey, SkillDetailConfig> = {
       { id: "exam-lr", name: "TOEIC Listening & Reading (200 câu)", href: "/exams?paper=TOEIC_LR" },
       { id: "exam-sw", name: "TOEIC Speaking & Writing (19 bài)", href: "/exams?paper=TOEIC_SW" },
       { id: "exam-4s", name: "TOEIC 4 kỹ năng (Full Bundle)", href: "/exams?paper=TOEIC_4_SKILLS" },
-      { id: "exam-mini", name: "TOEIC Mini Practice (Rút gọn)", href: "/exams" },
     ],
   },
   reading: {
@@ -223,7 +337,7 @@ export const SKILL_DETAIL_CONFIGS: Record<SkillKey, SkillDetailConfig> = {
       { id: "speak-pronunciation", name: "Nền tảng phát âm (Pronunciation)", href: "/speaking" },
       { id: "speak-question-response", name: "Phản hồi câu hỏi (Question & Response)", href: "/speaking" },
       { id: "speak-opinion", name: "Trình bày quan điểm (Express Opinion)", href: "/speaking" },
-      { id: "speak-toeic", name: "Nhiệm vụ TOEIC Speaking", href: "/speaking?category=TOEIC" },
+      { id: "speak-toeic", name: "Nhiệm vụ TOEIC Speaking", href: "/speaking" },
     ],
   },
   writing: {
@@ -283,9 +397,6 @@ export function matchPartActivity(
       }
       if (partId === "exam-4s") {
         return title.includes("4 kỹ năng") || title.includes("full bundle") || title.includes("4 skill");
-      }
-      if (partId === "exam-mini") {
-        return title.includes("mini") || title.includes("rút gọn");
       }
       return false;
 

@@ -11,6 +11,7 @@ import {
   RefreshCw,
   AlertCircle,
   Loader2,
+  TrendingUp,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/stores/authStore";
@@ -22,6 +23,7 @@ import {
   getPetStatusCopy,
   canFeedPet,
   handleFeedFailure,
+  petLevelProgress,
 } from "../petLogic";
 import { CompanionPet2D } from "./CompanionPet2D";
 
@@ -79,6 +81,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
   }, [pet, userBalance]);
 
   const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
+  const levelProgress = petLevelProgress(pet?.exp, pet?.level);
   const petDisplayName = pet?.name || speciesInfo.speciesName || "Bready";
   const satietyText = useMemo(() => {
     return getPetStatusCopy({
@@ -267,6 +270,36 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
           {/* Health & Happiness & Satiety Progress Meters */}
           <div className="space-y-2.5 bg-slate-50/50 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+            {/* Level Progress: EXP inside the current level (1,000 EXP a level) */}
+            <div>
+              <div className="flex justify-between text-xs font-medium mb-1">
+                <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300">
+                  <TrendingUp size={12} className="text-amber-600 dark:text-amber-400" aria-hidden="true" /> Lên Cấp{" "}
+                  {levelProgress.nextLevel}
+                </span>
+                <span className="text-amber-700 dark:text-amber-400 font-bold">
+                  {levelProgress.expInLevel}/{levelProgress.expPerLevel} EXP
+                </span>
+              </div>
+              <div
+                className="h-2 rounded-full bg-slate-200/80 dark:bg-slate-700 overflow-hidden"
+                role="progressbar"
+                aria-valuenow={levelProgress.expInLevel}
+                aria-valuemin={0}
+                aria-valuemax={levelProgress.expPerLevel}
+                aria-label={`Tiến trình lên Cấp ${levelProgress.nextLevel}`}
+              >
+                <div
+                  className="h-full rounded-full bg-amber-500 transition-all duration-300 motion-reduce:transition-none"
+                  style={{ width: `${levelProgress.percent}%` }}
+                />
+              </div>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                Còn {levelProgress.expToNext} EXP. Thú cưng nhận EXP khi được cho ăn ({pet.dailyRewardLimit ?? 3} lượt
+                đầu mỗi ngày).
+              </p>
+            </div>
+
             {/* Health Meter */}
             <div>
               <div className="flex justify-between text-xs font-medium mb-1">

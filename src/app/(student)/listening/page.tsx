@@ -2,7 +2,7 @@
 
 import { RecommendedForYou } from "@/components/learning-path/RecommendedForYou";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Flame,
@@ -26,6 +26,8 @@ import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScre
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import {
   DEFAULT_CATALOG_SORT,
+  DIFFICULTY_PARAMS,
+  filterFromParam,
   matchesDifficultyFilter,
   matchesStatusFilter,
   sortByLevel,
@@ -36,6 +38,7 @@ import {
 import { quizDisplayTitle, withoutLevelPhrase } from "@/lib/catalog/displayTitles";
 
 const EMPTY_QUIZZES: ListeningPracticeCatalogItem[] = [];
+const LISTENING_MODES = ["COMPREHENSION", "DICTATION", "DIALOGUE"] as const;
 
 /** Authoritative level from the API, with the authored tag as fallback. */
 const listeningLevelOf = (q: ListeningPracticeCatalogItem) =>
@@ -47,13 +50,19 @@ type ListeningCatalogCardItem = ListeningPracticeCatalogItem & {
 
 function ListeningCatalogContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { streak } = useGamificationStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedMode, setSelectedMode] = useState<string>("ALL");
-  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("ALL");
+  // The dashboard links here with ?mode= and ?difficulty=.
+  const [selectedMode, setSelectedMode] = useState<string>(() =>
+    filterFromParam<string>(searchParams.get("mode"), LISTENING_MODES, "ALL"),
+  );
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>(() =>
+    filterFromParam<DifficultyFilter>(searchParams.get("difficulty"), DIFFICULTY_PARAMS, "ALL"),
+  );
   const [sortOrder, setSortOrder] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [launchingQuiz, setLaunchingQuiz] = useState<ListeningPracticeCatalogItem | null>(null);
@@ -327,6 +336,7 @@ function ListeningCatalogContent() {
             <button
               type="button"
               onClick={() => setSelectedMode("ALL")}
+              aria-pressed={selectedMode === "ALL"}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "ALL"
                   ? "bg-teal-700 text-white shadow-2xs"
@@ -338,6 +348,7 @@ function ListeningCatalogContent() {
             <button
               type="button"
               onClick={() => setSelectedMode("COMPREHENSION")}
+              aria-pressed={selectedMode === "COMPREHENSION"}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "COMPREHENSION"
                   ? "bg-teal-700 text-white shadow-2xs"
@@ -349,6 +360,7 @@ function ListeningCatalogContent() {
             <button
               type="button"
               onClick={() => setSelectedMode("DICTATION")}
+              aria-pressed={selectedMode === "DICTATION"}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "DICTATION"
                   ? "bg-teal-700 text-white shadow-2xs"
@@ -360,6 +372,7 @@ function ListeningCatalogContent() {
             <button
               type="button"
               onClick={() => setSelectedMode("DIALOGUE")}
+              aria-pressed={selectedMode === "DIALOGUE"}
               className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
                 selectedMode === "DIALOGUE"
                   ? "bg-teal-700 text-white shadow-2xs"

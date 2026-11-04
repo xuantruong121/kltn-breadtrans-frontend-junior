@@ -32,7 +32,7 @@ import {
   gamificationService,
   TodayQuestItem,
 } from "@/lib/api/services/gamification.service";
-import { userService, UserProfile, type DailyPracticeResponse } from "@/lib/api/services/user.service";
+import { userService, UserProfile } from "@/lib/api/services/user.service";
 import { diagnosticBadgeLabel } from "@/lib/diagnostic/diagnosticUiLogic";
 import {
   planService,
@@ -57,9 +57,8 @@ import {
   getVietnamDayOfWeek,
   getVietnamFormattedDate,
   getVietnamGreeting,
-  getTypeSpecificQuestFallback,
-  isSafeInternalRoute,
   matchPartActivity,
+  resolveQuestAction,
   SKILL_DETAIL_CONFIGS,
   type SkillKey,
 } from "./dashboardUtils";
@@ -75,63 +74,19 @@ function getQuestProgressText(item: TodayQuestItem): string {
     return `${current}/${target} từ`;
   }
   if (
-    type === "DO_LISTENING" ||
-    type === "COMPLETE_QUIZ" ||
-    type === "DO_SPEAKING" ||
-    type === "PRACTICE_SPEAKING"
+    [
+      "DO_LISTENING",
+      "DO_READING",
+      "DO_WRITING",
+      "PERFECT_QUIZ",
+      "COMPLETE_QUIZ",
+      "DO_SPEAKING",
+      "PRACTICE_SPEAKING",
+    ].includes(type)
   ) {
     return `${current}/${target} bài`;
   }
   return `${current}/${target}`;
-}
-
-function resolveQuestAction(item: TodayQuestItem, dailyPractice?: DailyPracticeResponse) {
-  const questObj = item.quest || item;
-  const type = (item.type ?? questObj?.type ?? "").toUpperCase();
-  const candidateUrl = item.actionUrl?.trim() || "";
-  const candidateLabel = item.actionLabel?.trim() || "";
-
-  const plannerSkill = type === "DO_LISTENING" ? "LISTENING" : type === "DO_SPEAKING" || type === "PRACTICE_SPEAKING" ? "SPEAKING" : null;
-  const plannerItem = plannerSkill
-    ? dailyPractice?.items.find(
-        (planned) =>
-          planned.skill === plannerSkill &&
-          !planned.isLocked &&
-          !planned.isCompleted &&
-          isSafeInternalRoute(planned.route) &&
-          (plannerSkill === "LISTENING"
-            ? planned.route.startsWith("/listening")
-            : planned.route.startsWith("/speaking")),
-      )
-    : undefined;
-  if (plannerItem) {
-    return {
-      actionLabel: plannerSkill === "LISTENING" ? "Luyện nghe ngay" : "Luyện nói ngay",
-      actionUrl: plannerItem.route,
-    };
-  }
-
-  // Guard against legacy backend actionUrl incorrectly pointing COMPLETE_QUIZ to listening
-  if (type === "COMPLETE_QUIZ" && candidateUrl === "/listening") {
-    return {
-      actionLabel:
-        candidateLabel === "Luyện nghe" ? "Làm bài kiểm tra" : (candidateLabel || "Làm bài kiểm tra"),
-      actionUrl: "/exams",
-    };
-  }
-
-  if (candidateUrl && isSafeInternalRoute(candidateUrl)) {
-    return {
-      actionLabel: candidateLabel || "Tiếp tục học",
-      actionUrl: candidateUrl,
-    };
-  }
-
-  const fallback = getTypeSpecificQuestFallback(type);
-  return {
-    actionLabel: candidateLabel || fallback.actionLabel,
-    actionUrl: fallback.actionUrl,
-  };
 }
 
 function getQuestCategoryMeta(type?: string) {
@@ -154,9 +109,33 @@ function getQuestCategoryMeta(type?: string) {
         progressFill: "bg-blue-500",
         icon: Headphones,
       };
+    case "DO_READING":
+      return {
+        label: "Luyện đọc",
+        badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
+        progressFill: "bg-blue-500",
+        icon: BookOpen,
+      };
+    case "DO_WRITING":
+      return {
+        label: "Luyện viết",
+        badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
+        btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
+        progressFill: "bg-blue-500",
+        icon: PenTool,
+      };
+    case "PERFECT_QUIZ":
+      return {
+        label: "Làm đúng 100%",
+        badgeClass: "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+        btnClass: "bg-emerald-700 hover:bg-emerald-800 text-white shadow-emerald-600/20",
+        progressFill: "bg-emerald-500",
+        icon: Target,
+      };
     case "COMPLETE_QUIZ":
       return {
-        label: "Bài kiểm tra",
+        label: "Luyện kỹ năng",
         badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
         btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
         progressFill: "bg-blue-500",
@@ -165,7 +144,7 @@ function getQuestCategoryMeta(type?: string) {
     case "DO_SPEAKING":
     case "PRACTICE_SPEAKING":
       return {
-        label: "Luyện nói",
+        label: upper === "PRACTICE_SPEAKING" ? "Phát âm" : "Luyện nói",
         badgeClass: "bg-teal-100 dark:bg-teal-950/70 text-teal-900 dark:text-teal-300 border-teal-200 dark:border-teal-800",
         btnClass: "bg-teal-700 hover:bg-teal-800 text-white shadow-teal-600/20",
         progressFill: "bg-teal-500",
@@ -341,6 +320,16 @@ export default function DashboardPage() {
     requiredTier: "PLUS" | "PRO";
     periodLabel: string;
   } | null>(null);
+
+  // The upgrade dialog closes with Escape, as a modal should.
+  useEffect(() => {
+    if (!upgradePrompt?.isOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setUpgradePrompt(null);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [upgradePrompt?.isOpen]);
 
   // Active Skill Dropdown State (Accordion detail expansion)
   const [activeDetailKey, setActiveDetailKey] = useState<SkillKey | null>(null);
@@ -929,6 +918,7 @@ export default function DashboardPage() {
                     key={period.key}
                     type="button"
                     onClick={() => handleSelectPeriod(period.key)}
+                    aria-pressed={isActive}
                     aria-label={
                       period.requiredTier !== "FREE"
                         ? `${period.label} (Yêu cầu gói ${period.requiredTier === "PLUS" ? "Plus trở lên" : "Pro"})`
@@ -1465,7 +1455,7 @@ export default function DashboardPage() {
                   typeof item.progressPercent === "number"
                     ? Math.min(100, Math.max(0, item.progressPercent))
                     : clampPercentage(item.currentValue, targetValue);
-                const { actionLabel, actionUrl } = resolveQuestAction(item, dailyPractice);
+                const { actionLabel, actionUrl } = resolveQuestAction(item, dailyPractice?.items);
                 const categoryMeta = getQuestCategoryMeta(item.type ?? questObj?.type);
                 const CategoryIcon = categoryMeta.icon;
 

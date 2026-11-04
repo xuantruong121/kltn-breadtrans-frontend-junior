@@ -267,3 +267,44 @@ export function getFloatingPetBoundingBox(
     y2: bottom + height,
   };
 }
+
+/** The backend promotes a pet every 1,000 EXP: level = floor(exp / 1000) + 1. */
+export const PET_EXP_PER_LEVEL = 1000;
+
+export interface PetLevelProgress {
+  level: number;
+  nextLevel: number;
+  /** EXP earned inside the current level. */
+  expInLevel: number;
+  expPerLevel: number;
+  expToNext: number;
+  percent: number;
+}
+
+/**
+ * How far a pet is from its next level. The stored level is kept when it ran
+ * ahead of the EXP (old demo pets: Cấp 4 at 60 EXP), as the backend never
+ * takes a level away; the next level then needs level × 1,000 EXP in total.
+ */
+export function petLevelProgress(
+  exp: number | null | undefined,
+  storedLevel?: number | null,
+): PetLevelProgress {
+  const total = Math.max(0, Math.floor(Number(exp) || 0));
+  const level = Math.max(
+    Math.floor(Number(storedLevel) || 1),
+    Math.floor(total / PET_EXP_PER_LEVEL) + 1,
+  );
+  const expInLevel = Math.min(
+    PET_EXP_PER_LEVEL,
+    Math.max(0, total - (level - 1) * PET_EXP_PER_LEVEL),
+  );
+  return {
+    level,
+    nextLevel: level + 1,
+    expInLevel,
+    expPerLevel: PET_EXP_PER_LEVEL,
+    expToNext: level * PET_EXP_PER_LEVEL - total,
+    percent: Math.round((expInLevel / PET_EXP_PER_LEVEL) * 100),
+  };
+}

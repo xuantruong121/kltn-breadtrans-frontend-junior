@@ -1,4 +1,9 @@
 import axiosClient from "../axiosClient";
+import type {
+  ConfirmationMethod,
+  GroupReview,
+  GroupReviewStatus,
+} from "@/lib/examAi/answerReview";
 
 export type ExamAiCandidateQuestion = {
   questionNumber: number;
@@ -21,7 +26,15 @@ export type ExamAiCandidateGroup = {
   issues: string[];
   questions: ExamAiCandidateQuestion[];
   applied: boolean;
+  /** Null for Part 1: its photo, and so its review, come after Apply. */
+  reviewStatus?: GroupReviewStatus | null;
+  review?: GroupReview | null;
+  contentHash?: string;
+  /** Recomputed by the server from the current content. */
+  applyDecision?: { ok: boolean; reason: string };
 };
+
+export type ExamAiSkipped = { candidateKey: string; reason: string };
 
 export type ExamAiCandidateTask = {
   email?: string | null;
@@ -39,7 +52,7 @@ export type ExamAiFailedUnit = {
   part: number;
   offset: number;
   groupOrder: number;
-  code: "CONTENT_CONTRACT_FAILURE";
+  code: "CONTENT_CONTRACT_FAILURE" | "ANSWER_REVIEW_FAILED";
   message: string;
   attempts: number;
 };
@@ -98,11 +111,22 @@ export const examAiService = {
   async apply(
     jobId: string,
     selectedCandidateKeys?: string[],
-  ): Promise<ExamAiJobStatus> {
+  ): Promise<ExamAiJobStatus & { skipped?: ExamAiSkipped[] }> {
     return (await axiosClient.post(
       `/admin/exams/ai/jobs/${jobId}/apply`,
       selectedCandidateKeys ? { selectedCandidateKeys } : {},
-    )) as unknown as ExamAiJobStatus;
+    )) as unknown as ExamAiJobStatus & { skipped?: ExamAiSkipped[] };
+  },
+
+  async confirmGroup(
+    jobId: string,
+    candidateKey: string,
+    method: ConfirmationMethod,
+  ): Promise<ExamAiCandidate> {
+    return (await axiosClient.post(
+      `/admin/exams/ai/jobs/${jobId}/candidates/${candidateKey}/confirm`,
+      { method },
+    )) as unknown as ExamAiCandidate;
   },
 
   async regenerateGroup(

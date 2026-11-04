@@ -9,6 +9,7 @@ import {
   SKILL_DETAIL_CONFIGS,
   matchPartActivity,
   getVietnamFormattedDate,
+  resolveQuestAction,
 } from "./dashboardUtils.ts";
 
 test("getVietnamDayOfWeek deterministically parses backend dateKey", () => {
@@ -76,10 +77,11 @@ test("Quest routing correctly separates COMPLETE_QUIZ from DO_LISTENING", () => 
   assert.equal(listening.actionUrl, "/listening");
   assert.equal(listening.actionLabel, "Luyện nghe");
 
-  // COMPLETE_QUIZ -> /exams (NOT /listening)
+  // COMPLETE_QUIZ counts standalone Listening/Reading/Writing practice only,
+  // never a TOEIC exam, so its fallback is a practice home.
   const quiz = getTypeSpecificQuestFallback("COMPLETE_QUIZ");
-  assert.equal(quiz.actionUrl, "/exams");
-  assert.equal(quiz.actionLabel, "Làm bài kiểm tra");
+  assert.equal(quiz.actionUrl, "/listening");
+  assert.equal(quiz.actionLabel, "Luyện kỹ năng");
 
   // DO_SPEAKING -> canonical Speaking home
   const speaking = getTypeSpecificQuestFallback("DO_SPEAKING");
@@ -89,6 +91,49 @@ test("Quest routing correctly separates COMPLETE_QUIZ from DO_LISTENING", () => 
   const vocab = getTypeSpecificQuestFallback("LEARN_VOCAB");
   assert.equal(vocab.actionUrl, "/flashcard");
 
+});
+
+test("a skill-practice quest never opens the exam pages", () => {
+  const plan = (skill: string, route: string, over: Record<string, boolean> = {}) => ({
+    skill,
+    route,
+    isLocked: false,
+    isCompleted: false,
+    ...over,
+  });
+  // The old backend link and the old frontend guard both sent it to /exams.
+  for (const actionUrl of ["/exams", "/toeic/assessments", "/listening", undefined]) {
+    const action = resolveQuestAction({ type: "COMPLETE_QUIZ", actionUrl, actionLabel: "Làm bài kiểm tra" });
+    assert.ok(!/^\/(exams|toeic)/.test(action.actionUrl), `${actionUrl} -> ${action.actionUrl}`);
+    assert.notEqual(action.actionLabel, "Làm bài kiểm tra");
+  }
+  // Today's planned practice wins, skipping a locked or finished one and a
+  // planned skill the quest does not count.
+  const planned = [
+    plan("SPEAKING", "/speaking/4"),
+    plan("LISTENING", "/listening/7", { isCompleted: true }),
+    plan("READING", "/reading/12", { isLocked: true }),
+    plan("WRITING", "/writing/3"),
+  ];
+  assert.deepEqual(resolveQuestAction({ type: "COMPLETE_QUIZ" }, planned), {
+    actionLabel: "Luyện kỹ năng ngay",
+    actionUrl: "/writing/3",
+  });
+  // A planned route that does not open the planned skill is not followed.
+  assert.equal(
+    resolveQuestAction({ type: "COMPLETE_QUIZ" }, [plan("READING", "/exams/2")]).actionUrl,
+    "/listening",
+  );
+  // A planned speaking item without a task type is not followed, since it
+  // might count for the other speaking quest.
+  assert.equal(
+    resolveQuestAction({ type: "DO_SPEAKING" }, planned).actionUrl,
+    "/speaking",
+  );
+  assert.equal(
+    resolveQuestAction({ quest: { type: "LEARN_VOCAB" }, actionUrl: "/flashcard" }).actionUrl,
+    "/flashcard",
+  );
 });
 
 test("isSafeInternalRoute validates allowed prefixes", () => {
@@ -172,7 +217,11 @@ test("SKILL_DETAIL_CONFIGS defines valid data for all 6 core skills", () => {
   // Exam specific checks matching BreadTrans test formats
   const exam = SKILL_DETAIL_CONFIGS.exam;
   assert.equal(exam.title, "LUYỆN ĐỀ");
-  assert.equal(exam.parts.length, 4);
+  // Only papers the catalog has; there is no "mini" TOEIC product.
+  assert.deepEqual(
+    exam.parts.map((p) => p.href),
+    ["/exams?paper=TOEIC_LR", "/exams?paper=TOEIC_SW", "/exams?paper=TOEIC_4_SKILLS"],
+  );
 
   // Reading specific checks matching BreadTrans levels
   const reading = SKILL_DETAIL_CONFIGS.reading;
@@ -256,4 +305,35 @@ test("getVietnamFormattedDate formats date as DD/MM", () => {
   const testDate = new Date("2026-10-09T08:00:00Z");
   const formatted = getVietnamFormattedDate(testDate);
   assert.equal(formatted, "09/10");
+});
+
+test("each daily quest opens practice of the kind it counts", () => {
+  const plan = (skill: string, route: string, taskType: string | null = null) => ({
+    skill,
+    route,
+    taskType,
+    isLocked: false,
+    isCompleted: false,
+  });
+  const planned = [
+    plan("LISTENING", "/listening/9"),
+    plan("READING", "/reading/6"),
+    plan("WRITING", "/writing/17"),
+    plan("SPEAKING", "/speaking/16", "RESPOND_TO_QUESTION"),
+    plan("SPEAKING", "/speaking/129", "READ_ALOUD"),
+  ];
+  const go = (type: string) => resolveQuestAction({ type }, planned);
+  assert.equal(go("DO_LISTENING").actionUrl, "/listening/9");
+  assert.equal(go("DO_READING").actionUrl, "/reading/6");
+  assert.equal(go("DO_WRITING").actionUrl, "/writing/17");
+  assert.equal(go("PERFECT_QUIZ").actionUrl, "/listening/9");
+  // Free speech for "Luyện Speaking", read-aloud for "Thực hành phát âm".
+  assert.equal(go("DO_SPEAKING").actionUrl, "/speaking/16");
+  assert.equal(go("PRACTICE_SPEAKING").actionUrl, "/speaking/129");
+  assert.equal(go("PRACTICE_SPEAKING").actionLabel, "Luyện phát âm ngay");
+  // Without a fitting planned item, the skill catalog, never an exam page.
+  for (const type of ["DO_LISTENING", "DO_READING", "DO_WRITING", "PERFECT_QUIZ", "DO_SPEAKING", "PRACTICE_SPEAKING"]) {
+    const url = resolveQuestAction({ type, actionUrl: "/exams" }).actionUrl;
+    assert.match(url, /^\/(listening|reading|writing|speaking)$/, type);
+  }
 });
