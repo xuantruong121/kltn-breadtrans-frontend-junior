@@ -24,6 +24,7 @@ import { PlanCard } from "@/modules/subscription/components/PlanCard";
 import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentModal";
 import { PlanComparisonTable } from "@/modules/subscription/components/PlanComparisonTable";
 import { PlanFaqAccordion } from "@/modules/subscription/components/PlanFaqAccordion";
+import { PlanExpiryBanner } from "@/modules/subscription/components/PlanExpiryBanner";
 
 function PlansPageContent() {
   const router = useRouter();
@@ -129,6 +130,7 @@ function PlansPageContent() {
       currentIdempotencyKeyRef.current = generateIdempotencyKey();
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.myPurchases });
       queryClient.invalidateQueries({ queryKey: ["plan-renewal-preview"] });
+      queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.expirySummary });
       setActivePurchaseId(purchase.id);
       setActivePurchasePlanCode(purchase.planCode === "PRO" ? "PRO" : "PLUS");
     },
@@ -232,6 +234,9 @@ function PlansPageContent() {
           )}
         </div>
       </header>
+
+      {/* On this page the cards below are the way to renew. */}
+      <PlanExpiryBanner showRenewLink={false} />
 
       {/* ── Catalog Error Banner ──────────────────────────────────── */}
       {isCatalogError && (

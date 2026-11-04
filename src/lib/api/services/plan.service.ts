@@ -10,6 +10,7 @@ import type {
   EffectivePlanEntitlement,
   SubscriptionStatus,
   RenewalPreview,
+  ExpirySummary,
 } from "@/modules/subscription/planLogic";
 import {
   formatVnd,
@@ -35,6 +36,7 @@ export type {
   EffectivePlanEntitlement,
   SubscriptionStatus,
   RenewalPreview,
+  ExpirySummary,
 };
 
 export {
@@ -123,6 +125,11 @@ export const planService = {
    * Where buying this version now would sit: now, queued after the running
    * plan, or as an upgrade with the running plan's days converted.
    */
+  /** GET /subscriptions/me/expiry-summary: days left, queued renewal, paid practice used. */
+  getExpirySummary: async (): Promise<ExpirySummary> => {
+    return await axiosClient.get("/subscriptions/me/expiry-summary");
+  },
+
   getRenewalPreview: async (planVersionId: number): Promise<RenewalPreview> => {
     return await axiosClient.get(`/plan-purchases/renewal-preview/${planVersionId}`);
   },

@@ -49,6 +49,7 @@ import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { ONBOARDING_SKIPPED_KEY, shouldOpenOnboarding } from "@/lib/learning-path/onboarding";
 import { useRouter } from "next/navigation";
 import { DashboardCompanionCard } from "@/modules/pet/components/DashboardCompanionCard";
+import { PlanExpiryBanner } from "@/modules/subscription/components/PlanExpiryBanner";
 import {
   canAccessFilterPeriod,
   clampPercentage,
@@ -694,6 +695,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-16 font-['Quicksand',sans-serif]" id="dashboard">
+      <PlanExpiryBanner />
       {/* ========================================================================= */}
       {/* 1. STUDENT HERO COMMAND CENTER (BreadTrans Clean Light Visual Language)   */}
       {/* ========================================================================= */}

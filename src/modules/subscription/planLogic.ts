@@ -133,6 +133,7 @@ export const PLAN_QUERY_KEYS = {
   myPurchases: ["my-plan-purchases"] as const,
   purchaseDetail: (id: number) => ["plan-purchase-detail", id] as const,
   renewalPreview: (planVersionId: number) => ["plan-renewal-preview", planVersionId] as const,
+  expirySummary: ["plan-expiry-summary"] as const,
   vocabTopics: ["vocab-topics"] as const,
   readingExercises: ["reading-exercises"] as const,
   // Must match the key used by the Listening catalog query. Keeping this
@@ -168,6 +169,44 @@ const formatDay = (iso: string) => {
     ? ""
     : date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
 };
+
+/** GET /subscriptions/me/expiry-summary */
+export interface ExpirySummary {
+  isPaid: boolean;
+  planCode: string;
+  planName: string;
+  endsAt: string | null;
+  daysLeft: number | null;
+  queuedRenewal: { planCode: string; startsAt: string; endsAt: string } | null;
+  lockedAfterExpiry: Array<{
+    skill: string;
+    levelGroup: string;
+    requiredPlan: "PLUS" | "PRO";
+    label: string;
+    count: number;
+  }>;
+}
+
+export interface PlanExpiryBannerState {
+  title: string;
+  body: string;
+  items: string[];
+}
+
+/**
+ * The banner shown in the last 7 days of a paid plan with no renewal queued:
+ * how long is left and what the learner used that FREE will lock again.
+ */
+export function planExpiryBannerState(summary: ExpirySummary | null | undefined): PlanExpiryBannerState | null {
+  if (!summary?.isPaid || summary.daysLeft === null || summary.daysLeft > 7 || summary.queuedRenewal) return null;
+  const name = summary.planName.replace(/^BreadTrans\s+/, "");
+  const title = summary.daysLeft <= 0 ? `Gói ${name} hết hạn hôm nay` : `Gói ${name} còn ${summary.daysLeft} ngày`;
+  const items = summary.lockedAfterExpiry.slice(0, 4).map((group) => `${group.label} · ${group.count} bài`);
+  const body = items.length
+    ? "Khi gói hết hạn, các phần bạn đã luyện trong kỳ này sẽ bị khoá lại. Gia hạn bây giờ không mất ngày nào: gói mới bắt đầu đúng lúc gói hiện tại kết thúc."
+    : "Gia hạn bây giờ không mất ngày nào: gói mới bắt đầu đúng lúc gói hiện tại kết thúc.";
+  return { title, body, items };
+}
 
 /** Converted days shown to the learner: at most one decimal, comma separator. */
 export function formatConvertedDays(days: number): string {

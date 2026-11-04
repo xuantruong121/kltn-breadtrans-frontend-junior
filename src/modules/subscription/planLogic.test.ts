@@ -11,6 +11,7 @@ import {
   resolveEffectivePlanDisplay,
   getPlusPricingDisplay,
   getPlanCardCta,
+  planExpiryBannerState,
   getPaymentStatusBadgeInfo,
   preparePurchasePayload,
   generateIdempotencyKey,
@@ -1058,5 +1059,45 @@ describe("Renewing early and moving up (renewal preview from the server)", () =>
     });
     assert.equal(cta.label, "Nâng cấp Plus");
     assert.equal(cta.disabled, false);
+  });
+});
+
+describe("Plan expiry banner", () => {
+  const summary = (over: Record<string, unknown> = {}) => ({
+    isPaid: true,
+    planCode: "PLUS",
+    planName: "BreadTrans Plus",
+    endsAt: "2026-11-07T08:00:00.000Z",
+    daysLeft: 3,
+    queuedRenewal: null,
+    lockedAfterExpiry: [
+      { skill: "WRITING", levelGroup: "INTERMEDIATE", requiredPlan: "PLUS" as const, label: "Viết Trung cấp", count: 4 },
+      { skill: "SPEAKING", levelGroup: "INTERMEDIATE", requiredPlan: "PLUS" as const, label: "Nói Trung cấp", count: 2 },
+    ],
+    ...over,
+  });
+
+  test("last 7 days with nothing queued: days left and what will lock again", () => {
+    const state = planExpiryBannerState(summary());
+    assert.equal(state?.title, "Gói Plus còn 3 ngày");
+    assert.deepEqual(state?.items, ["Viết Trung cấp · 4 bài", "Nói Trung cấp · 2 bài"]);
+    assert.match(state?.body ?? "", /sẽ bị khoá lại/);
+  });
+
+  test("the last day says today; nothing used says only that renewing loses no day", () => {
+    const state = planExpiryBannerState(summary({ daysLeft: 0, lockedAfterExpiry: [] }));
+    assert.equal(state?.title, "Gói Plus hết hạn hôm nay");
+    assert.deepEqual(state?.items, []);
+    assert.doesNotMatch(state?.body ?? "", /bị khoá/);
+  });
+
+  test("hidden for FREE, for more than 7 days left, and once a renewal is queued", () => {
+    assert.equal(planExpiryBannerState(summary({ isPaid: false, daysLeft: null })), null);
+    assert.equal(planExpiryBannerState(summary({ daysLeft: 8 })), null);
+    assert.equal(
+      planExpiryBannerState(summary({ queuedRenewal: { planCode: "PLUS", startsAt: "2026-11-07T08:00:00.000Z", endsAt: "2026-12-07T08:00:00.000Z" } })),
+      null,
+    );
+    assert.equal(planExpiryBannerState(null), null);
   });
 });
