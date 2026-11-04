@@ -150,7 +150,8 @@ export function AiReviewCostsSection() {
                           )}
                           {row.neurons !== null && (
                             <div className="text-slate-500">
-                              {formatTokens(row.neurons)} Neurons
+                              {formatTokens(row.neurons)} Neurons{" "}
+                              {row.neuronsMeasured ? "(đo)" : "(ước tính)"}
                             </div>
                           )}
                         </td>

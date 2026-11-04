@@ -12,6 +12,8 @@ export type AiReviewModelRow = {
   latencyMs: number;
   costUsd: number | null;
   neurons: number | null;
+  /** True when Cloudflare reported the Neurons itself, false when estimated from tokens. */
+  neuronsMeasured?: boolean;
   tokensMissing: boolean;
 };
 
