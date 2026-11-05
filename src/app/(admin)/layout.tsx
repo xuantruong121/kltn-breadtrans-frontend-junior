@@ -31,6 +31,7 @@ import {
   TicketPercent,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useAuthSyncStore } from "@/stores/authSyncStore";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -135,11 +136,14 @@ export default function AdminLayout({
     () => false,
   );
 
+  // Wait for the other open tabs to hand over a session before leaving.
+  const authSettled = useAuthSyncStore((state) => state.settled);
+
   useEffect(() => {
-    if (isReady && (!user || user.role !== "ADMIN")) {
+    if (isReady && authSettled && (!user || user.role !== "ADMIN")) {
       router.push("/");
     }
-  }, [isReady, user, router]);
+  }, [isReady, authSettled, user, router]);
 
   useEffect(() => {
     const handleResize = () => {

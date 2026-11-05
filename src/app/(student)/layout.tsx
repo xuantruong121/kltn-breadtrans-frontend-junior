@@ -10,6 +10,7 @@ import { BackToTop } from "@/components/navigation/BackToTop";
 import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 import { userService } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
+import { useAuthSyncStore } from "@/stores/authSyncStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { LearningFocusProvider, useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { isLearningFocusRoute } from "@/lib/practice/focusMode";
@@ -71,11 +72,15 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     staleTime: 60_000,
   });
 
+  // A tab opened with "Open in new tab" may get its session from another tab
+  // a moment after it loads; wait for that answer before sending it to /login.
+  const authSettled = useAuthSyncStore((state) => state.settled);
+
   useEffect(() => {
-    if (isReady && (!user || user.role !== "STUDENT") && !isGuestAllowed) {
+    if (isReady && authSettled && (!user || user.role !== "STUDENT") && !isGuestAllowed) {
       router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
     }
-  }, [isReady, user, router, pathname, isGuestAllowed]);
+  }, [isReady, authSettled, user, router, pathname, isGuestAllowed]);
 
   useEffect(() => {
     if (!user || user.role !== "STUDENT") return;
