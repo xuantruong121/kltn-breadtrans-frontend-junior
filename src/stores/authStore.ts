@@ -52,6 +52,12 @@ const authStorage = {
   },
 };
 
+/** Where this tab keeps its session: "session" (this tab) or "local" (remembered). */
+export function getAuthPersistenceMode(): "session" | "local" {
+  if (typeof window === "undefined") return "local";
+  return window.sessionStorage.getItem(AUTH_PERSISTENCE_MODE_KEY) === "session" ? "session" : "local";
+}
+
 /** Select where the current login session survives: tab refresh or browser restart. */
 export function setAuthPersistenceMode(rememberMe: boolean) {
   if (typeof window === "undefined") return;
