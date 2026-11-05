@@ -8,8 +8,7 @@ import {
   publishChecklist,
   trackNames,
   writingCardLabel,
-  writingUsesPictures,
-} from "./skillCmsStatus.ts";
+  writingUsesPictures, TRACK_FIELD_COPY } from "./skillCmsStatus.ts";
 
 test("latestAudioBadge: no recording reads as none", () => {
   assert.deepEqual(latestAudioBadge(undefined), {
@@ -75,8 +74,8 @@ test("a dialogue with a clip on every question has its audio", () => {
 
 test("track names read in full, and say when none is set", () => {
   assert.equal(trackNames(["IT_SOFTWARE"]), "Công nghệ thông tin");
-  assert.equal(trackNames([]), "Chưa gắn ngành");
-  assert.equal(trackNames(undefined), "Chưa gắn ngành");
+  assert.equal(trackNames([]), "Chưa gắn lĩnh vực");
+  assert.equal(trackNames(undefined), "Chưa gắn lĩnh vực");
 });
 
 test("publishChecklist: flags a missing English explanation, a bad key and unpublished audio", () => {
@@ -174,4 +173,11 @@ test("a sentence exercise stored as a picture type does not ask for an image", (
     "Viết theo tranh",
   );
   assert.equal(writingCardLabel({ type: "WRITING_EMAIL" }), "Viết email");
+});
+
+test("admin track copy says lĩnh vực, as the learner onboarding does", () => {
+  assert.equal(TRACK_FIELD_COPY.label, "Lĩnh vực");
+  for (const text of Object.values(TRACK_FIELD_COPY)) {
+    assert.doesNotMatch(text, /ngành/i);
+  }
 });

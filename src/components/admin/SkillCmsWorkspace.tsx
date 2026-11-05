@@ -1587,14 +1587,14 @@ export default function SkillCmsWorkspace({
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
-            Ngành
+            Lĩnh vực
             <select
               value={trackFilter}
               onChange={(event) => setTrackFilter(event.target.value)}
               className={FILTER_SELECT}
             >
               <option value="ALL">Tất cả</option>
-              <option value="UNTAGGED">Chưa gắn ngành</option>
+              <option value="UNTAGGED">Chưa gắn lĩnh vực</option>
               {CONTENT_TRACKS.map((track) => (
                 <option key={track.value} value={track.value}>
                   {track.label}
@@ -2498,6 +2498,15 @@ export default function SkillCmsWorkspace({
                 className={`${inputClassName()} min-h-20`}
               />
             </label>
+            {/* Keyed by id: a new item becomes taggable once saved. */}
+            <TrackTagField
+              key={item?.id ?? "new"}
+              variant="inline"
+              domain={domain}
+              id={item?.id}
+              tracks={item?.tracks ?? []}
+              listKey={`admin-skill-content-${domain}`}
+            />
             {isWriting && (
               <label className="text-sm font-medium">
                 Dạng bài viết
@@ -2745,15 +2754,6 @@ export default function SkillCmsWorkspace({
                 </details>
               )}
             </section>
-          )}
-
-          {item?.id && (
-            <TrackTagField
-              domain={domain}
-              id={item.id}
-              tracks={item.tracks ?? []}
-              listKey={`admin-skill-content-${domain}`}
-            />
           )}
 
           <section

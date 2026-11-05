@@ -20,6 +20,7 @@ import {
   type AdminPlanPurchase,
   type PlanPurchaseStatus,
 } from "@/lib/api/services/admin-plan-purchase.service";
+import { canConfirmPurchase, canRejectPurchase } from "@/lib/admin/planPurchaseActions";
 import {
   adminSubscriptionService,
   type AdminSubscriptionItem,
@@ -68,12 +69,9 @@ const dateOnly = (value?: string | null) =>
       })
     : "—";
 
-const canConfirm = (item: AdminPlanPurchase) =>
-  ["REPORTED", "REVIEW_REQUIRED"].includes(item.payment.status) &&
-  item.status === "PENDING_PAYMENT";
+const canConfirm = (item: AdminPlanPurchase) => canConfirmPurchase(item);
 
-const canReject = (item: AdminPlanPurchase) =>
-  item.payment.status === "REPORTED" && item.status === "PENDING_PAYMENT";
+const canReject = (item: AdminPlanPurchase) => canRejectPurchase(item);
 
 function TransactionStatusBadge({ item }: { item: AdminPlanPurchase }) {
   const status = item.payment.status;
