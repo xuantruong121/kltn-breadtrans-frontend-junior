@@ -298,7 +298,7 @@ export default function AdminSpeakingPage() {
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
-            Ngành
+            Lĩnh vực
             <select
               value={trackFilter}
               onChange={(e) => {
@@ -308,7 +308,7 @@ export default function AdminSpeakingPage() {
               className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             >
               <option value="ALL">Tất cả</option>
-              <option value="UNTAGGED">Chưa gắn ngành</option>
+              <option value="UNTAGGED">Chưa gắn lĩnh vực</option>
               {CONTENT_TRACKS.map((track) => (
                 <option key={track.value} value={track.value}>
                   {track.label}

@@ -70,12 +70,24 @@ export const CONTENT_TRACKS = [
   { value: "STUDENT_ACADEMIC", label: "Sinh viên – Học thuật" },
 ];
 
+/**
+ * Admin copy for career tracks. The learner's onboarding asks "Bạn làm việc
+ * hoặc học trong lĩnh vực nào?", so the admin says "lĩnh vực" too.
+ */
+export const TRACK_FIELD_COPY = {
+  label: "Lĩnh vực",
+  hint: "Bài được ưu tiên đề xuất cho học viên chọn lĩnh vực này. Tự lưu khi bấm.",
+  lockedHint: "Lưu bài trước, sau đó chọn lĩnh vực.",
+  untagged: "Chưa gắn lĩnh vực",
+  saveError: "Chưa lưu được lĩnh vực",
+} as const;
+
 /** A list card's track line. */
 export function trackNames(tracks?: string[]): string {
   const names = CONTENT_TRACKS.filter((t) => tracks?.includes(t.value)).map(
     (t) => t.label,
   );
-  return names.length ? names.join(", ") : "Chưa gắn ngành";
+  return names.length ? names.join(", ") : TRACK_FIELD_COPY.untagged;
 }
 
 export type ChecklistItem = { label: string; done: boolean };
