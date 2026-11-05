@@ -11,6 +11,7 @@ import {
   BookOpen,
   CheckCircle2,
   Loader2,
+  Maximize,
   Mic,
   RotateCcw,
   SkipForward,
@@ -67,6 +68,8 @@ import {
   writingGuidance,
 } from "@/lib/diagnostic/diagnosticTaskLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { enterFullscreen, exitFullscreen, useIsFullscreen } from "@/lib/toeic/useExamFullscreen";
+import { F11_HINT, fullscreenAfterResult } from "@/lib/diagnostic/fullscreenExit";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -314,6 +317,24 @@ export default function DiagnosticPage() {
     latestResult && (!submit.data || latestResult.attemptId === submit.data.attemptId)
       ? latestResult
       : (submit.data ?? latestResult ?? undefined);
+
+  // Once the result shows, leave the page's fullscreen; if the learner is in
+  // the browser's own fullscreen (F11, e.g. after leaving ours during the
+  // test), say how to get out, once.
+  const isFullscreen = useIsFullscreen();
+  const f11HintShownRef = useRef(false);
+  useEffect(() => {
+    if (!result) return;
+    const next = fullscreenAfterResult({
+      elementFullscreen: Boolean(document.fullscreenElement),
+      browserFullscreen: window.matchMedia?.("(display-mode: fullscreen)").matches ?? false,
+    });
+    if (next === "EXIT") exitFullscreen();
+    else if (next === "HINT_F11" && !f11HintShownRef.current) {
+      f11HintShownRef.current = true;
+      toast(F11_HINT, { duration: 8000 });
+    }
+  }, [result, isFullscreen]);
 
   useAssessmentAntiCheat({
     enabled: started && !result && !submit.isPending,
@@ -637,6 +658,23 @@ export default function DiagnosticPage() {
           onExit={() => setShowExitConfirm(true)}
           exitLabel="Tạm dừng"
         />
+        {/* Phones without the Fullscreen API (iPhone Safari) never see this. */}
+        {!isFullscreen && typeof document !== "undefined" && document.fullscreenEnabled && (
+          <div
+            role="status"
+            className="flex flex-wrap items-center justify-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <span>Bạn đang làm bài ngoài chế độ toàn màn hình.</span>
+            <button
+              type="button"
+              onClick={enterFullscreen}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 text-sm font-bold text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
+            >
+              <Maximize size={15} strokeWidth={2.25} aria-hidden="true" />
+              Bật lại toàn màn hình
+            </button>
+          </div>
+        )}
 
         <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8">
           {/* Question list: a bar with a drawer below lg, a sticky sidebar from lg. */}
