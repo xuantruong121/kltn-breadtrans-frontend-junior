@@ -719,3 +719,81 @@ test("Dictation without a published full-quiz artifact shows the notice without 
   assert.equal(entry.audioError, true);
   assert.match(entry.audioNotice ?? "", /đang được quản trị viên chuẩn bị/);
 });
+
+// =========================================================================
+// On-load probe asks the transcript status first (no 403 per lesson open)
+// =========================================================================
+
+for (const hasDictation of [true, false]) {
+  const kind = hasDictation ? "dictation" : "dialogue";
+
+  test(`Probe (${kind}): an unrevealed lesson never calls the transcript`, async () => {
+    const { fetcher, calls } = createMockFetcher({
+      getTranscriptStatus: async () => ({ revealed: false }),
+    });
+    const quiz = createSampleQuiz(hasDictation);
+
+    const entry = await probeOrPrefetchTranscript(quiz.id, quiz, undefined, fetcher);
+
+    assert.equal(calls.getQuizTranscript.length, 0);
+    assert.equal(calls.revealTranscript.length, 0);
+    assert.equal(calls.getTranscriptAudioBlob.length, 0);
+    assert.equal(entry.authorizationStatus, "unauthorized");
+    assert.equal(entry.transcript, null);
+  });
+
+  test(`Probe (${kind}): an earlier reveal is restored on load`, async () => {
+    const { fetcher, calls } = createMockFetcher({
+      getTranscriptStatus: async () => ({ revealed: true }),
+    });
+    const quiz = createSampleQuiz(hasDictation);
+
+    const entry = await probeOrPrefetchTranscript(quiz.id, quiz, undefined, fetcher);
+
+    assert.equal(calls.getQuizTranscript.length, 1);
+    assert.equal(calls.revealTranscript.length, 0);
+    assert.equal(entry.authorizationStatus, "authorized");
+    assert.ok(entry.transcript && entry.transcript.length > 0);
+  });
+}
+
+test("Probe: a failing status call falls back to probing the transcript", async () => {
+  const { fetcher, calls } = createMockFetcher({
+    getTranscriptStatus: async () => {
+      throw new Error("Network Error");
+    },
+  });
+  const quiz = createSampleQuiz(true);
+
+  const entry = await probeOrPrefetchTranscript(quiz.id, quiz, undefined, fetcher);
+
+  assert.equal(calls.getQuizTranscript.length, 1);
+  assert.equal(entry.authorizationStatus, "authorized");
+});
+
+test("Explicit request on a dialogue lesson records the reveal before loading", async () => {
+  let revealed = false;
+  const { fetcher, calls } = createMockFetcher({
+    revealTranscript: async (id) => {
+      calls.revealTranscript.push(id);
+      revealed = true;
+      return { revealedAt: new Date().toISOString() };
+    },
+    getQuizTranscript: async (id) => {
+      if (!revealed) {
+        const error: any = new Error("Hãy xác nhận xem transcript trước khi tải nội dung.");
+        error.response = { status: 403 };
+        throw error;
+      }
+      calls.getQuizTranscript.push(id);
+      return { items: [{ questionId: 101, order: 1, transcript: "Hi", translation: "Chào" }] };
+    },
+  });
+  const quiz = createSampleQuiz(false);
+
+  const entry = await revealAndFetchTranscript(quiz.id, quiz, undefined, fetcher);
+
+  assert.equal(calls.revealTranscript.length, 1);
+  assert.equal(entry.authorizationStatus, "authorized");
+  assert.equal(entry.transcript?.[0].transcript, "Hi");
+});

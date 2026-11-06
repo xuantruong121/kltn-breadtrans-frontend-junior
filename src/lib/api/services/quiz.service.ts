@@ -284,6 +284,10 @@ export const quizService = {
     return await axiosClient.get(`/quizzes/${quizId}/transcript`);
   },
 
+  getListeningTranscriptStatus: async (quizId: number): Promise<{ revealed: boolean }> => {
+    return await axiosClient.get(`/quizzes/${quizId}/transcript/status`);
+  },
+
   revealListeningTranscript: async (quizId: number): Promise<{ revealedAt: string }> => {
     return await axiosClient.post(`/quizzes/${quizId}/transcript/reveal`);
   },

@@ -30,6 +30,12 @@ export interface TranscriptResourceFetcher {
     transcriptVersion?: number | string | null;
   }>;
   revealTranscript: (quizId: number) => Promise<{ revealedAt: string }>;
+  /**
+   * Whether the learner already revealed the transcript, answered with 200.
+   * The on-load probe asks this first so an unrevealed lesson does not call
+   * the transcript itself and get a 403 (a backend warning on every open).
+   */
+  getTranscriptStatus?: (quizId: number) => Promise<{ revealed: boolean }>;
   getTranscriptAudioBlob: (
     quizId: number,
     signal?: AbortSignal,
@@ -53,6 +59,7 @@ async function resolveFetcher(provided?: TranscriptResourceFetcher): Promise<Tra
   activeFetcher = {
     getQuizTranscript: (quizId: number) => quizService.getListeningTranscript(quizId),
     revealTranscript: (quizId: number) => quizService.revealListeningTranscript(quizId),
+    getTranscriptStatus: (quizId: number) => quizService.getListeningTranscriptStatus(quizId),
     getTranscriptAudioBlob: (
       quizId: number,
       signal?: AbortSignal,
@@ -487,6 +494,24 @@ function runInFlightTask<T>(
  * Validates fresh server content against any existing cached entry:
  * - If server transcript content changed, invalidates stale cache and fetches fresh audio.
  */
+/** A lesson whose transcript the learner has not revealed: no text kept. */
+function unauthorizedEntry(quizId: number, quiz: Quiz): TranscriptResourceCacheEntry {
+  const entry: TranscriptResourceCacheEntry = {
+    quizId,
+    authorizationStatus: "unauthorized",
+    transcript: null,
+    audioBlob: null,
+    audioBlobUrl: null,
+    audioArtifact: quiz.listeningAudioArtifact ?? null,
+    contentHash: null,
+    audioError: false,
+    audioNotice: null,
+    updatedAt: Date.now(),
+  };
+  cacheByQuizId.set(quizId, entry);
+  return entry;
+}
+
 export async function probeOrPrefetchTranscript(
   quizId: number,
   quiz: Quiz,
@@ -511,6 +536,21 @@ export async function probeOrPrefetchTranscript(
     const fetcher = await resolveFetcher(customFetcher);
     const hasDictation = quizContainsDictation(quiz);
 
+    // Not revealed yet: nothing to load, and no 403 from the transcript call.
+    // If the status call itself fails, fall back to probing the transcript.
+    if (fetcher.getTranscriptStatus) {
+      let revealed: boolean | null = null;
+      try {
+        revealed = (await fetcher.getTranscriptStatus(quizId)).revealed;
+      } catch (error: any) {
+        if (internalSignal.aborted || error?.name === "AbortError") {
+          throw createAbortError();
+        }
+      }
+      if (internalSignal.aborted) throw createAbortError();
+      if (revealed === false) return unauthorizedEntry(quizId, quiz);
+    }
+
     if (!hasDictation) {
       return await fetchAuthorizedResources(quizId, quiz, internalSignal, fetcher);
     }
@@ -534,20 +574,7 @@ export async function probeOrPrefetchTranscript(
         status === 403 ||
         error?.message?.includes("xác nhận xem transcript")
       ) {
-        const entry: TranscriptResourceCacheEntry = {
-          quizId,
-          authorizationStatus: "unauthorized",
-          transcript: null,
-          audioBlob: null,
-          audioBlobUrl: null,
-          audioArtifact: quiz.listeningAudioArtifact ?? null,
-          contentHash: null,
-          audioError: false,
-          audioNotice: null,
-          updatedAt: Date.now(),
-        };
-        cacheByQuizId.set(quizId, entry);
-        return entry;
+        return unauthorizedEntry(quizId, quiz);
       }
       throw error;
     }
@@ -594,13 +621,15 @@ export async function revealAndFetchTranscript(
     }
   }
 
-  const hasDictation = quizContainsDictation(quiz);
+  // The backend asks for a reveal on every listening-practice lesson,
+  // dialogue ones included; without it this explicit request got a 403.
+  const needsReveal = quizContainsDictation(quiz) || quiz.type === "LISTENING_PRACTICE";
 
   return runInFlightTask(inFlightReveals, quizId, signal, async (internalSignal) => {
     if (internalSignal.aborted) throw createAbortError();
     const fetcher = await resolveFetcher(customFetcher);
 
-    if (hasDictation) {
+    if (needsReveal) {
       await fetcher.revealTranscript(quizId).catch(() => undefined);
     }
     return await fetchAuthorizedResources(quizId, quiz, internalSignal, fetcher);
