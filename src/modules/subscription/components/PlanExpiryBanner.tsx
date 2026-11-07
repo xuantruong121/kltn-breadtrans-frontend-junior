@@ -20,6 +20,27 @@ function useNow(active: boolean) {
 }
 
 /**
+ * Digits in cells one "0" wide. Quicksand has no tabular figures, so plain
+ * digits change the clock's width every second (80-121px at 30px) and the
+ * banner text beside it re-wraps; fixed cells keep the width constant.
+ */
+function FixedDigits({ text }: { text: string }) {
+  return (
+    <>
+      {text.split("").map((char, index) =>
+        /\d/.test(char) ? (
+          <span key={index} className="inline-block w-[1ch] text-center">
+            {char}
+          </span>
+        ) : (
+          <span key={index}>{char}</span>
+        ),
+      )}
+    </>
+  );
+}
+
+/**
  * Shown in the last 7 days of a paid plan with no renewal queued: days left,
  * the paid practice used in this plan that FREE will lock again, and a link
  * to renew (the new plan starts when this one ends, so no day is lost).
@@ -90,7 +111,7 @@ export function PlanExpiryBanner({ showRenewLink = true }: { showRenewLink?: boo
                 {countdown.days > 0 && (
                   <>
                     <span aria-hidden="true" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-                      {countdown.days}
+                      <FixedDigits text={String(countdown.days)} />
                     </span>
                     <span aria-hidden="true" className="mr-1 text-sm font-semibold text-slate-600 dark:text-slate-400">
                       ngày
@@ -98,7 +119,7 @@ export function PlanExpiryBanner({ showRenewLink = true }: { showRenewLink?: boo
                   </>
                 )}
                 <span aria-hidden="true" className="text-2xl font-extrabold tracking-tight sm:text-3xl">
-                  {countdown.clock}
+                  <FixedDigits text={countdown.clock} />
                 </span>
               </p>
             )}
