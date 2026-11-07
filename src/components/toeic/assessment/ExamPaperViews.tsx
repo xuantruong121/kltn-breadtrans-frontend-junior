@@ -35,8 +35,8 @@ function QuestionNumber({ value, marks }: { value: number; marks?: PaperMarks })
       type="button"
       onClick={() => marks.onToggle(value)}
       aria-pressed={flagged}
-      aria-label={flagged ? `Câu ${value}, đang đánh dấu review. Bấm để bỏ` : `Câu ${value}. Bấm để đánh dấu review`}
-      title="Bấm để đánh dấu review"
+      aria-label={flagged ? `Câu ${value}, đang đánh dấu cần xem lại. Bấm để bỏ` : `Câu ${value}. Bấm để đánh dấu cần xem lại`}
+      title="Bấm để đánh dấu cần xem lại"
       className={`${base} transition-colors ${flagged ? "bg-amber-400 text-amber-950 ring-2 ring-amber-200 dark:ring-amber-900" : `${plain} hover:bg-blue-100`}`}
     >
       {value}

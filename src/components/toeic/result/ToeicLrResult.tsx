@@ -316,7 +316,7 @@ function LrResultView({
                     </span>
                     <StatusBadge status={q.status} />
                     <button type="button" onClick={() => onOpen(q)} className="shrink-0 rounded-md px-2 py-1.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40">
-                      [Chi tiết]
+                      Chi tiết
                     </button>
                   </li>
                 ))}

@@ -309,7 +309,7 @@ export function AssessmentRoom({
           stats={[
             { value: answered.size, label: "Đã trả lời", tone: "bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200" },
             { value: unanswered, label: "Chưa trả lời", tone: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200" },
-            { value: marked.size, label: "Đánh dấu review", tone: "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200" },
+            { value: marked.size, label: "Cần xem lại", tone: "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200" },
           ]}
           error={submitError ? "Chưa nộp được. Kiểm tra kết nối rồi thử lại; bài làm vẫn được giữ." : null}
           stay="Quay lại làm bài"

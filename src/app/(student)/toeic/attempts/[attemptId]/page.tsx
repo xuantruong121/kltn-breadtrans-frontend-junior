@@ -877,7 +877,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
               </div>
               <div className="rounded-md bg-amber-50 p-3 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
                 <p className="text-2xl font-bold">{marked.size}</p>
-                <p className="text-sm font-semibold">Đánh dấu review</p>
+                <p className="text-sm font-semibold">Cần xem lại</p>
               </div>
             </div>
             {submit.isError && (

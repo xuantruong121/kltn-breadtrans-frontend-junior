@@ -44,8 +44,8 @@ export const ToeicPaperQuestion = memo(function ToeicPaperQuestion({
           type="button"
           onClick={() => onToggleMark(questionId)}
           aria-pressed={marked}
-          aria-label={marked ? `Câu ${questionNumber}, đang đánh dấu review. Bấm để bỏ` : `Câu ${questionNumber}. Bấm để đánh dấu review`}
-          title="Bấm để đánh dấu review"
+          aria-label={marked ? `Câu ${questionNumber}, đang đánh dấu cần xem lại. Bấm để bỏ` : `Câu ${questionNumber}. Bấm để đánh dấu cần xem lại`}
+          title="Bấm để đánh dấu cần xem lại"
           className={`inline-flex h-9 min-w-9 shrink-0 items-center justify-center rounded-full px-2 text-sm font-bold transition-colors ${marked ? "bg-amber-400 text-amber-950 ring-2 ring-amber-200 dark:ring-amber-900" : "bg-blue-50 text-blue-800 hover:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-200"}`}
         >
           {questionNumber}
