@@ -200,6 +200,40 @@ export interface PlanExpiryBannerState {
   items: string[];
   /** The button: "Gia hạn ngay" for a paid plan, "Mua gói Plus" for a trial. */
   actionLabel: string;
+  /** A trial counts down to this moment instead of naming the days left. */
+  trialEndsAt?: string;
+}
+
+export interface TrialCountdown {
+  /** Whole days left; the clock shows the rest. */
+  days: number;
+  /** Hours, minutes and seconds under a day, always "HH:MM:SS". */
+  clock: string;
+  /** For screen readers, to the minute: "còn 1 ngày 3 giờ 12 phút". */
+  spoken: string;
+  /** Under an hour left. */
+  urgent: boolean;
+  expired: boolean;
+}
+
+/** Time left on a trial at `nowMs`, stopping at zero; null for an unreadable date. */
+export function trialCountdown(endsAt: string, nowMs: number): TrialCountdown | null {
+  const end = Date.parse(endsAt);
+  if (Number.isNaN(end)) return null;
+  const total = Math.max(0, Math.floor((end - nowMs) / 1000));
+  const days = Math.floor(total / 86_400);
+  const hours = Math.floor((total % 86_400) / 3_600);
+  const minutes = Math.floor((total % 3_600) / 60);
+  const seconds = total % 60;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const spokenParts = [days ? `${days} ngày` : "", hours ? `${hours} giờ` : "", `${minutes} phút`].filter(Boolean);
+  return {
+    days,
+    clock: `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`,
+    spoken: total === 0 ? "thời gian dùng thử đã hết" : `còn ${spokenParts.join(" ")}`,
+    urgent: total < 3_600,
+    expired: total === 0,
+  };
 }
 
 /**
@@ -208,9 +242,9 @@ export interface PlanExpiryBannerState {
  */
 export function planExpiryBannerState(summary: ExpirySummary | null | undefined): PlanExpiryBannerState | null {
   if (summary?.trial) {
-    const left = summary.daysLeft !== null && summary.daysLeft > 0 ? `còn ${summary.daysLeft} ngày` : "hết hạn hôm nay";
     return {
-      title: `Bạn đang dùng thử Plus · ${left}`,
+      title: "Bạn đang dùng thử Plus",
+      trialEndsAt: summary.trial.endsAt,
       body: `Còn ${summary.trial.speakingLeft} lượt chấm Nói và ${summary.trial.writingLeft} lượt chấm Viết ở mức trả phí. Mua gói Plus để học tiếp không giới hạn lượt chấm; dữ liệu học của bạn được giữ nguyên.`,
       items: [],
       actionLabel: "Mua gói Plus",
