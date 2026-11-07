@@ -15,6 +15,7 @@ import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { useAuthStore } from "@/stores/authStore";
 import ToeicExamDetailShell from "@/components/toeic/ToeicExamDetailShell";
 import { canonicalExamDetailPath } from "@/lib/toeic/canonicalExamRoute";
+import { practiceMinutes } from "@/lib/toeic/practiceDuration";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const TOEIC_PART_NAMES: Record<number, string> = {
@@ -282,6 +283,11 @@ export default function ToeicLrExamDetail({
               >
                 {chosenParts.length === data.parts.length ? "Bỏ chọn tất cả" : "Chọn tất cả"}
               </button>
+              {chosenParts.length > 0 && (
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                  Thời gian: <span className="font-semibold text-slate-800 dark:text-slate-100">{practiceMinutes(chosenParts)} phút</span>
+                </p>
+              )}
             </fieldset>
           )}
           {activeForMode && (
