@@ -197,6 +197,8 @@ export interface ExpirySummary {
 export interface PlanExpiryBannerState {
   title: string;
   body: string;
+  /** A second line under the body, set on its own line (the trial's offer). */
+  detail?: string;
   items: string[];
   /** The button: "Gia hạn ngay" for a paid plan, "Mua gói Plus" for a trial. */
   actionLabel: string;
@@ -245,7 +247,8 @@ export function planExpiryBannerState(summary: ExpirySummary | null | undefined)
     return {
       title: "Bạn đang dùng thử Plus",
       trialEndsAt: summary.trial.endsAt,
-      body: `Còn ${summary.trial.speakingLeft} lượt chấm Nói và ${summary.trial.writingLeft} lượt chấm Viết ở mức trả phí. Mua gói Plus để học tiếp không giới hạn lượt chấm; dữ liệu học của bạn được giữ nguyên.`,
+      body: `Còn ${summary.trial.speakingLeft} lượt chấm Nói và ${summary.trial.writingLeft} lượt chấm Viết ở mức trả phí.`,
+      detail: "Mua gói Plus để chấm không giới hạn, dữ liệu học vẫn được giữ nguyên.",
       items: [],
       actionLabel: "Mua gói Plus",
     };

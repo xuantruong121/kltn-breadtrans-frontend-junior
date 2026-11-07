@@ -80,7 +80,10 @@ export function PlanExpiryBanner({ showRenewLink = true }: { showRenewLink?: boo
           <Clock size={20} strokeWidth={2.25} className="mt-0.5 shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />
           <div className="min-w-0">
             <p className="font-bold text-slate-900 dark:text-slate-100">{state.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-slate-700 dark:text-slate-300">{state.body}</p>
+            <p className="mt-1 text-sm leading-relaxed text-pretty text-slate-700 dark:text-slate-300">
+              <span className="block text-balance">{state.body}</span>
+              {state.detail && <span className="block text-balance">{state.detail}</span>}
+            </p>
             {state.items.length > 0 && (
               <ul className="mt-2.5 flex flex-wrap gap-2" aria-label="Nội dung sẽ bị khoá khi gói hết hạn">
                 {state.items.map((item) => (

@@ -1116,7 +1116,8 @@ describe("Plan expiry banner", () => {
     );
     assert.equal(state?.title, "Bạn đang dùng thử Plus");
     assert.equal(state?.trialEndsAt, "2026-11-06T08:00:00.000Z");
-    assert.match(state?.body ?? "", /Còn 4 lượt chấm Nói và 0 lượt chấm Viết/);
+    assert.equal(state?.body, "Còn 4 lượt chấm Nói và 0 lượt chấm Viết ở mức trả phí.");
+    assert.equal(state?.detail, "Mua gói Plus để chấm không giới hạn, dữ liệu học vẫn được giữ nguyên.");
     assert.equal(state?.actionLabel, "Mua gói Plus");
     assert.equal(planExpiryBannerState(summary())?.actionLabel, "Gia hạn ngay");
     assert.equal(planExpiryBannerState(summary())?.trialEndsAt, undefined);
