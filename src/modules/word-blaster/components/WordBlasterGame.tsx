@@ -1,30 +1,42 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Crosshair, Heart, LogOut } from "lucide-react";
 import { wordBlasterService, type BlasterResult, type BlasterView } from "@/lib/api/services/wordBlaster.service";
-import { ArenaBackdrop } from "@/modules/arena/components/ArenaBackdrop";
 import { LeaveMatchDialog } from "@/modules/arena/components/LeaveMatchDialog";
-import { SoundToggle } from "@/modules/arena/components/SoundToggle";
 import { buzz } from "@/modules/arena/sound/arenaSound";
-import { BreadCannon } from "./BreadCannon";
-import { KIND_LABEL, aimTarget, clockOffset, fallProgress, fillHint, gameProgress, gameTime, liveBlocks, localState, type ClientBlock } from "../blasterLogic";
+import { KIND_LABEL, LANDING_GRACE_MS, clockOffset, fallProgress, gameProgress, gameTime, landsAt, localState, type ClientBlock } from "../blasterLogic";
 import { playBlaster } from "../blasterSound";
+import { createFx, fireBullet, spawnDust, spawnExplosion, type FxState } from "../fx";
+import { shotCell, stepInput } from "../typing";
+import { BlasterHud, Callout } from "./BlasterHud";
+import { BreadTurret, TURRET_BARREL, TURRET_BOX, TURRET_PIVOT } from "./BreadTurret";
+import { FxLayer, type Aim } from "./FxLayer";
+import { NightSky } from "./NightSky";
+import { TypingBar } from "./TypingBar";
+import { WordCard } from "./WordCard";
 
-const KIND_TONE: Record<ClientBlock["kind"], string> = {
-  copy: "border-sky-400 bg-sky-50 text-sky-950 dark:bg-sky-950/80 dark:text-sky-100",
-  missing: "border-amber-400 bg-amber-50 text-amber-950 dark:bg-amber-950/80 dark:text-amber-100",
-  vi_to_en: "border-emerald-400 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/80 dark:text-emerald-100",
-  en_to_vi: "border-orange-400 bg-orange-50 text-orange-950 dark:bg-orange-950/80 dark:text-orange-100",
-};
-const CANNON_ZONE = 112; // px under the cannon line: the cannon and the ground
-const BLOCK_H = 64;
+/** What the page alone knows at the end: the result dialog shows it beside the server's result. */
+export type BlasterStats = { total: number; maxCombo: number; accuracy: number | null };
 
-type Burst = { key: number; x: number; y: number };
+type Point = { x: number; y: number };
+type Floater = { key: number; x: number; y: number; text: string; big: boolean };
 
-/** The playing field: falling blocks, the bread cannon, the answer box, lives. */
-export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onDone: (result: BlasterResult) => void }) {
+/** A card's height for the fall: it lands when its bottom meets the cannon line. */
+const BLOCK_H = 72;
+const MemoCard = React.memo(WordCard);
+/** The effects clock. Only called from handlers and effects, never while rendering. */
+const clock = () => performance.now();
+const wallClock = () => Date.now();
+
+/**
+ * The playing field (owner 2026-11-08: per key, after ZType, on a starry
+ * night). The first key locks the cannon on a block, every accepted letter
+ * fires a bullet at that letter, and the answer goes to the server by itself
+ * once it has all its letters. The server decides every hit; the page only
+ * draws it and keeps the combo and the key count for the result.
+ */
+export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onDone: (result: BlasterResult, stats: BlasterStats) => void }) {
   const reduce = Boolean(useReducedMotion());
   const [view, setView] = useState(initial);
   // Measured once on arrival, then again with every reply.
@@ -32,24 +44,35 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
   const offset = useRef(firstOffset);
   const [t, setT] = useState(() => gameTime(Date.now(), firstOffset, initial.startedAt));
   const [typed, setTyped] = useState("");
-  const [shake, setShake] = useState(0);
-  const [recoil, setRecoil] = useState(0);
-  const [bursts, setBursts] = useState<Burst[]>([]);
-  const [beam, setBeam] = useState<Burst | null>(null);
+  const [lockedId, setLockedId] = useState<number | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
+  const [combo, setCombo] = useState(0);
+  const [floaters, setFloaters] = useState<Floater[]>([]);
+  const [inputShake, setInputShake] = useState(0);
+  const [cardShake, setCardShake] = useState({ id: -1, n: 0 });
+  const [flash, setFlash] = useState(0);
   const [hurt, setHurt] = useState(0);
   const [banner, setBanner] = useState<string | null>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [size, setSize] = useState({ w: 1024, h: 640 });
   const fieldRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [size, setSize] = useState({ w: 800, h: 560 });
+  const fxRef = useRef<FxState>(createFx());
+  const aimRef = useRef<Aim>(null);
+  const composing = useRef(false);
+  const beforeCompose = useRef("");
+  const comboRef = useRef(0);
+  const maxCombo = useRef(0);
+  const keys = useRef({ good: 0, bad: 0 });
   const finishing = useRef(false);
+  const floatId = useRef(0);
 
-  // Frame clock, by the server's time.
+  // Frame clock, by the server's time; it holds still for a hit-stop.
   useEffect(() => {
     let frame = 0;
     const tick = () => {
-      setT(gameTime(Date.now(), offset.current, view.startedAt));
+      if (clock() >= fxRef.current.freezeUntil) setT(gameTime(Date.now(), offset.current, view.startedAt));
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
@@ -68,33 +91,89 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
 
   useEffect(() => inputRef.current?.focus(), []);
 
-  const blocks = view.blocks;
-  const live = liveBlocks(blocks, view.hits, t);
-  const state = localState(blocks, view.hits, t);
-  const lineY = size.h - CANNON_ZONE;
-  const cannonX = size.w / 2;
+  // Layout: the HUD on top, the cannon and the typing bar at the bottom.
+  const compact = size.w < 640 || size.h < 560;
+  const top = compact ? 64 : 88;
+  const barH = compact ? 76 : 92;
+  const turret = compact ? 80 : 108;
+  const turretTop = size.h - (barH - 4) - turret;
+  const lineY = turretTop + turret * 0.42;
+  const scale = turret / TURRET_BOX;
+  const pivot: Point = { x: size.w / 2, y: turretTop + TURRET_PIVOT.y * scale };
+  const edge = compact ? 72 : 120;
   const positionOf = useCallback(
-    (b: ClientBlock, at: number) => ({ x: b.lane * size.w, y: (fallProgress(b, at) ?? 0) * (lineY - BLOCK_H) + BLOCK_H / 2 }),
-    [size.w, lineY]
+    (b: ClientBlock, at: number): Point => ({
+      x: Math.min(Math.max(b.lane * size.w, edge), size.w - edge),
+      y: top + BLOCK_H / 2 + (fallProgress(b, at) ?? 0) * Math.max(40, lineY - top - BLOCK_H),
+    }),
+    [size.w, edge, top, lineY]
   );
-  const target = aimTarget(live, typed);
-  const aim = target ? positionOf(target, t) : null;
-  const angle = aim ? Math.max(-65, Math.min(65, (Math.atan2(aim.x - cannonX, size.h - 70 - aim.y) * 180) / Math.PI)) : 0;
 
-  // A landing costs a life: sound, a red flash and a shake.
+  const blocks = view.blocks;
+  // On screen: appeared, not broken, not past the landing grace (the server still takes a shot then).
+  const onScreen = blocks.filter((b) => view.hits[b.id] === undefined && t >= b.spawnAtMs && t <= landsAt(b) + LANDING_GRACE_MS);
+  const live = onScreen.filter((b) => b.id !== pendingId);
+  const state = localState(blocks, view.hits, t);
+  const progress = gameProgress(blocks, t);
+  // The lock goes when its block does (broken or landed), and the text with it.
+  const lockedBlock = lockedId === null ? null : (live.find((b) => b.id === lockedId) ?? null);
+  const lockGone = lockedId !== null && !lockedBlock;
+  const activeLock = lockGone ? null : lockedId;
+  const text = lockGone ? "" : typed;
+  const locked = lockedBlock;
+  const aimed = locked ?? [...live].sort((a, b) => landsAt(a) - landsAt(b))[0] ?? null;
+  const aimAt = aimed ? positionOf(aimed, t) : null;
+  const angle = aimAt ? Math.max(-70, Math.min(70, (Math.atan2(aimAt.x - pivot.x, pivot.y - aimAt.y) * 180) / Math.PI)) : 0;
+  const rad = (angle * Math.PI) / 180;
+  const muzzle: Point = { x: pivot.x + Math.sin(rad) * TURRET_BARREL * scale, y: pivot.y - Math.cos(rad) * TURRET_BARREL * scale };
+
+  useEffect(() => {
+    aimRef.current = locked && aimAt ? { from: muzzle, to: aimAt } : null;
+  });
+
+
+  /** Where a letter cell (or the whole card) is, in field pixels. */
+  const pointOf = useCallback((blockId: number, cell?: number): Point | null => {
+    const field = fieldRef.current;
+    const el = field?.querySelector(cell === undefined ? `[data-block="${blockId}"]` : `[data-block="${blockId}"] [data-letter="${cell}"]`);
+    if (!field || !el) return null;
+    const f = field.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    return { x: r.left - f.left + r.width / 2, y: r.top - f.top + r.height / 2 };
+  }, []);
+
+  const float = (p: Point, text: string, big: boolean) => {
+    floatId.current += 1;
+    const key = floatId.current;
+    setFloaters((list) => [...list, { key, x: p.x, y: p.y, text, big }]);
+    window.setTimeout(() => setFloaters((list) => list.filter((f) => f.key !== key)), 950);
+  };
+
+  // A landing costs a life: dust, a hard shake, a red edge, a thud; the combo ends.
   const lastLanded = useRef(state.landed);
   useEffect(() => {
     if (state.landed > lastLanded.current) {
+      const fallen = blocks
+        .filter((b) => view.hits[b.id] === undefined && landsAt(b) + LANDING_GRACE_MS < t)
+        .sort((a, b) => landsAt(b) - landsAt(a))[0];
+      if (fallen) spawnDust(fxRef.current, Math.min(Math.max(fallen.lane * size.w, edge), size.w - edge), lineY, clock(), Math.random);
       playBlaster("lifeLost");
-      buzz(120);
+      buzz(140);
       setHurt((n) => n + 1);
-      setShake((n) => n + 1);
+      comboRef.current = 0;
+      setCombo(0);
     }
     lastLanded.current = state.landed;
-  }, [state.landed]);
+  }, [state.landed, blocks, view.hits, t, size.w, edge, lineY]);
 
-  // The game speeds up past a third and two thirds.
-  const progress = gameProgress(blocks, t);
+  // The countdown before the first block, then "Tăng tốc!" past a third and two thirds.
+  const first = blocks.length ? Math.min(...blocks.map((b) => b.spawnAtMs)) : 0;
+  const left = first - t;
+  const count = left > 2500 && left <= 3500 ? "3" : left > 1500 && left <= 2500 ? "2" : left > 500 && left <= 1500 ? "1" : left > -500 && left <= 500 ? "Bắt đầu!" : null;
+  useEffect(() => {
+    if (count) playBlaster(count === "Bắt đầu!" ? "go" : "count");
+  }, [count]);
+
   const stage = progress >= 0.7 ? 2 : progress >= 0.35 ? 1 : 0;
   const lastStage = useRef(stage);
   useEffect(() => {
@@ -111,7 +190,8 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
   // The game is over here: the server checks and settles it.
   useEffect(() => {
     if (view.result) {
-      onDone(view.result);
+      const total = keys.current.good + keys.current.bad;
+      onDone(view.result, { total: view.target, maxCombo: maxCombo.current, accuracy: total ? keys.current.good / total : null });
       return;
     }
     if (!state.over || finishing.current) return;
@@ -127,37 +207,72 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
       }
     };
     void ask();
-  }, [state.over, view.result, view.sessionId, onDone]);
+  }, [state.over, view.result, view.sessionId, view.target, onDone]);
 
-  const fire = async () => {
-    const text = typed.trim();
-    if (!text || leaveOpen || view.result) return;
-    playBlaster("shoot");
-    setRecoil(6);
-    window.setTimeout(() => setRecoil(0), 90);
+  /** Sends an answer. The box clears at once, so the next word can start while the server answers. */
+  const fire = async (text: string, targetId: number | null) => {
+    const answer = text.trim();
+    if (!answer || leaveOpen || view.result) return;
+    setTyped("");
+    setLockedId(null);
+    setPendingId(targetId);
     try {
-      const res = await wordBlasterService.shot(view.sessionId, text);
-      offset.current = clockOffset(res.serverNow, Date.now());
-      const hit = res.hitBlockId !== null ? blocks.find((b) => b.id === res.hitBlockId) : null;
-      if (hit) {
-        const at = gameTime(Date.now(), offset.current, view.startedAt);
-        const p = positionOf(hit, at);
-        const key = Date.now();
-        setBeam({ key, ...p });
-        setBursts((list) => [...list, { key, ...p }]);
-        window.setTimeout(() => setBursts((list) => list.filter((b) => b.key !== key)), 700);
-        window.setTimeout(() => setBeam(null), 160);
+      const res = await wordBlasterService.shot(view.sessionId, answer);
+      offset.current = clockOffset(res.serverNow, wallClock());
+      if (res.hitBlockId !== null) {
+        const hit = blocks.find((b) => b.id === res.hitBlockId);
+        const p = pointOf(res.hitBlockId) ?? (hit ? positionOf(hit, t) : muzzle);
+        spawnExplosion(fxRef.current, p.x, p.y, clock(), Math.random, reduce ? 0.45 : 1);
+        const next = comboRef.current + 1;
+        comboRef.current = next;
+        maxCombo.current = Math.max(maxCombo.current, next);
+        setCombo(next);
+        float(p, "+1", false);
+        if (next >= 2) float({ x: p.x, y: p.y - 30 }, `Combo ×${next}`, true);
         playBlaster("explode");
-        setTyped("");
+        if (next >= 2) playBlaster("combo", next);
       } else {
+        // Wrong (a meaning mode, or a gap filled wrong): the box is clear, the lock stays.
         playBlaster("miss");
-        setShake((n) => n + 1);
-        inputRef.current?.select();
+        comboRef.current = 0;
+        setCombo(0);
+        setInputShake((n) => n + 1);
+        if (targetId !== null) {
+          setCardShake((s) => ({ id: targetId, n: s.n + 1 }));
+          setLockedId((current) => current ?? targetId);
+        }
       }
       setView((v) => ({ ...v, hits: res.hits, result: res.result ?? v.result, serverNow: res.serverNow }));
     } catch {
       playBlaster("miss");
+    } finally {
+      setPendingId(null);
     }
+  };
+
+  /** One change of the box: refused, or accepted with a bullet per new letter. */
+  const apply = (previous: string, next: string) => {
+    if (leaveOpen || view.result) return;
+    const step = stepInput(live, previous, next, activeLock);
+    if (!step.accepted) {
+      keys.current.bad += 1;
+      playBlaster("miss");
+      setInputShake((n) => n + 1);
+      if (activeLock !== null) setCardShake((s) => ({ id: activeLock, n: s.n + 1 }));
+      return;
+    }
+    setTyped(step.typed);
+    setLockedId(step.targetId);
+    const target = step.targetId === null ? null : live.find((b) => b.id === step.targetId);
+    if (step.shots > 0 && target) {
+      keys.current.good += step.shots;
+      const cell = shotCell(target, step.typed);
+      const to = pointOf(target.id, cell) ?? positionOf(target, t);
+      fireBullet(fxRef.current, muzzle, to, clock(), target.id);
+      playBlaster("key", cell);
+      setFlash((n) => n + 1);
+    }
+    if (step.complete && target) void fire(step.typed, target.id);
   };
 
   const leave = async () => {
@@ -171,175 +286,124 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
     }
   };
 
-  const dusk = Math.min(0.35, progress * 0.35);
-  const hearts = useMemo(() => Array.from({ length: view.lives }, (_, i) => i < state.livesLeft), [view.lives, state.livesLeft]);
+  const callout = count ?? banner;
 
   return (
-    <div className="fixed inset-0 z-40 flex flex-col bg-amber-50 dark:bg-slate-950">
-      {/* HUD */}
-      <div className="relative z-10 flex items-center justify-between gap-3 px-3 py-2 sm:px-6 sm:py-3">
-        <div className="flex items-center gap-1" aria-label={`Còn ${state.livesLeft} mạng`}>
-          {hearts.map((on, i) => (
-            <motion.span key={i} animate={!on && !reduce ? { scale: [1, 1.4, 1] } : undefined}>
-              <Heart size={24} strokeWidth={2.25} className={on ? "fill-rose-500 text-rose-600" : "text-slate-400"} aria-hidden="true" />
-            </motion.span>
-          ))}
-        </div>
-        <p className="whitespace-nowrap rounded-lg bg-white/85 px-3 py-1.5 text-sm font-bold tabular-nums text-slate-800 backdrop-blur-sm dark:bg-slate-900/80 dark:text-slate-200">
-          <Crosshair size={14} strokeWidth={2.5} className="mr-1 inline-block align-[-2px]" aria-hidden="true" />
-          {state.destroyed + state.landed}/{view.target} khối
-          <span className="hidden sm:inline">
-            {view.mode ? ` · ${KIND_LABEL[view.mode]}` : ""} · cược {view.stake}
-          </span>
-        </p>
-        <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-white/85 backdrop-blur-sm dark:bg-slate-900/80">
-            <SoundToggle />
-          </div>
-          <button
-            type="button"
-            onClick={() => setLeaveOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-white/85 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm hover:bg-rose-50 hover:text-rose-700 dark:bg-slate-900/80 dark:text-slate-300"
-          >
-            <LogOut size={16} strokeWidth={2.25} aria-hidden="true" />
-            Thoát
-          </button>
-        </div>
-      </div>
-
-      {/* Field */}
-      <motion.div
+    <div className="fixed inset-0 z-40 overflow-hidden bg-[#060A18]">
+      <div
         ref={fieldRef}
-        key={`field-${shake}`}
-        animate={reduce || shake === 0 ? undefined : { x: [0, -10, 8, -5, 3, 0] }}
-        transition={{ duration: 0.35 }}
-        className="relative isolate mx-2 flex-1 overflow-hidden rounded-2xl sm:mx-6"
+        className="absolute inset-0 isolate overflow-hidden will-change-transform"
+        onPointerUp={() => {
+          if (!leaveOpen) inputRef.current?.focus();
+        }}
       >
-        <ArenaBackdrop />
-        {/* sunset as the game speeds up */}
-        <div
-          className="pointer-events-none absolute inset-0 -z-[5] bg-gradient-to-b from-orange-400 via-amber-300 to-transparent transition-opacity duration-1000"
-          style={{ opacity: dusk }}
-          aria-hidden="true"
-        />
-        <AnimatePresence>
-          {hurt > 0 && (
-            <motion.div
-              key={`hurt-${hurt}`}
-              initial={{ opacity: 0.45 }}
-              animate={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="pointer-events-none absolute inset-0 z-20 bg-rose-500"
-              aria-hidden="true"
-            />
-          )}
-        </AnimatePresence>
+        <NightSky progress={progress} reduce={reduce} />
 
-        {/* cannon line */}
-        <div className="absolute inset-x-0 border-t-2 border-dashed border-rose-400/70" style={{ top: lineY }} aria-hidden="true" />
+        {/* the cannon line */}
+        <div className="pointer-events-none absolute inset-x-0 h-px bg-gradient-to-r from-transparent via-rose-300/50 to-transparent" style={{ top: lineY }} aria-hidden="true" />
 
-        {live.map((b) => {
+        {onScreen.map((b) => {
           const p = positionOf(b, t);
-          const danger = (fallProgress(b, t) ?? 0) > 0.75;
-          const aimed = target?.id === b.id;
+          const sway = reduce ? 0 : Math.sin(t / 650 + b.id * 1.7) * 1.8;
           return (
             <div
               key={b.id}
-              className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
-              style={{ left: Math.min(Math.max(p.x, 80), size.w - 80), top: p.y }}
+              className="absolute z-10"
+              style={{ left: p.x, top: p.y, transform: `translate(-50%, -50%) rotate(${sway.toFixed(2)}deg)` }}
             >
-              <div
-                className={`max-w-[44vw] rounded-xl border-2 px-3 py-2 text-center shadow-md sm:max-w-xs ${KIND_TONE[b.kind]} ${aimed ? "ring-4 ring-sky-400/70" : ""} ${danger && !reduce ? "animate-pulse border-rose-500" : ""}`}
-              >
-                <p className="break-words text-base font-extrabold leading-tight sm:text-lg">{b.prompt}</p>
-                {b.hint && (
-                  // One underscore per letter of the meaning; the aimed block fills in as you type.
-                  <p className="mt-1.5 flex flex-wrap justify-center gap-x-3 gap-y-1 font-mono text-sm font-bold" aria-label={`Nghĩa có ${b.hint.replace(/ /g, "").length} chữ cái`}>
-                    {fillHint(b.hint, aimed ? typed : "").map((word, w) => (
-                      <span key={w} className="inline-flex gap-0.5">
-                        {word.map((c, i) => (
-                          <span key={i} className={`inline-block w-3 border-b-2 text-center leading-5 ${c.filled ? "border-sky-600 text-sky-900 dark:text-sky-200" : "border-current opacity-70"}`}>
-                            {c.filled ? c.char : "\u00a0"}
-                          </span>
-                        ))}
-                      </span>
-                    ))}
-                  </p>
-                )}
-              </div>
+              <MemoCard
+                block={b}
+                typed={b.id === activeLock ? text : ""}
+                locked={b.id === activeLock}
+                danger={(fallProgress(b, t) ?? 0) > 0.75}
+                reduce={reduce}
+                shakeKey={cardShake.id === b.id ? cardShake.n : 0}
+              />
             </div>
           );
         })}
 
-        {/* beam and bursts */}
-        <svg className="pointer-events-none absolute inset-0 z-10 h-full w-full" aria-hidden="true">
-          {beam && <line x1={cannonX} y1={size.h - 78} x2={beam.x} y2={beam.y} stroke="#F59E0B" strokeWidth="5" strokeLinecap="round" />}
-        </svg>
-        {bursts.map((b) => (
-          <div key={b.key} className="pointer-events-none absolute z-20" style={{ left: b.x, top: b.y }} aria-hidden="true">
-            {Array.from({ length: 10 }, (_, i) => {
-              const a = (i / 10) * Math.PI * 2;
-              return (
-                <motion.span
-                  key={i}
-                  className={`absolute h-2.5 w-2.5 rounded-full ${i % 3 === 0 ? "bg-amber-300" : i % 3 === 1 ? "bg-orange-500" : "bg-amber-700"}`}
-                  initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
-                  animate={{ x: Math.cos(a) * 60, y: Math.sin(a) * 60 + 20, opacity: 0, scale: 0.4 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-              );
-            })}
-          </div>
-        ))}
-
-        <AnimatePresence>
-          {banner && (
-            <motion.p
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute left-1/2 top-1/3 z-20 -translate-x-1/2 rounded-xl bg-amber-500 px-5 py-2 text-xl font-extrabold text-white shadow-lg"
-            >
-              {banner}
-            </motion.p>
-          )}
-        </AnimatePresence>
-
-        {/* the cannon */}
-        <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2">
-          <BreadCannon angle={angle} recoil={recoil} size={92} />
+        <div className="absolute z-10 -translate-x-1/2" style={{ left: size.w / 2, top: turretTop }}>
+          <BreadTurret angle={angle} size={turret} flash={flash} reduce={reduce} />
         </div>
-      </motion.div>
 
-      {/* Answer box */}
-      <form
-        className="relative z-10 mx-auto flex w-full max-w-xl gap-2 px-3 py-3"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void fire();
+        <FxLayer fx={fxRef} aim={aimRef} shakeRef={fieldRef} reduce={reduce} />
+
+        <div className="pointer-events-none absolute inset-0 z-20" aria-hidden="true">
+          <AnimatePresence>
+            {floaters.map((f) => (
+              <motion.p
+                key={f.key}
+                initial={{ opacity: 0, y: 0, scale: 0.6 }}
+                animate={{ opacity: [0, 1, 1, 0], y: reduce ? 0 : -54, scale: 1 }}
+                transition={{ duration: 0.9, ease: "easeOut" }}
+                className={`absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap font-black ${
+                  f.big ? "text-xl text-orange-300 [text-shadow:0_0_18px_rgba(251,146,60,0.7)]" : "text-2xl text-amber-200 [text-shadow:0_0_16px_rgba(251,191,36,0.8)]"
+                }`}
+                style={{ left: f.x, top: f.y }}
+              >
+                {f.text}
+              </motion.p>
+            ))}
+          </AnimatePresence>
+          <AnimatePresence>
+            {hurt > 0 && (
+              <motion.div
+                key={`hurt-${hurt}`}
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.75 }}
+                className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_42%,rgba(225,29,72,0.7)_100%)]"
+              />
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <BlasterHud
+        lives={view.lives}
+        livesLeft={state.livesLeft}
+        total={view.target}
+        destroyed={state.destroyed}
+        landed={state.landed}
+        combo={combo}
+        modeLabel={view.mode ? KIND_LABEL[view.mode] : null}
+        stake={view.stake}
+        reduce={reduce}
+        onLeave={() => setLeaveOpen(true)}
+      />
+
+      <Callout text={callout} tone={count ? (count === "Bắt đầu!" ? "go" : "count") : "speed"} reduce={reduce} />
+
+      <TypingBar
+        inputRef={inputRef}
+        value={text}
+        lockedPrompt={locked ? locked.prompt : null}
+        disabled={Boolean(view.result)}
+        shakeKey={inputShake}
+        reduce={reduce}
+        compact={compact}
+        onChange={(next) => {
+          if (composing.current) setTyped(next);
+          else apply(text, next);
         }}
-      >
-        <motion.input
-          ref={inputRef}
-          key={`input-${shake}`}
-          animate={reduce || shake === 0 ? undefined : { x: [0, -8, 8, -4, 0] }}
-          transition={{ duration: 0.3 }}
-          value={typed}
-          onChange={(e) => setTyped(e.target.value)}
-          disabled={Boolean(view.result)}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          aria-label="Gõ đáp án rồi nhấn Enter để bắn"
-          placeholder="Gõ đáp án, Enter để bắn"
-          className="min-w-0 flex-1 rounded-xl border-2 border-slate-300 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none focus:border-amber-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-        />
-        <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 font-extrabold text-white hover:bg-amber-600">
-          <Crosshair size={18} strokeWidth={2.5} aria-hidden="true" />
-          Bắn
-        </button>
-      </form>
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            setTyped("");
+            setLockedId(null);
+          }
+        }}
+        onCompositionStart={() => {
+          composing.current = true;
+          beforeCompose.current = text;
+        }}
+        onCompositionEnd={(value) => {
+          composing.current = false;
+          apply(beforeCompose.current, value);
+        }}
+        onFire={() => void fire(text, activeLock)}
+      />
 
       {leaveOpen && (
         <LeaveMatchDialog

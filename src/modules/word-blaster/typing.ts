@@ -85,3 +85,20 @@ export function stepInput(live: ClientBlock[], previous: string, next: string, l
   const shots = Math.max(0, letters(next.replace(/ /g, "")).length - letters(previous.replace(/ /g, "")).length);
   return { accepted: true, typed: next, targetId: target.id, shots, complete: isComplete(target, next) };
 }
+
+/**
+ * The letter cell the last typed letter lands in, so its bullet flies to that
+ * letter: on the word itself for copy and missing, on the hint for meanings
+ * (cells counted across words, spaces left out).
+ */
+export function shotCell(block: ClientBlock, typed: string): number {
+  const text = lower(typed);
+  if (block.kind === "copy" || block.kind === "missing") return Math.max(0, letters(text).length - 1);
+  if (!block.hint) return 0;
+  const shape = hintShape(block.hint);
+  const words = text.split(" ");
+  let w = words.length - 1;
+  while (w > 0 && !words[w]) w -= 1;
+  const before = shape.slice(0, w).reduce((sum, n) => sum + n, 0);
+  return before + Math.max(0, letters(words[w]).length - 1);
+}

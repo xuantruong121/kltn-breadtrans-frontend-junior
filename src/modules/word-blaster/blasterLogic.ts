@@ -21,7 +21,7 @@ export const LIVES = 3;
 export const MODES: { id: ClientBlock["kind"]; name: string; line: string; sample: string }[] = [
   { id: "copy", name: "Gõ lại từ", line: "Khối hiện từ tiếng Anh, gõ lại đúng chính tả.", sample: "negotiate" },
   { id: "missing", name: "Điền chữ thiếu", line: "Từ bị ẩn vài chữ cái, gõ cả từ.", sample: "neg_ti_te" },
-  { id: "vi_to_en", name: "Nghĩa → từ", line: "Khối hiện nghĩa tiếng Việt, gõ từ tiếng Anh.", sample: "đàm phán" },
+  { id: "vi_to_en", name: "Nghĩa → từ", line: "Khối hiện nghĩa tiếng Việt, gõ từ tiếng Anh theo số gạch chân.", sample: "đàm phán / _________" },
   { id: "en_to_vi", name: "Từ → nghĩa", line: "Khối hiện từ tiếng Anh, gõ nghĩa theo số gạch chân.", sample: "negotiate / ___ ____" },
 ];
 

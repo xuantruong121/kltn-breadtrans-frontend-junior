@@ -3,15 +3,26 @@
 import React, { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import Confetti from "react-confetti";
-import { RotateCcw, Wheat, X } from "lucide-react";
+import { Crosshair, Flame, RotateCcw, Target, Wheat, X } from "lucide-react";
 import type { BlasterResult } from "@/lib/api/services/wordBlaster.service";
 import { BreadMascot } from "@/modules/arena/components/BreadMascot";
 import { blasterResultCopy } from "../blasterResult";
+import type { BlasterStats } from "./WordBlasterGame";
 
 const CONFETTI_COLORS = ["#F59E0B", "#FBBF24", "#FB923C", "#10B981", "#38BDF8", "#FDE68A"];
 
-/** The end of a game: won or lost, Bánh Mì and XP. */
-export function BlasterResultDialog({ result, onAgain, onExit }: { result: BlasterResult; onAgain: () => void; onExit: () => void }) {
+/** The end of a game: won or lost, Bánh Mì and XP, and how it went (blocks, best combo, accuracy). */
+export function BlasterResultDialog({
+  result,
+  stats,
+  onAgain,
+  onExit,
+}: {
+  result: BlasterResult;
+  stats: BlasterStats | null;
+  onAgain: () => void;
+  onExit: () => void;
+}) {
   const reduce = Boolean(useReducedMotion());
   const againRef = useRef<HTMLButtonElement>(null);
   useEffect(() => againRef.current?.focus(), []);
@@ -72,6 +83,28 @@ export function BlasterResultDialog({ result, onAgain, onExit }: { result: Blast
             </motion.span>
           </div>
           {copy.note && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{copy.note}</p>}
+
+          <dl className="mt-5 grid grid-cols-3 divide-x divide-slate-200 rounded-xl border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+            {[
+              { icon: Crosshair, label: "Bắn vỡ", value: stats ? `${result.destroyed}/${stats.total}` : `${result.destroyed}` },
+              { icon: Flame, label: "Combo dài nhất", value: stats ? `×${stats.maxCombo}` : "–" },
+              { icon: Target, label: "Chính xác", value: stats?.accuracy != null ? `${Math.round(stats.accuracy * 100)}%` : "–" },
+            ].map(({ icon: Icon, label, value }, i) => (
+              <motion.div
+                key={label}
+                initial={reduce ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: reduce ? 0 : 0.75 + i * 0.1 }}
+                className="px-2 py-2.5"
+              >
+                <dt className="flex items-center justify-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                  <Icon size={12} strokeWidth={2.5} aria-hidden="true" />
+                  {label}
+                </dt>
+                <dd className="mt-0.5 text-lg font-extrabold tabular-nums text-slate-900 dark:text-slate-100">{value}</dd>
+              </motion.div>
+            ))}
+          </dl>
 
           <div className="mt-6 flex flex-col gap-2">
             <button

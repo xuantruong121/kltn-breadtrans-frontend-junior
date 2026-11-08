@@ -7,7 +7,7 @@ import { Crosshair, Heart, Wheat } from "lucide-react";
 import { wordBlasterService, type BlasterMode } from "@/lib/api/services/wordBlaster.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
-import { BreadCannon } from "./BreadCannon";
+import { BreadTurret } from "./BreadTurret";
 import { MODES } from "../blasterLogic";
 
 const STAKES = [20, 50, 100] as const;
@@ -15,13 +15,23 @@ const STAKES = [20, 50, 100] as const;
 const PREVIEW: Record<BlasterMode, { text: string; hint?: string }[]> = {
   copy: [{ text: "negotiate" }, { text: "budget" }, { text: "renewal" }],
   missing: [{ text: "neg_ti_te" }, { text: "b_dg_t" }, { text: "r_n_wal" }],
-  vi_to_en: [{ text: "đàm phán" }, { text: "ngân sách" }, { text: "sự gia hạn" }],
+  vi_to_en: [
+    { text: "đàm phán", hint: "_________" },
+    { text: "ngân sách", hint: "______" },
+    { text: "sự gia hạn", hint: "_______" },
+  ],
   en_to_vi: [
     { text: "negotiate", hint: "___ ____" },
     { text: "budget", hint: "____ ____" },
     { text: "renewal", hint: "__ ___ ___" },
   ],
 };
+const PREVIEW_STARS = Array.from({ length: 34 }, (_, i) => ({
+  x: (i * 37 + 7) % 100,
+  y: (i * 23 + 5) % 55,
+  r: i % 7 === 0 ? 2.5 : 1.5,
+  o: 0.4 + ((i * 13) % 6) / 10,
+}));
 const PREVIEW_SPOTS = [
   { left: "10%", delay: 0 },
   { left: "50%", delay: 1.4 },
@@ -59,7 +69,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           Bắn chữ rơi
         </h1>
         <p className="mt-2 max-w-md text-base text-slate-700 dark:text-slate-300">
-          Các khối chữ rơi xuống. Gõ đúng từ, chữ còn thiếu hoặc nghĩa của nó rồi nhấn Enter để khẩu pháo bánh mì bắn vỡ trước khi khối chạm đất.
+          Các khối chữ rơi xuống cánh đồng. Gõ chữ đầu để pháo bánh mì khoá mục tiêu, mỗi chữ đúng là một phát bắn, gõ đủ chữ là khối vỡ, không cần nhấn Enter.
         </p>
         <ul className="mt-4 space-y-1.5 text-sm text-slate-800 dark:text-slate-200">
           <li className="flex items-center gap-2"><Crosshair size={15} strokeWidth={2.25} aria-hidden="true" /> 20 khối, rơi nhanh dần. Qua hết mà còn mạng là thắng.</li>
@@ -150,23 +160,36 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
         </div>
       </div>
 
-      <div className="relative min-h-[260px] overflow-hidden rounded-xl bg-gradient-to-b from-sky-100 via-amber-50 to-amber-100 dark:from-slate-800 dark:via-slate-900 dark:to-amber-950/50" aria-hidden="true">
+      <div
+        className="relative min-h-[280px] overflow-hidden rounded-xl bg-[linear-gradient(to_bottom,#060A18_0%,#0B1430_40%,#17244A_66%,#4A3524_88%,#7A4A1C_100%)]"
+        aria-hidden="true"
+      >
+        {/* stars and moon */}
+        {PREVIEW_STARS.map((st, i) => (
+          <span key={i} className="absolute rounded-full bg-white" style={{ left: `${st.x}%`, top: `${st.y}%`, width: st.r, height: st.r, opacity: st.o }} />
+        ))}
+        <span className="absolute right-[10%] top-[10%] h-12 w-12 rounded-full bg-[radial-gradient(circle_at_35%_35%,#FFFBEB,#FDE68A_60%,#F5D46B)] shadow-[0_0_40px_12px_rgba(253,230,138,0.2)]" />
         {PREVIEW[mode].map((b, i) => (
           <motion.span
             key={`${mode}-${b.text}`}
-            className="absolute top-0 rounded-lg border-2 border-amber-300 bg-amber-50 px-3 py-1.5 text-center text-sm font-bold text-amber-950 shadow-sm"
+            className={`absolute top-0 rounded-xl border bg-slate-950/75 px-3 py-1.5 text-center text-sm font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.45)] backdrop-blur-sm ${
+              i === 0 ? "border-amber-300/90 shadow-[0_0_24px_rgba(251,191,36,0.35)]" : "border-white/15"
+            }`}
             style={{ left: PREVIEW_SPOTS[i].left }}
             initial={{ y: -40 }}
             animate={reduce ? { y: 60 } : { y: [-40, 190, 190], opacity: [1, 1, 0], scale: [1, 1, 1.4] }}
             transition={reduce ? undefined : { duration: 4.2, delay: PREVIEW_SPOTS[i].delay, repeat: Infinity, times: [0, 0.82, 1], ease: "linear" }}
           >
-            {b.text}
-            {b.hint && <span className="block font-mono text-xs tracking-widest">{b.hint}</span>}
+            <span className={mode === "copy" || mode === "missing" ? "font-mono tracking-wide" : ""}>{b.text}</span>
+            {b.hint && <span className="mt-0.5 block font-mono text-xs tracking-[0.2em] text-white/70">{b.hint}</span>}
           </motion.span>
         ))}
-        <div className="absolute inset-x-0 bottom-0 h-12 bg-amber-200 dark:bg-amber-900/60" />
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
-          <BreadCannon angle={reduce ? 0 : -12} size={84} />
+        <svg className="absolute inset-x-0 bottom-0 h-20 w-full" viewBox="0 0 400 80" preserveAspectRatio="none">
+          <path d="M0 40 C60 20 120 46 200 30 S340 18 400 34 V80 H0Z" fill="#131D38" />
+          <path d="M0 58 C80 44 160 64 240 52 S360 46 400 56 V80 H0Z" fill="#0C142A" />
+        </svg>
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+          <BreadTurret angle={reduce ? 0 : -14} size={84} flash={0} reduce />
         </div>
       </div>
     </section>

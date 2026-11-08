@@ -8,7 +8,7 @@ import { wordBlasterService, type BlasterResult } from "@/lib/api/services/wordB
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { useArenaMusic } from "@/modules/arena/sound/useArenaSound";
 import { MATCH_END_QUERY_KEYS } from "@/modules/arena/arenaWallet";
-import { WordBlasterGame } from "@/modules/word-blaster/components/WordBlasterGame";
+import { WordBlasterGame, type BlasterStats } from "@/modules/word-blaster/components/WordBlasterGame";
 import { BlasterResultDialog } from "@/modules/word-blaster/components/BlasterResultDialog";
 
 const LOBBY = "/arena?game=blaster";
@@ -24,6 +24,7 @@ export default function WordBlasterPage() {
   const { user } = useAuthStore();
   const isGuest = !user || user.role !== "STUDENT";
   const [result, setResult] = useState<BlasterResult | null>(null);
+  const [stats, setStats] = useState<BlasterStats | null>(null);
 
   const { data: open, isFetched } = useQuery({
     queryKey: ["word-blaster-current", user?.id],
@@ -49,8 +50,9 @@ export default function WordBlasterPage() {
   }, [isGuest, isFetched, open, result, router]);
 
   const done = useCallback(
-    (r: BlasterResult) => {
+    (r: BlasterResult, s: BlasterStats) => {
       setResult(r);
+      setStats(s);
       arenaSound.play(r.outcome === "win" ? "win" : "lose");
       for (const key of MATCH_END_QUERY_KEYS) void queryClient.invalidateQueries({ queryKey: [...key] });
     },
@@ -65,7 +67,7 @@ export default function WordBlasterPage() {
   return (
     <>
       {open && !result && <WordBlasterGame key={open.sessionId} initial={open} onDone={done} />}
-      {result && <BlasterResultDialog result={result} onAgain={back} onExit={back} />}
+      {result && <BlasterResultDialog result={result} stats={stats} onAgain={back} onExit={back} />}
       {!open && !result && (
         <p className="py-24 text-center text-sm text-slate-600 dark:text-slate-400" role="status">
           Đang mở ván…

@@ -2,7 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
 import type { ClientBlock } from "./blasterLogic.ts";
-import { fitsBlock, isComplete, letters, pickTarget, stepInput } from "./typing.ts";
+import { fitsBlock, isComplete, letters, pickTarget, shotCell, stepInput } from "./typing.ts";
 
 const block = (id: number, kind: ClientBlock["kind"], prompt: string, hint: string | null = null, fallMs = 8000): ClientBlock => ({
   id,
@@ -88,5 +88,15 @@ describe("pickTarget and stepInput", () => {
     const meaning = [block(4, "en_to_vi", "negotiate", "___ ____")];
     const step = stepInput(meaning, "dam", "đàm", 4);
     assert.equal(step.accepted && step.shots, 0);
+  });
+});
+
+describe("shotCell", () => {
+  test("the bullet goes to the letter just typed", () => {
+    assert.equal(shotCell(block(1, "copy", "budget"), "bud"), 2);
+    assert.equal(shotCell(block(1, "missing", "b_dg_t"), "b"), 0);
+    assert.equal(shotCell(block(1, "vi_to_en", "ngân sách", "______"), "bu"), 1);
+    assert.equal(shotCell(block(1, "en_to_vi", "negotiate", "___ ____"), "đàm p"), 3);
+    assert.equal(shotCell(block(1, "en_to_vi", "negotiate", "___ ____"), "đàm "), 2);
   });
 });
