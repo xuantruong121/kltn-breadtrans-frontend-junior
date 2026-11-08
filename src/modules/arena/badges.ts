@@ -99,7 +99,8 @@ export function badgeViews(
 
 /** The unearned badge with measurable progress that is closest to done. */
 export function nextBadge(views: readonly BadgeView[]): BadgeView | null {
-  const open = views.filter((v) => v.earnedAt === null && v.current);
+  // A badge whose condition is already met is about to be granted, not "close".
+  const open = views.filter((v) => v.earnedAt === null && v.current && v.current.ratio < 1);
   if (!open.length) return null;
   return open.reduce((best, v) => (v.current!.ratio > best.current!.ratio ? v : best));
 }

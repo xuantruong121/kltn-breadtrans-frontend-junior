@@ -55,6 +55,11 @@ describe("badges", () => {
     assert.notEqual(nextBadge(views)?.name, "Tân Binh");
   });
 
+  test("a badge already at its target is not offered as the next one", () => {
+    const views = badgeViews({ totalXp: 0, streak: 0, petLevel: 1, arenaWins: 1 }, []);
+    assert.notEqual(nextBadge(views)?.name, "Đấu Sĩ Bất Bại");
+  });
+
   test("next badge is the unearned one closest to done", () => {
     const views = badgeViews({ ...facts, petLevel: 1 }, [{ awardedAt: "x", badge: { name: "Tân Binh" } }]);
     // Chuyên Gia Nuôi Thú 1/2 beats Thợ Săn 250/1000.
