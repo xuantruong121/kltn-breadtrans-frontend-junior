@@ -67,14 +67,16 @@ export function xpToLeaveDemotion(
   return Math.max(1, safe.weeklyExp - myXp + 1);
 }
 
-/** "2 ngày 05:12" or "05:12:09" until the reset. */
+/** Time left with its units: "2 ngày 5 giờ", "13 giờ 28 phút 43 giây", "4 phút 9 giây". */
 export function formatCountdown(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
   const days = Math.floor(total / 86_400);
-  const hh = String(Math.floor((total % 86_400) / 3600)).padStart(2, "0");
-  const mm = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
-  const ss = String(total % 60).padStart(2, "0");
-  return days > 0 ? `${days} ngày ${hh}:${mm}` : `${hh}:${mm}:${ss}`;
+  const hours = Math.floor((total % 86_400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (days > 0) return `${days} ngày ${hours} giờ`;
+  if (hours > 0) return `${hours} giờ ${minutes} phút ${seconds} giây`;
+  return `${minutes} phút ${seconds} giây`;
 }
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;

@@ -75,9 +75,10 @@ describe("league helpers", () => {
     assert.equal(xpToLeaveDemotion(17, 40, null, entries), null);
   });
 
-  test("countdown shows days and minutes, or hours to the second", () => {
-    assert.equal(formatCountdown(2 * 86_400_000 + 5 * 3_600_000 + 12 * 60_000 + 30_000), "2 ngày 05:12");
-    assert.equal(formatCountdown(3_600_000 + 9_000), "01:00:09");
-    assert.equal(formatCountdown(-5), "00:00:00");
+  test("countdown names its units: days and hours, or down to the second", () => {
+    assert.equal(formatCountdown(2 * 86_400_000 + 5 * 3_600_000 + 12 * 60_000 + 30_000), "2 ngày 5 giờ");
+    assert.equal(formatCountdown(13 * 3_600_000 + 28 * 60_000 + 43_000), "13 giờ 28 phút 43 giây");
+    assert.equal(formatCountdown(4 * 60_000 + 9_000), "4 phút 9 giây");
+    assert.equal(formatCountdown(-5), "0 phút 0 giây");
   });
 });

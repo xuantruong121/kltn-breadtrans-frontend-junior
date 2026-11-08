@@ -32,6 +32,14 @@ function useNow(intervalMs: number) {
   return now;
 }
 
+/** Time left to the Monday 00:01 reset; only this re-renders each second. */
+function ResetCountdown() {
+  const now = useNow(1_000);
+  return (
+    <span className="font-bold tabular-nums text-slate-900 dark:text-slate-100">{formatCountdown(nextLeagueReset(now) - now)}</span>
+  );
+}
+
 function ZoneRule({ kind }: { kind: "up" | "down" }) {
   const up = kind === "up";
   return (
@@ -100,8 +108,6 @@ export function WeeklyLeague({
   myTier: LeagueTier | null;
   myUserId: number | null;
 }) {
-  const now = useNow(30_000);
-  const resetIn = nextLeagueReset(now) - now;
   const entries = data?.entries ?? [];
   const me = data?.currentUserRank ?? null;
   const isTierView = tab !== "ALL";
@@ -129,7 +135,7 @@ export function WeeklyLeague({
           {title} · tuần này
         </h2>
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Chốt sau <span className="font-bold tabular-nums text-slate-900 dark:text-slate-100">{formatCountdown(resetIn)}</span>
+          Chốt sau <ResetCountdown />
         </p>
       </div>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
