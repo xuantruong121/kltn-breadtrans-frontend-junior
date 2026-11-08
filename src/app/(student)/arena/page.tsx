@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { Suspense, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanionPetStore } from "@/stores/companionPetStore";
@@ -11,14 +11,29 @@ import { ArenaHero } from "@/modules/arena/components/ArenaHero";
 import { ArenaRecord } from "@/modules/arena/components/ArenaRecord";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { useArenaMusic } from "@/modules/arena/sound/useArenaSound";
-import { WordBlasterCard } from "@/modules/word-blaster/components/WordBlasterCard";
+import { ArenaGameNav } from "@/modules/arena/components/ArenaGameNav";
+import { arenaGameFrom, type ArenaGame } from "@/modules/arena/games";
+import { BlasterLobby } from "@/modules/word-blaster/components/BlasterLobby";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService } from "@/lib/api/services/gamification.service";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { RotateCcw, X } from "lucide-react";
 
+// useSearchParams needs a Suspense boundary for the static build.
 export default function ArenaPage() {
+  return (
+    <Suspense fallback={null}>
+      <ArenaLobby />
+    </Suspense>
+  );
+}
+
+function ArenaLobby() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const game = arenaGameFrom(searchParams.get("game"));
+  const pick = (next: ArenaGame) => router.replace(next === "duel" ? pathname : `${pathname}?game=${next}`, { scroll: false });
   const { user } = useAuthStore();
   const isGuest = !user || user.role !== "STUDENT";
 
@@ -116,7 +131,9 @@ export default function ArenaPage() {
   }
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="grid items-start gap-6 pb-12 lg:grid-cols-[260px_1fr] [&>*]:min-w-0">
+      <ArenaGameNav game={game} onPick={pick} />
+      <div className="space-y-6">
       {abortedNotice && (
         <div
           role="status"
@@ -139,8 +156,8 @@ export default function ArenaPage() {
           </button>
         </div>
       )}
-      <div className="grid gap-6 lg:grid-cols-3 [&>*]:min-w-0">
-        <div className="lg:col-span-2">
+      {game === "duel" ? (
+        <div className="grid gap-6 xl:grid-cols-[1fr_320px] [&>*]:min-w-0">
           <ArenaHero
             stake={stake}
             onStake={setStake}
@@ -150,20 +167,21 @@ export default function ArenaPage() {
             onFind={find}
             onCancel={cancelQueue}
           />
+          <ArenaRecord stats={arenaStats} isGuest={isGuest} isLoading={arenaStatsLoading} />
         </div>
-        <ArenaRecord stats={arenaStats} isGuest={isGuest} isLoading={arenaStatsLoading} />
-      </div>
-
-      <WordBlasterCard isGuest={isGuest} onGuest={() => setAuthGateOpen("blaster")} />
+      ) : (
+        <BlasterLobby balance={balance} isGuest={isGuest} onGuest={() => setAuthGateOpen("blaster")} />
+      )}
 
       <AuthGateModal
         isOpen={authGateOpen !== null}
         onClose={() => setAuthGateOpen(null)}
         targetLabel={authGateOpen === "blaster" ? "chơi Bắn chữ rơi" : "tham gia đấu trường 1v1"}
-        targetRoute={authGateOpen === "blaster" ? "/arena/word-blaster" : "/arena"}
-        onOpenLogin={() => router.push(`/login?redirect=${authGateOpen === "blaster" ? "/arena/word-blaster" : "/arena"}`)}
-        onOpenRegister={() => router.push(`/register?redirect=${authGateOpen === "blaster" ? "/arena/word-blaster" : "/arena"}`)}
+        targetRoute={authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena"}
+        onOpenLogin={() => router.push(`/login?redirect=${encodeURIComponent(authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena")}`)}
+        onOpenRegister={() => router.push(`/register?redirect=${encodeURIComponent(authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena")}`)}
       />
+      </div>
     </div>
   );
 }

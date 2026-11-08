@@ -3,6 +3,16 @@ import assert from "node:assert/strict";
 
 import { NO_BADGE_FACTS, badgeViews, nextBadge } from "./badges.ts";
 import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "./arenaWallet.ts";
+import { arenaGameFrom } from "./games.ts";
+
+describe("arenaGameFrom", () => {
+  test("?game=blaster opens Bắn chữ rơi; anything else the duel", () => {
+    assert.equal(arenaGameFrom("blaster"), "blaster");
+    assert.equal(arenaGameFrom("duel"), "duel");
+    assert.equal(arenaGameFrom(null), "duel");
+    assert.equal(arenaGameFrom("chess"), "duel");
+  });
+});
 import { roundTimer, shouldTick } from "./roundTimer.ts";
 import { streakGoal, streakNote } from "./record.ts";
 import { resultCopy } from "./result.ts";
