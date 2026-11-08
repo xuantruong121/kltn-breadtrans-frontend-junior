@@ -37,6 +37,7 @@ import {
 import { getSpeciesIdFromPetName, PET_SPECIES_LIST } from "../types";
 import { CompanionPet2D } from "./CompanionPet2D";
 import { isCompanionPetHidden } from "@/lib/pet/companionPetVisibility";
+import { useCompanionPetStore } from "@/stores/companionPetStore";
 
 const FloatingCompanionPetInner: React.FC = () => {
   const { user } = useAuthStore();
@@ -500,7 +501,8 @@ const FloatingCompanionPetInner: React.FC = () => {
 export const FloatingCompanionPet: React.FC = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  if (isCompanionPetHidden(pathname, searchParams.get("tab"))) return null;
+  const suppressed = useCompanionPetStore((s) => s.suppressed);
+  if (suppressed || isCompanionPetHidden(pathname, searchParams.get("tab"))) return null;
 
   return <FloatingCompanionPetInner />;
 };

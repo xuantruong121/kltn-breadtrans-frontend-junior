@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
+import { useCompanionPetStore } from "@/stores/companionPetStore";
 import { useArenaSocket } from "@/lib/hooks/useArenaSocket";
 import ArenaMatchRoom from "@/modules/arena/ArenaMatchRoom";
 import { ArenaHero } from "@/modules/arena/components/ArenaHero";
@@ -104,6 +105,12 @@ export default function ArenaPage() {
       window.removeEventListener("keydown", start);
     };
   }, []);
+  // The floating pet and its bubbles stay away while two learners play.
+  const setPetSuppressed = useCompanionPetStore((s) => s.setSuppressed);
+  useEffect(() => {
+    setPetSuppressed(Boolean(matchData));
+    return () => setPetSuppressed(false);
+  }, [matchData, setPetSuppressed]);
   const announced = useRef<string | null>(null);
   useEffect(() => {
     if (matchData && announced.current !== matchData.matchId) {
