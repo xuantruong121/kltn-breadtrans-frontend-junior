@@ -50,7 +50,7 @@ export function MatchResultDialog({
     outcome === "win" ? "text-emerald-700 dark:text-emerald-400" : outcome === "draw" ? "text-slate-700 dark:text-slate-300" : "text-rose-700 dark:text-rose-400";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/60 p-4">
+    <div className="fixed inset-0 z-50 flex overflow-y-auto bg-slate-900/60 p-4">
       {outcome === "win" && !reduce && <Confetti recycle={false} numberOfPieces={320} />}
       <motion.div
         role="dialog"
@@ -59,7 +59,7 @@ export function MatchResultDialog({
         initial={reduce ? false : { scale: 0.92, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", stiffness: 220, damping: 20 }}
-        className="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl dark:bg-slate-900"
+        className="m-auto w-full max-w-md overflow-hidden rounded-xl bg-white shadow-xl dark:bg-slate-900"
       >
         <div className={`flex justify-center pt-6 ${outcome === "win" ? "bg-amber-100 dark:bg-amber-950/50" : "bg-slate-100 dark:bg-slate-800"}`}>
           <BreadMascot team="me" mood={outcome === "lose" ? "sad" : "happy"} size={112} />
@@ -103,12 +103,12 @@ export function MatchResultDialog({
               <tbody>
                 {rounds.map((r, i) => (
                   <tr key={i} className="border-t border-slate-100 dark:border-slate-800">
-                    <td className="py-1.5 text-slate-700 dark:text-slate-300">{i + 1}</td>
+                    <td className="py-1 text-slate-700 dark:text-slate-300">{i + 1}</td>
                     {[
                       [r.myCorrect, r.myPoints],
                       [r.rivalCorrect, r.rivalPoints],
                     ].map(([ok, pts], j) => (
-                      <td key={j} className="py-1.5 text-right tabular-nums">
+                      <td key={j} className="py-1 text-right tabular-nums">
                         <span className="inline-flex items-center gap-1">
                           {ok ? (
                             <Check size={14} strokeWidth={3} className="text-emerald-600" aria-label="đúng" />
