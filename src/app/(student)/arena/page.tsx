@@ -9,14 +9,11 @@ import { useArenaSocket } from "@/lib/hooks/useArenaSocket";
 import ArenaMatchRoom from "@/modules/arena/ArenaMatchRoom";
 import { ArenaHero } from "@/modules/arena/components/ArenaHero";
 import { ArenaRecord } from "@/modules/arena/components/ArenaRecord";
-import { BadgesCabinet } from "@/modules/arena/components/BadgesCabinet";
-import { WeeklyLeague } from "@/modules/arena/components/WeeklyLeague";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { useArenaMusic } from "@/modules/arena/sound/useArenaSound";
-import { DEFAULT_TIER, isLeagueTier, leagueQuery, type LeagueTier } from "@/modules/arena/league";
-import { NO_BADGE_FACTS } from "@/modules/arena/badges";
+import { WordBlasterCard } from "@/modules/word-blaster/components/WordBlasterCard";
 import { userService } from "@/lib/api/services/user.service";
-import { gamificationService, type LeaderboardResponse } from "@/lib/api/services/gamification.service";
+import { gamificationService } from "@/lib/api/services/gamification.service";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { RotateCcw, X } from "lucide-react";
 
@@ -26,8 +23,7 @@ export default function ArenaPage() {
   const isGuest = !user || user.role !== "STUDENT";
 
   const [stake, setStake] = useState<number>(20);
-  const [chosenTab, setChosenTab] = useState<LeagueTier | "ALL" | null>(null);
-  const [authGateOpen, setAuthGateOpen] = useState(false);
+  const [authGateOpen, setAuthGateOpen] = useState<null | "duel" | "blaster">(null);
 
   const {
     isSearching,
@@ -46,25 +42,7 @@ export default function ArenaPage() {
     resetMatch,
   } = useArenaSocket();
 
-  // "Tất cả" opens first; a tier tab shows that tier's promotion and demotion zones.
-  const { data: snippet } = useQuery({
-    queryKey: ["arena-snippet", user?.id],
-    queryFn: gamificationService.getArenaSnippet,
-    enabled: !isGuest,
-    staleTime: 60_000,
-  });
-  const myTier: LeagueTier | null = isLeagueTier(snippet?.tier) ? snippet.tier : isGuest ? null : DEFAULT_TIER;
-  const tab: LeagueTier | "ALL" = chosenTab ?? "ALL";
-
-  const { data: league, isLoading: leagueLoading } = useQuery<LeaderboardResponse>({
-    queryKey: ["leaderboard", tab],
-    queryFn: () => {
-      const { tier, scope } = leagueQuery(tab);
-      return gamificationService.getLeaderboard(tier, scope);
-    },
-    staleTime: 60_000,
-  });
-
+  // The weekly league and the badges live on /ranking (owner 2026-11-08).
   const { data: stats } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: userService.getStats,
@@ -77,21 +55,7 @@ export default function ArenaPage() {
     enabled: !isGuest,
     staleTime: 60_000,
   });
-  const { data: myBadges, isLoading: badgesLoading } = useQuery({
-    queryKey: ["my-badges", user?.id],
-    queryFn: gamificationService.getMyBadges,
-    enabled: !isGuest,
-    staleTime: 60_000,
-  });
-  const { data: badgeProgress } = useQuery({
-    queryKey: ["badge-progress", user?.id],
-    queryFn: gamificationService.getBadgeProgress,
-    enabled: !isGuest,
-    staleTime: 60_000,
-  });
-
   const balance = isGuest ? null : (stats?.totalBanhRan ?? null);
-  const badgeFacts = badgeProgress?.facts ?? NO_BADGE_FACTS;
 
   // Lobby loop on the arena page, the faster loop during a match. Browsers only
   // allow sound after a user gesture, so the first click or key anywhere on the
@@ -122,7 +86,7 @@ export default function ArenaPage() {
 
   const find = () => {
     if (isGuest) {
-      setAuthGateOpen(true);
+      setAuthGateOpen("duel");
       return;
     }
     arenaSound.unlock();
@@ -190,34 +154,15 @@ export default function ArenaPage() {
         <ArenaRecord stats={arenaStats} isGuest={isGuest} isLoading={arenaStatsLoading} />
       </div>
 
-      <div className="grid items-start gap-6 lg:grid-cols-3 [&>*]:min-w-0">
-        <div className="lg:col-span-2">
-          <WeeklyLeague
-            data={league}
-            isLoading={leagueLoading}
-            tab={tab}
-            onTab={setChosenTab}
-            myTier={myTier}
-            myUserId={user?.id ?? null}
-          />
-        </div>
-        {isGuest ? (
-          <section className="rounded-xl border border-slate-200 bg-white p-5 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Huy hiệu</h2>
-            <p className="mt-2">Đăng nhập để xem huy hiệu bạn đã đạt và những huy hiệu sắp đạt.</p>
-          </section>
-        ) : (
-          <BadgesCabinet myBadges={myBadges ?? []} facts={badgeFacts} isLoading={badgesLoading} />
-        )}
-      </div>
+      <WordBlasterCard isGuest={isGuest} onGuest={() => setAuthGateOpen("blaster")} />
 
       <AuthGateModal
-        isOpen={authGateOpen}
-        onClose={() => setAuthGateOpen(false)}
-        targetLabel="tham gia đấu trường 1v1"
-        targetRoute="/arena"
-        onOpenLogin={() => router.push("/login?redirect=/arena")}
-        onOpenRegister={() => router.push("/register?redirect=/arena")}
+        isOpen={authGateOpen !== null}
+        onClose={() => setAuthGateOpen(null)}
+        targetLabel={authGateOpen === "blaster" ? "chơi Bắn chữ rơi" : "tham gia đấu trường 1v1"}
+        targetRoute={authGateOpen === "blaster" ? "/arena/word-blaster" : "/arena"}
+        onOpenLogin={() => router.push(`/login?redirect=${authGateOpen === "blaster" ? "/arena/word-blaster" : "/arena"}`)}
+        onOpenRegister={() => router.push(`/register?redirect=${authGateOpen === "blaster" ? "/arena/word-blaster" : "/arena"}`)}
       />
     </div>
   );

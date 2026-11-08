@@ -128,7 +128,8 @@ describe("Navigation Route Classification", () => {
     assert.equal(isMarketRoute("/arena"), false);
 
     // 8. More (Arena and FAQ)
-    assert.equal(isMoreRoute("/arena"), true);
+    assert.equal(isMoreRoute("/arena"), false);
+    assert.equal(isMoreRoute("/ranking"), true);
     assert.equal(isMoreRoute("/help"), true);
     assert.equal(isMoreRoute("/dashboard"), false);
   });

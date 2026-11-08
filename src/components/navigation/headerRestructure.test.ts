@@ -26,7 +26,7 @@ describe("Header Navigation Restructure Verification", () => {
       "Flashcard",
       "Luyện đề",
       ...["Cửa hàng"],
-      ...["Bảng xếp hạng"],
+      ...["Đấu trường"],
       "More",
     ];
 
@@ -51,7 +51,7 @@ describe("Header Navigation Restructure Verification", () => {
     assert.equal(buttons.length, 8);
     assert.deepEqual(
       MORE_DROPDOWN_ITEMS.map((item) => item.href),
-      ["/help"],
+      ["/ranking", "/help"],
     );
   });
 
@@ -78,9 +78,10 @@ describe("Header Navigation Restructure Verification", () => {
   });
 
   it("activates 'More' for Leaderboard and FAQ routes", () => {
-    assert.equal(isMoreRoute("/arena"), true);
-    assert.equal(isMoreRoute("/arena/weekly"), true);
+    assert.equal(isMoreRoute("/ranking"), true);
     assert.equal(isMoreRoute("/help"), true);
+    // Đấu trường is a button of its own now.
+    assert.equal(isMoreRoute("/arena"), false);
 
     assert.equal(isMoreRoute("/dashboard"), false);
     assert.equal(isMoreRoute("/practice"), false);

@@ -82,6 +82,7 @@ const isGuestAllowedPage = (): boolean => {
     "/practice",
     "/market",
     "/arena",
+    "/ranking",
     "/flashcard",
     "/grammar",
     "/plans",

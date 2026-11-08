@@ -36,7 +36,12 @@ export function AppFooter() {
               </li>
               <li>
                 <Link href="/arena" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
-                  Đấu trường & Bảng xếp hạng
+                  Đấu trường
+                </Link>
+              </li>
+              <li>
+                <Link href="/ranking" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                  Bảng xếp hạng
                 </Link>
               </li>
             </ul>
