@@ -40,7 +40,7 @@ export default function ArenaPage() {
     resetMatch,
   } = useArenaSocket();
 
-  // The learner's own league opens first: the weekly cron promotes and demotes within it.
+  // "Tất cả" opens first; a tier tab shows that tier's promotion and demotion zones.
   const { data: snippet } = useQuery({
     queryKey: ["arena-snippet", user?.id],
     queryFn: gamificationService.getArenaSnippet,
@@ -48,7 +48,7 @@ export default function ArenaPage() {
     staleTime: 60_000,
   });
   const myTier: LeagueTier | null = isLeagueTier(snippet?.tier) ? snippet.tier : isGuest ? null : DEFAULT_TIER;
-  const tab: LeagueTier | "ALL" = chosenTab ?? myTier ?? DEFAULT_TIER;
+  const tab: LeagueTier | "ALL" = chosenTab ?? "ALL";
 
   const { data: league, isLoading: leagueLoading } = useQuery<LeaderboardResponse>({
     queryKey: ["leaderboard", tab],
