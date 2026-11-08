@@ -42,6 +42,7 @@ export default function ArenaPage() {
     joinQueue,
     cancelQueue,
     submitAnswer,
+    leaveMatch,
     resetMatch,
   } = useArenaSocket();
 
@@ -138,6 +139,7 @@ export default function ArenaPage() {
         matchResult={matchResult}
         opponentDisconnected={opponentDisconnected}
         onSubmitAnswer={submitAnswer}
+        onLeave={leaveMatch}
         onExit={resetMatch}
         onRematch={(again) => {
           resetMatch();

@@ -64,6 +64,8 @@ export interface MatchResult {
   winnerRole: "p1" | "p2" | "draw";
   winnerUserId: number | null;
   isForfeit?: boolean;
+  /** Why a forfeit happened: the loser left on purpose, or lost connection for 15 s. */
+  forfeitReason?: "left" | "disconnected" | null;
   // xp: 5 per correct answer, capped at 150 Arena XP a day (xpCapped).
   p1: { userId: number; userName: string; score: number; xp?: number; xpCapped?: boolean };
   p2: { userId: number; userName: string; score: number; xp?: number; xpCapped?: boolean };
@@ -240,9 +242,7 @@ export function useArenaSocket() {
       setMatchResult(data);
       refresh(MATCH_END_QUERY_KEYS);
       setOpponentDisconnected(null);
-      if (data.isForfeit) {
-        toast.success("Đối thủ đã bỏ cuộc sau 15s mất kết nối!");
-      }
+      // The result dialog says why a forfeit happened (left or disconnected).
     });
 
     // The server cancelled the match and gave both stakes back. It can say so
@@ -316,6 +316,12 @@ export function useArenaSocket() {
     [user]
   );
 
+  /** Leave the running match: the server ends it at once and the rival wins. */
+  const leaveMatch = useCallback((matchId: string) => {
+    if (!socketRef.current) return;
+    socketRef.current.emit("leave_match", { matchId });
+  }, []);
+
   const dismissAbortedNotice = useCallback(() => setAbortedNotice(null), []);
 
   const resetMatch = useCallback(() => {
@@ -344,6 +350,7 @@ export function useArenaSocket() {
     cancelQueue,
     submitAnswer,
     reconnectMatch,
+    leaveMatch,
     resetMatch,
   };
 }

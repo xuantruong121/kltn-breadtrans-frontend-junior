@@ -5,6 +5,35 @@ import { NO_BADGE_FACTS, badgeViews, nextBadge } from "./badges.ts";
 import { formatCountdown, xpToLeaveDemotion } from "./league.ts";
 import { roundTimer, shouldTick } from "./roundTimer.ts";
 import { streakGoal, streakNote } from "./record.ts";
+import { resultCopy } from "./result.ts";
+
+describe("resultCopy", () => {
+  const base = { rivalName: "Lan", stake: 50, reward: 100, xp: 35, xpCapped: false } as const;
+  test("a normal win: net Bánh Mì and XP", () => {
+    const c = resultCopy({ ...base, outcome: "win", forfeitReason: null });
+    assert.equal(c.title, "Bạn thắng!");
+    assert.equal(c.line, "Bạn đã vượt qua Lan.");
+    assert.equal(c.banh, "+50");
+    assert.equal(c.banhTone, "up");
+    assert.equal(c.xp, "+35 XP");
+    assert.equal(c.xpNote, null);
+  });
+  test("why a forfeit happened", () => {
+    assert.equal(resultCopy({ ...base, outcome: "win", forfeitReason: "left" }).line, "Lan đã rời trận.");
+    assert.equal(resultCopy({ ...base, outcome: "win", forfeitReason: "disconnected" }).line, "Lan mất kết nối quá 15 giây.");
+    assert.equal(resultCopy({ ...base, outcome: "lose", forfeitReason: "disconnected" }).line, "Bạn mất kết nối quá 15 giây.");
+  });
+  test("a loss and a draw", () => {
+    const lose = resultCopy({ ...base, outcome: "lose", forfeitReason: null, xp: 0, xpCapped: true });
+    assert.equal(lose.banh, "−50");
+    assert.equal(lose.banhTone, "down");
+    assert.equal(lose.xp, "+0 XP");
+    assert.equal(lose.xpNote, "Đã đủ 150 XP từ Đấu trường hôm nay.");
+    const draw = resultCopy({ ...base, outcome: "draw", forfeitReason: null, xp: undefined });
+    assert.equal(draw.banh, "±0");
+    assert.equal(draw.xp, null);
+  });
+});
 
 describe("streakNote", () => {
   test("shows the best streak only when it differs from the current one", () => {

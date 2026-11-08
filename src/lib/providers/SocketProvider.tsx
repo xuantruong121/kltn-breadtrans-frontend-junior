@@ -123,8 +123,14 @@ export default function SocketProvider({ children }: { children: React.ReactNode
           void queryClient.invalidateQueries({ queryKey: [...queryKey] });
         }
 
+        // The Vocabulary Arena shows stakes, payouts and refunds on its own
+        // screens (net, after the stake); a second toast with the gross amount
+        // only contradicted them. The balance above still updates.
+        const fromArena = typeof data.reason === "string" && data.reason.includes("Đấu Trường");
         // Hiển thị thông báo chúc mừng / thông tin
-        if (data.amount > 0) {
+        if (fromArena) {
+          // no toast
+        } else if (data.amount > 0) {
           toast.success(`+${data.amount} Bánh Mì! Lý do: ${data.reason || "Thưởng học tập"}`, {
             duration: 6000,
             icon: <Wheat size={18} className="text-amber-600" aria-hidden="true" />,

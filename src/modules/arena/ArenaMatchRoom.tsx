@@ -2,9 +2,12 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { CheckCircle2, WifiOff, Wheat, XCircle } from "lucide-react";
+import toast from "react-hot-toast";
+import { CheckCircle2, LogOut, WifiOff, Wheat, XCircle } from "lucide-react";
 import type { ArenaQuestionKind, MatchData, MatchResult, RoundResultData, RoundStartData } from "@/lib/hooks/useArenaSocket";
 import { useAuthStore } from "@/stores/authStore";
+import { ArenaBackdrop } from "./components/ArenaBackdrop";
+import { LeaveMatchDialog } from "./components/LeaveMatchDialog";
 import { MatchIntro } from "./components/MatchIntro";
 import { MatchResultDialog, type RoundRecord } from "./components/MatchResultDialog";
 import { PlayerScoreCard, type RoundMark } from "./components/PlayerScoreCard";
@@ -22,6 +25,8 @@ interface ArenaMatchRoomProps {
   matchResult: MatchResult | null;
   opponentDisconnected: { disconnectedUserId: number; disconnectedUserName: string; gracePeriodSeconds: number } | null;
   onSubmitAnswer: (matchId: string, roundIndex: number, selectedOption: string) => void;
+  /** Leave the running match; the server settles it as a loss for this learner. */
+  onLeave: (matchId: string) => void;
   onExit: () => void;
   onRematch: (stake: number) => void;
 }
@@ -46,6 +51,7 @@ export default function ArenaMatchRoom({
   matchResult,
   opponentDisconnected,
   onSubmitAnswer,
+  onLeave,
   onExit,
   onRematch,
 }: ArenaMatchRoomProps) {
@@ -54,6 +60,8 @@ export default function ArenaMatchRoom({
   const [selected, setSelected] = useState<Record<number, string>>({});
   const [history, setHistory] = useState<Record<number, RoundRecord>>({});
   const [disconnectLeft, setDisconnectLeft] = useState(15);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const isP1 = matchData.player1.userId === user?.id;
   const me = isP1 ? matchData.player1 : matchData.player2;
@@ -105,11 +113,18 @@ export default function ArenaMatchRoom({
         ? "win"
         : "lose"
     : null;
+  // This learner left on purpose: no result dialog, back to the lobby with a note.
+  const leftByMe = Boolean(matchResult?.isForfeit && matchResult.forfeitReason === "left" && outcome === "lose");
   useEffect(() => {
-    if (!outcome) return;
+    if (!outcome || leftByMe) return;
     arenaSound.play(outcome);
     if (outcome === "win") buzz([40, 60, 40]);
-  }, [outcome]);
+  }, [outcome, leftByMe]);
+  useEffect(() => {
+    if (!leftByMe) return;
+    toast(`Bạn đã rời trận và mất ${matchData.stake} Bánh Mì đã cược.`);
+    onExit();
+  }, [leftByMe, matchData.stake, onExit]);
 
   // Opponent reconnect window.
   useEffect(() => {
@@ -132,7 +147,8 @@ export default function ArenaMatchRoom({
   const optionsRef = useRef<string[]>([]);
   useEffect(() => {
     chooseRef.current = choose;
-    optionsRef.current = question?.options ?? [];
+    // No answer by key while the leave question is open.
+    optionsRef.current = leaveOpen ? [] : (question?.options ?? []);
   });
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -163,16 +179,32 @@ export default function ArenaMatchRoom({
   const myResult = roundResult ? (isP1 ? roundResult.p1 : roundResult.p2) : null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 pb-10">
+    <div className="relative isolate mx-auto max-w-5xl overflow-hidden rounded-2xl px-3 pb-40 pt-5 sm:px-6 sm:pt-7">
+      <ArenaBackdrop />
+    <div className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <p className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-semibold text-slate-700 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300">
           Cược {matchData.stake}
           <Wheat size={15} strokeWidth={2.25} aria-hidden="true" />
           <span className="sr-only">Bánh Mì</span>
           <span className="text-slate-400">·</span>
           {question ? `Câu ${roundIdx + 1}/${totalRounds}` : "Chuẩn bị"}
         </p>
-        <SoundToggle />
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-white/80 backdrop-blur-sm dark:bg-slate-900/70">
+            <SoundToggle />
+          </div>
+          {!matchResult && (
+            <button
+              type="button"
+              onClick={() => setLeaveOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm hover:bg-rose-50 hover:text-rose-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
+            >
+              <LogOut size={16} strokeWidth={2.25} aria-hidden="true" />
+              Thoát
+            </button>
+          )}
+        </div>
       </div>
 
       <AnimatePresence>
@@ -329,10 +361,23 @@ export default function ArenaMatchRoom({
         </>
       )}
 
-      {matchResult && outcome && (
+      {leaveOpen && !matchResult && (
+        <LeaveMatchDialog
+          stake={matchData.stake}
+          rivalName={rival.userName}
+          pending={leaving}
+          onStay={() => setLeaveOpen(false)}
+          onLeave={() => {
+            setLeaving(true);
+            onLeave(matchData.matchId);
+          }}
+        />
+      )}
+
+      {matchResult && outcome && !leftByMe && (
         <MatchResultDialog
           outcome={outcome}
-          forfeit={Boolean(matchResult.isForfeit)}
+          forfeitReason={matchResult.isForfeit ? (matchResult.forfeitReason ?? "disconnected") : null}
           myScore={isP1 ? matchResult.p1.score : matchResult.p2.score}
           rivalScore={isP1 ? matchResult.p2.score : matchResult.p1.score}
           rivalName={rival.userName}
@@ -340,14 +385,13 @@ export default function ArenaMatchRoom({
           reward={matchResult.reward}
           xp={isP1 ? matchResult.p1.xp : matchResult.p2.xp}
           xpCapped={Boolean(isP1 ? matchResult.p1.xpCapped : matchResult.p2.xpCapped)}
-          rounds={Object.keys(history)
-            .map(Number)
-            .sort((a, b) => a - b)
-            .map((k) => history[k])}
+          correct={Object.values(history).filter((r) => r.myCorrect).length}
+          totalRounds={totalRounds}
           onRematch={() => onRematch(matchData.stake)}
           onExit={onExit}
         />
       )}
+    </div>
     </div>
   );
 }
