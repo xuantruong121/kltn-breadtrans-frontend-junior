@@ -72,7 +72,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           Các khối chữ rơi xuống cánh đồng. Gõ chữ đầu để pháo bánh mì khoá mục tiêu, mỗi chữ đúng là một phát bắn, gõ đủ chữ là khối vỡ, không cần nhấn Enter.
         </p>
         <ul className="mt-4 space-y-1.5 text-sm text-slate-800 dark:text-slate-200">
-          <li className="flex items-center gap-2"><Crosshair size={15} strokeWidth={2.25} aria-hidden="true" /> 20 khối, rơi nhanh dần. Qua hết mà còn mạng là thắng.</li>
+          <li className="flex items-center gap-2"><Crosshair size={15} strokeWidth={2.25} aria-hidden="true" /> 20 khối, rơi dày và nhanh dần, về cuối có lúc hai khối cùng rơi. Qua hết mà còn mạng là thắng.</li>
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 3 mạng: mỗi khối chạm đất mất một mạng.</li>
           <li className="flex items-center gap-2"><Wheat size={15} strokeWidth={2.25} aria-hidden="true" /> Gõ không dấu cũng được khi trả lời nghĩa tiếng Việt.</li>
         </ul>

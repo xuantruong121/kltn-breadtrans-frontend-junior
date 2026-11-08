@@ -254,7 +254,8 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
           setLockedId((current) => current ?? targetId);
         }
       }
-      setView((v) => ({ ...v, hits: res.hits, result: res.result ?? v.result, serverNow: res.serverNow }));
+      // The server may bring the next blocks in early after a hit (an empty field), so take its schedule too.
+      setView((v) => ({ ...v, blocks: res.blocks ?? v.blocks, hits: res.hits, result: res.result ?? v.result, serverNow: res.serverNow }));
     } catch {
       playBlaster("miss");
     } finally {
