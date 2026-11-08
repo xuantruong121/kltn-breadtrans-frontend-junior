@@ -128,7 +128,7 @@ export function MatchResultDialog({
               <p className="text-4xl font-extrabold tabular-nums text-sky-700 dark:text-sky-400">{mine.toLocaleString("vi-VN")}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">Bạn</p>
             </div>
-            <span className="text-2xl font-bold text-slate-300 dark:text-slate-600" aria-hidden="true">
+            <span className="text-2xl font-bold text-slate-300 dark:text-slate-700" aria-hidden="true">
               –
             </span>
             <div className="min-w-0 flex-1 text-left">
