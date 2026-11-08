@@ -26,6 +26,8 @@ describe("resultCopy", () => {
   test("a loss and a draw", () => {
     const lose = resultCopy({ ...base, outcome: "lose", forfeitReason: null, xp: 0, xpCapped: true });
     assert.equal(lose.banh, "−50");
+    // The Arena plays with dictionary words only; nothing points at a review list.
+    assert.equal(lose.line, "Lan nhanh hơn lần này. Phục thù ở trận sau nhé!");
     assert.equal(lose.banhTone, "down");
     assert.equal(lose.xp, "+0 XP");
     assert.equal(lose.xpNote, "Đã đủ 150 XP từ Đấu trường hôm nay.");

@@ -10,13 +10,12 @@ import { blasterResultCopy } from "../blasterResult";
 
 const CONFETTI_COLORS = ["#F59E0B", "#FBBF24", "#FB923C", "#10B981", "#38BDF8", "#FDE68A"];
 
-/** The end of a game: won or lost, Bánh Mì and XP, and the words that got away. */
+/** The end of a game: won or lost, Bánh Mì and XP. */
 export function BlasterResultDialog({ result, onAgain, onExit }: { result: BlasterResult; onAgain: () => void; onExit: () => void }) {
   const reduce = Boolean(useReducedMotion());
   const againRef = useRef<HTMLButtonElement>(null);
   useEffect(() => againRef.current?.focus(), []);
   const copy = blasterResultCopy(result);
-  const missed = result.words.filter((w) => !w.hit);
   const win = result.outcome === "win";
 
   return (
@@ -73,20 +72,6 @@ export function BlasterResultDialog({ result, onAgain, onExit }: { result: Blast
             </motion.span>
           </div>
           {copy.note && <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">{copy.note}</p>}
-
-          {missed.length > 0 && (
-            <div className="mt-5 text-left">
-              <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Từ cần ôn lại</p>
-              <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-sm">
-                {missed.map((w) => (
-                  <li key={w.id} className="flex justify-between gap-3 border-b border-slate-100 py-1 dark:border-slate-800">
-                    <span className="font-semibold text-slate-900 dark:text-slate-100">{w.displayWord}</span>
-                    <span className="text-right text-slate-700 dark:text-slate-300">{w.meaningVi}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           <div className="mt-6 flex flex-col gap-2">
             <button

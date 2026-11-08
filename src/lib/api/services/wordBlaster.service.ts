@@ -23,7 +23,6 @@ export interface BlasterResult {
   net: number;
   bonusCapped: number;
   xp: number;
-  words: { id: number; displayWord: string; meaningVi: string; hit: boolean }[];
 }
 
 export interface BlasterView {
