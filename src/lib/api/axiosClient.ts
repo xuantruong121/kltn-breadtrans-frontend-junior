@@ -53,6 +53,7 @@ const isPublicOrOptionalEndpoint = (url?: string): boolean => {
   if (!url) return false;
   const publicPaths = [
     "/gamification/leaderboard",
+    "/gamification/ranking",
     "/market/products",
     "/practice",
     "/grammar",

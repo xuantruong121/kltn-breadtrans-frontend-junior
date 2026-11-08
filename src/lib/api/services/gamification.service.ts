@@ -62,6 +62,55 @@ export interface ArenaStats {
   netBanh: number;
 }
 
+export type RankingMetric = "xp" | "streak" | "referral";
+export type RankingPeriod = "today" | "week" | "month" | "all";
+
+export interface RankingEntry {
+  rank: number;
+  userId: number;
+  displayName: string;
+  avatarUrl: string | null;
+  level: number;
+  tier: string;
+  value: number;
+}
+
+/** The learner's place in the weekly league, as the Monday reset will move them. */
+export interface LeagueStanding {
+  tier: string;
+  rankInTier: number;
+  tierSize: number;
+  promoteCount: number;
+  demoteFrom: number | null;
+  xpToPromotion: number | null;
+  inDemotionZone: boolean;
+  xpToLeaveDemotion: number | null;
+}
+
+export interface RankingResponse {
+  metric: RankingMetric;
+  period: RankingPeriod;
+  entries: RankingEntry[];
+  total: number;
+  me: { rank: number | null; value: number; level: number; tier: string; league: LeagueStanding | null } | null;
+}
+
+export type HallOfFameEntry = { userId: number; displayName: string; avatarUrl: string | null; value: number } | null;
+export interface HallOfFame {
+  xp: HallOfFameEntry;
+  streak: HallOfFameEntry;
+  referral: HallOfFameEntry;
+}
+
+export interface RankingActivity {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  text: string;
+  kind: "study" | "badge" | "arena" | "level" | "streak";
+  at: string;
+}
+
 export interface Pet {
   id: number;
   name: string;
@@ -181,6 +230,19 @@ export const gamificationService = {
 
   getArenaStats: async (): Promise<ArenaStats> => {
     return await axiosClient.get("/gamification/arena/stats");
+  },
+
+  /** Bảng xếp hạng: top 50 for a metric and period, and the learner's own place. */
+  getRanking: async (metric: RankingMetric, period: RankingPeriod): Promise<RankingResponse> => {
+    return await axiosClient.get("/gamification/ranking", { params: { metric, period } });
+  },
+
+  getHallOfFame: async (): Promise<HallOfFame> => {
+    return await axiosClient.get("/gamification/ranking/hall-of-fame");
+  },
+
+  getRankingActivity: async (): Promise<RankingActivity[]> => {
+    return await axiosClient.get("/gamification/ranking/activity");
   },
 
   getLeaderboard: async (tier?: string, scope?: string): Promise<LeaderboardResponse> => {

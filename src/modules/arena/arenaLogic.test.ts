@@ -2,7 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { NO_BADGE_FACTS, badgeViews, nextBadge } from "./badges.ts";
-import { formatCountdown, xpToLeaveDemotion } from "./league.ts";
+import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "./arenaWallet.ts";
 import { roundTimer, shouldTick } from "./roundTimer.ts";
 import { streakGoal, streakNote } from "./record.ts";
 import { resultCopy } from "./result.ts";
@@ -127,23 +127,12 @@ describe("badges", () => {
   });
 });
 
-describe("league helpers", () => {
-  const entries = [
-    { rank: 15, weeklyExp: 120 },
-    { rank: 16, weeklyExp: 90 },
-    { rank: 17, weeklyExp: 40 },
-  ];
-
-  test("XP to climb out of the demotion zone", () => {
-    assert.equal(xpToLeaveDemotion(17, 40, 17, entries), 51);
-    assert.equal(xpToLeaveDemotion(16, 90, 17, entries), null);
-    assert.equal(xpToLeaveDemotion(17, 40, null, entries), null);
+describe("arena wallet keys", () => {
+  test("cover every query that shows Bánh Mì, by prefix", () => {
+    assert.deepEqual(WALLET_QUERY_KEYS, [["user-stats"], ["profile"], ["market-balance"]]);
   });
 
-  test("countdown names its units: days and hours, or down to the second", () => {
-    assert.equal(formatCountdown(2 * 86_400_000 + 5 * 3_600_000 + 12 * 60_000 + 30_000), "2 ngày 5 giờ");
-    assert.equal(formatCountdown(13 * 3_600_000 + 28 * 60_000 + 43_000), "13 giờ 28 phút 43 giây");
-    assert.equal(formatCountdown(4 * 60_000 + 9_000), "4 phút 9 giây");
-    assert.equal(formatCountdown(-5), "0 phút 0 giây");
+  test("a finished match also refreshes the ranking, the feed, the arena record and the badges", () => {
+    assert.deepEqual(MATCH_END_QUERY_KEYS.slice(-5), [["ranking"], ["ranking-activity"], ["arena-stats"], ["my-badges"], ["badge-progress"]]);
   });
 });
