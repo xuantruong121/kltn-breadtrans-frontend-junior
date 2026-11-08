@@ -64,6 +64,13 @@ export interface MatchResult {
   isDraw: boolean;
 }
 
+/** A match the server cancelled and refunded, e.g. after it restarted mid-match. */
+export interface AbortedMatchNotice {
+  matchId: string;
+  refunded: number;
+  reason: "server_restart" | "stale_escrow";
+}
+
 export function useArenaSocket() {
   const { user, accessToken } = useAuthStore();
   const socketRef = useRef<Socket | null>(null);
@@ -93,6 +100,11 @@ export function useArenaSocket() {
     gracePeriodSeconds: number;
   } | null>(null);
 
+  const [abortedNotice, setAbortedNotice] = useState<AbortedMatchNotice | null>(null);
+  // The match in progress, read by the reconnect handler without re-subscribing.
+  const activeMatchRef = useRef<string | null>(null);
+  const abortedSeenRef = useRef<string | null>(null);
+
   useEffect(() => {
     const wsUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
     const socket = io(`${wsUrl}/arena`, {
@@ -110,6 +122,9 @@ export function useArenaSocket() {
 
     socket.on("connect", () => {
       setIsConnected(true);
+      // After a dropped connection the server keeps the match for 15 s; ask to
+      // rejoin it. If the server restarted, it answers arena:match_aborted.
+      if (activeMatchRef.current) socket.emit("reconnect_match", { matchId: activeMatchRef.current });
     });
 
     socket.on("disconnect", () => {
@@ -129,6 +144,7 @@ export function useArenaSocket() {
     socket.on("arena:match_found", (data: MatchData) => {
       setIsSearching(false);
       refresh(WALLET_QUERY_KEYS);
+      activeMatchRef.current = data.matchId;
       setMatchData(data);
       setMatchResult(null);
       setCurrentRoundData(null);
@@ -184,6 +200,7 @@ export function useArenaSocket() {
     // State restoration when this client reconnected
     socket.on("arena:match_state_restored", (data: any) => {
       setIsSearching(false);
+      activeMatchRef.current = data.matchId;
       setMatchData({
         roomId: data.matchId,
         matchId: data.matchId,
@@ -212,12 +229,30 @@ export function useArenaSocket() {
 
     // Match Ended
     socket.on("arena:match_ended", (data: MatchResult) => {
+      activeMatchRef.current = null;
       setMatchResult(data);
       refresh(MATCH_END_QUERY_KEYS);
       setOpponentDisconnected(null);
       if (data.isForfeit) {
         toast.success("Đối thủ đã bỏ cuộc sau 15s mất kết nối!");
       }
+    });
+
+    // The server cancelled the match and gave both stakes back. It can say so
+    // twice (on connection and in answer to reconnect_match); show it once.
+    socket.on("arena:match_aborted", (data: AbortedMatchNotice) => {
+      refresh(MATCH_END_QUERY_KEYS);
+      if (abortedSeenRef.current === data.matchId) return;
+      abortedSeenRef.current = data.matchId;
+      activeMatchRef.current = null;
+      setMatchData(null);
+      setMatchResult(null);
+      setCurrentRoundData(null);
+      setRoundResult(null);
+      setLiveProgress(null);
+      setOpponentDisconnected(null);
+      setIsSearching(false);
+      setAbortedNotice(data);
     });
 
     socket.on("arena:error", (data: { message: string }) => {
@@ -274,7 +309,10 @@ export function useArenaSocket() {
     [user]
   );
 
+  const dismissAbortedNotice = useCallback(() => setAbortedNotice(null), []);
+
   const resetMatch = useCallback(() => {
+    activeMatchRef.current = null;
     setMatchData(null);
     setMatchResult(null);
     setCurrentRoundData(null);
@@ -293,6 +331,8 @@ export function useArenaSocket() {
     liveProgress,
     matchResult,
     opponentDisconnected,
+    abortedNotice,
+    dismissAbortedNotice,
     joinQueue,
     cancelQueue,
     submitAnswer,
