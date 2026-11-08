@@ -10,11 +10,20 @@ export type ClientBlock = {
   spawnAtMs: number;
   fallMs: number;
   lane: number;
+  hint?: string | null;
 };
 
 /** Same as the server: a shot this long after landing still counts. */
 export const LANDING_GRACE_MS = 400;
 export const LIVES = 3;
+
+/** The four modes, as the lobby offers them (owner 2026-11-08: one per game). */
+export const MODES: { id: ClientBlock["kind"]; name: string; line: string; sample: string }[] = [
+  { id: "copy", name: "Gõ lại từ", line: "Khối hiện từ tiếng Anh, gõ lại đúng chính tả.", sample: "negotiate" },
+  { id: "missing", name: "Điền chữ thiếu", line: "Từ bị ẩn vài chữ cái, gõ cả từ.", sample: "neg_ti_te" },
+  { id: "vi_to_en", name: "Nghĩa → từ", line: "Khối hiện nghĩa tiếng Việt, gõ từ tiếng Anh.", sample: "đàm phán" },
+  { id: "en_to_vi", name: "Từ → nghĩa", line: "Khối hiện từ tiếng Anh, gõ nghĩa theo số gạch chân.", sample: "negotiate / ___ ____" },
+];
 
 export const KIND_LABEL: Record<ClientBlock["kind"], string> = {
   copy: "Gõ lại từ",
@@ -74,10 +83,40 @@ function fitsPattern(prompt: string, typed: string): boolean {
   return true;
 }
 
+/** The hint's words as letter counts: "___ ____" → [3, 4]. */
+function hintWords(hint: string): number[] {
+  return hint.split(" ").filter(Boolean).map((w) => w.length);
+}
+
+function typedWords(typed: string): string[] {
+  return typed.normalize("NFC").trim().split(/\s+/).filter(Boolean);
+}
+
+/** Could the typed text be this meaning: no more words, none longer than the hint's? */
+export function fitsHint(hint: string, typed: string): boolean {
+  const want = hintWords(hint);
+  const have = typedWords(typed);
+  if (have.length === 0 || have.length > want.length) return false;
+  return have.every((w, i) => [...w].length <= want[i]);
+}
+
+/**
+ * The hint with the typed letters in place, word by word, for the block the
+ * cannon aims at: "dam ph" over "___ ____" → d a m · p h _ _.
+ */
+export function fillHint(hint: string, typed: string): { char: string; filled: boolean }[][] {
+  const have = typedWords(typed);
+  return hintWords(hint).map((length, i) => {
+    const letters = [...(have[i] ?? "")];
+    return Array.from({ length }, (_, j) => (letters[j] ? { char: letters[j], filled: true } : { char: "_", filled: false }));
+  });
+}
+
 /**
  * The block the cannon points at: for "copy" and "missing" blocks the one
- * whose word fits what is typed so far; otherwise the block closest to the
- * cannon line. Meanings cannot be matched here, the answers stay on the server.
+ * whose word fits what is typed so far, for a meaning the one whose hint the
+ * typed words fit; otherwise the block closest to the cannon line. The
+ * answers themselves stay on the server.
  */
 export function aimTarget(live: ClientBlock[], typed: string): ClientBlock | null {
   if (live.length === 0) return null;
@@ -85,7 +124,10 @@ export function aimTarget(live: ClientBlock[], typed: string): ClientBlock | nul
   const byLanding = [...live].sort((a, b) => landsAt(a) - landsAt(b));
   if (text) {
     const fit = byLanding.find(
-      (b) => (b.kind === "copy" && b.prompt.toLowerCase().startsWith(text)) || (b.kind === "missing" && fitsPattern(b.prompt, text)),
+      (b) =>
+        (b.kind === "copy" && b.prompt.toLowerCase().startsWith(text)) ||
+        (b.kind === "missing" && fitsPattern(b.prompt, text)) ||
+        (b.kind === "en_to_vi" && Boolean(b.hint) && fitsHint(b.hint!, typed)),
     );
     if (fit) return fit;
   }

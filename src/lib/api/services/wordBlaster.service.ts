@@ -1,6 +1,8 @@
 import axiosClient from "@/lib/api/axiosClient";
 
 export type BlasterKind = "copy" | "missing" | "vi_to_en" | "en_to_vi";
+/** One kind of block for the whole game. */
+export type BlasterMode = BlasterKind;
 
 /** A falling block as the server sends it: no answer. Times are ms since the game started. */
 export interface BlasterBlock {
@@ -10,6 +12,8 @@ export interface BlasterBlock {
   spawnAtMs: number;
   fallMs: number;
   lane: number;
+  /** Word-to-meaning mode: one "_" per letter of the meaning, spaces kept. */
+  hint: string | null;
 }
 
 export interface BlasterResult {
@@ -28,6 +32,7 @@ export interface BlasterResult {
 export interface BlasterView {
   sessionId: string;
   stake: number;
+  mode: BlasterMode | null;
   serverNow: number;
   startedAt: number;
   lives: number;
@@ -39,7 +44,8 @@ export interface BlasterView {
 }
 
 export const wordBlasterService = {
-  start: async (stake: number): Promise<BlasterView> => axiosClient.post("/games/word-blaster/start", { stake }),
+  start: async (stake: number, mode: BlasterMode): Promise<BlasterView> =>
+    axiosClient.post("/games/word-blaster/start", { stake, mode }),
   current: async (): Promise<BlasterView | null> => axiosClient.get("/games/word-blaster/current"),
   shot: async (id: string, text: string): Promise<BlasterView & { hitBlockId: number | null }> =>
     axiosClient.post(`/games/word-blaster/${id}/shot`, { text }),

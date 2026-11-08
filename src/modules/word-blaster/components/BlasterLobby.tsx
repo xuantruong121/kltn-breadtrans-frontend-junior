@@ -4,16 +4,28 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Crosshair, Heart, Wheat } from "lucide-react";
-import { wordBlasterService } from "@/lib/api/services/wordBlaster.service";
+import { wordBlasterService, type BlasterMode } from "@/lib/api/services/wordBlaster.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { BreadCannon } from "./BreadCannon";
+import { MODES } from "../blasterLogic";
 
 const STAKES = [20, 50, 100] as const;
-const PREVIEW = [
-  { text: "negotiate", left: "12%", delay: 0, tone: "bg-sky-100 text-sky-900 border-sky-300" },
-  { text: "đàm phán → ?", left: "52%", delay: 1.4, tone: "bg-emerald-100 text-emerald-900 border-emerald-300" },
-  { text: "r_n_wal", left: "30%", delay: 2.8, tone: "bg-amber-100 text-amber-900 border-amber-300" },
+/** Three blocks falling in the preview, in the chosen mode. */
+const PREVIEW: Record<BlasterMode, { text: string; hint?: string }[]> = {
+  copy: [{ text: "negotiate" }, { text: "budget" }, { text: "renewal" }],
+  missing: [{ text: "neg_ti_te" }, { text: "b_dg_t" }, { text: "r_n_wal" }],
+  vi_to_en: [{ text: "đàm phán" }, { text: "ngân sách" }, { text: "sự gia hạn" }],
+  en_to_vi: [
+    { text: "negotiate", hint: "___ ____" },
+    { text: "budget", hint: "____ ____" },
+    { text: "renewal", hint: "__ ___ ___" },
+  ],
+};
+const PREVIEW_SPOTS = [
+  { left: "10%", delay: 0 },
+  { left: "50%", delay: 1.4 },
+  { left: "28%", delay: 2.8 },
 ];
 
 /** Bắn chữ rơi's lobby on /arena: the rules, the stake, what it wins or loses, and a moving preview. */
@@ -21,6 +33,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
   const router = useRouter();
   const reduce = Boolean(useReducedMotion());
   const [stake, setStake] = useState<number>(20);
+  const [mode, setMode] = useState<BlasterMode>("copy");
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const short = balance !== null && balance < stake ? stake - balance : 0;
@@ -31,7 +44,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
     setStarting(true);
     arenaSound.unlock();
     try {
-      await wordBlasterService.start(stake);
+      await wordBlasterService.start(stake, mode);
       router.push("/arena/word-blaster");
     } catch (e) {
       setError(getApiErrorMessage(e, "Không mở được ván. Vui lòng thử lại."));
@@ -53,6 +66,29 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 3 mạng: mỗi khối chạm đất mất một mạng.</li>
           <li className="flex items-center gap-2"><Wheat size={15} strokeWidth={2.25} aria-hidden="true" /> Gõ không dấu cũng được khi trả lời nghĩa tiếng Việt.</li>
         </ul>
+
+        <fieldset className="mt-5" disabled={starting}>
+          <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">Chế độ</legend>
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={mode === m.id}
+                onClick={() => setMode(m.id)}
+                className={`rounded-xl border-2 px-3 py-2.5 text-left transition-colors ${
+                  mode === m.id
+                    ? "border-amber-500 bg-amber-50 dark:border-amber-600 dark:bg-amber-950/40"
+                    : "border-slate-200 bg-white hover:border-amber-300 dark:border-slate-700 dark:bg-slate-900"
+                }`}
+              >
+                <span className="block font-bold text-slate-900 dark:text-slate-100">{m.name}</span>
+                <span className="block text-xs text-slate-700 dark:text-slate-300">{m.line}</span>
+                <span className="mt-1 block font-mono text-xs font-semibold text-amber-800 dark:text-amber-300">{m.sample}</span>
+              </button>
+            ))}
+          </div>
+        </fieldset>
 
         <fieldset className="mt-5" disabled={starting}>
           <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -115,16 +151,17 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
       </div>
 
       <div className="relative min-h-[260px] overflow-hidden rounded-xl bg-gradient-to-b from-sky-100 via-amber-50 to-amber-100 dark:from-slate-800 dark:via-slate-900 dark:to-amber-950/50" aria-hidden="true">
-        {PREVIEW.map((b) => (
+        {PREVIEW[mode].map((b, i) => (
           <motion.span
-            key={b.text}
-            className={`absolute top-0 rounded-lg border-2 px-3 py-1.5 text-sm font-bold shadow-sm ${b.tone}`}
-            style={{ left: b.left }}
+            key={`${mode}-${b.text}`}
+            className="absolute top-0 rounded-lg border-2 border-amber-300 bg-amber-50 px-3 py-1.5 text-center text-sm font-bold text-amber-950 shadow-sm"
+            style={{ left: PREVIEW_SPOTS[i].left }}
             initial={{ y: -40 }}
             animate={reduce ? { y: 60 } : { y: [-40, 190, 190], opacity: [1, 1, 0], scale: [1, 1, 1.4] }}
-            transition={reduce ? undefined : { duration: 4.2, delay: b.delay, repeat: Infinity, times: [0, 0.82, 1], ease: "linear" }}
+            transition={reduce ? undefined : { duration: 4.2, delay: PREVIEW_SPOTS[i].delay, repeat: Infinity, times: [0, 0.82, 1], ease: "linear" }}
           >
             {b.text}
+            {b.hint && <span className="block font-mono text-xs tracking-widest">{b.hint}</span>}
           </motion.span>
         ))}
         <div className="absolute inset-x-0 bottom-0 h-12 bg-amber-200 dark:bg-amber-900/60" />

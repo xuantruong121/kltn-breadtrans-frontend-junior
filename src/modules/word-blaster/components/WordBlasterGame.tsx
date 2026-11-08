@@ -9,7 +9,7 @@ import { LeaveMatchDialog } from "@/modules/arena/components/LeaveMatchDialog";
 import { SoundToggle } from "@/modules/arena/components/SoundToggle";
 import { buzz } from "@/modules/arena/sound/arenaSound";
 import { BreadCannon } from "./BreadCannon";
-import { KIND_LABEL, aimTarget, clockOffset, fallProgress, gameProgress, gameTime, liveBlocks, localState, type ClientBlock } from "../blasterLogic";
+import { KIND_LABEL, aimTarget, clockOffset, fallProgress, fillHint, gameProgress, gameTime, liveBlocks, localState, type ClientBlock } from "../blasterLogic";
 import { playBlaster } from "../blasterSound";
 
 const KIND_TONE: Record<ClientBlock["kind"], string> = {
@@ -188,7 +188,9 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
         <p className="whitespace-nowrap rounded-lg bg-white/85 px-3 py-1.5 text-sm font-bold tabular-nums text-slate-800 backdrop-blur-sm dark:bg-slate-900/80 dark:text-slate-200">
           <Crosshair size={14} strokeWidth={2.5} className="mr-1 inline-block align-[-2px]" aria-hidden="true" />
           {state.destroyed + state.landed}/{view.target} khối
-          <span className="hidden sm:inline"> · cược {view.stake}</span>
+          <span className="hidden sm:inline">
+            {view.mode ? ` · ${KIND_LABEL[view.mode]}` : ""} · cược {view.stake}
+          </span>
         </p>
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-white/85 backdrop-blur-sm dark:bg-slate-900/80">
@@ -249,8 +251,21 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
               <div
                 className={`max-w-[44vw] rounded-xl border-2 px-3 py-2 text-center shadow-md sm:max-w-xs ${KIND_TONE[b.kind]} ${aimed ? "ring-4 ring-sky-400/70" : ""} ${danger && !reduce ? "animate-pulse border-rose-500" : ""}`}
               >
-                <p className="text-[11px] font-semibold uppercase tracking-wide opacity-80">{KIND_LABEL[b.kind]}</p>
                 <p className="break-words text-base font-extrabold leading-tight sm:text-lg">{b.prompt}</p>
+                {b.hint && (
+                  // One underscore per letter of the meaning; the aimed block fills in as you type.
+                  <p className="mt-1.5 flex flex-wrap justify-center gap-x-3 gap-y-1 font-mono text-sm font-bold" aria-label={`Nghĩa có ${b.hint.replace(/ /g, "").length} chữ cái`}>
+                    {fillHint(b.hint, aimed ? typed : "").map((word, w) => (
+                      <span key={w} className="inline-flex gap-0.5">
+                        {word.map((c, i) => (
+                          <span key={i} className={`inline-block w-3 border-b-2 text-center leading-5 ${c.filled ? "border-sky-600 text-sky-900 dark:text-sky-200" : "border-current opacity-70"}`}>
+                            {c.filled ? c.char : "\u00a0"}
+                          </span>
+                        ))}
+                      </span>
+                    ))}
+                  </p>
+                )}
               </div>
             </div>
           );

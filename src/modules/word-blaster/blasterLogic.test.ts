@@ -2,6 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { blasterResultCopy } from "./blasterResult.ts";
+import { fillHint, fitsHint } from "./blasterLogic.ts";
 import { aimTarget, clockOffset, fallProgress, gameProgress, gameTime, liveBlocks, localState, type ClientBlock } from "./blasterLogic.ts";
 
 const block = (id: number, spawnAtMs: number, fallMs: number, kind: ClientBlock["kind"] = "copy", prompt = `w${id}`): ClientBlock => ({
@@ -81,5 +82,28 @@ describe("blasterResultCopy", () => {
     const capped = blasterResultCopy({ ...base, outcome: "win", net: 0, bonusCapped: 25 });
     assert.equal(capped.banh, "±0");
     assert.match(capped.note ?? "", /đủ 150 Bánh Mì/);
+  });
+});
+
+describe("letter hints (word-to-meaning mode)", () => {
+  test("typed words must fit the hint's words", () => {
+    assert.equal(fitsHint("___ ____", "đàm"), true);
+    assert.equal(fitsHint("___ ____", "dam ph"), true);
+    assert.equal(fitsHint("___ ____", "đàmm"), false);
+    assert.equal(fitsHint("___ ____", "a b c"), false);
+    assert.equal(fitsHint("___ ____", " "), false);
+  });
+  test("typed letters fill the underscores word by word", () => {
+    const rows = fillHint("___ ____", "đàm ph");
+    assert.deepEqual(rows.map((w) => w.map((c) => c.char).join("")), ["đàm", "ph__"]);
+    assert.equal(rows[1][2].filled, false);
+  });
+  test("the cannon aims at the meaning block whose hint fits", () => {
+    const live = [
+      { ...block(1, 0, 5000, "en_to_vi", "rent"), hint: "__ __" },
+      { ...block(2, 0, 9000, "en_to_vi", "negotiate"), hint: "___ ____" },
+    ];
+    assert.equal(aimTarget(live, "dam")?.id, 2, "three letters do not fit a two-letter word");
+    assert.equal(aimTarget(live, "di t")?.id, 1, "both fit: the block closest to landing");
   });
 });
