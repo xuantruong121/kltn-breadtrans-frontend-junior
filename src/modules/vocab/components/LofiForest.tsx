@@ -195,10 +195,14 @@ export function LofiForest({ reduce }: { reduce: boolean }) {
       layers = loaded;
       if (reduce) draw(performance.now(), 0);
     });
+    // The scene changes 30 times a second: smooth enough for rain, and the glass
+    // over it re-blurs only when it changes, so half the work for the page.
     let last = performance.now();
     const loop = (now: number) => {
-      draw(now, Math.min(50, now - last));
-      last = now;
+      if (now - last >= 32) {
+        draw(now, Math.min(66, now - last));
+        last = now;
+      }
       frame = requestAnimationFrame(loop);
     };
     if (!reduce) frame = requestAnimationFrame(loop);
@@ -213,7 +217,7 @@ export function LofiForest({ reduce }: { reduce: boolean }) {
     <div className="pointer-events-none fixed inset-0 -z-10 bg-[#141a2b]" aria-hidden="true">
       <canvas ref={canvasRef} className="absolute inset-0 h-full w-full [image-rendering:pixelated]" />
       {/* keeps the cards and the words easy to read over the scene */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(2,6,23,0.55),rgba(2,6,23,0.2)_35%,rgba(2,6,23,0.35)_75%,rgba(2,6,23,0.7))]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(2,6,23,0.3),rgba(2,6,23,0.1)_35%,rgba(2,6,23,0.15)_70%,rgba(2,6,23,0.45))]" />
     </div>
   );
 }

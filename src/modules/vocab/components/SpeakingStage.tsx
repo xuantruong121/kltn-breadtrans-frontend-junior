@@ -73,7 +73,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
   return (
     <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6">
       {/* Target Word & Meaning Card */}
-      <div className="w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 text-center space-y-4 shadow-xs">
+      <div className="glass-face w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 text-center space-y-4 shadow-xs">
         <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
           <Mic size={15} />
           Phát âm từ này
@@ -187,7 +187,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
 
       {/* Note when pronunciation was skipped */}
       {isSkipped && !feedback && (
-        <div className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl text-center space-y-1 animate-fadeIn shadow-xs">
+        <div className="glass-face w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl text-center space-y-1 animate-fadeIn shadow-xs">
           <p className="text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200">
             Đã bỏ qua phần phát âm. Hãy đánh giá mức độ ghi nhớ của bạn bên dưới:
           </p>

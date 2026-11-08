@@ -65,7 +65,8 @@ export function layerVolume(base: number, state: { recording: boolean; ducked: b
  * Rainy dusk from a sunny autumn layer: every pixel darkened and cooled,
  * alpha kept. `mul` is per channel, applied in place to RGBA data.
  */
-export const DUSK: [number, number, number] = [0.42, 0.45, 0.62];
+// Owner 2026-11-08: lighter than the first cut ([0.42, 0.45, 0.62]), which read as plain dark mode.
+export const DUSK: [number, number, number] = [0.6, 0.62, 0.78];
 export function tintPixels(data: Uint8ClampedArray, mul: [number, number, number] = DUSK) {
   for (let i = 0; i < data.length; i += 4) {
     data[i] = data[i] * mul[0];

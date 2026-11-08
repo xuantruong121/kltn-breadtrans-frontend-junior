@@ -23,7 +23,7 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
-      className="w-full max-w-xl mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 sm:p-10 shadow-sm text-center space-y-6"
+      className="glass-panel w-full max-w-xl mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 sm:p-10 shadow-sm text-center space-y-6"
     >
       {/* Icon Badge */}
       <div className="size-18 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-400 rounded-3xl flex items-center justify-center mx-auto border border-sky-200/80 dark:border-sky-800/60 shadow-2xs">

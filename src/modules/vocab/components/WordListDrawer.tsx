@@ -59,7 +59,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 220 }}
-              className="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800"
+              className="glass-panel w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl flex flex-col border-l border-slate-200 dark:border-slate-800"
             >
               {/* Drawer Header */}
               <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-850/90 flex items-center justify-between">
@@ -82,7 +82,7 @@ export const WordListDrawer: React.FC<WordListDrawerProps> = ({
               </div>
 
               {/* Search Bar */}
-              <div className="p-3.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <div className="glass-clear p-3.5 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
                 <div className="relative">
                   <Search
                     size={16}

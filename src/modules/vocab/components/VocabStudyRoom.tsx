@@ -129,7 +129,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     // Over the night forest the room reads in its dark theme, so every text keeps its contrast.
     <div
       className={`min-h-[100dvh] text-foreground flex flex-col justify-between selection:bg-sky-100 selection:text-sky-900 transition-colors duration-150 ${
-        ambience.scene ? "dark relative isolate" : "bg-background"
+        ambience.scene ? "dark study-glass relative isolate" : "bg-background"
       }`}
     >
       {ambience.scene && <LofiForest reduce={reduceMotion} />}
@@ -196,7 +196,6 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                     onPlayAudio={handlePlayAudio}
                     onMarkMastered={handleMarkMastered}
                     onEscalate={handleEscalateMode}
-                    onOpenSettings={() => setIsSettingsOpen(true)}
                   />
                 )}
 
@@ -254,7 +253,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
         newCount={newCount}
         learnedCount={learnedCount}
         reviewCount={reviewCount}
-        solid={ambience.scene}
+        glass={ambience.scene}
       />
 
       {/* Slide-over Word List Drawer */}

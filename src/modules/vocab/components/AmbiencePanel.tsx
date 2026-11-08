@@ -141,7 +141,7 @@ export function AmbienceMenu() {
         <div
           role="dialog"
           aria-label="Không gian học"
-          className="dark absolute right-0 top-full z-40 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-slate-700 bg-slate-900 p-4 text-left shadow-2xl"
+          className="glass-face dark absolute right-0 top-full z-40 mt-2 w-[min(20rem,calc(100vw-2rem))] rounded-2xl border border-slate-700 bg-slate-900 p-4 text-left shadow-2xl"
         >
           <p className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-300">Không gian học</p>
           <AmbienceControls />

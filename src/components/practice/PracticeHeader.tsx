@@ -57,6 +57,8 @@ export interface PracticeHeaderProps {
    * Label for the exit button. Defaults to "Thoát".
    */
   exitLabel?: string;
+  /** Extra classes for the bar itself, e.g. the study room's glass look. */
+  className?: string;
   /**
    * Disable the exit button (e.g. during an ongoing critical network submission).
    */
@@ -111,6 +113,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
   activityLabel,
   onExit,
   exitLabel = "Thoát",
+  className = "",
   exitDisabled = false,
   bilingualEnabled = false,
   isBilingual = false,
@@ -158,7 +161,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
       : undefined);
 
   return (
-    <header className="w-full h-14 bg-slate-900 text-white px-3 sm:px-6 flex items-center justify-between shrink-0 select-none border-b border-slate-800 z-30">
+    <header className={`w-full h-14 bg-slate-900 text-white px-3 sm:px-6 flex items-center justify-between shrink-0 select-none border-b border-slate-800 z-30 ${className}`}>
       {/* Left: Exit button + Title + Badges */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
