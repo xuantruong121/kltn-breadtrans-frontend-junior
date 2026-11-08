@@ -16,6 +16,7 @@ export const BlasterHud = React.memo(function BlasterHud({
   total,
   destroyed,
   landed,
+  marks,
   combo,
   modeLabel,
   stake,
@@ -27,6 +28,8 @@ export const BlasterHud = React.memo(function BlasterHud({
   total: number;
   destroyed: number;
   landed: number;
+  /** One letter per block in spawn order: h broken, l landed, p to come. */
+  marks: string;
   combo: number;
   modeLabel: string | null;
   stake: number;
@@ -60,7 +63,7 @@ export const BlasterHud = React.memo(function BlasterHud({
               <span
                 key={i}
                 className={`h-2 flex-1 rounded-full transition-colors duration-300 ${
-                  i < destroyed ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" : i < destroyed + landed ? "bg-rose-500" : "bg-white/15"
+                  marks[i] === "h" ? "bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" : marks[i] === "l" ? "bg-rose-500" : "bg-white/15"
                 }`}
               />
             ))}

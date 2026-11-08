@@ -2,7 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { blasterResultCopy } from "./blasterResult.ts";
-import { fillHint, fitsHint } from "./blasterLogic.ts";
+import { blockMarks, easeAngle, fillHint, fitsHint } from "./blasterLogic.ts";
 import { aimTarget, clockOffset, fallProgress, gameProgress, gameTime, liveBlocks, localState, type ClientBlock } from "./blasterLogic.ts";
 
 const block = (id: number, spawnAtMs: number, fallMs: number, kind: ClientBlock["kind"] = "copy", prompt = `w${id}`): ClientBlock => ({
@@ -105,5 +105,30 @@ describe("letter hints (word-to-meaning mode)", () => {
     ];
     assert.equal(aimTarget(live, "dam")?.id, 2, "three letters do not fit a two-letter word");
     assert.equal(aimTarget(live, "di t")?.id, 1, "both fit: the block closest to landing");
+  });
+});
+
+describe("blockMarks", () => {
+  const b = (id: number, spawnAtMs: number, fallMs: number): ClientBlock => ({ id, kind: "copy", prompt: "x", spawnAtMs, fallMs, lane: 0.5 });
+  const blocks = [b(1, 0, 1000), b(2, 500, 1000), b(3, 1000, 1000)];
+  test("each block keeps its own place: a red mark does not move when a later block breaks", () => {
+    assert.equal(blockMarks(blocks, {}, 1500), "lpp");
+    assert.equal(blockMarks(blocks, { 2: 1200 }, 1500), "lhp");
+    assert.equal(blockMarks(blocks, { 2: 1200, 3: 1300 }, 1500), "lhh");
+  });
+  test("a landing counts only after the grace, like the server", () => {
+    assert.equal(blockMarks(blocks, {}, 1000 + 400), "ppp");
+    assert.equal(blockMarks(blocks, {}, 1000 + 401), "lpp");
+  });
+});
+
+describe("easeAngle", () => {
+  test("moves toward the target and settles on it", () => {
+    const one = easeAngle(0, 40, 16);
+    assert.ok(one > 0 && one < 40);
+    let a = 0;
+    for (let i = 0; i < 60; i += 1) a = easeAngle(a, 40, 16);
+    assert.equal(a, 40);
+    assert.equal(easeAngle(10, 10, 16), 10);
   });
 });

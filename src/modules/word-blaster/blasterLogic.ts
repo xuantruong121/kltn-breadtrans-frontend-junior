@@ -139,3 +139,22 @@ export function gameProgress(blocks: ClientBlock[], t: number): number {
   if (blocks.length === 0) return 0;
   return blocks.filter((b) => b.spawnAtMs <= t).length / blocks.length;
 }
+
+/**
+ * The progress bar, one letter per block in the order they appear: "h" broken,
+ * "l" landed (past the grace, as the server counts it), "p" still to come.
+ * A block keeps its place, so a red mark never moves (owner 2026-11-08: two
+ * red marks showed while a count-based bar shifted its red one along).
+ */
+export function blockMarks(blocks: ClientBlock[], hits: Record<number, number>, t: number): string {
+  return [...blocks]
+    .sort((a, b) => a.spawnAtMs - b.spawnAtMs || a.id - b.id)
+    .map((b) => (hits[b.id] !== undefined ? "h" : t > landsAt(b) + LANDING_GRACE_MS ? "l" : "p"))
+    .join("");
+}
+
+/** Turns the cannon toward `target` (degrees) a little each frame: about 90 % of the way in 100 ms. */
+export function easeAngle(shown: number, target: number, dtMs: number): number {
+  const next = shown + (target - shown) * (1 - Math.exp(-Math.max(0, dtMs) / 45));
+  return Math.abs(target - next) < 0.05 ? target : next;
+}

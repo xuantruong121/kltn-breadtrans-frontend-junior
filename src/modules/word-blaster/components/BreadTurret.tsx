@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 /** The turret's drawing box: the barrel turns around PIVOT and its mouth is BARREL above it. */
 export const TURRET_BOX = 112;
 export const TURRET_PIVOT = { x: 56, y: 70 };
-export const TURRET_BARREL = 66;
+export const TURRET_BARREL = 67;
 
 /**
  * The bread cannon at night: a glowing loaf on a stone base, its barrel
@@ -35,11 +35,10 @@ export function BreadTurret({ angle, size, flash, reduce }: { angle: number; siz
       </defs>
       <ellipse cx="56" cy="96" rx="54" ry="18" fill="url(#wb-glow)" />
 
-      <motion.g
-        style={{ originX: `${TURRET_PIVOT.x}px`, originY: `${TURRET_PIVOT.y}px` }}
-        animate={{ rotate: angle }}
-        transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 520, damping: 32 }}
-      >
+      {/* A plain SVG rotate around the pivot, in drawing units. framer-motion's
+          origin on an SVG group is relative to the group's own box, which put the
+          barrel off the aim line (owner 2026-11-08). The game eases the angle. */}
+      <g transform={`rotate(${angle.toFixed(2)} ${TURRET_PIVOT.x} ${TURRET_PIVOT.y})`}>
         <motion.g
           key={flash}
           initial={reduce || flash === 0 ? false : { y: 7 }}
@@ -56,13 +55,13 @@ export function BreadTurret({ angle, size, flash, reduce }: { angle: number; siz
             initial={{ opacity: 1, scale: 0.6 }}
             animate={{ opacity: 0, scale: 1.5 }}
             transition={{ duration: 0.12, ease: "easeOut" }}
-            style={{ originX: "56px", originY: "-2px" }}
+            style={{ originX: 0.5, originY: 0.5 }}
           >
             <path d="M56 -16 L60 -6 L70 -8 L62 -1 L68 8 L56 2 L44 8 L50 -1 L42 -8 L52 -6 Z" fill="#FFFBEB" />
             <circle cx="56" cy="-2" r="5" fill="#FDE68A" />
           </motion.g>
         )}
-      </motion.g>
+      </g>
 
       {/* the loaf */}
       <path d="M16 84c0-22 17-34 40-34s40 12 40 34v4H16z" fill="url(#wb-loaf)" stroke="#92400E" strokeWidth="2.5" />

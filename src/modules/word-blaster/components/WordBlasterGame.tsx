@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { wordBlasterService, type BlasterResult, type BlasterView } from "@/lib/api/services/wordBlaster.service";
 import { LeaveMatchDialog } from "@/modules/arena/components/LeaveMatchDialog";
 import { buzz } from "@/modules/arena/sound/arenaSound";
-import { KIND_LABEL, LANDING_GRACE_MS, clockOffset, fallProgress, gameProgress, gameTime, landsAt, localState, type ClientBlock } from "../blasterLogic";
+import { KIND_LABEL, LANDING_GRACE_MS, blockMarks, clockOffset, easeAngle, fallProgress, gameProgress, gameTime, landsAt, localState, type ClientBlock } from "../blasterLogic";
 import { playBlaster } from "../blasterSound";
 import { createFx, fireBullet, spawnDust, spawnExplosion, type FxState } from "../fx";
 import { shotCell, stepInput } from "../typing";
@@ -66,18 +66,27 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
   const maxCombo = useRef(0);
   const keys = useRef({ good: 0, bad: 0 });
   const finishing = useRef(false);
+  // The cannon turns smoothly in the frame loop; the barrel and the aim line
+  // both use this one angle, so the line always starts at the barrel's mouth.
+  const [angle, setAngle] = useState(0);
+  const targetAngle = useRef(0);
   const floatId = useRef(0);
 
   // Frame clock, by the server's time; it holds still for a hit-stop.
   useEffect(() => {
     let frame = 0;
+    let last = clock();
     const tick = () => {
-      if (clock() >= fxRef.current.freezeUntil) setT(gameTime(Date.now(), offset.current, view.startedAt));
+      const now = clock();
+      const dt = Math.min(50, now - last);
+      last = now;
+      if (now >= fxRef.current.freezeUntil) setT(gameTime(Date.now(), offset.current, view.startedAt));
+      setAngle((a) => (reduce ? targetAngle.current : easeAngle(a, targetAngle.current, dt)));
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [view.startedAt]);
+  }, [view.startedAt, reduce]);
 
   useEffect(() => {
     const el = fieldRef.current;
@@ -123,7 +132,10 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
   const locked = lockedBlock;
   const aimed = locked ?? [...live].sort((a, b) => landsAt(a) - landsAt(b))[0] ?? null;
   const aimAt = aimed ? positionOf(aimed, t) : null;
-  const angle = aimAt ? Math.max(-70, Math.min(70, (Math.atan2(aimAt.x - pivot.x, pivot.y - aimAt.y) * 180) / Math.PI)) : 0;
+  const aimAngle = aimAt ? Math.max(-70, Math.min(70, (Math.atan2(aimAt.x - pivot.x, pivot.y - aimAt.y) * 180) / Math.PI)) : 0;
+  useEffect(() => {
+    targetAngle.current = aimAngle;
+  }, [aimAngle]);
   const rad = (angle * Math.PI) / 180;
   const muzzle: Point = { x: pivot.x + Math.sin(rad) * TURRET_BARREL * scale, y: pivot.y - Math.cos(rad) * TURRET_BARREL * scale };
 
@@ -366,6 +378,7 @@ export function WordBlasterGame({ initial, onDone }: { initial: BlasterView; onD
         total={view.target}
         destroyed={state.destroyed}
         landed={state.landed}
+        marks={blockMarks(blocks, view.hits, t)}
         combo={combo}
         modeLabel={view.mode ? KIND_LABEL[view.mode] : null}
         stake={view.stake}
