@@ -1,4 +1,5 @@
 import axiosClient from "../axiosClient";
+import type { BadgeFacts } from "@/modules/arena/badges";
 
 export interface Badge {
   id: number;
@@ -13,7 +14,8 @@ export interface UserBadge {
   id: number;
   badgeId: number;
   userId: number;
-  earnedAt: string;
+  /** UserBadge.awardedAt in the schema. */
+  awardedAt: string;
   badge: Badge;
 }
 
@@ -44,6 +46,69 @@ export interface LeaderboardResponse {
   scope: string;
   entries: LeaderboardEntry[];
   currentUserRank: LeaderboardCurrentUserRank | null;
+  /** Learners in the listed tier (every learner for scope=all). */
+  tierSize?: number;
+}
+
+/** GET /gamification/arena/stats: the learner's record from settled matches. */
+export interface ArenaStats {
+  played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  winRate: number | null;
+  currentWinStreak: number;
+  longestWinStreak: number;
+  netBanh: number;
+}
+
+export type RankingMetric = "xp" | "streak" | "referral";
+export type RankingPeriod = "today" | "week" | "month" | "all";
+
+export interface RankingEntry {
+  rank: number;
+  userId: number;
+  displayName: string;
+  avatarUrl: string | null;
+  level: number;
+  tier: string;
+  value: number;
+}
+
+/** The learner's place in the weekly league, as the Monday reset will move them. */
+export interface LeagueStanding {
+  tier: string;
+  rankInTier: number;
+  tierSize: number;
+  promoteCount: number;
+  demoteFrom: number | null;
+  xpToPromotion: number | null;
+  inDemotionZone: boolean;
+  xpToLeaveDemotion: number | null;
+}
+
+export interface RankingResponse {
+  metric: RankingMetric;
+  period: RankingPeriod;
+  entries: RankingEntry[];
+  total: number;
+  me: { rank: number | null; value: number; level: number; tier: string; league: LeagueStanding | null } | null;
+}
+
+export type HallOfFameEntry = { userId: number; displayName: string; avatarUrl: string | null; value: number } | null;
+export interface HallOfFame {
+  xp: HallOfFameEntry;
+  streak: HallOfFameEntry;
+  referral: HallOfFameEntry;
+}
+
+export interface RankingActivity {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  text: string;
+  kind: "study" | "badge" | "arena" | "level" | "streak";
+  at: string;
 }
 
 export interface Pet {
@@ -142,6 +207,12 @@ export interface DashboardTodayResponse {
   };
 }
 
+/** GET /gamification/badges/progress: what the badge rules count. */
+export interface BadgeProgress {
+  facts: BadgeFacts;
+  rules: Record<string, number>;
+}
+
 export interface ArenaSnippet {
   rank: number | null;
   tier: string;
@@ -153,6 +224,27 @@ export const gamificationService = {
     return await axiosClient.get("/gamification/badges/me");
   },
   
+  getBadgeProgress: async (): Promise<BadgeProgress> => {
+    return await axiosClient.get("/gamification/badges/progress");
+  },
+
+  getArenaStats: async (): Promise<ArenaStats> => {
+    return await axiosClient.get("/gamification/arena/stats");
+  },
+
+  /** Bảng xếp hạng: top 50 for a metric and period, and the learner's own place. */
+  getRanking: async (metric: RankingMetric, period: RankingPeriod): Promise<RankingResponse> => {
+    return await axiosClient.get("/gamification/ranking", { params: { metric, period } });
+  },
+
+  getHallOfFame: async (): Promise<HallOfFame> => {
+    return await axiosClient.get("/gamification/ranking/hall-of-fame");
+  },
+
+  getRankingActivity: async (): Promise<RankingActivity[]> => {
+    return await axiosClient.get("/gamification/ranking/activity");
+  },
+
   getLeaderboard: async (tier?: string, scope?: string): Promise<LeaderboardResponse> => {
     return await axiosClient.get("/gamification/leaderboard", {
       params: { tier, scope },

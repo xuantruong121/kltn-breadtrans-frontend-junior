@@ -1,191 +1,88 @@
 "use client";
 
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, Lock, BadgeCheck, Calendar } from "lucide-react";
-import { useGamificationStore } from "@/stores/gamificationStore";
-import toast from "react-hot-toast";
+import React, { useEffect, useRef } from "react";
+import { X } from "lucide-react";
+import type { BadgeView } from "../badges";
+import { BadgeMedal } from "./BadgeMedal";
 
-export interface BadgeItem {
-  id: number;
-  name: string;
-  category: string;
-  description: string;
-  icon: any;
-  color: string;
-  bgColor: string;
-  borderColor: string;
-  shadowColor: string;
-  accentGlow: string;
-  currentValue?: number;
-  targetValue: number;
-  unit: string;
-  rewardBreads: number;
-  rewardExp: number;
-}
+const GROUP_LABEL = {
+  learning: "Học tập",
+  streak: "Chuyên cần",
+  arena: "Đấu trường",
+  pet: "Thú ảo",
+} as const;
 
-interface BadgeDetailModalProps {
-  badge: BadgeItem | null;
-  hasUnlocked: boolean;
-  unlockedAt?: string | null;
-  onClose: () => void;
-}
+export function BadgeDetailModal({ badge, onClose }: { badge: BadgeView | null; onClose: () => void }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
 
-export const BadgeDetailModal: React.FC<BadgeDetailModalProps> = ({
-  badge,
-  hasUnlocked,
-  unlockedAt,
-  onClose,
-}) => {
-  const { equippedBadge, equipBadge } = useGamificationStore();
+  useEffect(() => {
+    if (!badge) return;
+    closeRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [badge, onClose]);
 
   if (!badge) return null;
-
-  const Icon = badge.icon;
-  const isEquipped = equippedBadge === `badge_${badge.id}` || equippedBadge === badge.name;
-  const progressPercent = Math.min(
-    Math.round(((badge.currentValue || 0) / badge.targetValue) * 100),
-    100
-  );
-
-  const handleToggleEquip = () => {
-    if (isEquipped) {
-      equipBadge(null);
-      toast.success(`Đã tháo huy hiệu ${badge.name}`);
-    } else {
-      equipBadge(`badge_${badge.id}`);
-      toast.success(`Đã đeo huy hiệu "${badge.name}" lên Avatar!`);
-    }
-  };
+  const earned = badge.earnedAt !== null;
+  const earnedDate = badge.earnedAt
+    ? new Date(badge.earnedAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
+    : null;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full max-h-[min(90dvh,calc(100dvh-3rem))] overflow-y-auto p-6 sm:p-8 text-center relative"
-        >
-          {/* Close Button */}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="badge-dialog-title"
+        className="w-full max-w-sm rounded-xl bg-white p-6 shadow-lg dark:bg-slate-900"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex justify-end">
           <button
+            ref={closeRef}
+            type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 flex items-center justify-center transition-colors cursor-pointer z-10"
+            aria-label="Đóng"
+            className="-mr-2 -mt-2 rounded-md p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <X size={16} />
+            <X size={18} strokeWidth={2.25} />
           </button>
+        </div>
+        <div className="flex flex-col items-center text-center">
+          <BadgeMedal name={badge.name} group={badge.group} earned={earned} size={96} />
+          <h3 id="badge-dialog-title" className="mt-3 text-xl font-bold text-slate-900 dark:text-slate-100">
+            {badge.name}
+          </h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{GROUP_LABEL[badge.group]}</p>
+          <p className="mt-3 text-base text-slate-800 dark:text-slate-200">{badge.rule}</p>
+        </div>
 
-          {/* Badge Icon Display */}
-          <div className="relative my-4 flex justify-center">
-            <div
-              className={`w-24 h-24 rounded-2xl border-2 flex items-center justify-center relative shadow-xs ${
-                hasUnlocked
-                  ? `${badge.bgColor} ${badge.borderColor} ${badge.color} dark:bg-opacity-20`
-                  : "bg-slate-100 border-slate-300 dark:bg-slate-800 dark:border-slate-700 text-slate-600 dark:text-slate-400 grayscale"
-              }`}
-            >
-              <Icon size={44} strokeWidth={1.75} />
-
-              {/* Status Badge */}
-              <div className="absolute -bottom-2.5 px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider text-white shadow-xs flex items-center gap-1 bg-slate-800 dark:bg-slate-700">
-                {hasUnlocked ? (
-                  <>
-                    <CheckCircle2 size={11} className="text-emerald-400" /> ĐÃ MỞ KHÓA
-                  </>
-                ) : (
-                  <>
-                    <Lock size={11} className="text-amber-400" /> ĐANG KHÓA
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Title & Category */}
-          <div className="mb-4">
-            <span className="text-xs font-semibold uppercase px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-              {badge.category}
-            </span>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mt-2 mb-1">
-              {badge.name}
-            </h3>
-            <p className="text-sm sm:text-sm font-medium text-slate-600 dark:text-slate-400 px-2 leading-relaxed">
-              {badge.description}
-            </p>
-          </div>
-
-          {/* Progress / Status Card */}
-          <div className="bg-slate-50 dark:bg-slate-850/70 rounded-xl p-4 border border-slate-200 dark:border-slate-800 mb-5 text-left">
-            <div className="flex justify-between items-center text-xs font-semibold mb-1.5">
-              <span className="text-slate-600 dark:text-slate-400">Tiến trình thử thách:</span>
-              <span className={hasUnlocked ? "text-emerald-700 dark:text-emerald-400" : "text-indigo-600 dark:text-indigo-400"}>
-                {hasUnlocked
-                  ? "Hoàn thành 100%"
-                  : `${badge.currentValue || 0} / ${badge.targetValue} ${badge.unit} (${progressPercent}%)`}
-              </span>
-            </div>
-
-            {/* Bar */}
-            <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div
-                className={`h-full rounded-full transition-all ${
-                  hasUnlocked ? "bg-emerald-600 dark:bg-emerald-500" : "bg-indigo-600 dark:bg-indigo-500"
-                }`}
-                style={{ width: `${hasUnlocked ? 100 : progressPercent}%` }}
-              />
-            </div>
-
-            {/* Rewards */}
-            <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200 dark:border-slate-800 text-xs font-medium text-slate-600 dark:text-slate-400">
-              <span>Phần thưởng danh dự:</span>
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 text-amber-700 dark:text-amber-400 font-semibold">
-                  +{badge.rewardBreads} Bánh Mì
-                </span>
-                <span className="flex items-center gap-1 text-slate-800 dark:text-slate-200 font-semibold">
-                  +{badge.rewardExp} EXP
+        <div className="mt-5 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
+          {earned ? (
+            <p className="font-semibold text-emerald-700 dark:text-emerald-400">{earnedDate ? `Đã đạt ngày ${earnedDate}.` : "Đã đạt."}</p>
+          ) : badge.current ? (
+            <>
+              <div className="flex justify-between text-slate-700 dark:text-slate-300">
+                <span>Tiến độ</span>
+                <span className="font-semibold tabular-nums">
+                  {badge.current.value.toLocaleString("vi-VN")}/{badge.current.target.toLocaleString("vi-VN")} {badge.current.unit}
                 </span>
               </div>
-            </div>
-
-            {/* Date if unlocked */}
-            {hasUnlocked && unlockedAt && (
-              <div className="flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-400 mt-2">
-                <Calendar size={12} />
-                <span>
-                  Đạt được ngày {new Date(unlockedAt).toLocaleDateString("vi-VN")}
-                </span>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.round(badge.current.ratio * 100)}%` }} />
               </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div>
-            {hasUnlocked ? (
-              <button
-                type="button"
-                onClick={handleToggleEquip}
-                className={`w-full font-semibold text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-xs ${
-                  isEquipped
-                    ? "bg-amber-600 hover:bg-amber-700 text-white"
-                    : "bg-emerald-700 hover:bg-emerald-800 text-white"
-                }`}
-              >
-                <BadgeCheck size={16} />
-                {isEquipped ? "Đang ghim trên Avatar (Bấm để gỡ)" : "Ghim huy hiệu lên Avatar"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="w-full font-medium text-sm py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed border border-slate-200 dark:border-slate-700"
-              >
-                <Lock size={15} /> Chưa đủ điều kiện mở khóa
-              </button>
-            )}
-          </div>
-        </motion.div>
+              {badge.name === "Siêu Sao" && badge.current.ratio >= 1 && (
+                <p className="mt-2 text-slate-700 dark:text-slate-300">Đã đủ XP tuần. Còn cần đứng đầu bảng xếp hạng tuần.</p>
+              )}
+            </>
+          ) : (
+            <p className="text-slate-700 dark:text-slate-300">Chưa đạt. Huy hiệu được trao ngay khi bạn hoàn thành điều kiện trên.</p>
+          )}
+        </div>
       </div>
-    </AnimatePresence>
+    </div>
   );
-};
+}

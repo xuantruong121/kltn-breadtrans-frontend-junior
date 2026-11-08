@@ -45,6 +45,7 @@ function isGuestAllowedRoute(pathname: string): boolean {
     "/toeic",
     "/market",
     "/arena",
+    "/ranking",
     "/flashcard",
     "/grammar",
     "/learn",
@@ -136,7 +137,7 @@ function StudentLayoutContent({
   const isHistoryPopRef = useRef(false);
   const { isFocusMode } = useLearningFocusMode();
   const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
-  const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard"].includes(pathname);
+  const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard", "/arena", "/ranking"].includes(pathname);
   const isDiagnosticRoute = pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
 
   // App Router keeps this shared learner layout mounted across page changes.

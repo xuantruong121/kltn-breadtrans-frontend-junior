@@ -1,45 +1,46 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  ArrowRight,
-  WifiOff,
-  Flame,
-  Zap,
-  Trophy,
-  Handshake,
-  HeartCrack,
-  Swords,
-  Wheat,
-} from "lucide-react";
-import { Button3D } from "@/components/ui";
-import { 
-  MatchData, 
-  RoundStartData, 
-  RoundResultData, 
-  MatchResult 
-} from "@/lib/hooks/useArenaSocket";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import toast from "react-hot-toast";
+import { CheckCircle2, LogOut, WifiOff, Wheat, XCircle } from "lucide-react";
+import type { ArenaQuestionKind, MatchData, MatchResult, RoundResultData, RoundStartData } from "@/lib/hooks/useArenaSocket";
 import { useAuthStore } from "@/stores/authStore";
-import { AvatarImage } from "@/components/ui/AvatarImage";
-import Confetti from "react-confetti";
+import { ArenaBackdrop } from "./components/ArenaBackdrop";
+import { LeaveMatchDialog } from "./components/LeaveMatchDialog";
+import { MatchIntro } from "./components/MatchIntro";
+import { MatchResultDialog, type RoundRecord } from "./components/MatchResultDialog";
+import { PlayerScoreCard, type RoundMark } from "./components/PlayerScoreCard";
+import { RoundTimerBar } from "./components/RoundTimerBar";
+import { SoundToggle } from "./components/SoundToggle";
+import { arenaSound, buzz } from "./sound/arenaSound";
+
+type Progress = { score: number; answered: number; hasAnsweredCurrentRound?: boolean } | undefined;
 
 interface ArenaMatchRoomProps {
   matchData: MatchData;
   currentRoundData: RoundStartData | null;
   roundResult: RoundResultData | null;
-  liveProgress: any;
+  liveProgress: { p1?: Progress; p2?: Progress } | null;
   matchResult: MatchResult | null;
-  opponentDisconnected: {
-    disconnectedUserId: number;
-    disconnectedUserName: string;
-    gracePeriodSeconds: number;
-  } | null;
+  opponentDisconnected: { disconnectedUserId: number; disconnectedUserName: string; gracePeriodSeconds: number } | null;
   onSubmitAnswer: (matchId: string, roundIndex: number, selectedOption: string) => void;
+  /** Leave the running match; the server settles it as a loss for this learner. */
+  onLeave: (matchId: string) => void;
   onExit: () => void;
+  onRematch: (stake: number) => void;
+}
+
+const LETTERS = ["A", "B", "C", "D"];
+
+const KIND_LABEL: Record<ArenaQuestionKind, string> = {
+  fill_blank: "Điền từ vào chỗ trống",
+  meaning_to_word: "Chọn từ đúng",
+  word_to_meaning: "Chọn nghĩa đúng",
+};
+
+function roundIdxOf(round: RoundStartData | null): number {
+  return round?.roundIndex ?? 0;
 }
 
 export default function ArenaMatchRoom({
@@ -50,371 +51,347 @@ export default function ArenaMatchRoom({
   matchResult,
   opponentDisconnected,
   onSubmitAnswer,
+  onLeave,
   onExit,
+  onRematch,
 }: ArenaMatchRoomProps) {
   const { user } = useAuthStore();
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
-  const [timeLeft, setTimeLeft] = useState(15);
-  const [disconnectTimer, setDisconnectTimer] = useState(15);
+  const reduce = Boolean(useReducedMotion());
+  const [selected, setSelected] = useState<Record<number, string>>({});
+  const [history, setHistory] = useState<Record<number, RoundRecord>>({});
+  const [disconnectLeft, setDisconnectLeft] = useState(15);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
-  const isPlayer1 = matchData.player1.userId === user?.id;
-  const myInfo = isPlayer1 ? matchData.player1 : matchData.player2;
-  const opponentInfo = isPlayer1 ? matchData.player2 : matchData.player1;
-
-  const myProgress = isPlayer1 ? liveProgress?.p1 : liveProgress?.p2;
-  const opponentProgress = isPlayer1 ? liveProgress?.p2 : liveProgress?.p1;
-
-  const currentQ = currentRoundData?.question;
+  const isP1 = matchData.player1.userId === user?.id;
+  const me = isP1 ? matchData.player1 : matchData.player2;
+  const rival = isP1 ? matchData.player2 : matchData.player1;
+  const myProgress = isP1 ? liveProgress?.p1 : liveProgress?.p2;
+  const rivalProgress = isP1 ? liveProgress?.p2 : liveProgress?.p1;
+  const totalRounds = matchData.totalRounds || 10;
+  const isFinalRound = roundIdxOf(currentRoundData) === totalRounds - 1;
+  const question = currentRoundData?.question;
   const roundIdx = currentRoundData?.roundIndex ?? 0;
-  const totalRounds = matchData.totalRounds || 5;
+  const mySelection = selected[roundIdx] ?? null;
+  const locked = Boolean(mySelection || roundResult || matchResult);
 
-  const selectedOption = selectedAnswers[roundIdx] || null;
-  const hasSubmitted = !!selectedOption;
-
-  // Server-authoritative timer calculation
+  // Each revealed round: who was right and the points, for the dots, the pops and the summary.
+  const lastRevealed = useRef<number | null>(null);
   useEffect(() => {
-    if (!currentRoundData || matchResult || roundResult) return;
+    if (!roundResult || lastRevealed.current === roundResult.roundIndex) return;
+    lastRevealed.current = roundResult.roundIndex;
+    const mine = isP1 ? roundResult.p1 : roundResult.p2;
+    const theirs = isP1 ? roundResult.p2 : roundResult.p1;
+    setHistory((h) => ({
+      ...h,
+      [roundResult.roundIndex]: {
+        myCorrect: mine.isCorrect,
+        myPoints: mine.addedPoints,
+        rivalCorrect: theirs.isCorrect,
+        rivalPoints: theirs.addedPoints,
+      },
+    }));
+    if (mine.isCorrect) arenaSound.play("correct");
+    else {
+      arenaSound.play("wrong");
+      buzz(60);
+    }
+  }, [roundResult, isP1]);
 
-    const calculateRemaining = () => {
-      const serverStart = currentRoundData.serverStartTime;
-      const durationMs = (currentRoundData.duration || 15) * 1000;
-      const elapsed = Date.now() - serverStart;
-      const remaining = Math.max(0, Math.ceil((durationMs - elapsed) / 1000));
-      setTimeLeft(remaining);
-    };
+  // Sounds for a new round and for the end of the match.
+  const lastRound = useRef<number | null>(null);
+  useEffect(() => {
+    if (!currentRoundData || lastRound.current === currentRoundData.roundIndex) return;
+    lastRound.current = currentRoundData.roundIndex;
+    arenaSound.play("roundStart");
+  }, [currentRoundData]);
 
-    calculateRemaining();
-    const interval = setInterval(calculateRemaining, 200);
-    return () => clearInterval(interval);
-  }, [currentRoundData, matchResult, roundResult]);
+  const outcome: "win" | "lose" | "draw" | null = matchResult
+    ? matchResult.winnerRole === "draw"
+      ? "draw"
+      : matchResult.winnerUserId === user?.id
+        ? "win"
+        : "lose"
+    : null;
+  // This learner left on purpose: no result dialog, back to the lobby with a note.
+  const leftByMe = Boolean(matchResult?.isForfeit && matchResult.forfeitReason === "left" && outcome === "lose");
+  useEffect(() => {
+    if (!outcome || leftByMe) return;
+    arenaSound.play(outcome);
+    if (outcome === "win") buzz([40, 60, 40]);
+  }, [outcome, leftByMe]);
+  useEffect(() => {
+    if (!leftByMe) return;
+    toast(`Bạn đã rời trận và mất ${matchData.stake} Bánh Mì đã cược.`);
+    onExit();
+  }, [leftByMe, matchData.stake, onExit]);
 
-  // Opponent disconnect countdown timer
+  // Opponent reconnect window.
   useEffect(() => {
     if (!opponentDisconnected) return;
-
-    const startTime = Date.now();
-    const totalDuration = (opponentDisconnected.gracePeriodSeconds || 15) * 1000;
-
-    const tick = () => {
-      const elapsed = Date.now() - startTime;
-      const remaining = Math.max(0, Math.ceil((totalDuration - elapsed) / 1000));
-      setDisconnectTimer(remaining);
-    };
-
-    tick();
-    const interval = setInterval(tick, 500);
-    return () => clearInterval(interval);
+    const started = Date.now();
+    const total = (opponentDisconnected.gracePeriodSeconds || 15) * 1000;
+    const id = window.setInterval(() => setDisconnectLeft(Math.max(0, Math.ceil((total - (Date.now() - started)) / 1000))), 250);
+    return () => window.clearInterval(id);
   }, [opponentDisconnected]);
 
-  const handleSelectOption = (option: string) => {
-    if (hasSubmitted || !currentRoundData || roundResult || matchResult) return;
-    setSelectedAnswers((prev) => ({ ...prev, [roundIdx]: option }));
+  const choose = (option: string) => {
+    if (locked || !currentRoundData) return;
+    arenaSound.play("select");
+    setSelected((s) => ({ ...s, [roundIdx]: option }));
     onSubmitAnswer(matchData.matchId, currentRoundData.roundIndex, option);
   };
 
-  const isMeWinner = matchResult?.winnerUserId === user?.id;
-  const isDraw = matchResult?.winnerRole === "draw";
+  // Keys 1-4 or A-D pick an option.
+  const chooseRef = useRef(choose);
+  const optionsRef = useRef<string[]>([]);
+  useEffect(() => {
+    chooseRef.current = choose;
+    // No answer by key while the leave question is open.
+    optionsRef.current = leaveOpen ? [] : (question?.options ?? []);
+  });
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const key = event.key.toLowerCase();
+      const index = ["1", "2", "3", "4"].indexOf(key) >= 0 ? Number(key) - 1 : ["a", "b", "c", "d"].indexOf(key);
+      const option = optionsRef.current[index];
+      if (option !== undefined) chooseRef.current(option);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const marks = useMemo(() => {
+    const mine: RoundMark[] = [];
+    const theirs: RoundMark[] = [];
+    for (let i = 0; i < totalRounds; i += 1) {
+      const r = history[i];
+      mine.push(r ? (r.myCorrect ? "correct" : "wrong") : null);
+      theirs.push(r ? (r.rivalCorrect ? "correct" : "wrong") : null);
+    }
+    return { mine, theirs };
+  }, [history, totalRounds]);
+
+  const gainKey = roundResult ? roundResult.roundIndex : -1;
+  const myGain = roundResult ? { key: gainKey, points: (isP1 ? roundResult.p1 : roundResult.p2).addedPoints } : null;
+  const rivalGain = roundResult ? { key: gainKey, points: (isP1 ? roundResult.p2 : roundResult.p1).addedPoints } : null;
+  const myResult = roundResult ? (isP1 ? roundResult.p1 : roundResult.p2) : null;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* OPPONENT DISCONNECT WARNING BANNER */}
-      <AnimatePresence>
-        {opponentDisconnected && !matchResult && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-amber-500 text-white p-4 rounded-2xl border-4 border-amber-600 shadow-md flex items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-white/20 rounded-xl">
-                <WifiOff size={24} className="animate-pulse" />
-              </div>
-              <div>
-                <h4 className="font-black text-base">
-                  Đối thủ ({opponentDisconnected.disconnectedUserName}) đang mất kết nối!
-                </h4>
-                <p className="text-sm font-bold text-amber-100">
-                  Hệ thống đang chờ đối thủ kết nối lại. Nếu quá thời gian, bạn sẽ tự động được xử thắng.
-                </p>
-              </div>
-            </div>
-            <div className="px-4 py-2 bg-white text-amber-700 rounded-xl font-black text-lg shrink-0 shadow-xs flex items-center gap-1.5 dark:text-amber-400">
-              <Clock size={18} /> {disconnectTimer}s
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* HEADER SCOREBOARD 1v1 */}
-      <div className="bg-card dark:bg-slate-900 rounded-3xl sm:rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-[0_10px_0_0_#e2e8f0] dark:shadow-none p-4 sm:p-6 relative overflow-hidden">
-        <div className="flex items-center justify-between gap-2 sm:gap-4">
-          {/* My Player Panel */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-sky-100 border-2 sm:border-3 border-sky-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
-              <AvatarImage
-                src={myInfo.avatar}
-                alt=""
-                className="w-full h-full object-cover rounded-xl"
-                fallback="🧙‍♂️"
-              />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1">
-                <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{myInfo.userName}</span>
-                <span className="text-xs bg-sky-500 text-white font-extrabold px-1.5 py-0.2 rounded shrink-0">BẠN</span>
-              </div>
-              <p className="font-black text-sky-700 text-base sm:text-2xl tracking-tight dark:text-sky-400">
-                {myProgress?.score || 0} <span className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase">Điểm</span>
-              </p>
-            </div>
+    <div className="relative isolate mx-auto max-w-5xl overflow-hidden rounded-2xl px-3 pb-40 pt-5 sm:px-6 sm:pt-7">
+      <ArenaBackdrop />
+    <div className="mx-auto max-w-3xl space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-semibold text-slate-700 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300">
+          Cược {matchData.stake}
+          <Wheat size={15} strokeWidth={2.25} aria-hidden="true" />
+          <span className="sr-only">Bánh Mì</span>
+          <span className="text-slate-400">·</span>
+          {question ? `Câu ${roundIdx + 1}/${totalRounds}` : "Chuẩn bị"}
+        </p>
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-white/80 backdrop-blur-sm dark:bg-slate-900/70">
+            <SoundToggle />
           </div>
-
-          {/* VS Center Badge & Timer */}
-          <div className="flex flex-col items-center shrink-0">
-            <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-orange-500 border-2 sm:border-4 border-orange-600 flex items-center justify-center text-white font-black text-xs sm:text-base shadow-md">
-              VS
-            </div>
-            <div
-              className={`flex items-center gap-1 mt-1 sm:mt-2 text-xs font-black px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border transition-colors ${
-                timeLeft <= 3
-                  ? "bg-rose-50 border-rose-300 text-rose-700 animate-bounce dark:text-rose-400"
-                  : "bg-amber-50 border-amber-200 text-amber-700 dark:text-amber-400"
-              }`}
+          {!matchResult && (
+            <button
+              type="button"
+              onClick={() => setLeaveOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-2 text-sm font-semibold text-slate-700 backdrop-blur-sm hover:bg-rose-50 hover:text-rose-700 dark:bg-slate-900/70 dark:text-slate-300 dark:hover:bg-rose-950/40 dark:hover:text-rose-400"
             >
-              <Clock size={12} /> {timeLeft}s
-            </div>
-          </div>
-
-          {/* Opponent Panel */}
-          <div className="flex items-center gap-2 sm:gap-3 text-right min-w-0">
-            <div className="min-w-0">
-              <div className="flex items-center justify-end gap-1">
-                <span className="text-xs bg-rose-100 text-rose-700 font-extrabold px-1.5 py-0.2 rounded shrink-0">ĐỐI THỦ</span>
-                <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-lg truncate max-w-[70px] sm:max-w-[130px]">{opponentInfo.userName}</span>
-              </div>
-              <p className="font-black text-rose-700 text-base sm:text-2xl tracking-tight dark:text-rose-400">
-                {opponentProgress?.score || 0} <span className="text-xs text-slate-600 dark:text-slate-400 font-bold uppercase">Điểm</span>
-              </p>
-            </div>
-            <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-rose-100 border-2 sm:border-3 border-rose-400 flex items-center justify-center text-lg sm:text-2xl font-black shadow-inner shrink-0">
-              <AvatarImage
-                src={opponentInfo.avatar}
-                alt=""
-                className="w-full h-full object-cover rounded-xl"
-                fallback="🥷"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Live Race Progress Bar */}
-        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t-2 border-slate-100 dark:border-slate-800">
-          <div className="flex justify-between text-xs font-black text-slate-600 dark:text-slate-400 mb-1.5">
-            <span>Bạn: {myProgress?.answered || 0}/{totalRounds}</span>
-            <span className="bg-amber-100 text-amber-800 px-2 sm:px-2.5 py-0.5 rounded-full font-extrabold border border-amber-200 text-xs">
-              Cược: {matchData.stake} <Wheat size={12} className="inline -mt-0.5" aria-label="Bánh Mì" />
-            </span>
-            <span>Đối thủ: {opponentProgress?.answered || 0}/{totalRounds}</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:gap-3">
-            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
-              <div
-                className="bg-sky-500 h-full rounded-full transition-all duration-300"
-                style={{ width: `${((myProgress?.answered || 0) / totalRounds) * 100}%` }}
-              />
-            </div>
-            <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 sm:h-3.5 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700">
-              <div
-                className="bg-rose-500 h-full rounded-full transition-all duration-300 ml-auto"
-                style={{ width: `${((opponentProgress?.answered || 0) / totalRounds) * 100}%` }}
-              />
-            </div>
-          </div>
+              <LogOut size={16} strokeWidth={2.25} aria-hidden="true" />
+              Thoát
+            </button>
+          )}
         </div>
       </div>
 
-      {/* QUESTION CARD */}
-      {!matchResult && currentQ && (
-        <motion.div
-          key={roundIdx}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-card dark:bg-slate-900 rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-[0_10px_0_0_#e2e8f0] dark:shadow-none p-6 sm:p-8 space-y-6"
-        >
-          <div className="flex items-center justify-between">
-            <span className="bg-purple-100 text-purple-800 font-extrabold text-xs px-3.5 py-1.5 rounded-full border border-purple-200 flex items-center gap-1.5">
-              <Flame size={14} /> Hiệp {roundIdx + 1} / {totalRounds}
-            </span>
-            {currentQ.ipa && (
-              <span className="text-slate-500 dark:text-slate-400 font-bold text-sm tracking-wider bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-xl">
-                /{currentQ.ipa}/
-              </span>
-            )}
-          </div>
-
-          <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100 text-center leading-relaxed py-2 break-words max-w-full px-2">
-            {currentQ.prompt}
-          </h3>
-
-          {/* 4 Options Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            {currentQ.options.map((opt, oIdx) => {
-              const isSelected = selectedOption === opt;
-              const isCorrectOpt = roundResult?.correctAnswer === opt;
-
-              let btnStyle = "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-sky-300 hover:bg-sky-50 dark:hover:bg-sky-950/30 text-slate-700 dark:text-slate-200";
-
-              if (roundResult) {
-                // Server revealed results
-                if (isCorrectOpt) {
-                  btnStyle = "bg-emerald-100 border-emerald-500 text-emerald-800 ring-2 ring-emerald-400 scale-[1.02]";
-                } else if (isSelected && !isCorrectOpt) {
-                  btnStyle = "bg-rose-100 border-rose-400 text-rose-800";
-                } else {
-                  btnStyle = "opacity-40 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800";
-                }
-              } else if (hasSubmitted) {
-                // Waiting for round to end
-                if (isSelected) {
-                  btnStyle = "bg-sky-50 border-sky-400 text-sky-800 ring-2 ring-sky-300";
-                } else {
-                  btnStyle = "opacity-50 border-slate-200 dark:border-slate-700";
-                }
-              }
-
-              return (
-                <button
-                  key={oIdx}
-                  disabled={hasSubmitted || !!roundResult}
-                  onClick={() => handleSelectOption(opt)}
-                  className={`p-5 rounded-2xl border-3 font-bold text-left transition-all text-base flex items-center justify-between gap-3 cursor-pointer ${btnStyle}`}
-                >
-                  <span className="break-words flex-1">{opt}</span>
-                  {roundResult && isCorrectOpt && (
-                    <CheckCircle2 size={22} className="text-emerald-600 shrink-0" />
-                  )}
-                  {roundResult && isSelected && !isCorrectOpt && (
-                    <XCircle size={22} className="text-rose-600 shrink-0" />
-                  )}
-                  {!roundResult && isSelected && hasSubmitted && (
-                    <span className="text-xs bg-sky-500 text-white font-black px-2 py-0.5 rounded-md animate-pulse">
-                      Đã chọn
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ROUND RESULT EXPLANATION BANNER */}
-          <AnimatePresence>
-            {roundResult && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 space-y-2 mt-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-indigo-900 font-black text-sm">
-                    <Zap size={18} className="text-amber-500" />
-                    {isPlayer1
-                      ? roundResult.p1.isCorrect
-                        ? `Tuyệt vời! +${roundResult.p1.addedPoints} Điểm (Bao gồm thưởng tốc độ)`
-                        : `Chưa chính xác (0 Điểm)`
-                      : roundResult.p2.isCorrect
-                      ? `Tuyệt vời! +${roundResult.p2.addedPoints} Điểm (Bao gồm thưởng tốc độ)`
-                      : `Chưa chính xác (0 Điểm)`}
-                  </div>
-                  <span className="text-xs font-bold text-indigo-500">Chuẩn bị hiệp tiếp theo...</span>
-                </div>
-                {roundResult.explanation && (
-                  <p className="text-sm font-bold text-slate-600 dark:text-slate-300 leading-relaxed">
-                    <b>Giải thích:</b> {roundResult.explanation}
-                  </p>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-      )}
-
-      {/* WAITING OVERLAY IF ROUND NOT YET STARTED */}
-      {!matchResult && !currentQ && (
-        <div className="bg-card dark:bg-slate-900 rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-sm p-12 text-center space-y-4">
-          <div className="w-16 h-16 bg-amber-100 border-4 border-amber-300 rounded-3xl mx-auto flex items-center justify-center text-3xl animate-bounce">
-            <Swords size={30} strokeWidth={2.25} className="text-amber-700" aria-hidden="true" />
-          </div>
-          <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100">Trận Đấu Đang Khởi Động</h3>
-          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-            Hệ thống đang chuẩn bị câu hỏi và đồng bộ đồng hồ thi đấu với đối thủ...
-          </p>
-        </div>
-      )}
-
-      {/* MATCH RESULT MODAL */}
       <AnimatePresence>
-        {matchResult && (
+        {opponentDisconnected && !matchResult && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            role="alert"
+            className="flex items-center gap-3 rounded-lg bg-amber-50 px-4 py-3 text-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
           >
-            {isMeWinner && <Confetti recycle={false} numberOfPieces={350} />}
-
-            <div className="bg-card dark:bg-slate-900 max-w-md w-full rounded-[2.5rem] border-4 border-slate-200 dark:border-slate-800 shadow-[0_12px_0_0_#cbd5e1] dark:shadow-none p-8 text-center space-y-6">
-              <div className="w-24 h-24 mx-auto rounded-3xl bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-5xl shadow-lg">
-                {isMeWinner ? (
-                  <Trophy size={44} strokeWidth={2.25} className="text-amber-600" aria-hidden="true" />
-                ) : isDraw ? (
-                  <Handshake size={44} strokeWidth={2.25} className="text-slate-600" aria-hidden="true" />
-                ) : (
-                  <HeartCrack size={44} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" />
-                )}
-              </div>
-
-              <div>
-                <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100">
-                  {isMeWinner ? "CHIẾN THẮNG!" : isDraw ? "HÒA NHAU!" : "THUA CUỘC!"}
-                </h2>
-                <p className="font-bold text-slate-600 dark:text-slate-400 text-sm mt-1">
-                  {isMeWinner
-                    ? matchResult.isForfeit
-                      ? `Đối thủ đã bỏ cuộc sau 15s mất mạng. Bạn giành chiến thắng!`
-                      : `Xuất sắc! Bạn đã đánh bại đối thủ và giành trọn ${matchResult.reward} Bánh Mì.`
-                    : isDraw
-                    ? `Trận đấu ngang tài ngang sức! Tiền cược đã được hoàn lại.`
-                    : `Đừng nản lòng, hãy trau dồi từ vựng và phục thù ở trận sau nhé!`}
-                </p>
-              </div>
-
-              <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 flex items-center justify-around">
-                <div>
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Điểm của bạn</span>
-                  <p className="text-2xl font-black text-sky-700 dark:text-sky-400">
-                    {isPlayer1 ? matchResult.p1.score : matchResult.p2.score}
-                  </p>
-                </div>
-                <div className="h-10 w-0.5 bg-amber-200" />
-                <div>
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Bánh Mì</span>
-                  <p className="text-2xl font-black text-amber-700 dark:text-amber-400">
-                    <span className="inline-flex items-center gap-1">
-                      {isMeWinner ? `+${matchResult.reward}` : isDraw ? `Hoàn cược` : `-${matchData.stake}`}
-                      {!isDraw && <Wheat size={20} strokeWidth={2.25} aria-label="Bánh Mì" />}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <Button3D variant="orange" size="lg" className="w-full" onClick={onExit}>
-                Về Sảnh Đấu Trường <ArrowRight size={18} />
-              </Button3D>
-            </div>
+            <WifiOff size={18} strokeWidth={2.25} aria-hidden="true" />
+            <p className="flex-1 text-sm">
+              <span className="font-bold">{opponentDisconnected.disconnectedUserName}</span> mất kết nối. Nếu không vào lại, bạn được xử thắng.
+            </p>
+            <span className="text-lg font-extrabold tabular-nums">{disconnectLeft}s</span>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {!question && !matchResult ? (
+        <MatchIntro myName={me.userName} rivalName={rival.userName} stake={matchData.stake} />
+      ) : (
+        <>
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <PlayerScoreCard
+              name={me.userName}
+              avatar={me.avatar}
+              score={myProgress?.score ?? 0}
+              marks={marks.mine}
+              side="me"
+              answeredNow={Boolean(mySelection)}
+              gain={myGain}
+            />
+            <span className="shrink-0 text-sm font-extrabold text-slate-400" aria-hidden="true">
+              VS
+            </span>
+            <PlayerScoreCard
+              name={rival.userName}
+              avatar={rival.avatar}
+              score={rivalProgress?.score ?? 0}
+              marks={marks.theirs}
+              side="rival"
+              answeredNow={Boolean(rivalProgress?.hasAnsweredCurrentRound) && !roundResult}
+              gain={rivalGain}
+            />
+          </div>
+
+          {question && currentRoundData && (
+            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+              <RoundTimerBar
+                key={currentRoundData.roundIndex}
+                serverStartTime={currentRoundData.serverStartTime}
+                duration={currentRoundData.duration || 12}
+                stopped={Boolean(roundResult || matchResult)}
+              />
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={roundIdx}
+                  initial={reduce ? false : { opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={reduce ? undefined : { opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <div className="mt-6 text-center">
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                      {KIND_LABEL[question.kind ?? "word_to_meaning"]}
+                      {isFinalRound && <span className="ml-2 rounded-md bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">Câu cuối · điểm ×2</span>}
+                    </p>
+                    {question.kind === "fill_blank" ? (
+                      <h2 className="mt-2 text-xl font-bold leading-relaxed text-slate-900 dark:text-slate-100 sm:text-2xl">
+                        {question.prompt.split("_____").map((part, i, parts) => (
+                          <React.Fragment key={i}>
+                            {part}
+                            {i < parts.length - 1 && (
+                              <span className="mx-1 inline-block min-w-20 border-b-2 border-slate-400 align-baseline dark:border-slate-500" aria-label="chỗ trống">
+                                &nbsp;
+                              </span>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </h2>
+                    ) : (
+                      <h2 className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100 sm:text-3xl">{question.prompt}</h2>
+                    )}
+                    {question.ipa && (
+                      <p className="mt-1 text-base text-slate-500 dark:text-slate-400">/{question.ipa.replace(/^\/+|\/+$/g, "")}/</p>
+                    )}
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {question.options.map((option, i) => {
+                      const isMine = mySelection === option;
+                      const isAnswer = roundResult?.correctAnswer === option;
+                      let tone =
+                        "border-slate-200 bg-white hover:border-sky-400 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-sky-950/40";
+                      if (roundResult) {
+                        tone = isAnswer
+                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40"
+                          : isMine
+                            ? "border-rose-400 bg-rose-50 dark:bg-rose-950/40"
+                            : "border-slate-200 bg-white opacity-50 dark:border-slate-700 dark:bg-slate-900";
+                      } else if (mySelection) {
+                        tone = isMine ? "border-sky-500 bg-sky-50 dark:bg-sky-950/40" : "border-slate-200 bg-white opacity-60 dark:border-slate-700 dark:bg-slate-900";
+                      }
+                      const shake = roundResult && isMine && !isAnswer && !reduce;
+                      const pop = roundResult && isAnswer && isMine && !reduce;
+                      return (
+                        <motion.button
+                          key={i}
+                          type="button"
+                          disabled={locked}
+                          onClick={() => choose(option)}
+                          animate={shake ? { x: [0, -8, 8, -5, 5, 0] } : pop ? { scale: [1, 1.05, 1] } : undefined}
+                          transition={{ duration: 0.4 }}
+                          className={`flex min-h-16 items-center gap-3 rounded-xl border-2 px-4 py-3 text-left text-base font-semibold text-slate-900 transition-colors disabled:cursor-default dark:text-slate-100 ${tone}`}
+                        >
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-sm font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                            {LETTERS[i]}
+                          </span>
+                          <span className="flex-1 break-words">{option}</span>
+                          {roundResult && isAnswer && <CheckCircle2 size={22} strokeWidth={2.25} className="shrink-0 text-emerald-600" aria-label="Đáp án đúng" />}
+                          {roundResult && isMine && !isAnswer && <XCircle size={22} strokeWidth={2.25} className="shrink-0 text-rose-600" aria-label="Bạn chọn sai" />}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-5 min-h-[3.5rem]" aria-live="polite">
+                    {roundResult && myResult ? (
+                      <div className={`rounded-lg px-4 py-3 text-sm ${myResult.isCorrect ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200"}`}>
+                        <p className="font-bold">
+                          {myResult.isCorrect
+                            ? isFinalRound
+                              ? `Đúng! +${myResult.addedPoints} điểm (câu cuối nhân đôi)`
+                              : `Đúng! +${myResult.addedPoints} điểm (100 + ${myResult.addedPoints - 100} thưởng tốc độ)`
+                            : mySelection
+                              ? `Chưa đúng. Đáp án là "${roundResult.correctAnswer}".`
+                              : `Hết giờ. Đáp án là "${roundResult.correctAnswer}".`}
+                        </p>
+                        {roundResult.explanation && <p className="mt-1">{roundResult.explanation}</p>}
+                      </div>
+                    ) : mySelection ? (
+                      <p className="text-center text-sm text-slate-600 dark:text-slate-400">Đã chọn. Chờ đối thủ hoặc hết giờ…</p>
+                    ) : (
+                      <p className="text-center text-sm text-slate-500 dark:text-slate-400">Chọn bằng chuột hoặc phím 1–4</p>
+                    )}
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
+        </>
+      )}
+
+      {leaveOpen && !matchResult && (
+        <LeaveMatchDialog
+          stake={matchData.stake}
+          rivalName={rival.userName}
+          pending={leaving}
+          onStay={() => setLeaveOpen(false)}
+          onLeave={() => {
+            setLeaving(true);
+            onLeave(matchData.matchId);
+          }}
+        />
+      )}
+
+      {matchResult && outcome && !leftByMe && (
+        <MatchResultDialog
+          outcome={outcome}
+          forfeitReason={matchResult.isForfeit ? (matchResult.forfeitReason ?? "disconnected") : null}
+          myScore={isP1 ? matchResult.p1.score : matchResult.p2.score}
+          rivalScore={isP1 ? matchResult.p2.score : matchResult.p1.score}
+          rivalName={rival.userName}
+          stake={matchData.stake}
+          reward={matchResult.reward}
+          xp={isP1 ? matchResult.p1.xp : matchResult.p2.xp}
+          xpCapped={Boolean(isP1 ? matchResult.p1.xpCapped : matchResult.p2.xpCapped)}
+          correct={Object.values(history).filter((r) => r.myCorrect).length}
+          totalRounds={totalRounds}
+          onRematch={() => onRematch(matchData.stake)}
+          onExit={onExit}
+        />
+      )}
+    </div>
     </div>
   );
 }

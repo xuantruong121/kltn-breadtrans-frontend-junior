@@ -8,6 +8,7 @@ import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Wheat } from "lucide-react";
+import { WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -117,11 +118,19 @@ export default function SocketProvider({ children }: { children: React.ReactNode
           useGamificationStore.getState().addBreads(data.amount);
         }
 
-        // Invalidate profile query để đồng bộ toàn bộ app
-        queryClient.invalidateQueries({ queryKey: ["user-profile", user?.id] });
+        // Mọi query đang hiện số dư Bánh Mì (header, thanh gamification, trang thú ảo).
+        for (const queryKey of WALLET_QUERY_KEYS) {
+          void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+        }
 
+        // The Vocabulary Arena shows stakes, payouts and refunds on its own
+        // screens (net, after the stake); a second toast with the gross amount
+        // only contradicted them. The balance above still updates.
+        const fromArena = typeof data.reason === "string" && data.reason.includes("Đấu Trường");
         // Hiển thị thông báo chúc mừng / thông tin
-        if (data.amount > 0) {
+        if (fromArena) {
+          // no toast
+        } else if (data.amount > 0) {
           toast.success(`+${data.amount} Bánh Mì! Lý do: ${data.reason || "Thưởng học tập"}`, {
             duration: 6000,
             icon: <Wheat size={18} className="text-amber-600" aria-hidden="true" />,

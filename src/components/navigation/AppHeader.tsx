@@ -19,6 +19,7 @@ import {
   Mic,
   PenTool,
   ShoppingBag,
+  Swords,
   Target,
   Trophy,
   User,
@@ -63,6 +64,7 @@ import {
   isWritingRoute,
   isFlashcardRoute,
   isMarketRoute,
+  isArenaRoute,
   splitNavOverflow,
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -280,8 +282,9 @@ export function AppHeader() {
   // 6. Flashcard
   // 7. Luyện đề (Exam Practice: TOEIC & Certificate test hub)
   // 8. Cửa hàng
-  // 9. Bảng xếp hạng
-  // 10. FAQ
+  // 9. Đấu trường
+  // 10. Bảng xếp hạng (More)
+  // 11. FAQ (More)
   // At most MAX_HEADER_NAV_BUTTONS are buttons; the rest go into More.
   const headerNavLinks = [
     {
@@ -334,12 +337,19 @@ export function AppHeader() {
       iconColor: "text-blue-600 dark:text-blue-400",
     },
     {
-      label: "Bảng xếp hạng",
+      label: "Đấu trường",
       href: "/arena",
-      icon: Trophy,
-      active: isActivePath(pathname, "/arena"),
+      icon: Swords,
+      active: isArenaRoute(pathname),
       iconColor: "text-amber-700 dark:text-amber-400",
-      description: "Bảng vàng thi đua tuần & tích lũy EXP",
+    },
+    {
+      label: "Bảng xếp hạng",
+      href: "/ranking",
+      icon: Trophy,
+      active: isActivePath(pathname, "/ranking"),
+      iconColor: "text-amber-700 dark:text-amber-400",
+      description: "Bảng xếp hạng tuần và huy hiệu",
     },
     {
       label: "FAQ",
@@ -360,7 +370,8 @@ export function AppHeader() {
     { label: "Flashcard từ vựng", href: "/flashcard", icon: Layers },
     { label: "Luyện đề", href: "/exams", icon: Target, isExam: true },
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
-    { label: "Bảng xếp hạng", href: "/arena", icon: Trophy },
+    { label: "Đấu trường", href: "/arena", icon: Swords },
+    { label: "Bảng xếp hạng", href: "/ranking", icon: Trophy },
     { label: "FAQ", href: "/help", icon: CircleHelp },
   ];
 

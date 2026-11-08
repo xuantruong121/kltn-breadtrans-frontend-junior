@@ -52,7 +52,7 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/arena" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
+                <Link href="/ranking" className="transition-colors hover:text-amber-600 dark:hover:text-amber-400">
                   Bảng xếp hạng
                 </Link>
               </li>

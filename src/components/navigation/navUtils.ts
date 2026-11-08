@@ -78,9 +78,15 @@ export function isMarketRoute(pathname: string): boolean {
 export function isMoreRoute(pathname: string): boolean {
   if (!pathname) return false;
   return (
-    pathname.startsWith("/arena") ||
+    pathname.startsWith("/ranking") ||
     pathname.startsWith("/help")
   );
+}
+
+/** The Arena games: the 1v1 duel lobby and Pháo Bánh Mì. */
+export function isArenaRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return pathname === "/arena" || pathname.startsWith("/arena/");
 }
 
 export interface NavItemConfig {
@@ -112,7 +118,8 @@ export const HEADER_NAV_ITEMS: NavItemConfig[] = [
   { label: "Flashcard", href: "/flashcard" },
   { label: "Luyện đề", href: "/exams" },
   { label: "Cửa hàng", href: "/market" },
-  { label: "Bảng xếp hạng", href: "/arena" },
+  { label: "Đấu trường", href: "/arena" },
+  { label: "Bảng xếp hạng", href: "/ranking" },
   { label: "FAQ", href: "/help" },
 ];
 

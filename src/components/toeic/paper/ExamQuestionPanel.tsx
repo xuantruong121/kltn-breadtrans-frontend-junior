@@ -95,7 +95,7 @@ export function ExamQuestionPanel({
         {saveStatus}
       </p>
       <p className="mt-2 text-xs italic leading-5 text-amber-700 dark:text-amber-300">
-        Chú ý: bạn có thể click vào số thứ tự câu hỏi trong bài để đánh dấu review
+        Bấm vào số câu trong bài để đánh dấu cần xem lại.
       </p>
 
       <div className="mt-3 min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
@@ -108,7 +108,7 @@ export function ExamQuestionPanel({
                   key={q.key}
                   type="button"
                   onClick={() => onJumpQuestion(q.number)}
-                  aria-label={`Câu ${q.number}${q.answered ? ", đã trả lời" : ", chưa trả lời"}${q.flagged ? ", đánh dấu review" : ""}`}
+                  aria-label={`Câu ${q.number}${q.answered ? ", đã trả lời" : ", chưa trả lời"}${q.flagged ? ", đánh dấu cần xem lại" : ""}`}
                   aria-current={q.current ? "true" : undefined}
                   className={`min-h-7 rounded border text-xs font-semibold tabular-nums transition-colors ${
                     q.flagged

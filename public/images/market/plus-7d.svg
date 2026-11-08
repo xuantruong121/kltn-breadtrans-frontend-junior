@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <radialGradient id="p7-aura" cx="80" cy="80" r="66" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FDE68A" stop-opacity="0.85"/>
+      <stop offset="55%" stop-color="#F59E0B" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#B45309" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="p7-body" x1="28" y1="38" x2="132" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="55%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="p7-band" x1="28" y1="96" x2="132" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#B45309"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+    <linearGradient id="p7-crown" x1="64" y1="44" x2="96" y2="68" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="100%" stop-color="#FEF3C7"/>
+    </linearGradient>
+    <filter id="p7-shadow" x="14" y="26" width="132" height="116" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#92400E" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <circle cx="80" cy="80" r="62" fill="url(#p7-aura)"/>
+
+  <g filter="url(#p7-shadow)">
+    <!-- Card -->
+    <rect x="28" y="38" width="104" height="86" rx="12" fill="url(#p7-body)"/>
+    <rect x="28.75" y="38.75" width="102.5" height="84.5" rx="11.25" stroke="#FFFBEB" stroke-opacity="0.55" stroke-width="1.5"/>
+    <!-- Lower band -->
+    <path d="M28 100H132V112C132 118.627 126.627 124 120 124H40C33.373 124 28 118.627 28 112V100Z" fill="url(#p7-band)"/>
+    <!-- Shine -->
+    <path d="M40 38H72L52 100H28V50C28 43.373 33.373 38 40 38Z" fill="#FFFFFF" fill-opacity="0.12"/>
+  </g>
+
+  <!-- Crown -->
+  <path d="M64 66L61 50L71 57L80 46L89 57L99 50L96 66H64Z" fill="url(#p7-crown)" stroke="#B45309" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="64" y="66" width="32" height="5" rx="2" fill="#FFFBEB" stroke="#B45309" stroke-width="2"/>
+  <circle cx="80" cy="57" r="2.5" fill="#D97706"/>
+
+  <!-- +7 -->
+  <text x="80" y="93" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="800" fill="#FFFFFF">+7 NGÀY</text>
+  <!-- PLUS -->
+  <text x="80" y="117" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="800" letter-spacing="3" fill="#FEF3C7">PLUS</text>
+</svg>

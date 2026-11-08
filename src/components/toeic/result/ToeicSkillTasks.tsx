@@ -145,7 +145,7 @@ export function SpeakingTasksResult({ tasks, examTitle }: { tasks: ToeicSpeaking
                 </span>
                 <TaskStatus status={t.status} />
                 <button type="button" onClick={() => setOpen(t)} className={detailClass}>
-                  [Chi tiết]
+                  Chi tiết
                 </button>
               </li>
             ))}
@@ -174,7 +174,7 @@ export function WritingTasksResult({ tasks }: { tasks: ToeicWritingTask[] }) {
                 <TaskStatus status={t.status} />
                 {t.status === "GRADED" && t.submission ? (
                   <Link href={`/writing/submissions/${t.submission.id}`} className={detailClass}>
-                    [Chi tiết]
+                    Chi tiết
                   </Link>
                 ) : (
                   <span className="w-[76px]" aria-hidden="true" />

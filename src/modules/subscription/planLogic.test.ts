@@ -12,6 +12,7 @@ import {
   getPlusPricingDisplay,
   getPlanCardCta,
   planExpiryBannerState,
+  trialCountdown,
   getPaymentStatusBadgeInfo,
   preparePurchasePayload,
   generateIdempotencyKey,
@@ -1113,9 +1114,45 @@ describe("Plan expiry banner", () => {
     const state = planExpiryBannerState(
       summary({ daysLeft: 2, trial: { endsAt: "2026-11-06T08:00:00.000Z", speakingLeft: 4, writingLeft: 0 } }),
     );
-    assert.equal(state?.title, "Bạn đang dùng thử Plus · còn 2 ngày");
-    assert.match(state?.body ?? "", /Còn 4 lượt chấm Nói và 0 lượt chấm Viết/);
+    assert.equal(state?.title, "Bạn đang dùng thử Plus");
+    assert.equal(state?.trialEndsAt, "2026-11-06T08:00:00.000Z");
+    assert.equal(state?.body, "Còn 4 lượt chấm Nói và 0 lượt chấm Viết ở mức trả phí.");
+    assert.equal(state?.detail, "Mua gói Plus để chấm không giới hạn, dữ liệu học vẫn được giữ nguyên.");
     assert.equal(state?.actionLabel, "Mua gói Plus");
     assert.equal(planExpiryBannerState(summary())?.actionLabel, "Gia hạn ngay");
+    assert.equal(planExpiryBannerState(summary())?.trialEndsAt, undefined);
+  });
+});
+
+describe("trialCountdown", () => {
+  const end = "2026-11-08T08:00:00.000Z";
+  const at = (iso: string) => Date.parse(iso);
+
+  test("more than a day left: days apart, the rest as a clock", () => {
+    const c = trialCountdown(end, at("2026-11-07T04:47:15.000Z"));
+    assert.equal(c?.days, 1);
+    assert.equal(c?.clock, "03:12:45");
+    assert.equal(c?.spoken, "còn 1 ngày 3 giờ 12 phút");
+    assert.equal(c?.urgent, false);
+    assert.equal(c?.expired, false);
+  });
+
+  test("the last hour is urgent and the clock keeps two digits", () => {
+    const c = trialCountdown(end, at("2026-11-08T07:59:51.400Z"));
+    assert.equal(c?.days, 0);
+    assert.equal(c?.clock, "00:00:08");
+    assert.equal(c?.spoken, "còn 0 phút");
+    assert.equal(c?.urgent, true);
+  });
+
+  test("past the end it stops at zero and reports expired", () => {
+    const c = trialCountdown(end, at("2026-11-08T08:00:05.000Z"));
+    assert.equal(c?.clock, "00:00:00");
+    assert.equal(c?.expired, true);
+    assert.equal(c?.spoken, "thời gian dùng thử đã hết");
+  });
+
+  test("an unreadable date shows no countdown", () => {
+    assert.equal(trialCountdown("not a date", Date.now()), null);
   });
 });
