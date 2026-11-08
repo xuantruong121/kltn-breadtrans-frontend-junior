@@ -188,7 +188,7 @@ export function ArenaHero({
               className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-extrabold text-white transition-colors hover:bg-amber-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               <Swords size={18} strokeWidth={2.25} aria-hidden="true" />
-              {isGuest ? "Đăng nhập để thách đấu" : `Tìm đối thủ · ${stake} Bánh Mì`}
+              {isGuest ? "Đăng nhập để thách đấu" : "Tìm đối thủ"}
             </button>
           )}
         </div>
