@@ -50,7 +50,7 @@ export function MatchResultDialog({
     outcome === "win" ? "text-emerald-700 dark:text-emerald-400" : outcome === "draw" ? "text-slate-700 dark:text-slate-300" : "text-rose-700 dark:text-rose-400";
 
   return (
-    <div className="fixed inset-0 z-50 flex overflow-y-auto bg-slate-900/60 p-4">
+    <div className="fixed inset-0 z-[100] flex overflow-y-auto bg-slate-900/60 p-4">
       {outcome === "win" && !reduce && <Confetti recycle={false} numberOfPieces={320} />}
       <motion.div
         role="dialog"

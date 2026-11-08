@@ -32,7 +32,7 @@ export function BadgeDetailModal({ badge, onClose }: { badge: BadgeView | null; 
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 p-4" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"
