@@ -9,8 +9,8 @@ describe("arena wallet keys", () => {
     assert.deepEqual(WALLET_QUERY_KEYS, [["user-stats"], ["profile"], ["market-balance"]]);
   });
 
-  test("a finished match also refreshes the league and the arena record", () => {
-    assert.deepEqual(MATCH_END_QUERY_KEYS.slice(-4), [["leaderboard"], ["arena-stats"], ["my-badges"], ["badge-progress"]]);
+  test("a finished match also refreshes the league, my place in it and the arena record", () => {
+    assert.deepEqual(MATCH_END_QUERY_KEYS.slice(-5), [["leaderboard"], ["arena-snippet"], ["arena-stats"], ["my-badges"], ["badge-progress"]]);
   });
 });
 

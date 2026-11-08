@@ -62,6 +62,7 @@ export function ArenaRecord({ stats, isGuest, isLoading }: { stats: ArenaStats |
         <li>Mỗi câu đúng được 100 điểm, trả lời càng sớm thì thưởng thêm tới 50.</li>
         <li>Sai hoặc hết giờ thì câu đó 0 điểm. Câu cuối được nhân đôi điểm.</li>
         <li>Thắng nhận lại gấp đôi số cược, hoà thì hoàn cược.</li>
+        <li>Mỗi câu đúng cộng 5 XP vào bảng xếp hạng tuần, dù thắng hay thua, tối đa 150 XP mỗi ngày.</li>
         <li>Rớt mạng có 15 giây để vào lại, quá thời gian thì xử thua.</li>
       </ul>
     </section>

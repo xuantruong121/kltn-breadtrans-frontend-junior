@@ -64,8 +64,9 @@ export interface MatchResult {
   winnerRole: "p1" | "p2" | "draw";
   winnerUserId: number | null;
   isForfeit?: boolean;
-  p1: { userId: number; userName: string; score: number };
-  p2: { userId: number; userName: string; score: number };
+  // xp: 5 per correct answer, capped at 150 Arena XP a day (xpCapped).
+  p1: { userId: number; userName: string; score: number; xp?: number; xpCapped?: boolean };
+  p2: { userId: number; userName: string; score: number; xp?: number; xpCapped?: boolean };
   reward: number;
   isDraw: boolean;
 }

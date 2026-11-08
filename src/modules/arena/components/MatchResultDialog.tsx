@@ -16,6 +16,8 @@ export function MatchResultDialog({
   rivalName,
   stake,
   reward,
+  xp,
+  xpCapped,
   rounds,
   onRematch,
   onExit,
@@ -27,6 +29,9 @@ export function MatchResultDialog({
   rivalName: string;
   stake: number;
   reward: number;
+  /** XP for this match; undefined when the server did not send it. */
+  xp?: number;
+  xpCapped: boolean;
   rounds: RoundRecord[];
   onRematch: () => void;
   onExit: () => void;
@@ -44,6 +49,14 @@ export function MatchResultDialog({
       : outcome === "draw"
         ? "Hai bên bằng điểm, mỗi người được hoàn cược."
         : `${rivalName} hơn bạn ${(rivalScore - myScore).toLocaleString("vi-VN")} điểm. Ôn lại các từ sai rồi phục thù nhé.`;
+  const xpLine =
+    xp === undefined
+      ? null
+      : xp > 0
+        ? `+${xp} XP vào bảng xếp hạng tuần${xpCapped ? " (đã đủ 150 XP Đấu trường hôm nay)" : ""}`
+        : xpCapped
+          ? "Hôm nay đã đủ 150 XP từ Đấu trường, trận này không cộng thêm XP."
+          : "Chưa có câu đúng nào nên trận này chưa có XP.";
   // Net change: the stake left the balance when the match started.
   const banh = outcome === "win" ? `+${reward - stake}` : outcome === "draw" ? "±0" : `−${stake}`;
   const banhInk =
@@ -89,6 +102,9 @@ export function MatchResultDialog({
               <span className="block truncate text-xs text-slate-500 dark:text-slate-400">{rivalName}</span>
             </p>
           </div>
+          {xpLine && (
+            <p className="mt-3 text-center text-sm font-semibold text-sky-700 dark:text-sky-400">{xpLine}</p>
+          )}
 
           {rounds.length > 0 && (
             <table className="mt-5 w-full text-sm">

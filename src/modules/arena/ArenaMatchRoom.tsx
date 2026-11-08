@@ -338,6 +338,8 @@ export default function ArenaMatchRoom({
           rivalName={rival.userName}
           stake={matchData.stake}
           reward={matchResult.reward}
+          xp={isP1 ? matchResult.p1.xp : matchResult.p2.xp}
+          xpCapped={Boolean(isP1 ? matchResult.p1.xpCapped : matchResult.p2.xpCapped)}
           rounds={Object.keys(history)
             .map(Number)
             .sort((a, b) => a - b)
