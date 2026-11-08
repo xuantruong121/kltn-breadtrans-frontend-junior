@@ -7,6 +7,9 @@
  */
 export type BadgeGroup = "learning" | "streak" | "arena" | "pet";
 
+/** "Đấu Sĩ Bất Bại": this many Arena wins in a row. */
+export const ARENA_STREAK_BADGE = 5;
+
 export type BadgeDefinition = {
   name: string;
   group: BadgeGroup;
@@ -79,8 +82,8 @@ export const BADGES: readonly BadgeDefinition[] = [
   {
     name: "Đấu Sĩ Bất Bại",
     group: "arena",
-    rule: "Thắng 5 trận Đấu trường liên tiếp.",
-    progress: (f) => ({ value: f.longestArenaWinStreak, target: 5, unit: "trận liên tiếp" }),
+    rule: `Thắng ${ARENA_STREAK_BADGE} trận Đấu trường liên tiếp.`,
+    progress: (f) => ({ value: f.longestArenaWinStreak, target: ARENA_STREAK_BADGE, unit: "trận liên tiếp" }),
   },
   {
     name: "Chuyên Gia Nuôi Thú",

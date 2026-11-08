@@ -4,6 +4,22 @@ import assert from "node:assert/strict";
 import { NO_BADGE_FACTS, badgeViews, nextBadge } from "./badges.ts";
 import { formatCountdown, xpToLeaveDemotion } from "./league.ts";
 import { roundTimer, shouldTick } from "./roundTimer.ts";
+import { streakGoal, streakNote } from "./record.ts";
+
+describe("streakNote", () => {
+  test("shows the best streak only when it differs from the current one", () => {
+    assert.equal(streakNote(1, 3), "dài nhất 3");
+    assert.equal(streakNote(3, 3), "kỷ lục của bạn");
+    assert.equal(streakNote(0, 0), "chưa có");
+    assert.equal(streakNote(0, 2), "dài nhất 2");
+  });
+
+  test("streakGoal counts the current streak toward 5, done once the longest reaches 5", () => {
+    assert.deepEqual(streakGoal(3, 3), { done: false, value: 3, target: 5, left: 2 });
+    assert.deepEqual(streakGoal(0, 4), { done: false, value: 0, target: 5, left: 5 });
+    assert.deepEqual(streakGoal(1, 6), { done: true, value: 5, target: 5, left: 0 });
+  });
+});
 
 describe("roundTimer", () => {
   const start = 1_000_000;
