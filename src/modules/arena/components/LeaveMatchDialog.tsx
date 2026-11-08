@@ -8,12 +8,17 @@ import { LogOut } from "lucide-react";
 export function LeaveMatchDialog({
   stake,
   rivalName,
+  title = "Thoát trận đấu?",
+  message,
   pending,
   onStay,
   onLeave,
 }: {
   stake: number;
-  rivalName: string;
+  rivalName?: string;
+  title?: string;
+  /** Replaces the 1v1 wording, e.g. for Bắn chữ rơi. */
+  message?: string;
   pending: boolean;
   onStay: () => void;
   onLeave: () => void;
@@ -46,10 +51,10 @@ export function LeaveMatchDialog({
           <LogOut size={20} strokeWidth={2.25} aria-hidden="true" />
         </span>
         <h2 id="leave-title" className="mt-4 text-xl font-extrabold text-slate-900 dark:text-slate-100">
-          Thoát trận đấu?
+          {title}
         </h2>
         <p id="leave-body" className="mt-2 text-sm text-slate-700 dark:text-slate-300">
-          Bạn sẽ bị xử thua ngay và mất {stake} Bánh Mì đã cược. {rivalName} thắng trận này.
+          {message ?? `Bạn sẽ bị xử thua ngay và mất ${stake} Bánh Mì đã cược. ${rivalName} thắng trận này.`}
         </p>
         <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button

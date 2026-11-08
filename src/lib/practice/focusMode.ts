@@ -126,7 +126,9 @@ export function isLearningFocusRoute(pathname: string): boolean {
     /^\/toeic\/attempts\/[^/]+(?:\/|$)/.test(pathname) ||
     ASSESSMENT_ROOM.test(pathname) ||
     pathname === "/vocabulary/study" ||
-    pathname.startsWith("/vocabulary/study/")
+    pathname.startsWith("/vocabulary/study/") ||
+    // Bắn chữ rơi fills the screen; the header would only get in the way.
+    pathname === "/arena/word-blaster"
   );
 }
 
