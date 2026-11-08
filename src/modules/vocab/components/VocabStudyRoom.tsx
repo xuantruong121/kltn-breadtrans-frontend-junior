@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useVocabStudyEngine } from "../hooks/useVocabStudyEngine";
 import { StudyTopHeader } from "./StudyTopHeader";
 import { StageTabIndicator } from "./StageTabIndicator";
@@ -14,7 +14,10 @@ import { StudyFooter } from "./StudyFooter";
 import { WordListDrawer } from "./WordListDrawer";
 import { StudySettingsModal } from "./StudySettingsModal";
 import { CompletionCelebration } from "./CompletionCelebration";
-import { playWordAudio } from "../utils/audio";
+import { playChime, playWordAudio } from "../utils/audio";
+import { LofiForest } from "./LofiForest";
+import { studySound } from "../sound/studySound";
+import { useAmbiencePrefs, useStudyAmbience } from "../sound/useStudyAmbience";
 
 import { VocabTopic, VocabTopicDetail } from "@/lib/api/services/vocab.service";
 
@@ -99,6 +102,17 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     handleRestart,
   } = engine;
 
+  // Ambience (owner 2026-11-08): lofi music and rain while studying, silent while
+  // recording; the rainy forest behind the cards when the scene is on.
+  const ambience = useAmbiencePrefs();
+  const reduceMotion = Boolean(useReducedMotion());
+  useStudyAmbience(!isCompleted, isRecording);
+  const wasCompleted = useRef(isCompleted);
+  useEffect(() => {
+    if (isCompleted && !wasCompleted.current) studySound.play("done");
+    wasCompleted.current = isCompleted;
+  }, [isCompleted]);
+
   // Audio helper for drawer
   const handlePlayDrawerAudio = (word: string, audioUrl?: string, accent?: "us" | "uk") => {
     const targetAccent = accent || "us";
@@ -112,7 +126,13 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col justify-between selection:bg-sky-100 selection:text-sky-900 transition-colors duration-150">
+    // Over the night forest the room reads in its dark theme, so every text keeps its contrast.
+    <div
+      className={`min-h-[100dvh] text-foreground flex flex-col justify-between selection:bg-sky-100 selection:text-sky-900 transition-colors duration-150 ${
+        ambience.scene ? "dark relative isolate" : "bg-background"
+      }`}
+    >
+      {ambience.scene && <LofiForest reduce={reduceMotion} />}
       {/* 1. Top Navigation Bar with Pill Switcher & Live Progress */}
       <StudyTopHeader
         topicTitle={topic.title}
@@ -169,7 +189,10 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                   <FlashcardStage
                     word={currentWord}
                     isFlipped={isFlipped}
-                    onFlip={() => setIsFlipped(!isFlipped)}
+                    onFlip={() => {
+                      setIsFlipped(!isFlipped);
+                      playChime("flip");
+                    }}
                     onPlayAudio={handlePlayAudio}
                     onMarkMastered={handleMarkMastered}
                     onEscalate={handleEscalateMode}
@@ -231,6 +254,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
         newCount={newCount}
         learnedCount={learnedCount}
         reviewCount={reviewCount}
+        solid={ambience.scene}
       />
 
       {/* Slide-over Word List Drawer */}

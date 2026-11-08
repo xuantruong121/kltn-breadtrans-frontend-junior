@@ -18,3 +18,22 @@ Licences were checked on the source pages on 2026-11-08.
 | arena/draw.ogg | jingles_nes_9.ogg, Music Jingles | Kenney | same |
 | arena/lobby.mp3 | Happy Clappy Loop | OwlishMedia | https://opengameart.org/content/happy-clappy-loop |
 | arena/battle.mp3 | Happy Adventure (Loop) | TinyWorlds | https://opengameart.org/content/happy-adventure-loop |
+| study/first-snow.mp3 | First Snow, Lo-Fi And Chill (Lofi Collection) | Holizna | https://opengameart.org/content/lo-fi-and-chill-collection |
+| study/snow-drift.mp3 | Snow Drift, same collection | Holizna | same |
+| study/laundry-on-the-wire.mp3 | Laundry On The Wire, same collection | Holizna | same |
+| study/rain.wav | 1.ogg, Rain (loopable) | Ylmir | https://opengameart.org/content/rain-loopable |
+| study/card-flip.wav | card-slide-1.ogg, Casino Audio | Kenney | https://opengameart.org/content/54-casino-sound-effects-cards-dice-chips |
+| study/card-place.wav | card-place-1.ogg, Casino Audio | Kenney | same |
+
+The study files were re-encoded on 2026-11-08 to keep the download small:
+the three tracks loudness-normalised to -20 LUFS at 96 kbps MP3; the rain
+and card sounds as 22 kHz mono WAV, so the rain loops without a gap.
+
+## Images (CC0 1.0 as well)
+
+| File | Original | Author | Source |
+|---|---|---|---|
+| images/study/forest/back-trees.png, middle-trees.png, front-trees.png, lights.png | parallax-forest-*.png, Parallax Forest | Luis Zuno (ansimuz) | https://opengameart.org/content/forest-background |
+
+The forest layers are used unchanged; the study room darkens and cools them
+to a rainy dusk when it draws them.

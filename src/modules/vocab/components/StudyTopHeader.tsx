@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Eye, Gamepad2, SlidersHorizontal } from "lucide-react";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
+import { AmbienceMenu } from "./AmbiencePanel";
 
 interface StudyTopHeaderProps {
   topicTitle: string;
@@ -64,6 +65,8 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
                 <span className="hidden sm:inline">Chơi</span>
               </button>
             )}
+
+            <AmbienceMenu />
 
             <button
               type="button"

@@ -2,8 +2,9 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Volume2, Gauge, Play, Keyboard, SlidersHorizontal } from "lucide-react";
+import { X, Volume2, Gauge, Play, Keyboard, SlidersHorizontal, Headphones } from "lucide-react";
 import { StudySettings } from "../types/study";
+import { AmbienceControls } from "./AmbiencePanel";
 
 interface StudySettingsModalProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 z-10"
+          className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-6 space-y-5 z-10"
         >
           {/* Header */}
           <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
@@ -97,8 +98,8 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
                   <Volume2 size={16} />
                 </div>
                 <div>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Âm thanh phản hồi</span>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Hiệu ứng chuông khi đúng, sai, lật thẻ</p>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Âm thanh phát âm</span>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Đọc từ khi bấm loa hoặc tự phát</p>
                 </div>
               </div>
               <button
@@ -175,6 +176,17 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
                   Anh (UK)
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Ambience: lofi music, rain, the forest scene, card sounds (owner 2026-11-08) */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-slate-100">
+              <Headphones size={16} className="text-sky-600 dark:text-sky-400" aria-hidden="true" />
+              Không gian học
+            </div>
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+              <AmbienceControls />
             </div>
           </div>
 
