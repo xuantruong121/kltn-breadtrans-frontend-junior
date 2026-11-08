@@ -17,7 +17,7 @@ export function BadgesCabinet({
 }) {
   const [open, setOpen] = useState<BadgeView | null>(null);
   const views = useMemo(() => badgeViews(facts, myBadges), [facts, myBadges]);
-  const earnedCount = views.filter((v) => v.earnedAt).length;
+  const earnedCount = views.filter((v) => v.earnedAt !== null).length;
   const next = nextBadge(views);
 
   return (
@@ -54,12 +54,12 @@ export function BadgesCabinet({
               type="button"
               onClick={() => setOpen(view)}
               className="flex w-full flex-col items-center gap-1.5 rounded-lg p-1.5 text-center transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-amber-500 dark:hover:bg-slate-800"
-              aria-label={`${view.name}: ${view.earnedAt ? "đã đạt" : "chưa đạt"}. Xem điều kiện`}
+              aria-label={`${view.name}: ${view.earnedAt !== null ? "đã đạt" : "chưa đạt"}. Xem điều kiện`}
             >
-              <BadgeMedal name={view.name} group={view.group} earned={Boolean(view.earnedAt)} size={52} />
+              <BadgeMedal name={view.name} group={view.group} earned={view.earnedAt !== null} size={52} />
               <span
                 className={`text-xs font-semibold leading-tight ${
-                  view.earnedAt ? "text-slate-900 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"
+                  view.earnedAt !== null ? "text-slate-900 dark:text-slate-100" : "text-slate-500 dark:text-slate-400"
                 }`}
               >
                 {view.name}

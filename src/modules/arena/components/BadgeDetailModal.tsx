@@ -26,7 +26,7 @@ export function BadgeDetailModal({ badge, onClose }: { badge: BadgeView | null; 
   }, [badge, onClose]);
 
   if (!badge) return null;
-  const earned = Boolean(badge.earnedAt);
+  const earned = badge.earnedAt !== null;
   const earnedDate = badge.earnedAt
     ? new Date(badge.earnedAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" })
     : null;
@@ -62,7 +62,7 @@ export function BadgeDetailModal({ badge, onClose }: { badge: BadgeView | null; 
 
         <div className="mt-5 rounded-lg bg-slate-50 p-4 text-sm dark:bg-slate-800/60">
           {earned ? (
-            <p className="font-semibold text-emerald-700 dark:text-emerald-400">Đã đạt ngày {earnedDate}.</p>
+            <p className="font-semibold text-emerald-700 dark:text-emerald-400">{earnedDate ? `Đã đạt ngày ${earnedDate}.` : "Đã đạt."}</p>
           ) : badge.current ? (
             <>
               <div className="flex justify-between text-slate-700 dark:text-slate-300">

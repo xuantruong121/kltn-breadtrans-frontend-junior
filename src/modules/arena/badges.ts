@@ -81,16 +81,17 @@ export type BadgeView = BadgeDefinition & {
 
 export function badgeViews(
   facts: BadgeFacts,
-  earned: ReadonlyArray<{ earnedAt: string; badge?: { name?: string } | null }>,
+  earned: ReadonlyArray<{ awardedAt?: string | null; badge?: { name?: string } | null }>,
 ): BadgeView[] {
+  // A row in the list means the badge is earned, whatever its date says.
   const earnedAt = new Map<string, string>();
-  for (const row of earned) if (row.badge?.name) earnedAt.set(row.badge.name, row.earnedAt);
+  for (const row of earned) if (row.badge?.name) earnedAt.set(row.badge.name, row.awardedAt ?? "");
   return BADGES.map((badge) => {
     const p = badge.progress?.(facts) ?? null;
     const value = p ? Math.min(Math.max(0, p.value), p.target) : 0;
     return {
       ...badge,
-      earnedAt: earnedAt.get(badge.name) ?? null,
+      earnedAt: earnedAt.has(badge.name) ? earnedAt.get(badge.name)! : null,
       current: p ? { ...p, value, ratio: value / p.target } : null,
     };
   });
@@ -98,7 +99,7 @@ export function badgeViews(
 
 /** The unearned badge with measurable progress that is closest to done. */
 export function nextBadge(views: readonly BadgeView[]): BadgeView | null {
-  const open = views.filter((v) => !v.earnedAt && v.current);
+  const open = views.filter((v) => v.earnedAt === null && v.current);
   if (!open.length) return null;
   return open.reduce((best, v) => (v.current!.ratio > best.current!.ratio ? v : best));
 }

@@ -44,13 +44,19 @@ describe("badges", () => {
     assert.equal(views.find((v) => v.name === "Siêu Sao")!.current, null);
   });
 
-  test("an earned badge carries its date", () => {
-    const views = badgeViews(facts, [{ earnedAt: "2026-11-02T03:00:00.000Z", badge: { name: "Tân Binh" } }]);
+  test("an earned badge carries its awardedAt date", () => {
+    const views = badgeViews(facts, [{ awardedAt: "2026-11-02T03:00:00.000Z", badge: { name: "Tân Binh" } }]);
     assert.equal(views.find((v) => v.name === "Tân Binh")!.earnedAt, "2026-11-02T03:00:00.000Z");
   });
 
+  test("a badge in the list is earned even without a date, and is never the next badge", () => {
+    const views = badgeViews({ ...facts, totalXp: 100 }, [{ badge: { name: "Tân Binh" } }]);
+    assert.notEqual(views.find((v) => v.name === "Tân Binh")!.earnedAt, null);
+    assert.notEqual(nextBadge(views)?.name, "Tân Binh");
+  });
+
   test("next badge is the unearned one closest to done", () => {
-    const views = badgeViews({ ...facts, petLevel: 1 }, [{ earnedAt: "x", badge: { name: "Tân Binh" } }]);
+    const views = badgeViews({ ...facts, petLevel: 1 }, [{ awardedAt: "x", badge: { name: "Tân Binh" } }]);
     // Chuyên Gia Nuôi Thú 1/2 beats Thợ Săn 250/1000.
     assert.equal(nextBadge(views)!.name, "Chuyên Gia Nuôi Thú");
   });

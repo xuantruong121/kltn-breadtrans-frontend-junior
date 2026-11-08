@@ -98,8 +98,19 @@ export default function ArenaPage() {
     arenaWins: arenaStats?.wins ?? 0,
   };
 
-  // Lobby loop while searching, the faster loop during a match.
-  useArenaMusic(matchData ? "battle" : isSearching ? "lobby" : null);
+  // Lobby loop on the arena page, the faster loop during a match. Browsers only
+  // allow sound after a user gesture, so the first click or key anywhere on the
+  // page starts it.
+  useArenaMusic(matchData ? "battle" : "lobby");
+  useEffect(() => {
+    const start = () => arenaSound.unlock();
+    window.addEventListener("pointerdown", start, { once: true });
+    window.addEventListener("keydown", start, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", start);
+      window.removeEventListener("keydown", start);
+    };
+  }, []);
   const announced = useRef<string | null>(null);
   useEffect(() => {
     if (matchData && announced.current !== matchData.matchId) {
@@ -139,7 +150,7 @@ export default function ArenaPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-12">
+    <div className="space-y-6 pb-12">
       <div className="grid gap-6 lg:grid-cols-3 [&>*]:min-w-0">
         <div className="lg:col-span-2">
           <ArenaHero

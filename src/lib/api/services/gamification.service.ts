@@ -13,7 +13,8 @@ export interface UserBadge {
   id: number;
   badgeId: number;
   userId: number;
-  earnedAt: string;
+  /** UserBadge.awardedAt in the schema. */
+  awardedAt: string;
   badge: Badge;
 }
 
