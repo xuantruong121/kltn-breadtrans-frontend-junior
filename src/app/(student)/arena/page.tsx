@@ -18,16 +18,14 @@ import { userService } from "@/lib/api/services/user.service";
 import { gamificationService, LeaderboardResponse } from "@/lib/api/services/gamification.service";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { AvatarImage } from "@/components/ui/AvatarImage";
+import { LEAGUE_TIERS, leagueQuery, type LeagueTier } from "@/modules/arena/league";
 
 const STAKES = [20, 50, 100];
 
-const TIERS = [
+// The backend stores and filters tiers by their Vietnamese names.
+const TIERS: Array<{ id: LeagueTier | "ALL"; label: string }> = [
   { id: "ALL", label: "Tất cả các hạng" },
-  { id: "BRONZE", label: "Đồng" },
-  { id: "SILVER", label: "Bạc" },
-  { id: "GOLD", label: "Vàng" },
-  { id: "PLATINUM", label: "Bạch Kim" },
-  { id: "DIAMOND", label: "Kim Cương" },
+  ...LEAGUE_TIERS.map((tier) => ({ id: tier, label: tier })),
 ];
 
 export default function ArenaPage() {
@@ -36,7 +34,7 @@ export default function ArenaPage() {
   const isGuest = !user || user.role !== "STUDENT";
 
   const [selectedStake, setSelectedStake] = useState<number>(20);
-  const [selectedTier, setSelectedTier] = useState<string>("ALL");
+  const [selectedTier, setSelectedTier] = useState<LeagueTier | "ALL">("ALL");
   const [authGateOpen, setAuthGateOpen] = useState(false);
 
   const {
@@ -56,10 +54,10 @@ export default function ArenaPage() {
   // 1. Leaderboard query with real backend JWT authentication
   const { data: leaderboardData, isLoading: isLoadingLeaderboard } = useQuery<LeaderboardResponse>({
     queryKey: ["leaderboard", selectedTier],
-    queryFn: () =>
-      gamificationService.getLeaderboard(
-        selectedTier !== "ALL" ? selectedTier : undefined
-      ),
+    queryFn: () => {
+      const { tier, scope } = leagueQuery(selectedTier);
+      return gamificationService.getLeaderboard(tier, scope);
+    },
     staleTime: 60_000,
   });
 

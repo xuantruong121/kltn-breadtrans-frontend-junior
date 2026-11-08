@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
+import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 
 export interface ArenaQuestion {
   id: number;
@@ -65,6 +67,7 @@ export interface MatchResult {
 export function useArenaSocket() {
   const { user, accessToken } = useAuthStore();
   const socketRef = useRef<Socket | null>(null);
+  const queryClient = useQueryClient();
 
   const [isConnected, setIsConnected] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -99,6 +102,11 @@ export function useArenaSocket() {
     });
 
     socketRef.current = socket;
+    // The server moves Bánh Mì when it escrows the stakes (match found), pays or
+    // refunds them (match ended) and on a cancelled search; refresh every copy.
+    const refresh = (keys: readonly (readonly string[])[]) => {
+      for (const queryKey of keys) void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+    };
 
     socket.on("connect", () => {
       setIsConnected(true);
@@ -114,11 +122,13 @@ export function useArenaSocket() {
 
     socket.on("arena:cancelled", (data: { message: string }) => {
       setIsSearching(false);
+      refresh(WALLET_QUERY_KEYS);
       toast.success(data.message || "Đã hủy tìm trận.");
     });
 
     socket.on("arena:match_found", (data: MatchData) => {
       setIsSearching(false);
+      refresh(WALLET_QUERY_KEYS);
       setMatchData(data);
       setMatchResult(null);
       setCurrentRoundData(null);
@@ -203,6 +213,7 @@ export function useArenaSocket() {
     // Match Ended
     socket.on("arena:match_ended", (data: MatchResult) => {
       setMatchResult(data);
+      refresh(MATCH_END_QUERY_KEYS);
       setOpponentDisconnected(null);
       if (data.isForfeit) {
         toast.success("Đối thủ đã bỏ cuộc sau 15s mất kết nối!");
@@ -217,7 +228,7 @@ export function useArenaSocket() {
     return () => {
       socket.disconnect();
     };
-  }, [accessToken]);
+  }, [accessToken, queryClient]);
 
   const joinQueue = useCallback(
     (stake: number = 20) => {

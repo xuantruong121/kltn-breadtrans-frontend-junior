@@ -8,6 +8,7 @@ import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { Wheat } from "lucide-react";
+import { WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -117,8 +118,10 @@ export default function SocketProvider({ children }: { children: React.ReactNode
           useGamificationStore.getState().addBreads(data.amount);
         }
 
-        // Invalidate profile query để đồng bộ toàn bộ app
-        queryClient.invalidateQueries({ queryKey: ["user-profile", user?.id] });
+        // Mọi query đang hiện số dư Bánh Mì (header, thanh gamification, trang thú ảo).
+        for (const queryKey of WALLET_QUERY_KEYS) {
+          void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+        }
 
         // Hiển thị thông báo chúc mừng / thông tin
         if (data.amount > 0) {
