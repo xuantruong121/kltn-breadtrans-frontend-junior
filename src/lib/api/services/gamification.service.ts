@@ -44,6 +44,20 @@ export interface LeaderboardResponse {
   scope: string;
   entries: LeaderboardEntry[];
   currentUserRank: LeaderboardCurrentUserRank | null;
+  /** Learners in the listed tier (every learner for scope=all). */
+  tierSize?: number;
+}
+
+/** GET /gamification/arena/stats: the learner's record from settled matches. */
+export interface ArenaStats {
+  played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  winRate: number | null;
+  currentWinStreak: number;
+  longestWinStreak: number;
+  netBanh: number;
 }
 
 export interface Pet {
@@ -153,6 +167,10 @@ export const gamificationService = {
     return await axiosClient.get("/gamification/badges/me");
   },
   
+  getArenaStats: async (): Promise<ArenaStats> => {
+    return await axiosClient.get("/gamification/arena/stats");
+  },
+
   getLeaderboard: async (tier?: string, scope?: string): Promise<LeaderboardResponse> => {
     return await axiosClient.get("/gamification/leaderboard", {
       params: { tier, scope },

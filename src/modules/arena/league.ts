@@ -51,6 +51,32 @@ export function xpToPromotion(
   return Math.max(1, cutoff.weeklyExp - myXp + 1);
 }
 
+/**
+ * XP needed to climb out of the demotion zone: one more than the learner just
+ * above it. Null when not in the zone or that learner is not in the list.
+ */
+export function xpToLeaveDemotion(
+  myRank: number,
+  myXp: number,
+  demoteFrom: number | null,
+  entries: ReadonlyArray<{ rank: number; weeklyExp: number }>,
+): number | null {
+  if (demoteFrom === null || myRank < demoteFrom) return null;
+  const safe = entries.find((entry) => entry.rank === demoteFrom - 1);
+  if (!safe) return null;
+  return Math.max(1, safe.weeklyExp - myXp + 1);
+}
+
+/** "2 ngày 05:12" or "05:12:09" until the reset. */
+export function formatCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const days = Math.floor(total / 86_400);
+  const hh = String(Math.floor((total % 86_400) / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+  const ss = String(total % 60).padStart(2, "0");
+  return days > 0 ? `${days} ngày ${hh}:${mm}` : `${hh}:${mm}:${ss}`;
+}
+
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
