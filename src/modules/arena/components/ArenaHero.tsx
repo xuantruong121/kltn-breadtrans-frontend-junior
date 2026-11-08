@@ -133,6 +133,29 @@ export function ArenaHero({
           )}
         </fieldset>
 
+        {/* What the chosen stake means, so the stake is a decision, not a guess. */}
+        <div className="mt-5 rounded-lg border border-slate-200 dark:border-slate-800">
+          <dl className="grid grid-cols-3 divide-x divide-slate-200 dark:divide-slate-800">
+            {[
+              { label: "Thắng", value: `+${stake}`, note: `nhận ${stake * 2}`, ink: "text-emerald-700 dark:text-emerald-400" },
+              { label: "Hoà", value: "±0", note: "hoàn cược", ink: "text-slate-800 dark:text-slate-200" },
+              { label: "Thua", value: `−${stake}`, note: "mất cược", ink: "text-rose-700 dark:text-rose-400" },
+            ].map((o) => (
+              <div key={o.label} className="px-3 py-2.5 text-center">
+                <dt className="text-xs font-medium text-slate-500 dark:text-slate-400">{o.label}</dt>
+                <dd className={`mt-0.5 inline-flex items-center gap-1 text-lg font-extrabold tabular-nums ${o.ink}`}>
+                  {o.value}
+                  <Wheat size={14} strokeWidth={2.25} aria-hidden="true" />
+                </dd>
+                <dd className="text-xs text-slate-500 dark:text-slate-400">{o.note}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="border-t border-slate-200 px-3 py-2 text-center text-xs text-slate-600 dark:border-slate-800 dark:text-slate-400">
+            Thắng hay thua, mỗi câu đúng đều được <span className="font-semibold text-sky-700 dark:text-sky-400">+5 XP</span> (tối đa 150 XP mỗi ngày).
+          </p>
+        </div>
+
         <div className="mt-auto pt-6">
           {isSearching ? (
             <div className="flex items-center gap-3">
