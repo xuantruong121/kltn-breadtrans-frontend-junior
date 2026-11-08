@@ -1,4 +1,5 @@
 import axiosClient from "../axiosClient";
+import type { BadgeFacts } from "@/modules/arena/badges";
 
 export interface Badge {
   id: number;
@@ -157,6 +158,12 @@ export interface DashboardTodayResponse {
   };
 }
 
+/** GET /gamification/badges/progress: what the badge rules count. */
+export interface BadgeProgress {
+  facts: BadgeFacts;
+  rules: Record<string, number>;
+}
+
 export interface ArenaSnippet {
   rank: number | null;
   tier: string;
@@ -168,6 +175,10 @@ export const gamificationService = {
     return await axiosClient.get("/gamification/badges/me");
   },
   
+  getBadgeProgress: async (): Promise<BadgeProgress> => {
+    return await axiosClient.get("/gamification/badges/progress");
+  },
+
   getArenaStats: async (): Promise<ArenaStats> => {
     return await axiosClient.get("/gamification/arena/stats");
   },

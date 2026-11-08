@@ -1,7 +1,8 @@
 /**
- * The eight badges and the rule that grants each, as the backend applies it
- * (gamification.service.ts getMyBadges, gamification.listener.ts and the
- * arena.match_won handler). Badges grant no Bánh Mì or XP of their own.
+ * The eight badges and the rule that grants each. The backend decides
+ * (badge-rules.logic.ts, rules changed 2026-11-08) and sends the facts it
+ * counts through GET /gamification/badges/progress; this file only words the
+ * rules and draws the progress. Badges grant no Bánh Mì or XP of their own.
  * Pure: the learner's numbers come in as arguments.
  */
 export type BadgeGroup = "learning" | "streak" | "arena" | "pet";
@@ -11,65 +12,81 @@ export type BadgeDefinition = {
   group: BadgeGroup;
   /** What earns it, in one sentence the learner can act on. */
   rule: string;
-  /** Measurable progress, when the rule is a count; null for one-off events. */
+  /** Measurable progress toward the rule. */
   progress: ((facts: BadgeFacts) => { value: number; target: number; unit: string }) | null;
 };
 
+/** As counted by the backend (BadgeFacts in badge-rules.logic.ts). */
 export type BadgeFacts = {
   totalXp: number;
+  weeklyXp: number;
+  isWeeklyTop: boolean;
   streak: number;
+  perfectPractices: number;
+  highSpeaking: number;
+  longestArenaWinStreak: number;
   petLevel: number;
-  arenaWins: number;
+};
+
+export const NO_BADGE_FACTS: BadgeFacts = {
+  totalXp: 0,
+  weeklyXp: 0,
+  isWeeklyTop: false,
+  streak: 0,
+  perfectPractices: 0,
+  highSpeaking: 0,
+  longestArenaWinStreak: 0,
+  petLevel: 1,
 };
 
 export const BADGES: readonly BadgeDefinition[] = [
   {
     name: "Tân Binh",
     group: "learning",
-    rule: "Tích luỹ 100 XP.",
-    progress: (f) => ({ value: f.totalXp, target: 100, unit: "XP" }),
+    rule: "Tích lũy 500 XP.",
+    progress: (f) => ({ value: f.totalXp, target: 500, unit: "XP" }),
   },
   {
     name: "Thợ Săn",
     group: "learning",
-    rule: "Tích luỹ 1.000 XP.",
-    progress: (f) => ({ value: f.totalXp, target: 1000, unit: "XP" }),
+    rule: "Tích lũy 5.000 XP.",
+    progress: (f) => ({ value: f.totalXp, target: 5000, unit: "XP" }),
   },
   {
     name: "Học Bá",
     group: "learning",
-    rule: "Đạt 100% một bài luyện Nghe, Đọc hoặc Viết.",
-    progress: null,
+    rule: "Đạt 100% ở 10 bài luyện Nghe hoặc Đọc khác nhau.",
+    progress: (f) => ({ value: f.perfectPractices, target: 10, unit: "bài" }),
   },
   {
     name: "Giọng Đọc Vàng",
     group: "learning",
-    rule: "Đạt từ 80 điểm ở một bài luyện nói.",
-    progress: null,
+    rule: "Đạt từ 80 điểm ở 10 bài luyện nói khác nhau.",
+    progress: (f) => ({ value: f.highSpeaking, target: 10, unit: "bài" }),
   },
   {
     name: "Chăm Chỉ",
     group: "streak",
-    rule: "Có chuỗi ngày học đầu tiên.",
-    progress: (f) => ({ value: f.streak, target: 1, unit: "ngày" }),
+    rule: "Giữ chuỗi 7 ngày học liên tiếp.",
+    progress: (f) => ({ value: f.streak, target: 7, unit: "ngày" }),
   },
   {
     name: "Siêu Sao",
     group: "streak",
-    rule: "Đứng đầu bảng xếp hạng tuần của toàn hệ thống.",
-    progress: null,
+    rule: "Đứng đầu bảng xếp hạng tuần của toàn hệ thống, với ít nhất 1.000 XP trong tuần.",
+    progress: (f) => ({ value: f.weeklyXp, target: 1000, unit: "XP tuần này" }),
   },
   {
     name: "Đấu Sĩ Bất Bại",
     group: "arena",
-    rule: "Thắng một trận ở Đấu trường.",
-    progress: (f) => ({ value: f.arenaWins, target: 1, unit: "trận thắng" }),
+    rule: "Thắng 5 trận Đấu trường liên tiếp.",
+    progress: (f) => ({ value: f.longestArenaWinStreak, target: 5, unit: "trận liên tiếp" }),
   },
   {
     name: "Chuyên Gia Nuôi Thú",
     group: "pet",
-    rule: "Nuôi thú ảo lên cấp 2.",
-    progress: (f) => ({ value: f.petLevel, target: 2, unit: "cấp" }),
+    rule: "Nuôi thú ảo lên cấp 3.",
+    progress: (f) => ({ value: f.petLevel, target: 3, unit: "cấp" }),
   },
 ];
 

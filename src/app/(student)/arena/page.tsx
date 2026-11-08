@@ -13,6 +13,7 @@ import { WeeklyLeague } from "@/modules/arena/components/WeeklyLeague";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { useArenaMusic } from "@/modules/arena/sound/useArenaSound";
 import { DEFAULT_TIER, isLeagueTier, leagueQuery, type LeagueTier } from "@/modules/arena/league";
+import { NO_BADGE_FACTS } from "@/modules/arena/badges";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService, type LeaderboardResponse } from "@/lib/api/services/gamification.service";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
@@ -77,26 +78,15 @@ export default function ArenaPage() {
     enabled: !isGuest,
     staleTime: 60_000,
   });
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: userService.getProfile,
-    enabled: !isGuest,
-    staleTime: 60_000,
-  });
-  const { data: pet } = useQuery({
-    queryKey: ["myPet", user?.id],
-    queryFn: gamificationService.getMyPet,
+  const { data: badgeProgress } = useQuery({
+    queryKey: ["badge-progress", user?.id],
+    queryFn: gamificationService.getBadgeProgress,
     enabled: !isGuest,
     staleTime: 60_000,
   });
 
   const balance = isGuest ? null : (stats?.totalBanhRan ?? null);
-  const badgeFacts = {
-    totalXp: league?.currentUserRank?.totalPoints ?? 0,
-    streak: (profile as { stats?: { streakCount?: number } } | undefined)?.stats?.streakCount ?? 0,
-    petLevel: pet?.level ?? 1,
-    arenaWins: arenaStats?.wins ?? 0,
-  };
+  const badgeFacts = badgeProgress?.facts ?? NO_BADGE_FACTS;
 
   // Lobby loop on the arena page, the faster loop during a match. Browsers only
   // allow sound after a user gesture, so the first click or key anywhere on the

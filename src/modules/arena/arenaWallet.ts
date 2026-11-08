@@ -10,9 +10,14 @@ export const WALLET_QUERY_KEYS: readonly (readonly string[])[] = [
   ["market-balance"],
 ];
 
-/** After a match ends: the wallet, the weekly league and the arena record. */
+/**
+ * After a match ends: the wallet, the weekly league, the arena record and the
+ * badges (a win may complete "Đấu Sĩ Bất Bại").
+ */
 export const MATCH_END_QUERY_KEYS: readonly (readonly string[])[] = [
   ...WALLET_QUERY_KEYS,
   ["leaderboard"],
   ["arena-stats"],
+  ["my-badges"],
+  ["badge-progress"],
 ];

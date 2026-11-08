@@ -74,6 +74,9 @@ export function BadgeDetailModal({ badge, onClose }: { badge: BadgeView | null; 
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                 <div className="h-full rounded-full bg-amber-500" style={{ width: `${Math.round(badge.current.ratio * 100)}%` }} />
               </div>
+              {badge.name === "Siêu Sao" && badge.current.ratio >= 1 && (
+                <p className="mt-2 text-slate-700 dark:text-slate-300">Đã đủ XP tuần. Còn cần đứng đầu bảng xếp hạng tuần.</p>
+              )}
             </>
           ) : (
             <p className="text-slate-700 dark:text-slate-300">Chưa đạt. Huy hiệu được trao ngay khi bạn hoàn thành điều kiện trên.</p>

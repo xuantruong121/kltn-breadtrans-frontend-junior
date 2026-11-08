@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { badgeViews, nextBadge } from "./badges.ts";
+import { NO_BADGE_FACTS, badgeViews, nextBadge } from "./badges.ts";
 import { formatCountdown, xpToLeaveDemotion } from "./league.ts";
 import { roundTimer, shouldTick } from "./roundTimer.ts";
 
@@ -34,14 +34,27 @@ describe("roundTimer", () => {
 });
 
 describe("badges", () => {
-  const facts = { totalXp: 250, streak: 0, petLevel: 1, arenaWins: 0 };
+  const facts = { ...NO_BADGE_FACTS, totalXp: 1250 };
 
-  test("progress is the real number capped at the target; one-off badges have none", () => {
+  test("progress is the real number capped at the target", () => {
     const views = badgeViews(facts, []);
-    const hunter = views.find((v) => v.name === "Thợ Săn")!;
-    assert.deepEqual(hunter.current, { value: 250, target: 1000, unit: "XP", ratio: 0.25 });
-    assert.equal(views.find((v) => v.name === "Tân Binh")!.current!.value, 100);
-    assert.equal(views.find((v) => v.name === "Siêu Sao")!.current, null);
+    assert.deepEqual(views.find((v) => v.name === "Thợ Săn")!.current, { value: 1250, target: 5000, unit: "XP", ratio: 0.25 });
+    assert.equal(views.find((v) => v.name === "Tân Binh")!.current!.value, 500);
+  });
+
+  test("every badge shows progress toward the 2026-11-08 marks", () => {
+    const views = badgeViews(NO_BADGE_FACTS, []);
+    const targets = Object.fromEntries(views.map((v) => [v.name, v.current!.target]));
+    assert.deepEqual(targets, {
+      "Tân Binh": 500,
+      "Thợ Săn": 5000,
+      "Học Bá": 10,
+      "Giọng Đọc Vàng": 10,
+      "Chăm Chỉ": 7,
+      "Siêu Sao": 1000,
+      "Đấu Sĩ Bất Bại": 5,
+      "Chuyên Gia Nuôi Thú": 3,
+    });
   });
 
   test("an earned badge carries its awardedAt date", () => {
@@ -50,20 +63,20 @@ describe("badges", () => {
   });
 
   test("a badge in the list is earned even without a date, and is never the next badge", () => {
-    const views = badgeViews({ ...facts, totalXp: 100 }, [{ badge: { name: "Tân Binh" } }]);
+    const views = badgeViews(facts, [{ badge: { name: "Tân Binh" } }]);
     assert.notEqual(views.find((v) => v.name === "Tân Binh")!.earnedAt, null);
     assert.notEqual(nextBadge(views)?.name, "Tân Binh");
   });
 
   test("a badge already at its target is not offered as the next one", () => {
-    const views = badgeViews({ totalXp: 0, streak: 0, petLevel: 1, arenaWins: 1 }, []);
+    const views = badgeViews({ ...NO_BADGE_FACTS, longestArenaWinStreak: 5 }, []);
     assert.notEqual(nextBadge(views)?.name, "Đấu Sĩ Bất Bại");
   });
 
   test("next badge is the unearned one closest to done", () => {
-    const views = badgeViews({ ...facts, petLevel: 1 }, [{ awardedAt: "x", badge: { name: "Tân Binh" } }]);
-    // Chuyên Gia Nuôi Thú 1/2 beats Thợ Săn 250/1000.
-    assert.equal(nextBadge(views)!.name, "Chuyên Gia Nuôi Thú");
+    const views = badgeViews({ ...facts, streak: 5 }, [{ awardedAt: "x", badge: { name: "Tân Binh" } }]);
+    // Chăm Chỉ 5/7 beats Chuyên Gia Nuôi Thú 1/3 and Thợ Săn 1.250/5.000.
+    assert.equal(nextBadge(views)!.name, "Chăm Chỉ");
   });
 });
 

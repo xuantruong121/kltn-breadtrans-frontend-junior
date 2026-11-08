@@ -10,7 +10,7 @@ describe("arena wallet keys", () => {
   });
 
   test("a finished match also refreshes the league and the arena record", () => {
-    assert.deepEqual(MATCH_END_QUERY_KEYS.slice(-2), [["leaderboard"], ["arena-stats"]]);
+    assert.deepEqual(MATCH_END_QUERY_KEYS.slice(-4), [["leaderboard"], ["arena-stats"], ["my-badges"], ["badge-progress"]]);
   });
 });
 
