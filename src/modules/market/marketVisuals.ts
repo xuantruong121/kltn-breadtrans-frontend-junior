@@ -15,6 +15,7 @@ const LOCAL_VISUALS: Record<string, string> = {
   "frame-cyber": "/images/market/frame-cyber.svg",
   "gift-notebook": "/images/market/gift-notebook.svg",
   "gift-voucher": "/images/market/gift-voucher.svg",
+  "plus-7d": "/images/market/plus-7d.svg",
   "gift-bottle": "/images/market/gift-bottle.svg",
   "gift-plush": "/images/market/gift-plush.svg",
 };
@@ -37,6 +38,7 @@ const VISUAL_ALT: Record<string, string> = {
   "frame-cyber": "khung avatar Cyber Tech",
   "gift-notebook": "sổ tay từ vựng BreadTrans",
   "gift-voucher": "voucher đồ uống",
+  "plus-7d": "thẻ cộng 7 ngày gói Plus",
   "gift-bottle": "bình giữ nhiệt BreadTrans",
   "gift-plush": "gấu bông Bánh Mì linh vật",
 };

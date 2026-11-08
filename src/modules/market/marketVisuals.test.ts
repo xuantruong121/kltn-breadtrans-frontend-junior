@@ -8,7 +8,9 @@ const projectRoot = resolve(process.cwd());
 
 test("every canonical shop slug resolves to a local visual", () => {
   const slugs = getKnownMarketVisualSlugs();
-  assert.equal(slugs.length, 12);
+  // 12 seeded products plus the old voucher slug, kept for its past orders.
+  assert.equal(slugs.length, 13);
+  assert.ok(slugs.includes("plus-7d"));
   for (const slug of slugs) {
     const visual = getMarketItemVisual(slug);
     assert.ok(existsSync(resolve(projectRoot, "public", visual.src.slice(1))));
