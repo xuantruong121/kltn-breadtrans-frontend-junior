@@ -17,7 +17,7 @@ export function roundTimer(serverStartTime: number, durationSeconds: number, now
     remainingMs,
     /** 1 when the round starts, 0 when it ends. */
     fraction: remainingMs / total,
-    /** Whole seconds shown beside the bar: 15 … 1, then 0. */
+    /** Whole seconds shown beside the bar: 12 … 1, then 0. */
     seconds: Math.ceil(remainingMs / 1000),
     phase,
   };

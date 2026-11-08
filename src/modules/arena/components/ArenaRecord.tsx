@@ -60,7 +60,7 @@ export function ArenaRecord({ stats, isGuest, isLoading }: { stats: ArenaStats |
       <h3 className="mt-6 text-sm font-bold text-slate-900 dark:text-slate-100">Cách tính điểm</h3>
       <ul className="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
         <li>Mỗi câu đúng được 100 điểm, trả lời càng sớm thì thưởng thêm tới 50.</li>
-        <li>Sai hoặc hết giờ thì câu đó 0 điểm.</li>
+        <li>Sai hoặc hết giờ thì câu đó 0 điểm. Câu cuối được nhân đôi điểm.</li>
         <li>Thắng nhận lại gấp đôi số cược, hoà thì hoàn cược.</li>
         <li>Rớt mạng có 15 giây để vào lại, quá thời gian thì xử thua.</li>
       </ul>

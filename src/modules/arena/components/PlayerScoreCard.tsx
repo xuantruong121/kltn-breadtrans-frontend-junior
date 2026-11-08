@@ -85,17 +85,17 @@ export function PlayerScoreCard({
             )}
           </AnimatePresence>
         </p>
-        <ol className={`mt-1 flex gap-1 ${me ? "" : "justify-end"}`} aria-label="Kết quả từng hiệp">
+        <ol className={`mt-1 flex flex-wrap gap-0.5 ${me ? "" : "justify-end"}`} aria-label="Kết quả từng câu">
           {marks.map((mark, i) => (
             <li
               key={i}
-              className={`flex h-3.5 w-3.5 items-center justify-center rounded-full ${
+              className={`flex h-2.5 w-2.5 items-center justify-center rounded-full ${
                 mark === "correct" ? "bg-emerald-500" : mark === "wrong" ? "bg-rose-400" : "bg-slate-200 dark:bg-slate-700"
               }`}
             >
-              {mark === "correct" && <Check size={9} strokeWidth={4} className="text-white" aria-hidden="true" />}
+              {mark === "correct" && <Check size={7} strokeWidth={4} className="text-white" aria-hidden="true" />}
               <span className="sr-only">
-                Hiệp {i + 1}: {mark === "correct" ? "đúng" : mark === "wrong" ? "sai" : "chưa chơi"}
+                Câu {i + 1}: {mark === "correct" ? "đúng" : mark === "wrong" ? "sai" : "chưa chơi"}
               </span>
             </li>
           ))}

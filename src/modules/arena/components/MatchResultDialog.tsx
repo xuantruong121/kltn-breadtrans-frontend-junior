@@ -92,10 +92,10 @@ export function MatchResultDialog({
 
           {rounds.length > 0 && (
             <table className="mt-5 w-full text-sm">
-              <caption className="sr-only">Điểm từng hiệp</caption>
+              <caption className="sr-only">Điểm từng câu</caption>
               <thead>
                 <tr className="text-xs text-slate-500 dark:text-slate-400">
-                  <th scope="col" className="pb-1 text-left font-medium">Hiệp</th>
+                  <th scope="col" className="pb-1 text-left font-medium">Câu</th>
                   <th scope="col" className="pb-1 text-right font-medium">Bạn</th>
                   <th scope="col" className="pb-1 text-right font-medium">Đối thủ</th>
                 </tr>

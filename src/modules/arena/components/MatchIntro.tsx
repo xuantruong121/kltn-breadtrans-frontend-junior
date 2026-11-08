@@ -47,7 +47,7 @@ export function MatchIntro({ myName, rivalName, stake }: { myName: string; rival
           <p className="mt-2 max-w-[9rem] truncate font-bold text-slate-900 dark:text-slate-100">{rivalName}</p>
         </div>
       </div>
-      <p className="mt-6 text-sm text-slate-700 dark:text-slate-300">5 câu · 15 giây mỗi câu · chọn bằng chuột hoặc phím 1–4</p>
+      <p className="mt-6 text-sm text-slate-700 dark:text-slate-300">10 câu · 12 giây mỗi câu · câu cuối nhân đôi điểm</p>
     </div>
   );
 }

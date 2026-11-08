@@ -7,8 +7,12 @@ import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
 import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 
+export type ArenaQuestionKind = "fill_blank" | "meaning_to_word" | "word_to_meaning";
+
 export interface ArenaQuestion {
   id: number;
+  /** Absent on servers older than the three-kind duel. */
+  kind?: ArenaQuestionKind;
   prompt: string;
   ipa?: string;
   options: string[];
@@ -20,8 +24,10 @@ export interface MatchData {
   stake: number;
   player1: { userId: number; userName: string; avatar?: string };
   player2: { userId: number; userName: string; avatar?: string };
+  /** Empty: each question arrives with its round. */
   questions: ArenaQuestion[];
   totalRounds: number;
+  roundSeconds?: number;
 }
 
 export interface RoundStartData {
@@ -219,7 +225,7 @@ export function useArenaSocket() {
           matchId: data.matchId,
           roundIndex: data.currentRound,
           totalRounds: data.totalRounds,
-          duration: data.remainingSeconds || 15,
+          duration: data.remainingSeconds || 12,
           serverStartTime: data.serverStartTime || Date.now(),
           question: data.questions[data.currentRound],
         });

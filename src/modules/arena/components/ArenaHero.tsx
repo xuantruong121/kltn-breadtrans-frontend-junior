@@ -91,7 +91,7 @@ export function ArenaHero({
           Đấu trường từ vựng
         </h1>
         <p className="mt-2 max-w-md text-base text-slate-700 dark:text-slate-300">
-          Ghép trận với một học viên khác, trả lời 5 câu từ vựng trong 15 giây mỗi câu. Ai đúng nhiều và nhanh hơn thì lấy cả hai phần cược.
+          Ghép trận với một học viên khác, trả lời 10 câu từ vựng, 12 giây mỗi câu. Ai đúng nhiều và nhanh hơn thì lấy cả hai phần cược.
         </p>
 
         <fieldset className="mt-5" disabled={isSearching}>

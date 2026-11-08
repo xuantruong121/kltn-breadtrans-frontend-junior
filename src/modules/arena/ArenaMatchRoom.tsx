@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CheckCircle2, WifiOff, Wheat, XCircle } from "lucide-react";
-import type { MatchData, MatchResult, RoundResultData, RoundStartData } from "@/lib/hooks/useArenaSocket";
+import type { ArenaQuestionKind, MatchData, MatchResult, RoundResultData, RoundStartData } from "@/lib/hooks/useArenaSocket";
 import { useAuthStore } from "@/stores/authStore";
 import { MatchIntro } from "./components/MatchIntro";
 import { MatchResultDialog, type RoundRecord } from "./components/MatchResultDialog";
@@ -28,6 +28,16 @@ interface ArenaMatchRoomProps {
 
 const LETTERS = ["A", "B", "C", "D"];
 
+const KIND_LABEL: Record<ArenaQuestionKind, string> = {
+  fill_blank: "Điền từ vào chỗ trống",
+  meaning_to_word: "Chọn từ đúng",
+  word_to_meaning: "Chọn nghĩa đúng",
+};
+
+function roundIdxOf(round: RoundStartData | null): number {
+  return round?.roundIndex ?? 0;
+}
+
 export default function ArenaMatchRoom({
   matchData,
   currentRoundData,
@@ -50,7 +60,8 @@ export default function ArenaMatchRoom({
   const rival = isP1 ? matchData.player2 : matchData.player1;
   const myProgress = isP1 ? liveProgress?.p1 : liveProgress?.p2;
   const rivalProgress = isP1 ? liveProgress?.p2 : liveProgress?.p1;
-  const totalRounds = matchData.totalRounds || 5;
+  const totalRounds = matchData.totalRounds || 10;
+  const isFinalRound = roundIdxOf(currentRoundData) === totalRounds - 1;
   const question = currentRoundData?.question;
   const roundIdx = currentRoundData?.roundIndex ?? 0;
   const mySelection = selected[roundIdx] ?? null;
@@ -159,7 +170,7 @@ export default function ArenaMatchRoom({
           <Wheat size={15} strokeWidth={2.25} aria-hidden="true" />
           <span className="sr-only">Bánh Mì</span>
           <span className="text-slate-400">·</span>
-          {question ? `Hiệp ${roundIdx + 1}/${totalRounds}` : "Chuẩn bị"}
+          {question ? `Câu ${roundIdx + 1}/${totalRounds}` : "Chuẩn bị"}
         </p>
         <SoundToggle />
       </div>
@@ -215,7 +226,7 @@ export default function ArenaMatchRoom({
               <RoundTimerBar
                 key={currentRoundData.roundIndex}
                 serverStartTime={currentRoundData.serverStartTime}
-                duration={currentRoundData.duration || 15}
+                duration={currentRoundData.duration || 12}
                 stopped={Boolean(roundResult || matchResult)}
               />
 
@@ -228,7 +239,26 @@ export default function ArenaMatchRoom({
                   transition={{ duration: 0.25 }}
                 >
                   <div className="mt-6 text-center">
-                    <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 sm:text-3xl">{question.prompt}</h2>
+                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
+                      {KIND_LABEL[question.kind ?? "word_to_meaning"]}
+                      {isFinalRound && <span className="ml-2 rounded-md bg-amber-100 px-2 py-0.5 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">Câu cuối · điểm ×2</span>}
+                    </p>
+                    {question.kind === "fill_blank" ? (
+                      <h2 className="mt-2 text-xl font-bold leading-relaxed text-slate-900 dark:text-slate-100 sm:text-2xl">
+                        {question.prompt.split("_____").map((part, i, parts) => (
+                          <React.Fragment key={i}>
+                            {part}
+                            {i < parts.length - 1 && (
+                              <span className="mx-1 inline-block min-w-20 border-b-2 border-slate-400 align-baseline dark:border-slate-500" aria-label="chỗ trống">
+                                &nbsp;
+                              </span>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </h2>
+                    ) : (
+                      <h2 className="mt-2 text-2xl font-extrabold text-slate-900 dark:text-slate-100 sm:text-3xl">{question.prompt}</h2>
+                    )}
                     {question.ipa && (
                       <p className="mt-1 text-base text-slate-500 dark:text-slate-400">/{question.ipa.replace(/^\/+|\/+$/g, "")}/</p>
                     )}
@@ -253,7 +283,7 @@ export default function ArenaMatchRoom({
                       const pop = roundResult && isAnswer && isMine && !reduce;
                       return (
                         <motion.button
-                          key={option}
+                          key={i}
                           type="button"
                           disabled={locked}
                           onClick={() => choose(option)}
@@ -277,7 +307,9 @@ export default function ArenaMatchRoom({
                       <div className={`rounded-lg px-4 py-3 text-sm ${myResult.isCorrect ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200" : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200"}`}>
                         <p className="font-bold">
                           {myResult.isCorrect
-                            ? `Đúng! +${myResult.addedPoints} điểm (100 + ${myResult.addedPoints - 100} thưởng tốc độ)`
+                            ? isFinalRound
+                              ? `Đúng! +${myResult.addedPoints} điểm (câu cuối nhân đôi)`
+                              : `Đúng! +${myResult.addedPoints} điểm (100 + ${myResult.addedPoints - 100} thưởng tốc độ)`
                             : mySelection
                               ? `Chưa đúng. Đáp án là "${roundResult.correctAnswer}".`
                               : `Hết giờ. Đáp án là "${roundResult.correctAnswer}".`}
