@@ -88,7 +88,7 @@ export function ArenaHero({
     <section aria-labelledby="arena-title" className="grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr]">
       <div className="flex flex-col">
         <h1 id="arena-title" className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-          Đấu trường từ vựng
+          Song Đấu Từ Vựng
         </h1>
         <p className="mt-2 max-w-md text-base text-slate-700 dark:text-slate-300">
           Ghép trận với một học viên khác, trả lời 10 câu từ vựng, 12 giây mỗi câu. Ai đúng nhiều và nhanh hơn thì lấy cả hai phần cược.

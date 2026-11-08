@@ -38,7 +38,7 @@ const PREVIEW_SPOTS = [
   { left: "28%", delay: 2.8 },
 ];
 
-/** Bắn chữ rơi's lobby on /arena: the rules, the stake, what it wins or loses, and a moving preview. */
+/** Pháo Bánh Mì's lobby on /arena: the rules, the stake, what it wins or loses, and a moving preview. */
 export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | null; isGuest: boolean; onGuest: () => void }) {
   const router = useRouter();
   const reduce = Boolean(useReducedMotion());
@@ -66,7 +66,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
     <section aria-labelledby="blaster-title" className="grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr]">
       <div className="flex flex-col">
         <h1 id="blaster-title" className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-          Bắn chữ rơi
+          Pháo Bánh Mì
         </h1>
         <p className="mt-2 max-w-md text-base text-slate-700 dark:text-slate-300">
           Các khối chữ rơi xuống cánh đồng. Gõ chữ đầu để pháo bánh mì khoá mục tiêu, mỗi chữ đúng là một phát bắn, gõ đủ chữ là khối vỡ, không cần nhấn Enter.

@@ -176,7 +176,7 @@ function ArenaLobby() {
       <AuthGateModal
         isOpen={authGateOpen !== null}
         onClose={() => setAuthGateOpen(null)}
-        targetLabel={authGateOpen === "blaster" ? "chơi Bắn chữ rơi" : "tham gia đấu trường 1v1"}
+        targetLabel={authGateOpen === "blaster" ? "chơi Pháo Bánh Mì" : "tham gia Song Đấu Từ Vựng"}
         targetRoute={authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena"}
         onOpenLogin={() => router.push(`/login?redirect=${encodeURIComponent(authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena")}`)}
         onOpenRegister={() => router.push(`/register?redirect=${encodeURIComponent(authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena")}`)}

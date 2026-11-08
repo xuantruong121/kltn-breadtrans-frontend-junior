@@ -6,7 +6,7 @@ import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "./arenaWallet.ts";
 import { arenaGameFrom } from "./games.ts";
 
 describe("arenaGameFrom", () => {
-  test("?game=blaster opens Bắn chữ rơi; anything else the duel", () => {
+  test("?game=blaster opens Pháo Bánh Mì; anything else the duel", () => {
     assert.equal(arenaGameFrom("blaster"), "blaster");
     assert.equal(arenaGameFrom("duel"), "duel");
     assert.equal(arenaGameFrom(null), "duel");

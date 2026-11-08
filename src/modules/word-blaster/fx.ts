@@ -1,5 +1,5 @@
 /**
- * Bắn chữ rơi's effects, as numbers: bullets flying to a letter, crumbs and
+ * Pháo Bánh Mì's effects, as numbers: bullets flying to a letter, crumbs and
  * sparks, a shock ring, screen shake and a short hit-stop. The canvas layer
  * draws this state; nothing here touches the DOM, so it is tested alone.
  * Times are in milliseconds, positions in field pixels.

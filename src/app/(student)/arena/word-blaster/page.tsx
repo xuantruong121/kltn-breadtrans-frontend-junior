@@ -14,7 +14,7 @@ import { BlasterResultDialog } from "@/modules/word-blaster/components/BlasterRe
 const LOBBY = "/arena?game=blaster";
 
 /**
- * Bắn chữ rơi's playing screen, full width. The stake is chosen in the
+ * Pháo Bánh Mì's playing screen, full width. The stake is chosen in the
  * lobby on /arena; this page plays the open game (a reload comes back to it)
  * and shows the result. With no open game it returns to the lobby.
  */

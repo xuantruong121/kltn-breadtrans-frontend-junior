@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from "react";
 
 /**
- * Bắn chữ rơi's stage (owner 2026-11-08: a starry night over the fields): a
+ * Pháo Bánh Mì's stage (owner 2026-11-08: a starry night over the fields): a
  * deep blue sky warming to amber at the horizon, twinkling stars and the odd
  * shooting star, a moon, three hills drifting at different speeds, wheat
  * swaying in front and fireflies rising from it. The horizon reddens as the

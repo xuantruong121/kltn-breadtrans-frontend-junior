@@ -1,5 +1,5 @@
 /**
- * Bắn chữ rơi, one key at a time (owner 2026-11-08, after ZType): the first
+ * Pháo Bánh Mì, one key at a time (owner 2026-11-08, after ZType): the first
  * key locks the cannon on a block, each accepted letter is a shot, and the
  * answer goes to the server by itself once it has all its letters. The
  * server still decides; this only knows what the block shows. Pure.

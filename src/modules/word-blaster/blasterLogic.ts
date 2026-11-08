@@ -1,5 +1,5 @@
 /**
- * Bắn chữ rơi in the browser: where each block is, which one the cannon aims
+ * Pháo Bánh Mì in the browser: where each block is, which one the cannon aims
  * at, and the lives as the server will count them. The server decides; this
  * only draws it smoothly between replies. Pure: no React, no I/O.
  */

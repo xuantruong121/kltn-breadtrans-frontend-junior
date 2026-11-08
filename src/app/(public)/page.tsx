@@ -626,9 +626,9 @@ export default function PublicLandingPage() {
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700 shadow-2xs">
                   <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                     <Award size={16} className="text-amber-600 dark:text-amber-400" />
-                    Đấu trường 1v1 Arena
+                    Đấu trường từ vựng
                   </span>
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">So tài từ vựng và ngữ pháp nhanh cùng bạn bè</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Song Đấu Từ Vựng với học viên khác, hoặc bắn hạ chữ rơi cùng Pháo Bánh Mì</p>
                 </div>
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700 shadow-2xs">
                   <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">

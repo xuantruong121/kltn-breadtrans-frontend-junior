@@ -83,7 +83,7 @@ export function isMoreRoute(pathname: string): boolean {
   );
 }
 
-/** The Arena games: the 1v1 duel lobby and Bắn chữ rơi. */
+/** The Arena games: the 1v1 duel lobby and Pháo Bánh Mì. */
 export function isArenaRoute(pathname: string): boolean {
   if (!pathname) return false;
   return pathname === "/arena" || pathname.startsWith("/arena/");

@@ -1,4 +1,4 @@
-/** The words of a Bắn chữ rơi result. Pure. */
+/** The words of a Pháo Bánh Mì result. Pure. */
 export type BlasterResultInput = {
   outcome: "win" | "lose";
   forfeit: boolean;

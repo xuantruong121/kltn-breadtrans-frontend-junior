@@ -3,7 +3,7 @@
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 
 /**
- * Bắn chữ rơi sound effects, made with Web Audio so no file has to load: a
+ * Pháo Bánh Mì sound effects, made with Web Audio so no file has to load: a
  * tick per key that climbs with the letter, a crumbly burst with a bass thump
  * for a broken block, a chime that climbs with the combo, a thud for a lost
  * life, beeps for the countdown. They follow the Arena's sound switch; music

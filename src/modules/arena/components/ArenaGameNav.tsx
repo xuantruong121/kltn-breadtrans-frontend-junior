@@ -5,8 +5,8 @@ import { Crosshair, Swords, type LucideIcon } from "lucide-react";
 import type { ArenaGame } from "../games";
 
 export const ARENA_GAMES: { id: ArenaGame; name: string; line: string; meta: string; icon: LucideIcon }[] = [
-  { id: "duel", name: "Đấu 1v1", line: "Đấu từ vựng với một học viên khác", meta: "10 câu · 12 giây mỗi câu", icon: Swords },
-  { id: "blaster", name: "Bắn chữ rơi", line: "Gõ đáp án để bắn vỡ khối chữ", meta: "20 khối · 3 mạng", icon: Crosshair },
+  { id: "duel", name: "Song Đấu Từ Vựng", line: "Đọ từ vựng trực tiếp với một học viên khác", meta: "10 câu · 12 giây mỗi câu", icon: Swords },
+  { id: "blaster", name: "Pháo Bánh Mì", line: "Gõ đúng từ để bắn hạ chữ trước khi chạm đất", meta: "20 khối · 3 mạng", icon: Crosshair },
 ];
 
 /** The Arena's game list: a column on wide screens, a row of tabs on phones. */

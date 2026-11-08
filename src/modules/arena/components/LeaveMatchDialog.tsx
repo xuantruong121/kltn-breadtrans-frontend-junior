@@ -17,7 +17,7 @@ export function LeaveMatchDialog({
   stake: number;
   rivalName?: string;
   title?: string;
-  /** Replaces the 1v1 wording, e.g. for Bắn chữ rơi. */
+  /** Replaces the 1v1 wording, e.g. for Pháo Bánh Mì. */
   message?: string;
   pending: boolean;
   onStay: () => void;
