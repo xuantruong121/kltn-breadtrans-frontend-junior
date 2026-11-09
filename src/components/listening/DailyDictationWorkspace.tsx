@@ -376,7 +376,7 @@ export function DailyDictationWorkspace({
   const activeTranscriptRowRef = useRef<HTMLButtonElement | null>(null);
   const transcriptListRef = useRef<HTMLDivElement | null>(null);
   const transcriptAudioRequestRef = useRef<AbortController | null>(null);
-  const questionAudioCacheRef = useRef<Map<string, { blob: Blob; url: string }>>(new Map());
+  const questionAudioCacheRef = useRef<Map<string, { url: string }>>(new Map());
   const activeAudioVersion = currentQuestion?.audioAssets?.find((asset) => asset.isActive)?.version;
   const currentSegment = currentQuestion?.listeningSegment ?? (Array.isArray(currentContent.transcriptSegments)
     ? currentContent.transcriptSegments.find(
@@ -708,17 +708,17 @@ export function DailyDictationWorkspace({
       }
     }, 0);
 
+    // The browser streams the audio from storage; the backend only says where.
     quizService
-      .getQuestionAudioBlob(
+      .getQuestionAudioUrl(
         quiz.id,
         currentQuestion.id,
         controller.signal,
         currentArtifact,
       )
-      .then((blob) => {
+      .then(({ url }) => {
         if (!isMounted) return;
-        const url = URL.createObjectURL(blob);
-        questionAudioCacheRef.current.set(questionCacheKey, { blob, url });
+        questionAudioCacheRef.current.set(questionCacheKey, { url });
 
         if (ownsPlayback(owner, generation)) {
           setAudioLoading(false);
