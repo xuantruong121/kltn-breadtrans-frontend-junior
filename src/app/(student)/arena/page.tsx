@@ -140,7 +140,7 @@ function ArenaLobby() {
 
   return (
     <div className="grid items-start gap-6 pb-12 lg:grid-cols-[260px_1fr] [&>*]:min-w-0">
-      <ArenaGameNav game={game} onPick={pick} />
+      <ArenaGameNav game={game} onPick={pick} isGuest={isGuest} arenaStats={arenaStats} />
       <div className="space-y-6">
       {abortedNotice && (
         <div
