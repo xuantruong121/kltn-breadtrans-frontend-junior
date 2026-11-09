@@ -50,6 +50,8 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
   const [typeShake, setTypeShake] = useState(0);
   const [floaters, setFloaters] = useState<Floater[]>([]);
   const [dying, setDying] = useState(false);
+  // The floor reached through a topping: its map was on the topping screen, so it is not shown again.
+  const [pickedInto, setPickedInto] = useState<number | null>(null);
   // The first monster greets as the map gives way to it.
   const [speech, setSpeech] = useState<Speech | null>(() =>
     initial.questionStartsAt !== null && initial.phase === "fight"
@@ -93,7 +95,8 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
   }, [floorKey, view.monster.boss]);
   const intro = view.phase === "fight" && !shown && view.questionStartsAt !== null && serverNow < view.questionStartsAt;
   // A floor opens on its map; the last stretch before the clock belongs to the monster's greeting.
-  const mapShowing = intro && view.questionStartsAt !== null && view.questionStartsAt - serverNow > GREET_MS;
+  const mapShowing =
+    intro && view.floor !== pickedInto && view.questionStartsAt !== null && view.questionStartsAt - serverNow > GREET_MS;
   const saying = speech && !mapShowing && serverNow >= speech.from && serverNow < speech.until ? speech : null;
 
   const float = useCallback((text: string, tone: Floater["tone"], side: Floater["side"]) => {
@@ -193,6 +196,7 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
     try {
       const res = await dungeonService.pick(view.sessionId, id);
       playBlaster("speedUp");
+      setPickedInto(res.floor);
       if (res.questionStartsAt !== null)
         setSpeech((p) => ({
           key: (p?.key ?? 0) + 1,
