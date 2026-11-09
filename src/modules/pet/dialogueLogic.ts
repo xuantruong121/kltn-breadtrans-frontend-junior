@@ -1,131 +1,151 @@
 /**
- * Deterministic domain logic for the BreadTrans 2D companion dialogue engine.
- * Pure state machine handling HUNGRY, STREAK_NUDGE, GOAL_PROGRESS, and ON_CLICK / POKE.
+ * What the companion pet says, and when. Pure: no storage, no clock, no React.
+ *
+ * Owner 2026-11-09: the pet speaks only when something new happens, each thing once a day.
+ * A reload or a page change never brings back a bubble the learner has already seen.
  */
 
-export type PetDialogueKind = "HUNGRY" | "STREAK_NUDGE" | "GOAL_PROGRESS" | "ON_CLICK" | "IDLE";
+import { getPetRecommendation } from "./petLogic.ts";
 
-export interface PetDialogueAction {
-  label: string;
-  url?: string;
-  onClickType?: "START_PRACTICE" | "EXPAND_PET" | "FEED_PET";
-}
+export type PetNudgeKind = "HUNGRY" | "STREAK" | "QUESTS";
 
-export interface PetDialogueContent {
-  kind: PetDialogueKind;
+export type PetNudgeAction =
+  | { type: "feed"; label: string }
+  | { type: "link"; label: string; url: string };
+
+export interface PetNudge {
+  /** Identifies the thing being said, so it is said once a day. */
+  key: string;
+  kind: PetNudgeKind;
   header: string;
   text: string;
-  action?: PetDialogueAction;
+  action?: PetNudgeAction;
 }
 
-export const POKE_MESSAGES: string[] = [
-  "Chăm chỉ học tập hôm nay, mai sau bay bổng tương lai!",
-  "Cậu đang học Nghe hả? Nhớ chú ý các âm nuốt nha!",
-  "Nhột quá đi! Học bài tiếp thôi nào bạn ơi! 😆",
-];
-
-export const HUNGRY_MESSAGES: string[] = [
-  "Bready đói bụng rồi... Mau làm bài tập kiếm Bánh Mì cho tớ ăn đi! 🍞",
-  "Tớ xẹp lép rồi nè! 1 bài nghe nữa là đủ đổi Bánh Mì nóng hổi đó! 😋",
-];
-
-export interface ResolveDialogueOptions {
-  petName?: string;
-  satiety?: number;
-  idleDurationMs?: number;
-  streak?: number;
-  isStreakAtRisk?: boolean;
-  completedQuestsCount?: number;
-  totalQuestsCount?: number;
-  pokeMessageIndex?: number;
-  forcePoke?: boolean;
-  allowGreeting?: boolean;
+export interface PetNudgeQuest {
+  title?: string;
+  description?: string | null;
+  isCompleted: boolean;
+  actionLabel?: string;
+  actionUrl?: string;
 }
 
-/**
- * Resolves the active dialogue bubble content based on vitals, streak, and learner events.
- * Strict priority: ON_CLICK (forcePoke) > HUNGRY > STREAK_NUDGE > GOAL_PROGRESS > GREETING.
- */
-export function resolvePetDialogue(options: ResolveDialogueOptions): PetDialogueContent | null {
-  const name = options.petName?.trim() || "Bready";
+export interface PetNudgeInput {
+  petName: string;
+  /** As the server computes it: FULL, NORMAL, HUNGRY or VERY_HUNGRY. */
+  satietyState?: string;
+  balance: number;
+  feedCost: number;
+  streak: number;
+  /** Hour of the day in Vietnam time, 0-23. */
+  hourVN: number;
+  /** Learning activities recorded today. */
+  activitiesCount: number;
+  quests: PetNudgeQuest[];
+}
 
-  // 1. Explicit user poke / click
-  if (options.forcePoke) {
-    const pokeIdx = Math.abs(options.pokeMessageIndex ?? 0) % POKE_MESSAGES.length;
-    return {
-      kind: "ON_CLICK",
-      header: `${name} · Cổ vũ 💪`,
-      text: POKE_MESSAGES[pokeIdx],
-      action: {
-        label: "Luyện bài ngay",
-        url: "/listening",
-        onClickType: "START_PRACTICE",
-      },
-    };
-  }
+/** From this hour on, a learner who has not studied today is reminded about the streak. */
+export const STREAK_REMINDER_HOUR = 18;
 
-  // 2. HUNGRY state: satiety < 50 OR idle >= 3 minutes (180,000 ms) with non-full belly (< 60)
-  const satiety = options.satiety ?? 80;
-  const isIdle3Min = (options.idleDurationMs ?? 0) >= 180_000;
-  if (satiety < 50 || (isIdle3Min && satiety < 60)) {
-    const hungryIdx = satiety < 20 ? 1 : 0;
-    return {
+/** Everything worth saying right now, most important first. */
+export function activeNudges(input: PetNudgeInput): PetNudge[] {
+  const name = input.petName.trim() || "Thú cưng";
+  const next = getPetRecommendation(input.quests);
+  const nextLink: PetNudgeAction | undefined = next
+    ? { type: "link", label: next.actionLabel, url: next.actionUrl }
+    : undefined;
+  const total = input.quests.length;
+  const done = input.quests.filter((q) => q.isCompleted).length;
+  const nudges: PetNudge[] = [];
+
+  if (input.satietyState === "HUNGRY" || input.satietyState === "VERY_HUNGRY") {
+    const veryHungry = input.satietyState === "VERY_HUNGRY";
+    const short = Math.max(0, input.feedCost - input.balance);
+    const opening = veryHungry
+      ? "Tớ đói lả rồi. Nhịn lâu nữa là sức khỏe tụt đó."
+      : "Bụng tớ đói rồi. Cho tớ ăn một phần nhé?";
+    nudges.push({
+      key: `hungry:${input.satietyState}`,
       kind: "HUNGRY",
-      header: `${name} · Đang đói 🥖`,
-      text: HUNGRY_MESSAGES[hungryIdx],
-      action: {
-        label: "Luyện bài ngay",
-        url: "/listening",
-        onClickType: "START_PRACTICE",
-      },
-    };
+      header: `${name} · Đang đói`,
+      text: short > 0 ? `${opening} Cậu còn thiếu ${short} Bánh Mì, làm nhiệm vụ hôm nay là có thêm.` : opening,
+      action: short > 0 ? nextLink : { type: "feed", label: `Cho ăn (${input.feedCost} Bánh Mì)` },
+    });
   }
 
-  // 3. STREAK_NUDGE state: current streak at risk / uncompleted daily quest
-  const streak = options.streak ?? 0;
-  if (streak > 0 && options.isStreakAtRisk) {
-    return {
-      kind: "STREAK_NUDGE",
-      header: `${name} · Cổ vũ Streak 🔥`,
-      text: `Đừng để tắt ngọn lửa Streak nhé! Hoàn thành 1 bài để giữ chuỗi ${streak} ngày nào! 🔥`,
-      action: {
-        label: "Giữ Streak",
-        url: "/listening",
-        onClickType: "START_PRACTICE",
-      },
-    };
+  if (
+    input.streak > 0 &&
+    input.hourVN >= STREAK_REMINDER_HOUR &&
+    input.activitiesCount === 0 &&
+    done === 0
+  ) {
+    nudges.push({
+      key: "streak-risk",
+      kind: "STREAK",
+      header: `${name} · Giữ chuỗi`,
+      text: `Hôm nay cậu chưa học bài nào. Học một bài để giữ chuỗi ${input.streak} ngày nhé.`,
+      action: nextLink,
+    });
   }
 
-  // 4. GOAL_PROGRESS state: daily progress in-flight
-  const completed = options.completedQuestsCount ?? 0;
-  const total = options.totalQuestsCount ?? 0;
-  if (completed > 0 && total > 0 && completed < total) {
-    return {
-      kind: "GOAL_PROGRESS",
-      header: `${name} · Mục tiêu hôm nay 🎯`,
-      text: `Tiến độ hôm nay: ${completed}/${total} bài rồi! Cố thêm một xíu nữa là xong! 🎯`,
-      action: {
-        label: "Luyện tiếp",
-        url: "/listening",
-        onClickType: "START_PRACTICE",
-      },
-    };
+  if (total > 0 && done > 0) {
+    nudges.push(
+      done < total
+        ? {
+            key: `quests:${done}`,
+            kind: "QUESTS",
+            header: `${name} · Nhiệm vụ hôm nay`,
+            text: next
+              ? `Xong ${done}/${total} nhiệm vụ hôm nay rồi. Còn: ${next.title}.`
+              : `Xong ${done}/${total} nhiệm vụ hôm nay rồi.`,
+            action: nextLink,
+          }
+        : {
+            key: "quests:done",
+            kind: "QUESTS",
+            header: `${name} · Nhiệm vụ hôm nay`,
+            text: `Xong cả ${total} nhiệm vụ hôm nay rồi. Giỏi quá!`,
+          },
+    );
   }
 
-  // 5. Default encouraging greeting when auto-showing dialogue
-  if (options.allowGreeting) {
-    const pokeIdx = Math.abs(options.pokeMessageIndex ?? 0) % POKE_MESSAGES.length;
-    return {
-      kind: "IDLE",
-      header: `${name} · Cổ vũ 💪`,
-      text: POKE_MESSAGES[pokeIdx],
-      action: {
-        label: "Luyện bài ngay",
-        url: "/listening",
-        onClickType: "START_PRACTICE",
-      },
-    };
-  }
+  return nudges;
+}
 
-  return null;
+/** The most important thing not yet said today, or null. */
+export function pickNudge(nudges: PetNudge[], seen: readonly string[]): PetNudge | null {
+  return nudges.find((n) => !seen.includes(n.key)) ?? null;
+}
+
+/** localStorage key holding what the pet has already said today. */
+export const NUDGES_SEEN_KEY = "breadtrans.pet.nudges";
+
+interface SeenRecord {
+  userId: string;
+  dateKey: string;
+  seen: string[];
+}
+
+/** What was said today to this learner. Another day or another learner starts empty. */
+export function parseSeen(raw: string | null, userId: string, dateKey: string): string[] {
+  if (!raw) return [];
+  try {
+    const record = JSON.parse(raw) as Partial<SeenRecord>;
+    if (record.userId !== userId || record.dateKey !== dateKey || !Array.isArray(record.seen)) return [];
+    return record.seen.filter((k): k is string => typeof k === "string");
+  } catch {
+    return [];
+  }
+}
+
+/** The stored value after these keys have been said. */
+export function recordSeen(raw: string | null, userId: string, dateKey: string, keys: string[]): string {
+  const seen = parseSeen(raw, userId, dateKey);
+  for (const key of keys) if (!seen.includes(key)) seen.push(key);
+  return JSON.stringify({ userId, dateKey, seen } satisfies SeenRecord);
+}
+
+/** Hour of the day in Vietnam (UTC+7, no daylight saving). */
+export function hourInVietnam(at: Date): number {
+  return (at.getUTCHours() + 7) % 24;
 }

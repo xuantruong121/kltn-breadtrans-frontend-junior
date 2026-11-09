@@ -1,146 +1,105 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
-  type PetDialogueContent,
-  resolvePetDialogue,
-  POKE_MESSAGES,
+  activeNudges,
+  hourInVietnam,
+  NUDGES_SEEN_KEY,
+  parseSeen,
+  pickNudge,
+  recordSeen,
+  type PetNudge,
+  type PetNudgeQuest,
 } from "./dialogueLogic";
 
-export interface UsePetDialogueOptions {
-  petName?: string;
-  satiety?: number;
-  satietyState?: string;
-  streak?: number;
-  todayQuests?: Array<{ isCompleted: boolean }>;
-  enabled?: boolean;
+// What the pet has said today lives in localStorage, so a reload does not repeat it.
+// When storage is blocked it is kept in memory for the tab instead.
+const listeners = new Set<() => void>();
+let memory: string | null = null;
+
+function readSeenRaw(): string | null {
+  try {
+    return window.localStorage.getItem(NUDGES_SEEN_KEY);
+  } catch {
+    return memory;
+  }
 }
 
-const FIVE_MINUTES_MS = 5 * 60 * 1000;
+function writeSeenRaw(value: string) {
+  memory = value;
+  try {
+    window.localStorage.setItem(NUDGES_SEEN_KEY, value);
+  } catch {
+    /* storage blocked: memory keeps it for this tab */
+  }
+  listeners.forEach((l) => l());
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  // Another tab that already showed a bubble counts here too.
+  window.addEventListener("storage", listener);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", listener);
+  };
+}
+
+const serverSnapshot = () => null;
+const now = () => new Date();
+
+export interface UsePetDialogueOptions {
+  /** The pet and today's data have loaded; nothing is decided before that. */
+  ready: boolean;
+  userId?: string | number | null;
+  /** Today's date key from the server (Vietnam time). */
+  dateKey?: string;
+  petName: string;
+  satietyState?: string;
+  balance: number;
+  feedCost: number;
+  streak: number;
+  activitiesCount: number;
+  quests: PetNudgeQuest[];
+}
 
 export function usePetDialogue(options: UsePetDialogueOptions) {
-  const {
-    petName,
-    satiety,
-    satietyState,
-    streak = 0,
-    todayQuests = [],
-    enabled = true,
-  } = options;
+  const { ready, dateKey = "", petName, satietyState, balance, feedCost, streak, activitiesCount, quests } = options;
+  const userId = options.userId == null ? "" : String(options.userId);
+  const live = ready && userId !== "" && dateKey !== "";
+  const hourVN = hourInVietnam(now());
 
-  const [dialogue, setDialogue] = useState<PetDialogueContent | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [isBouncing, setIsBouncing] = useState(false);
-
-  const pokeIndexRef = useRef(0);
-  const reopenTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const prevSatietyRef = useRef<number | undefined>(satiety);
-  const hasInitializedRef = useRef(false);
-
-  const clearReopenTimer = useCallback(() => {
-    if (reopenTimerRef.current) {
-      clearTimeout(reopenTimerRef.current);
-      reopenTimerRef.current = null;
-    }
-  }, []);
-
-  const resolveCurrentDialogue = useCallback(
-    (forcePoke = false) => {
-      const completedCount = todayQuests.filter((q) => q.isCompleted).length;
-      const totalCount = todayQuests.length;
-      const isStreakAtRisk = totalCount > 0 && completedCount === 0;
-
-      return resolvePetDialogue({
-        petName,
-        satiety,
-        idleDurationMs: 0,
-        streak,
-        isStreakAtRisk,
-        completedQuestsCount: completedCount,
-        totalQuestsCount: totalCount,
-        allowGreeting: true,
-        forcePoke,
-        pokeMessageIndex: pokeIndexRef.current,
-      });
-    },
-    [petName, satiety, streak, todayQuests],
+  const raw = useSyncExternalStore(subscribe, readSeenRaw, serverSnapshot);
+  const nudges = useMemo(
+    () =>
+      live
+        ? activeNudges({ petName, satietyState, balance, feedCost, streak, hourVN, activitiesCount, quests })
+        : [],
+    [live, petName, satietyState, balance, feedCost, streak, hourVN, activitiesCount, quests],
   );
+  const seen = useMemo(() => (live ? parseSeen(raw, userId, dateKey) : []), [live, raw, userId, dateKey]);
+  const candidate = live ? pickNudge(nudges, seen) : null;
 
-  const showDialogue = useCallback(
-    (forcePoke = false) => {
-      clearReopenTimer();
-      const content = resolveCurrentDialogue(forcePoke);
-      if (content) {
-        setDialogue(content);
-        setIsVisible(true);
-      }
-    },
-    [clearReopenTimer, resolveCurrentDialogue],
-  );
+  // The bubble holds the newest thing worth saying; a new one replaces it.
+  const [heldKey, setHeldKey] = useState<string | null>(null);
+  const [closedKey, setClosedKey] = useState<string | null>(null);
+  if (candidate && candidate.key !== heldKey) setHeldKey(candidate.key);
 
-  // User actively dismisses with X button: hide and reopen after 5 minutes
-  const dismiss = useCallback(() => {
-    clearReopenTimer();
-    setIsVisible(false);
-
-    // Automatically reopen dialogue after 5 minutes
-    reopenTimerRef.current = setTimeout(() => {
-      pokeIndexRef.current = (pokeIndexRef.current + 1) % POKE_MESSAGES.length;
-      showDialogue();
-    }, FIVE_MINUTES_MS);
-  }, [clearReopenTimer, showDialogue]);
-
-  // 1. Automatically show dialogue when user opens web / logs in (enabled becomes true)
+  // Once something is said, everything true right now counts as said today,
+  // so the bubble comes back only when something new happens.
+  const activeKeys = nudges.map((n) => n.key).join("|");
   useEffect(() => {
-    if (!enabled) {
-      hasInitializedRef.current = false;
-      return;
-    }
+    if (!live || !heldKey || !activeKeys) return;
+    writeSeenRaw(recordSeen(readSeenRaw(), userId, dateKey, activeKeys.split("|")));
+  }, [live, heldKey, activeKeys, userId, dateKey]);
 
-    if (!hasInitializedRef.current) {
-      hasInitializedRef.current = true;
-      showDialogue();
-    }
-  }, [enabled, showDialogue]);
-
-  // 2. Hunger trigger: when pet is hungry or becomes hungry, show dialogue immediately
-  useEffect(() => {
-    if (!enabled) return;
-
-    const isHungry =
-      satiety !== undefined &&
-      (satiety < 50 || satietyState === "HUNGRY" || satietyState === "VERY_HUNGRY");
-    const wasHungry =
-      prevSatietyRef.current !== undefined && prevSatietyRef.current < 50;
-    prevSatietyRef.current = satiety;
-
-    // If pet transitions to hungry while dialogue is closed, show hungry dialogue immediately
-    if (isHungry && !wasHungry && !isVisible) {
-      showDialogue();
-    }
-  }, [enabled, satiety, satietyState, isVisible, showDialogue]);
-
-  // Trigger bounce animation when pet is poked or clicked
-  const triggerBounce = useCallback(() => {
-    setIsBouncing(true);
-    setTimeout(() => setIsBouncing(false), 500);
-  }, []);
-
-  // Cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      clearReopenTimer();
-    };
-  }, [clearReopenTimer]);
+  // A held line disappears by itself once it stops being true (the pet was fed, say).
+  const dialogue: PetNudge | null = heldKey ? (nudges.find((n) => n.key === heldKey) ?? null) : null;
 
   return {
     dialogue,
-    isVisible,
-    isBouncing,
-    triggerBounce,
-    pokePet: triggerBounce,
-    dismiss,
-    showDialogue,
+    isVisible: dialogue !== null && closedKey !== heldKey,
+    dismiss: () => setClosedKey(heldKey),
   };
 }
 
