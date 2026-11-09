@@ -347,7 +347,8 @@ select {
 
 /*
  * Study room glass (owner 2026-11-08: see the rainy forest through the bars
- * and dialogs, but keep the card easy to read). Only inside .study-glass,
+ * and dialogs, but keep the card easy to read). Only inside .scene-glass
+ * (the study room and, since 2026-11-09, the Arena lobby over its city),
  * which the room sets while its scene is on; the marker classes do nothing
  * elsewhere. Outside any @layer so these beat Tailwind's utilities.
  *   glass-bar   header, progress line, footer, idle mode tabs (small, blurred)
@@ -358,26 +359,26 @@ select {
  * quiz half its frames at 1366 px, and backdrop-filter would also flatten the
  * flashcard's preserve-3d, so its flip would show both faces.
  */
-.study-glass .glass-bar {
+.scene-glass .glass-bar {
   background-color: rgb(2 6 23 / 0.35);
   border-color: rgb(255 255 255 / 0.1);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-.study-glass .glass-panel {
+.scene-glass .glass-panel {
   background-color: rgb(15 23 42 / 0.55);
   border-color: rgb(255 255 255 / 0.12);
   box-shadow: 0 20px 50px -20px rgb(0 0 0 / 0.6);
   -webkit-backdrop-filter: blur(16px) saturate(1.3);
   backdrop-filter: blur(16px) saturate(1.3);
 }
-.study-glass .glass-fill {
+.scene-glass .glass-fill {
   background-color: rgb(15 23 42 / 0.6);
 }
-.study-glass .glass-face {
+.scene-glass .glass-face {
   background-color: rgb(15 23 42 / 0.72);
   border-color: rgb(255 255 255 / 0.14);
 }
-.study-glass .glass-clear {
+.scene-glass .glass-clear {
   background-color: transparent;
 }

@@ -71,7 +71,7 @@ export function ArenaGameNav({
                 onHoverEnd={() => setHovered(null)}
                 whileHover={reduce || active ? undefined : { y: -3 }}
                 animate={{ y: active && !reduce ? -2 : 0 }}
-                className={`group block w-full overflow-hidden rounded-2xl border-2 text-left transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 ${
+                className={`glass-face group block w-full overflow-hidden rounded-2xl border-2 text-left transition-[border-color,box-shadow] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-amber-300/60 ${
                   active
                     ? "border-amber-400 bg-white shadow-[0_10px_30px_-10px_rgba(217,119,6,0.55)] dark:bg-slate-900"
                     : "border-slate-200 bg-white shadow-sm hover:border-amber-200 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-amber-900"

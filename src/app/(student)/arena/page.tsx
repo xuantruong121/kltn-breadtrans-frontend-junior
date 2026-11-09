@@ -12,6 +12,10 @@ import { ArenaRecord } from "@/modules/arena/components/ArenaRecord";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { useArenaMusic } from "@/modules/arena/sound/useArenaSound";
 import { ArenaGameNav } from "@/modules/arena/components/ArenaGameNav";
+import { ArenaMusicDock } from "@/modules/arena/components/ArenaMusicDock";
+import { CityNight } from "@/modules/arena/components/CityNight";
+import { useSoundPrefs } from "@/modules/arena/sound/useArenaSound";
+import { useReducedMotion } from "framer-motion";
 import { arenaGameFrom, type ArenaGame } from "@/modules/arena/games";
 
 const GATE_LABEL: Record<ArenaGame, string> = {
@@ -79,6 +83,8 @@ function ArenaLobby() {
     staleTime: 60_000,
   });
   const balance = isGuest ? null : (stats?.totalBanhRan ?? null);
+  const soundPrefs = useSoundPrefs();
+  const reduceMotion = Boolean(useReducedMotion());
 
   // Lobby loop on the arena page, the faster loop during a match. Browsers only
   // allow sound after a user gesture, so the first click or key anywhere on the
@@ -139,7 +145,11 @@ function ArenaLobby() {
   }
 
   return (
-    <div className="grid items-start gap-6 pb-12 lg:grid-cols-[260px_1fr] [&>*]:min-w-0">
+    // Owner 2026-11-09: a lofi city at night behind the lobby, one music control for the page.
+    <div className={soundPrefs.scene ? "dark scene-glass relative isolate" : ""}>
+      {soundPrefs.scene && <CityNight reduce={reduceMotion} />}
+      <ArenaMusicDock />
+    <div className="grid items-start gap-6 pb-24 lg:grid-cols-[260px_1fr] lg:pb-12 [&>*]:min-w-0">
       <ArenaGameNav game={game} onPick={pick} isGuest={isGuest} arenaStats={arenaStats} />
       <div className="space-y-6">
       {abortedNotice && (
@@ -192,6 +202,7 @@ function ArenaLobby() {
         onOpenRegister={() => router.push(`/register?redirect=${encodeURIComponent(gateRoute)}`)}
       />
       </div>
+    </div>
     </div>
   );
 }

@@ -129,7 +129,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     // Over the night forest the room reads in its dark theme, so every text keeps its contrast.
     <div
       className={`min-h-[100dvh] text-foreground flex flex-col justify-between selection:bg-sky-100 selection:text-sky-900 transition-colors duration-150 ${
-        ambience.scene ? "dark study-glass relative isolate" : "bg-background"
+        ambience.scene ? "dark scene-glass relative isolate" : "bg-background"
       }`}
     >
       {ambience.scene && <LofiForest reduce={reduceMotion} />}

@@ -8,7 +8,7 @@ interface StudyFooterProps {
   newCount: number;
   learnedCount: number;
   reviewCount: number;
-  /** Over the forest scene: a glass bar (see .study-glass in globals.css). */
+  /** Over the forest scene: a glass bar (see .scene-glass in globals.css). */
   glass?: boolean;
 }
 

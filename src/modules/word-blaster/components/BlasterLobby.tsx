@@ -63,7 +63,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
   };
 
   return (
-    <section aria-labelledby="blaster-title" className="grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr]">
+    <section aria-labelledby="blaster-title" className="glass-face grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr]">
       <div className="flex flex-col">
         <h1 id="blaster-title" className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
           Pháo Bánh Mì
@@ -172,7 +172,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
         {PREVIEW[mode].map((b, i) => (
           <motion.span
             key={`${mode}-${b.text}`}
-            className={`absolute top-0 rounded-xl border bg-slate-950/75 px-3 py-1.5 text-center text-sm font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.45)] backdrop-blur-sm ${
+            className={`absolute top-0 rounded-xl border bg-slate-950/75 px-3 py-1.5 text-center text-sm font-bold text-white shadow-[0_8px_20px_rgba(0,0,0,0.45)] ${
               i === 0 ? "border-amber-300/90 shadow-[0_0_24px_rgba(251,191,36,0.35)]" : "border-white/15"
             }`}
             style={{ left: PREVIEW_SPOTS[i].left }}
