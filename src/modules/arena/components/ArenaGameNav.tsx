@@ -7,7 +7,7 @@ import type { ArenaGame } from "../games";
 export const ARENA_GAMES: { id: ArenaGame; name: string; line: string; meta: string; icon: LucideIcon }[] = [
   { id: "duel", name: "Song Đấu Từ Vựng", line: "Đọ từ vựng trực tiếp với một học viên khác", meta: "10 câu · 12 giây mỗi câu", icon: Swords },
   { id: "blaster", name: "Pháo Bánh Mì", line: "Gõ đúng từ để bắn hạ chữ trước khi chạm đất", meta: "20 khối · 3 mạng", icon: Crosshair },
-  { id: "dungeon", name: "Hầm Bánh Mì", line: "Vượt từng tầng hầm, đánh quái bằng từ vựng", meta: "Boss mỗi 5 tầng · vé 20 Bánh Mì", icon: DoorOpen },
+  { id: "dungeon", name: "Hầm Bánh Mì", line: "Vượt từng tầng hầm, đánh quái bằng từ vựng", meta: "Boss mỗi 5 tầng · vé 20", icon: DoorOpen },
 ];
 
 /** The Arena's game list: a column on wide screens, a row of tabs on phones. */

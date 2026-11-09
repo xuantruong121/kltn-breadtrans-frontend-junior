@@ -75,10 +75,11 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
               type="button"
               onClick={() => void begin("daily")}
               disabled={starting !== null || short || played}
+              aria-label="Vào Hầm hôm nay"
               className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 font-extrabold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <DoorOpen size={17} strokeWidth={2.25} aria-hidden="true" />
-              {isGuest ? "Đăng nhập để chơi" : played ? "Mai quay lại" : starting === "daily" ? "Đang mở hầm…" : "Vào Hầm hôm nay"}
+              {isGuest ? "Đăng nhập để chơi" : played ? "Mai quay lại" : starting === "daily" ? "Đang mở hầm…" : "Vào hầm"}
             </button>
           </div>
           <div className="flex flex-col rounded-xl border-2 border-slate-200 p-4 dark:border-slate-700">
@@ -94,10 +95,11 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
               type="button"
               onClick={() => void begin("free")}
               disabled={starting !== null || short}
+              aria-label="Vào Hầm tự do"
               className="mt-3 inline-flex items-center justify-center gap-2 rounded-lg border-2 border-amber-500 px-4 py-2 font-extrabold text-amber-700 transition-colors hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:text-amber-300 dark:hover:bg-amber-950/40"
             >
               <Footprints size={17} strokeWidth={2.25} aria-hidden="true" />
-              {isGuest ? "Đăng nhập để chơi" : starting === "free" ? "Đang mở hầm…" : "Vào Hầm tự do"}
+              {isGuest ? "Đăng nhập để chơi" : starting === "free" ? "Đang mở hầm…" : "Vào hầm"}
             </button>
           </div>
         </div>

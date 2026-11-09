@@ -255,23 +255,6 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
                 onSubmit={() => void answer({ text: typed })}
               />
             ) : null}
-            <div className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2" aria-hidden="true">
-              <AnimatePresence>
-                {floaters
-                  .filter((f) => f.side === "me")
-                  .map((f) => (
-                    <motion.p
-                      key={f.key}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: [0, 1, 1, 0], y: reduce ? 0 : -30 }}
-                      transition={{ duration: 1.1 }}
-                      className={`whitespace-nowrap text-2xl font-black ${f.tone === "hurt" ? "text-rose-400" : "text-sky-200"} [text-shadow:0_2px_0_rgba(0,0,0,0.6)]`}
-                    >
-                      {f.text}
-                    </motion.p>
-                  ))}
-              </AnimatePresence>
-            </div>
           </div>
         </div>
 
@@ -292,6 +275,28 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
       </div>
 
       <DungeonHud view={view} reduce={reduce} onLeave={() => setLeaveOpen(true)} />
+
+      {/* The learner's own losses and saves show under their health bar (top left), not by the monster. */}
+      <div className="pointer-events-none absolute inset-x-0 top-[4.75rem] z-30 sm:top-[5.25rem]" aria-hidden="true">
+        <div className="mx-auto max-w-5xl px-5 sm:px-8">
+          <AnimatePresence>
+            {floaters
+              .filter((f) => f.side === "me")
+              .map((f) => (
+                <motion.p
+                  key={f.key}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: [0, 1, 1, 0], y: reduce ? 0 : 14 }}
+                  transition={{ duration: 1.1 }}
+                  className={`absolute whitespace-nowrap text-2xl font-black ${f.tone === "hurt" ? "text-rose-400" : "text-sky-200"} [text-shadow:0_2px_0_rgba(0,0,0,0.6)]`}
+                >
+                  {f.text}
+                </motion.p>
+              ))}
+          </AnimatePresence>
+        </div>
+      </div>
+
 
       <div className="pointer-events-none absolute inset-x-0 top-[38%] z-30 flex justify-center" aria-live="assertive" data-dungeon-callout>
         <AnimatePresence>
