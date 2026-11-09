@@ -13,7 +13,14 @@ import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { useArenaMusic } from "@/modules/arena/sound/useArenaSound";
 import { ArenaGameNav } from "@/modules/arena/components/ArenaGameNav";
 import { arenaGameFrom, type ArenaGame } from "@/modules/arena/games";
+
+const GATE_LABEL: Record<ArenaGame, string> = {
+  duel: "tham gia Song Đấu Từ Vựng",
+  blaster: "chơi Pháo Bánh Mì",
+  dungeon: "vào Hầm Bánh Mì",
+};
 import { BlasterLobby } from "@/modules/word-blaster/components/BlasterLobby";
+import { DungeonLobby } from "@/modules/dungeon/components/DungeonLobby";
 import { userService } from "@/lib/api/services/user.service";
 import { gamificationService } from "@/lib/api/services/gamification.service";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
@@ -38,7 +45,8 @@ function ArenaLobby() {
   const isGuest = !user || user.role !== "STUDENT";
 
   const [stake, setStake] = useState<number>(20);
-  const [authGateOpen, setAuthGateOpen] = useState<null | "duel" | "blaster">(null);
+  const [authGateOpen, setAuthGateOpen] = useState<null | ArenaGame>(null);
+  const gateRoute = authGateOpen && authGateOpen !== "duel" ? `/arena?game=${authGateOpen}` : "/arena";
 
   const {
     isSearching,
@@ -169,17 +177,19 @@ function ArenaLobby() {
           />
           <ArenaRecord stats={arenaStats} isGuest={isGuest} isLoading={arenaStatsLoading} />
         </div>
-      ) : (
+      ) : game === "blaster" ? (
         <BlasterLobby balance={balance} isGuest={isGuest} onGuest={() => setAuthGateOpen("blaster")} />
+      ) : (
+        <DungeonLobby balance={balance} isGuest={isGuest} onGuest={() => setAuthGateOpen("dungeon")} />
       )}
 
       <AuthGateModal
         isOpen={authGateOpen !== null}
         onClose={() => setAuthGateOpen(null)}
-        targetLabel={authGateOpen === "blaster" ? "chơi Pháo Bánh Mì" : "tham gia Song Đấu Từ Vựng"}
-        targetRoute={authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena"}
-        onOpenLogin={() => router.push(`/login?redirect=${encodeURIComponent(authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena")}`)}
-        onOpenRegister={() => router.push(`/register?redirect=${encodeURIComponent(authGateOpen === "blaster" ? "/arena?game=blaster" : "/arena")}`)}
+        targetLabel={GATE_LABEL[authGateOpen ?? "duel"]}
+        targetRoute={gateRoute}
+        onOpenLogin={() => router.push(`/login?redirect=${encodeURIComponent(gateRoute)}`)}
+        onOpenRegister={() => router.push(`/register?redirect=${encodeURIComponent(gateRoute)}`)}
       />
       </div>
     </div>
