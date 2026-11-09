@@ -10,8 +10,16 @@ export const MONSTER_NAME: Record<MonsterKind, string> = {
   mouse: "Chuột Bột",
   ant: "Bọ Rùa Đường",
   snail: "Ốc Bơ",
+  bee: "Ong Mật",
+  fly: "Ruồi Vụn Bánh",
+  flour_worm: "Sâu Bột",
+  cheese_worm: "Sâu Phô Mai",
+  taiyaki: "Cá Taiyaki",
   sourdough_king: "Vua Bột Chua",
   flour_dragon: "Slime Lửa Khổng Lồ",
+  matcha_cake: "Bông Lan Trà Xanh",
+  pandan_jelly: "Thạch Lá Dứa",
+  yeast_frog: "Ếch Chúa Men",
 };
 
 /** Short names for the HUD; the server sends the full line with each offer. */

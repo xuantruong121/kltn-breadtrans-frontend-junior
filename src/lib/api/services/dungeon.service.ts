@@ -17,7 +17,21 @@ export type ToppingId =
   | "chili_sauce"
   | "breadstick"
   | "salt_pepper";
-export type MonsterKind = "moldy" | "mouse" | "ant" | "snail" | "sourdough_king" | "flour_dragon";
+export type MonsterKind =
+  | "moldy"
+  | "mouse"
+  | "ant"
+  | "snail"
+  | "bee"
+  | "fly"
+  | "flour_worm"
+  | "cheese_worm"
+  | "taiyaki"
+  | "sourdough_king"
+  | "flour_dragon"
+  | "matcha_cake"
+  | "pandan_jelly"
+  | "yeast_frog";
 
 /** A question as the server sends it: no answer. */
 export type DungeonQuestion =

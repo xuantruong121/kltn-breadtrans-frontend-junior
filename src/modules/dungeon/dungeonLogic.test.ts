@@ -45,8 +45,10 @@ describe("labels", () => {
   });
 });
 
-test("the monsters are named for the Kenney sprites they now wear (owner 2026-11-09)", () => {
+test("the monsters, nine and five bosses, are named for their Kenney sprites (owner 2026-11-09)", () => {
   assert.equal(MONSTER_NAME.ant, "Bọ Rùa Đường");
   assert.equal(MONSTER_NAME.flour_dragon, "Slime Lửa Khổng Lồ");
   assert.equal(MONSTER_NAME.sourdough_king, "Vua Bột Chua");
+  assert.equal(Object.keys(MONSTER_NAME).length, 14);
+  assert.equal(MONSTER_NAME.yeast_frog, "Ếch Chúa Men");
 });

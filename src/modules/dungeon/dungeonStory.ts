@@ -73,6 +73,46 @@ const LINES: Record<MonsterKind, Record<LineMoment, string[]>> = {
     hit: ["Xèo xèo! Lửa ta nhỏ lại rồi!", "Nóng... nóng mặt quá!"],
     defeat: ["Phụt... trả lửa lại cho lò đây..."],
   },
+  bee: {
+    appear: ["Vo ve! Mật ong phết bánh là của ta!", "Bay vòng vòng, chích cho một phát!", "Đừng hòng lấy hũ mật!"],
+    hit: ["Ui, cánh ta rối rồi!", "Vo... ve... chóng mặt quá!"],
+    defeat: ["Về tổ... về tổ thôi..."],
+  },
+  fly: {
+    appear: ["Vù vù! Vụn bánh rơi là của ta hết!", "Ta bay nhanh lắm, đọc kịp không?", "Có mùi bánh nướng đâu đây..."],
+    hit: ["Ối, trúng cánh rồi!", "Vù... lệch đường bay rồi!"],
+    defeat: ["Bay... không nổi nữa..."],
+  },
+  flour_worm: {
+    appear: ["Ta bò ra từ bao bột đây!", "Bột mì ngon thế này ai mà nhường!", "Uốn éo, uốn éo... ngươi bắt không được đâu!"],
+    hit: ["Ui, dính bột đầy người rồi!", "Đau quá, ta cuộn tròn đây!"],
+    defeat: ["Chui... vào bao bột... trốn thôi..."],
+  },
+  cheese_worm: {
+    appear: ["Phô mai này để ta gặm hết!", "Béo ngậy thế này, chia cho ai!", "Ngươi cũng mê phô mai à?"],
+    hit: ["Ối, rơi mất miếng phô mai!", "Phô mai chảy hết rồi!"],
+    defeat: ["Phô mai... tạm biệt..."],
+  },
+  taiyaki: {
+    appear: ["Ta là bánh cá mà biết bơi đấy!", "Nhân đậu đỏ của ta không cho ai đâu!", "Bơi tung tăng trong hầm nè!"],
+    hit: ["Vỏ giòn của ta mẻ rồi!", "Ối, rỉ nhân đậu đỏ!"],
+    defeat: ["Bơi... về khuôn bánh thôi..."],
+  },
+  matcha_cake: {
+    appear: ["Ta là Bông Lan Trà Xanh, cứng như đá đây!", "Để quên ngoài tủ ba ngày, giờ ta là boss!"],
+    hit: ["Ui, mẻ một góc bánh rồi!", "Lớp kem trà xanh của ta!"],
+    defeat: ["Mềm lại rồi... nhúng sữa đi..."],
+  },
+  pandan_jelly: {
+    appear: ["Thạch Lá Dứa đây! Đàn hồi lắm nhé!", "Nhe răng ra cho ngươi sợ này!"],
+    hit: ["Rung rinh, rung rinh quá!", "Thạch của ta nứt rồi!"],
+    defeat: ["Tan... thành nước dừa mất rồi..."],
+  },
+  yeast_frog: {
+    appear: ["Ộp! Ta là Ếch Chúa Men, ủ cả hầm này!", "Men của ta làm bột nở gấp đôi, ộp ộp!"],
+    hit: ["Ộp! Đau bụng quá!", "Vương miện ếch của ta lệch rồi!"],
+    defeat: ["Ộp... nhảy về ao thôi..."],
+  },
 };
 
 /** A line for the monster at this moment, the same for everyone on the same floor. */

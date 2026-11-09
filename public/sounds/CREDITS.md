@@ -52,6 +52,6 @@ draws them.
 
 | File | Original | Author | Source |
 |---|---|---|---|
-| images/dungeon/kenney/*.svg (slime, mouse, ladybug, snail, character_beige frames) | Vector/Enemies and Vector/Characters, New Platformer Pack 1.0 | Kenney (kenney.nl) | https://kenney.nl/assets/new-platformer-pack (mirror: https://opengameart.org/content/new-platformer-pack) |
+| images/dungeon/kenney/*.svg (slimes, mouse, ladybug, snail, bee, fly, worms, yellow fish, block, frog, character_beige frames) | Vector/Enemies and Vector/Characters, New Platformer Pack 1.0 | Kenney (kenney.nl) | https://kenney.nl/assets/new-platformer-pack (mirror: https://opengameart.org/content/new-platformer-pack) |
 
 The Sourdough King is slime_normal recoloured with a CSS filter; its crown is drawn in code.

@@ -14,8 +14,11 @@ type Look = {
   tint?: string;
   /** Bosses: a glow behind. */
   glow?: string;
-  /** The Sourdough King wears a crown; the Fire Slime's flame is its own. */
-  crown?: boolean;
+  /** Crowned bosses: where the crown sits, as a percent from the sprite's top
+   *  (its head is higher or lower in the square). The Fire Slime's flame is its own crown. */
+  crown?: number;
+  /** Share of the square the sprite fills; the square ones are drawn a little smaller. */
+  art?: number;
 };
 
 // Owner 2026-11-09: the monsters are Kenney's New Platformer Pack (CC0).
@@ -24,17 +27,43 @@ const LOOKS: Record<MonsterKind, Look> = {
   mouse: { frames: ["mouse_walk_a", "mouse_walk_b"], down: "mouse_rest" },
   ant: { frames: ["ladybug_walk_a", "ladybug_walk_b"], down: "ladybug_rest" },
   snail: { frames: ["snail_walk_a", "snail_walk_b"], down: "snail_shell" },
+  bee: { frames: ["bee_a", "bee_b"], down: "bee_rest" },
+  fly: { frames: ["fly_a", "fly_b"], down: "fly_rest" },
+  flour_worm: { frames: ["worm_normal_move_a", "worm_normal_move_b"], down: "worm_normal_rest" },
+  cheese_worm: { frames: ["worm_ring_move_a", "worm_ring_move_b"], down: "worm_ring_rest" },
+  taiyaki: { frames: ["fish_yellow_swim_a", "fish_yellow_swim_b"], down: "fish_yellow_rest" },
   sourdough_king: {
     frames: ["slime_normal_walk_a", "slime_normal_walk_b"],
     down: "slime_normal_flat",
     tint: "grayscale(1) sepia(0.6) saturate(1.5) brightness(1.3)",
     glow: "rgba(251,191,36,0.45)",
-    crown: true,
+    crown: 22,
   },
   flour_dragon: {
     frames: ["slime_fire_walk_a", "slime_fire_walk_b"],
     down: "slime_fire_flat",
     glow: "rgba(249,115,22,0.5)",
+  },
+  matcha_cake: {
+    frames: ["block_idle", "block_fall"],
+    down: "block_rest",
+    glow: "rgba(132,204,22,0.4)",
+    crown: -15,
+    art: 0.78,
+  },
+  pandan_jelly: {
+    frames: ["slime_block_walk_a", "slime_block_walk_b"],
+    down: "slime_block_rest",
+    glow: "rgba(16,185,129,0.45)",
+    crown: -4,
+    art: 0.84,
+  },
+  yeast_frog: {
+    frames: ["frog_idle", "frog_jump"],
+    down: "frog_rest",
+    glow: "rgba(250,204,21,0.4)",
+    crown: -5,
+    art: 0.88,
   },
 };
 
@@ -75,7 +104,7 @@ export function Monster({
   const shift = floor > 10 ? ((floor - 10) * 18) % 120 : 0;
   const filter = [look.tint, shift ? `hue-rotate(${shift}deg)` : ""].filter(Boolean).join(" ") || undefined;
   // The sprites fill the lower part of their square; bosses are drawn larger.
-  const art = boss ? 1 : 0.86;
+  const art = look.art ?? (boss ? 1 : 0.86);
   const walking = !reduce && !dead;
   return (
     <motion.div
@@ -123,10 +152,11 @@ export function Monster({
               ))
             )}
           </div>
-          {look.crown && !dead && (
+          {look.crown !== undefined && !dead && (
             <motion.div
               data-boss-crown
-              className="absolute left-[35%] top-[22%] h-[18%] w-[30%]"
+              className="absolute left-[35%] h-[18%] w-[30%]"
+              style={{ top: `${look.crown}%` }}
               animate={walking ? { y: [0, -3, 0], rotate: [-4, 4, -4] } : undefined}
               transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             >

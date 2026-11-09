@@ -1,6 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
+import { MONSTER_NAME } from "./dungeonLogic.ts";
 import { STORY, chapterFor, monsterLine, saysOnHit } from "./dungeonStory.ts";
 
 describe("chapterFor", () => {
@@ -21,7 +22,7 @@ describe("chapterFor", () => {
 describe("monsterLine", () => {
   test("the same floor gets the same line; every kind and moment has one", () => {
     assert.equal(monsterLine("moldy", 3, "appear"), monsterLine("moldy", 3, "appear"));
-    for (const kind of ["moldy", "mouse", "ant", "snail", "sourdough_king", "flour_dragon"] as const)
+    for (const kind of Object.keys(MONSTER_NAME) as (keyof typeof MONSTER_NAME)[])
       for (const moment of ["appear", "hit", "defeat"] as const) assert.ok(monsterLine(kind, 7, moment, 2).length > 3);
   });
   test("hit lines only now and then", () => {
