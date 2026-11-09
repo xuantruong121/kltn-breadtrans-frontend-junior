@@ -175,7 +175,8 @@ function StudentLayoutContent({
       >
         {children}
       </main>
-      {!isPracticeRoomPage && <AppFooter />}
+      {/* The Arena is a play space; owner 2026-11-09: no footer under its games. */}
+      {!isPracticeRoomPage && pathname !== "/arena" && <AppFooter />}
       {!isPracticeRoomPage && <BackToTop />}
       {user && !isPracticeRoomPage && !isDiagnosticRoute && <FloatingAiTutor />}
       {user && !isPracticeRoomPage && !isDashboardPage && !isPetManagementPage && !isDiagnosticRoute && (
