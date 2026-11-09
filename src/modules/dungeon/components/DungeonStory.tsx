@@ -3,8 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ChevronRight, DoorOpen } from "lucide-react";
-import { BreadMascot } from "@/modules/arena/components/BreadMascot";
-import { BreadTurret } from "@/modules/word-blaster/components/BreadTurret";
+import { DungeonHero } from "./DungeonHero";
 import { STORY, type StoryPanel } from "../dungeonStory";
 import { Monster } from "./Monster";
 
@@ -22,7 +21,7 @@ function Scene({ scene, reduce }: { scene: StoryPanel["scene"]; reduce: boolean 
           {/* the cold oven: a dark arch, no fire */}
           <div className="absolute bottom-0 left-1/2 h-[62%] w-[46%] -translate-x-1/2 rounded-t-[999px] border-[10px] border-[#5b3423] bg-[#120a07]" />
           <motion.div className="absolute bottom-3 left-[18%]" {...float()}>
-            <BreadMascot team="me" mood="sad" size={110} />
+            <DungeonHero pose="hit" size={120} reduce={reduce} />
           </motion.div>
           {!reduce &&
             [20, 45, 70, 85].map((x, i) => (
@@ -74,7 +73,7 @@ function Scene({ scene, reduce }: { scene: StoryPanel["scene"]; reduce: boolean 
             </motion.span>
           ))}
           <motion.div className="absolute bottom-2 right-[8%]" {...float()}>
-            <BreadMascot team="me" mood="happy" size={96} />
+            <DungeonHero pose="jump" facing="left" size={110} reduce={reduce} />
           </motion.div>
         </>
       )}
@@ -85,11 +84,8 @@ function Scene({ scene, reduce }: { scene: StoryPanel["scene"]; reduce: boolean 
           {[0, 1, 2, 3, 4].map((i) => (
             <div key={i} className="absolute h-[9%] bg-[#24140d]" style={{ left: `${40 + i * 10}%`, bottom: `${48 - i * 10}%`, width: "14%" }} />
           ))}
-          <motion.div className="absolute bottom-[50%] left-[22%]" {...float()}>
-            <BreadMascot team="me" mood="ready" facing="right" size={100} />
-          </motion.div>
-          <div className="absolute bottom-[50%] left-[8%]">
-            <BreadTurret angle={20} size={84} flash={0} reduce />
+          <div className="absolute bottom-[50%] left-[14%]">
+            <DungeonHero pose="walk" size={110} reduce={reduce} />
           </div>
         </>
       )}

@@ -14,7 +14,7 @@ export const STORY: StoryPanel[] = [
   { scene: "oven-cold", text: "Đêm ấy, lò bánh dưới hầm tiệm BreadTrans bỗng tắt ngấm. Cả tiệm lạnh tanh, không một mẻ bánh nào nở nổi." },
   { scene: "invaders", text: "Vua Bột Chua và đám bánh thiu đã chiếm các tầng hầm, còn ăn mất chữ trong cuốn sách công thức." },
   { scene: "spellbook", text: "Chỉ người thuộc từ mới đọc được công thức làm bánh. Mỗi từ đúng là một mẻ bánh nóng bắn bay lũ quái." },
-  { scene: "descend", text: "Cầm lấy pháo bánh mì, xuống hầm giành lại lò. Càng xuống sâu, quái càng mạnh." },
+  { scene: "descend", text: "Xuống hầm giành lại lò thôi! Càng xuống sâu, quái càng mạnh." },
 ];
 
 const CHAPTER_NAMES = ["Lò Ủ Bột", "Kho Đường", "Hầm Men", "Lò Than"];
@@ -54,9 +54,9 @@ const LINES: Record<MonsterKind, Record<LineMoment, string[]>> = {
     defeat: ["Chít... trả lại bột đây..."],
   },
   ant: {
-    appear: ["Đường là của cả đàn kiến!", "Ta khiêng được gấp năm mươi lần người!", "Để lại cục đường rồi đi!"],
-    hit: ["Cục đường rơi rồi!", "Gọi cả đàn tới đây!"],
-    defeat: ["Cả đàn ơi... rút lui!"],
+    appear: ["Đường trong kho là của bọ rùa ta!", "Chấm trên lưng ta toàn là kẹo, đừng hòng lấy!", "Để lại cục đường rồi đi!"],
+    hit: ["Cục đường rơi rồi!", "Ui, sứt mất một chấm!"],
+    defeat: ["Bay... bay đi thôi..."],
   },
   snail: {
     appear: ["Từ... từ... thôi... nào...", "Bơ trên lưng ta là của ta!", "Chậm mà chắc, nhóc ạ."],
@@ -69,9 +69,9 @@ const LINES: Record<MonsterKind, Record<LineMoment, string[]>> = {
     defeat: ["Không thể nào... vương quốc bột chua của ta..."],
   },
   flour_dragon: {
-    appear: ["GRÀO! Bột mì trắng xoá cả hầm này!", "Ngươi tưởng qua được Rồng Bột Mì sao?"],
-    hit: ["Phù! Bột bay mù mịt!", "Đuôi ta tê rồi!"],
-    defeat: ["Ta... tan thành bột mất rồi..."],
+    appear: ["Xèo! Lửa trong lò bánh là ta lấy đấy!", "Ngươi tưởng qua được Slime Lửa Khổng Lồ sao?"],
+    hit: ["Xèo xèo! Lửa ta nhỏ lại rồi!", "Nóng... nóng mặt quá!"],
+    defeat: ["Phụt... trả lửa lại cho lò đây..."],
   },
 };
 

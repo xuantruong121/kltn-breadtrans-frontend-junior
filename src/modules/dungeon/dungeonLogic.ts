@@ -8,10 +8,10 @@ import type { MonsterKind, ToppingId } from "@/lib/api/services/dungeon.service"
 export const MONSTER_NAME: Record<MonsterKind, string> = {
   moldy: "Bánh Thiu",
   mouse: "Chuột Bột",
-  ant: "Kiến Đường",
+  ant: "Bọ Rùa Đường",
   snail: "Ốc Bơ",
   sourdough_king: "Vua Bột Chua",
-  flour_dragon: "Rồng Bột Mì",
+  flour_dragon: "Slime Lửa Khổng Lồ",
 };
 
 /** Short names for the HUD; the server sends the full line with each offer. */

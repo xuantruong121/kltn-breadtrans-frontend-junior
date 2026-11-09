@@ -3,16 +3,17 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Check, Crown } from "lucide-react";
-import { BreadMascot } from "@/modules/arena/components/BreadMascot";
+import { DungeonHero } from "./DungeonHero";
 import { FLOORS_PER_CHAPTER, chapterFor } from "../dungeonStory";
 
 /**
  * The map shown as a floor opens (owner 2026-11-09: small stages): the
  * chapter's five floors on a path, those passed ticked, the boss's with a
- * crown, and the bread mascot stepping down to the current one. A new
- * chapter gets its name card first.
+ * crown, and the hero stepping down to the current one. A new chapter gets
+ * its name card first. `compact` is the smaller map over the topping choice,
+ * where it stays until the learner picks (owner: the opening map went by too fast).
  */
-export function FloorMap({ floor, reduce }: { floor: number; reduce: boolean }) {
+export function FloorMap({ floor, reduce, compact = false }: { floor: number; reduce: boolean; compact?: boolean }) {
   const chapter = chapterFor(floor);
   const boss = floor === chapter.bossFloor;
   const nodeX = (i: number) => 10 + i * 20; // percent across the path
@@ -22,18 +23,20 @@ export function FloorMap({ floor, reduce }: { floor: number; reduce: boolean }) 
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 1.04 }}
       transition={{ duration: 0.3 }}
-      className={`w-[min(36rem,92vw)] rounded-2xl border px-5 pb-5 pt-4 shadow-2xl ${boss ? "border-rose-400/50 bg-[#2a0d12]" : "border-amber-300/40 bg-[#140c08]"}`}
+      className={`rounded-2xl border shadow-2xl ${compact ? "w-[min(32rem,94vw)] px-4 pb-3 pt-3" : "w-[min(36rem,92vw)] px-5 pb-5 pt-4"} ${boss ? "border-rose-400/50 bg-[#2a0d12]" : "border-amber-300/40 bg-[#140c08]"}`}
     >
-      <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/80">Chương {chapter.number}</p>
+      <p className="text-center text-xs font-bold uppercase tracking-[0.2em] text-amber-200/80">
+        {compact ? `Tiếp theo · Chương ${chapter.number}` : `Chương ${chapter.number}`}
+      </p>
       <motion.p
         initial={reduce || !chapter.starts ? false : { opacity: 0, y: 8, letterSpacing: "0.3em" }}
         animate={{ opacity: 1, y: 0, letterSpacing: "0em" }}
         transition={{ duration: 0.6 }}
-        className="text-center text-2xl font-black text-amber-100 sm:text-3xl"
+        className={`text-center font-black text-amber-100 ${compact ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"}`}
       >
         {chapter.name}
       </motion.p>
-      <div className="relative mt-6 h-24">
+      <div className={`relative ${compact ? "mt-5 h-20" : "mt-6 h-24"}`}>
         {/* the path */}
         <div className="absolute left-[10%] right-[10%] top-[38%] border-t-[3px] border-dashed border-amber-200/30" />
         <motion.div
@@ -77,7 +80,7 @@ export function FloorMap({ floor, reduce }: { floor: number; reduce: boolean }) 
           animate={{ left: `${nodeX(chapter.step)}%` }}
           transition={{ duration: reduce ? 0 : 0.8, delay: reduce ? 0 : 0.3, ease: "easeInOut" }}
         >
-          <BreadMascot team="me" mood="ready" size={42} />
+          <DungeonHero pose="walk" size={58} reduce={reduce} />
         </motion.div>
       </div>
       {boss && <p className="mt-1 text-center text-sm font-bold text-rose-200">Boss canh giữ cuối chương. Gõ đúng từ để hạ!</p>}

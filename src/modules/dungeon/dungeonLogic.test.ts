@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { clockAt, fitsHint, floorLabel, hpTone, typedCells } from "./dungeonLogic.ts";
+import { clockAt, fitsHint, floorLabel, hpTone, MONSTER_NAME, typedCells } from "./dungeonLogic.ts";
 
 describe("clockAt", () => {
   test("waits while the last outcome shows, then runs down", () => {
@@ -43,4 +43,10 @@ describe("labels", () => {
     assert.equal(hpTone(40, 100).tone, "low");
     assert.equal(hpTone(20, 100).tone, "critical");
   });
+});
+
+test("the monsters are named for the Kenney sprites they now wear (owner 2026-11-09)", () => {
+  assert.equal(MONSTER_NAME.ant, "Bọ Rùa Đường");
+  assert.equal(MONSTER_NAME.flour_dragon, "Slime Lửa Khổng Lồ");
+  assert.equal(MONSTER_NAME.sourdough_king, "Vua Bột Chua");
 });

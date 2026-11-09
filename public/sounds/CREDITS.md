@@ -47,3 +47,11 @@ The Arena lobby (2026-11-09) plays the three study lofi tracks above; its old
 loop, arena/lobby.mp3 (Happy Clappy Loop), is no longer shipped. The city
 layers are used unchanged; the lobby turns them into a night scene when it
 draws them.
+
+## Dungeon art (CC0 1.0)
+
+| File | Original | Author | Source |
+|---|---|---|---|
+| images/dungeon/kenney/*.svg (slime, mouse, ladybug, snail, character_beige frames) | Vector/Enemies and Vector/Characters, New Platformer Pack 1.0 | Kenney (kenney.nl) | https://kenney.nl/assets/new-platformer-pack (mirror: https://opengameart.org/content/new-platformer-pack) |
+
+The Sourdough King is slime_normal recoloured with a CSS filter; its crown is drawn in code.

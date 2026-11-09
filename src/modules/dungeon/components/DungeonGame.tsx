@@ -273,6 +273,9 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
             </>
           )}
 
+          {/* The map stays while the learner picks a topping. */}
+          {choosing && <FloorMap key={`next-${view.floor}`} floor={view.floor + 1} reduce={reduce} compact />}
+
           <div className="relative flex w-full justify-center">
             {choosing ? (
               <ToppingChoice view={view} pending={pending} reduce={reduce} onPick={(id) => void pick(id)} />
