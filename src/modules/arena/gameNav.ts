@@ -15,7 +15,7 @@ export const GAME_KIND: Record<ArenaGame, GameKind> = {
 
 /** Until when a game wears the "Mới" tag (end of that day, Vietnam time). */
 const NEW_UNTIL: Partial<Record<ArenaGame, string>> = {
-  dungeon: "2026-11-23T23:59:59+07:00",
+  dungeon: "2026-11-15T23:59:59+07:00",
 };
 
 export function isNew(game: ArenaGame, now: Date): boolean {

@@ -8,7 +8,9 @@ import { buzz } from "@/modules/arena/sound/arenaSound";
 import { playBlaster } from "@/modules/word-blaster/blasterSound";
 import { createFx, shake, spawnExplosion, spawnSparks, type FxState } from "@/modules/word-blaster/fx";
 import { FxLayer, type Aim } from "@/modules/word-blaster/components/FxLayer";
-import { clockAt, clockOffset, floorLabel } from "../dungeonLogic";
+import { clockAt, clockOffset } from "../dungeonLogic";
+import { monsterLine, saysOnHit } from "../dungeonStory";
+import { FloorMap } from "./FloorMap";
 import { BossTyping } from "./BossTyping";
 import { DungeonHud, MonsterPlate } from "./DungeonHud";
 import { DungeonScene } from "./DungeonScene";
@@ -17,6 +19,10 @@ import { QuestionPanel } from "./QuestionPanel";
 import { ToppingChoice } from "./ToppingChoice";
 
 type Floater = { key: number; text: string; tone: "hit" | "crit" | "hurt" | "info"; side: "monster" | "me" };
+/** What the monster says, shown from `from` until `until` (server time). */
+type Speech = { key: number; text: string; from: number; until: number };
+/** The floor map hides this long before the first question, so the monster can greet first. */
+const GREET_MS = 1300;
 /** The question just answered, kept on screen with its outcome until the next one starts. */
 type Shown = { question: DungeonQuestion; picked: number | null; typed: string; outcome: DungeonOutcome };
 
@@ -44,6 +50,17 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
   const [typeShake, setTypeShake] = useState(0);
   const [floaters, setFloaters] = useState<Floater[]>([]);
   const [dying, setDying] = useState(false);
+  // The first monster greets as the map gives way to it.
+  const [speech, setSpeech] = useState<Speech | null>(() =>
+    initial.questionStartsAt !== null && initial.phase === "fight"
+      ? {
+          key: 1,
+          text: monsterLine(initial.monster.kind, initial.floor, "appear"),
+          from: initial.questionStartsAt - GREET_MS,
+          until: initial.questionStartsAt + 1800,
+        }
+      : null
+  );
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -75,6 +92,9 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
     playBlaster(view.monster.boss ? "go" : "count");
   }, [floorKey, view.monster.boss]);
   const intro = view.phase === "fight" && !shown && view.questionStartsAt !== null && serverNow < view.questionStartsAt;
+  // A floor opens on its map; the last stretch before the clock belongs to the monster's greeting.
+  const mapShowing = intro && view.questionStartsAt !== null && view.questionStartsAt - serverNow > GREET_MS;
+  const saying = speech && !mapShowing && serverNow >= speech.from && serverNow < speech.until ? speech : null;
 
   const float = useCallback((text: string, tone: Floater["tone"], side: Floater["side"]) => {
     floatId.current += 1;
@@ -104,6 +124,10 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
           float(o.crit ? `Chí mạng −${o.damage}` : `−${o.damage}`, o.crit ? "crit" : "hit", "monster");
           playBlaster("shoot");
           if (res.combo >= 2) playBlaster("combo", res.combo);
+          if (o.killed)
+            setSpeech((p) => ({ key: (p?.key ?? 0) + 1, text: monsterLine(res.monster.kind, res.floor, "defeat"), from: res.serverNow, until: res.serverNow + 1400 }));
+          else if (saysOnHit(res.stats.answered))
+            setSpeech((p) => ({ key: (p?.key ?? 0) + 1, text: monsterLine(res.monster.kind, res.floor, "hit", res.stats.answered), from: res.serverNow, until: res.serverNow + 1600 }));
           if (o.killed) {
             spawnExplosion(fxRef.current, at.x, at.y, t, Math.random, reduce ? 0.5 : res.monster.boss ? 1.8 : 1.2);
             playBlaster("explode");
@@ -169,6 +193,13 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
     try {
       const res = await dungeonService.pick(view.sessionId, id);
       playBlaster("speedUp");
+      if (res.questionStartsAt !== null)
+        setSpeech((p) => ({
+          key: (p?.key ?? 0) + 1,
+          text: monsterLine(res.monster.kind, res.floor, "appear"),
+          from: res.questionStartsAt! - GREET_MS,
+          until: res.questionStartsAt! + 1800,
+        }));
       setShown(null);
       setPicked(null);
       setTyped("");
@@ -203,6 +234,21 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
             <>
               <MonsterPlate view={view} />
               <div ref={monsterRef} className="relative">
+                <AnimatePresence>
+                  {saying && (
+                    <motion.p
+                      key={saying.key}
+                      role="status"
+                      initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.7, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ type: "spring", stiffness: 380, damping: 22 }}
+                      className="absolute -top-4 left-[78%] z-10 w-max max-w-[min(15rem,60vw)] origin-bottom-left rounded-2xl rounded-bl-sm bg-amber-50 px-3 py-2 text-sm font-bold leading-snug text-amber-950 shadow-lg"
+                    >
+                      {saying.text}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
                 <Monster kind={view.monster.kind} floor={view.floor} hitKey={hitKey} dead={dying || (view.phase === "pick" && !shown)} reduce={reduce} size={monsterSize} />
                 <div className="pointer-events-none absolute inset-0" aria-hidden="true">
                   <AnimatePresence>
@@ -298,21 +344,14 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
       </div>
 
 
-      <div className="pointer-events-none absolute inset-x-0 top-[38%] z-30 flex justify-center" aria-live="assertive" data-dungeon-callout>
+      <div className="pointer-events-none absolute inset-x-0 top-[24%] z-30 flex justify-center" aria-live="assertive" data-dungeon-callout>
+        <AnimatePresence>{mapShowing && <FloorMap key={`map-${view.floor}`} floor={view.floor} reduce={reduce} />}</AnimatePresence>
+      </div>
+      {/* The map stands alone: the cellar dims behind it until the monster steps up. */}
+      <div className="pointer-events-none absolute inset-0 z-[25]" aria-hidden="true">
         <AnimatePresence>
-          {intro && (
-            <motion.p
-              key={`intro-${view.floor}`}
-              initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.2 }}
-              transition={{ type: "spring", stiffness: 300, damping: 18 }}
-              className={`rounded-2xl border px-6 py-3 text-3xl font-black shadow-2xl sm:text-4xl ${
-                view.monster.boss ? "border-rose-400/50 bg-rose-950/80 text-rose-100" : "border-amber-300/40 bg-black/75 text-amber-100"
-              }`}
-            >
-              {floorLabel(view.floor, view.monster.boss)}
-            </motion.p>
+          {mapShowing && (
+            <motion.div key={`dim-${view.floor}`} className="absolute inset-0 bg-black/70" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} />
           )}
         </AnimatePresence>
       </div>

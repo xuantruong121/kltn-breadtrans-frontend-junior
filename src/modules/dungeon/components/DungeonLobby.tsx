@@ -4,12 +4,14 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { motion, useReducedMotion } from "framer-motion";
-import { CalendarDays, Crown, DoorOpen, Footprints, Heart, Shuffle, Trophy, Wheat } from "lucide-react";
+import { BookOpen, CalendarDays, Crown, DoorOpen, Footprints, Heart, Shuffle, Trophy, Wheat } from "lucide-react";
 import { dungeonService, type DungeonMode } from "@/lib/api/services/dungeon.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { useAuthStore } from "@/stores/authStore";
 import { Monster } from "./Monster";
+import { DungeonStory } from "./DungeonStory";
+import { STORY_SEEN_KEY } from "../dungeonStory";
 
 const TICKET = 20;
 
@@ -28,8 +30,34 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
   });
   const short = !isGuest && balance !== null && balance < TICKET;
 
-  const begin = async (mode: DungeonMode) => {
+  // The opening story: before the very first run, and whenever asked for again.
+  const [story, setStory] = useState<{ then: DungeonMode | null } | null>(null);
+  const storySeen = () => {
+    try {
+      return window.localStorage.getItem(STORY_SEEN_KEY) === "1";
+    } catch {
+      return true;
+    }
+  };
+  const closeStory = () => {
+    const then = story?.then ?? null;
+    setStory(null);
+    try {
+      window.localStorage.setItem(STORY_SEEN_KEY, "1");
+    } catch {
+      /* storage blocked */
+    }
+    if (then) void enter(then);
+  };
+
+  const begin = (mode: DungeonMode) => {
     if (isGuest) return onGuest();
+    arenaSound.unlock();
+    if (!storySeen()) setStory({ then: mode });
+    else void enter(mode);
+  };
+
+  const enter = async (mode: DungeonMode) => {
     setError(null);
     setStarting(mode);
     arenaSound.unlock();
@@ -57,6 +85,14 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 100 máu; từ trả lời sai sẽ quay lại vài câu sau.</li>
           <li className="flex items-center gap-2"><Wheat size={15} strokeWidth={2.25} aria-hidden="true" /> Vé {TICKET} Bánh Mì. Hạ boss tầng 5 thì hoàn vé, mỗi boss thêm 10.</li>
         </ul>
+        <button
+          type="button"
+          onClick={() => setStory({ then: null })}
+          className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-semibold text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/40"
+        >
+          <BookOpen size={15} strokeWidth={2.25} aria-hidden="true" />
+          Xem lại cốt truyện
+        </button>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col rounded-xl border-2 border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-950/30">
@@ -152,6 +188,7 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
           )}
         </div>
       </div>
+      {story && <DungeonStory onDone={closeStory} finalLabel={story.then ? "Xuống hầm" : "Đóng"} />}
     </section>
   );
 }

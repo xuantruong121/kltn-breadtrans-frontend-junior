@@ -4,10 +4,10 @@ import assert from "node:assert/strict";
 import { GAME_KIND, gameStatus, isNew } from "./gameNav.ts";
 
 describe("isNew", () => {
-  test("Hầm Bánh Mì wears the tag until 23 Nov 2026 in Vietnam; the others never", () => {
+  test("Hầm Bánh Mì wears the tag until 15 Nov 2026 in Vietnam; the others never", () => {
     assert.equal(isNew("dungeon", new Date("2026-11-09T10:00:00+07:00")), true);
-    assert.equal(isNew("dungeon", new Date("2026-11-23T23:00:00+07:00")), true);
-    assert.equal(isNew("dungeon", new Date("2026-11-24T00:30:00+07:00")), false);
+    assert.equal(isNew("dungeon", new Date("2026-11-15T23:00:00+07:00")), true);
+    assert.equal(isNew("dungeon", new Date("2026-11-16T00:30:00+07:00")), false);
     assert.equal(isNew("duel", new Date("2026-11-09T10:00:00+07:00")), false);
   });
 });
