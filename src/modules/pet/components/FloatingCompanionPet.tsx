@@ -27,6 +27,7 @@ import { PetSpeechBubble } from "./PetSpeechBubble";
 import {
   getPetVisualState,
   getPetStatusCopy,
+  getPetSatietyState,
   canFeedPet,
   handleFeedFailure,
   getPetRecommendation,
@@ -44,7 +45,7 @@ const FloatingCompanionPetInner: React.FC = () => {
   const queryClient = useQueryClient();
   const { isOpen: isTutorOpen, setIsOpen: setTutorOpen } = useChatAssistantStore();
 
-  const { isFocusMode, pet, balance, today } = useCompanionPetRuntime();
+  const { isFocusMode, pet, balance, today, isLoading } = useCompanionPetRuntime();
 
   // Floating UI state machine
   const [isExpanded, setIsExpanded] = useState(false);
@@ -81,23 +82,35 @@ const FloatingCompanionPetInner: React.FC = () => {
   }, [speciesId]);
 
   const satiety = Math.min(100, Math.max(0, pet?.satiety ?? 80));
-  const petDisplayName = pet?.name || speciesInfo.speciesName || "Bready";
+  // One name everywhere: the bubble and the panel used to disagree.
+  const petDisplayName = speciesInfo.speciesName || pet?.name || "Bready";
+  const feedCost = pet?.feedCost ?? 10;
 
   const { streak } = useGamificationStore();
+  const todayQuests = useMemo(() => today?.quests ?? [], [today?.quests]);
   const {
     dialogue,
     isVisible: isDialogueVisible,
-    isBouncing,
-    triggerBounce,
     dismiss: dismissDialogue,
   } = usePetDialogue({
+    ready: !isLoading && Boolean(pet) && Boolean(today),
+    userId: user?.id,
+    dateKey: today?.dateKey,
     petName: petDisplayName,
-    satiety,
-    satietyState: pet?.satietyState,
+    satietyState: pet ? (pet.satietyState ?? getPetSatietyState(satiety)) : undefined,
+    balance,
+    feedCost,
     streak,
-    todayQuests: today?.quests,
-    enabled: Boolean(user) && !isFocusMode,
+    activitiesCount: today?.activities?.length ?? 0,
+    quests: todayQuests,
   });
+
+  // The avatar bounces when tapped.
+  const [isBouncing, setIsBouncing] = useState(false);
+  const triggerBounce = () => {
+    setIsBouncing(true);
+    setTimeout(() => setIsBouncing(false), 500);
+  };
 
   const visualEmotion = useMemo(() => {
     return getPetVisualState({
@@ -116,7 +129,6 @@ const FloatingCompanionPetInner: React.FC = () => {
     return canFeedPet(pet, balance);
   }, [pet, balance]);
 
-  const feedCost = pet?.feedCost ?? 10;
   const satietyText = useMemo(() => {
     return getPetStatusCopy({
       petName: petDisplayName,
@@ -208,7 +220,7 @@ const FloatingCompanionPetInner: React.FC = () => {
     return null;
   }
 
-  const petName = speciesInfo.speciesName || pet?.name || "Bready";
+  const petName = petDisplayName;
   const level = pet?.level ?? 1;
   const health = Math.min(100, Math.max(0, pet?.health ?? 100));
   const happiness = Math.min(100, Math.max(0, pet?.happiness ?? 100));
@@ -230,6 +242,8 @@ const FloatingCompanionPetInner: React.FC = () => {
         dialogue={dialogue}
         isVisible={isDialogueVisible && !isExpanded}
         onDismiss={dismissDialogue}
+        onFeed={handleFeedClick}
+        feedDisabled={feedMutation.isPending || !feedEligibility.allowed}
       />
 
       {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe bottom sheet) */}

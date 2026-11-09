@@ -9,8 +9,12 @@
 export function isCompanionPetHidden(pathname: string, tab: string | null): boolean {
   if (pathname === "/diagnostic" || pathname.startsWith("/diagnostic/")) return true;
   if (pathname.startsWith("/gate/")) return true;
+  // Onboarding: the bubble covered the "Tiếp tục" button (owner 2026-11-09).
+  if (pathname === "/onboarding") return true;
   // Pháo Bánh Mì: the pet would sit on the answer box.
   if (pathname === "/arena/word-blaster") return true;
+  // Hầm Bánh Mì: the pet would sit on the answers.
+  if (pathname === "/arena/dungeon") return true;
   if ((pathname === "/student" || pathname === "/hub") && (tab === "diagnostic" || tab === "diagnostic-result")) {
     return true;
   }

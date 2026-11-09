@@ -18,6 +18,10 @@ test("a TOEIC exam page and its attempts hide the pet (CP60-UX-02)", () => {
   assert.equal(isCompanionPetHidden("/toeic/assessments/16/attempts/41/result", null), true);
 });
 
+test("onboarding hides the pet, so its bubble cannot cover the Continue button", () => {
+  assert.equal(isCompanionPetHidden("/onboarding", null), true);
+});
+
 test("catalog and history pages keep the pet", () => {
   assert.equal(isCompanionPetHidden("/exams", null), false);
   assert.equal(isCompanionPetHidden("/toeic/history", null), false);

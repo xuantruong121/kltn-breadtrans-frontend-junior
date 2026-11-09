@@ -127,8 +127,9 @@ export function isLearningFocusRoute(pathname: string): boolean {
     ASSESSMENT_ROOM.test(pathname) ||
     pathname === "/vocabulary/study" ||
     pathname.startsWith("/vocabulary/study/") ||
-    // Pháo Bánh Mì fills the screen; the header would only get in the way.
-    pathname === "/arena/word-blaster"
+    // Pháo Bánh Mì and Hầm Bánh Mì fill the screen; the header would only get in the way.
+    pathname === "/arena/word-blaster" ||
+    pathname === "/arena/dungeon"
   );
 }
 

@@ -8,6 +8,8 @@ interface StudyFooterProps {
   newCount: number;
   learnedCount: number;
   reviewCount: number;
+  /** Over the forest scene: a glass bar (see .scene-glass in globals.css). */
+  glass?: boolean;
 }
 
 const MODE_STAGE_NUMBERS: Record<StudyMode, { step: number; title: string }> = {
@@ -22,11 +24,12 @@ export const StudyFooter: React.FC<StudyFooterProps> = ({
   newCount,
   learnedCount,
   reviewCount,
+  glass = false,
 }) => {
   const currentStageInfo = MODE_STAGE_NUMBERS[currentMode];
 
   return (
-    <footer className="w-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 py-3.5 px-4 sticky bottom-0 z-20">
+    <footer className={`w-full ${glass ? "glass-bar" : "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md"} border-t border-slate-200/80 dark:border-slate-800 py-3.5 px-4 sticky bottom-0 z-20`}>
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-center sm:text-left">
         {/* Stage Counter Centered in muted text */}
         <div className="text-xs font-bold text-slate-600 dark:text-slate-400">

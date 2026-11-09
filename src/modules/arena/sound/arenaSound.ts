@@ -1,13 +1,20 @@
+import { LOBBY_PLAYLIST, nextTrack, parseSoundPrefs, DEFAULT_SOUND_PREFS, type SoundPrefs } from "./arenaSoundLogic";
+
 /**
- * Arena audio: short effects and two background loops, all CC0 files under
- * public/sounds/arena (see public/sounds/CREDITS.md). Browsers only allow
- * sound after the user has interacted with the page, so nothing plays until
+ * Arena audio: short effects, the lobby's lofi playlist and the match loop,
+ * all CC0 files (see public/sounds/CREDITS.md). Browsers only allow sound
+ * after the user has interacted with the page, so nothing plays until
  * `unlock()` runs from a click. Music pauses while the tab is hidden.
- * Preferences live in localStorage; a blocked storage simply keeps defaults.
+ * Preferences (music, effects, music volume, the lobby scene) live in
+ * localStorage; a blocked storage simply keeps defaults.
+ *
+ * Owner 2026-11-09: the lobby plays lofi, track after track, with one music
+ * control for the whole Arena page (ArenaMusicDock); matches keep the faster
+ * loop.
  */
 export type SfxName = "select" | "correct" | "wrong" | "tick" | "matchFound" | "roundStart" | "win" | "lose" | "draw";
 export type MusicTrack = "lobby" | "battle";
-export type SoundPrefs = { music: boolean; sfx: boolean };
+export type { SoundPrefs };
 
 const SFX_FILES: Record<SfxName, string> = {
   select: "/sounds/arena/select.wav",
@@ -20,28 +27,22 @@ const SFX_FILES: Record<SfxName, string> = {
   lose: "/sounds/arena/lose.ogg",
   draw: "/sounds/arena/draw.ogg",
 };
-const MUSIC_FILES: Record<MusicTrack, string> = {
-  lobby: "/sounds/arena/lobby.mp3",
-  battle: "/sounds/arena/battle.mp3",
-};
-const MUSIC_VOLUME = 0.35;
+const BATTLE_FILE = "/sounds/arena/battle.mp3";
 const SFX_VOLUME = 0.6;
 const STORAGE_KEY = "breadtrans.arena.sound";
 
-let prefs: SoundPrefs = { music: true, sfx: true };
+let prefs: SoundPrefs = { ...DEFAULT_SOUND_PREFS };
 let unlocked = false;
 let wantedTrack: MusicTrack | null = null;
 let music: HTMLAudioElement | null = null;
-let musicTrack: MusicTrack | null = null;
+/** What `music` is playing: "battle", or "lobby:<index>". */
+let loaded: string | null = null;
+let lobbyIndex = 0;
 const listeners = new Set<() => void>();
 
 function readPrefs() {
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as Partial<SoundPrefs>;
-      prefs = { music: parsed.music !== false, sfx: parsed.sfx !== false };
-    }
+    prefs = parseSoundPrefs(window.localStorage.getItem(STORAGE_KEY));
   } catch {
     /* storage blocked: keep defaults */
   }
@@ -60,33 +61,48 @@ function ensureStarted() {
   if (started || typeof window === "undefined") return;
   started = true;
   readPrefs();
+  lobbyIndex = Math.floor(Math.random() * LOBBY_PLAYLIST.length);
   document.addEventListener("visibilitychange", syncMusic);
-}
-
-function syncMusic() {
-  const shouldPlay = unlocked && prefs.music && wantedTrack !== null && document.visibilityState === "visible";
-  if (!shouldPlay) {
-    music?.pause();
-    return;
-  }
-  if (!music || musicTrack !== wantedTrack) {
-    music?.pause();
-    music = new Audio(MUSIC_FILES[wantedTrack!]);
-    music.loop = true;
-    music.volume = MUSIC_VOLUME;
-    musicTrack = wantedTrack;
-  }
-  void music.play().catch(() => undefined);
 }
 
 function emit() {
   for (const listener of listeners) listener();
 }
 
+/** Whether music is actually sounding now (for the dock's spinning record). */
+const sounding = () =>
+  typeof document !== "undefined" && unlocked && prefs.music && wantedTrack !== null && document.visibilityState === "visible";
+
+function syncMusic() {
+  if (!sounding()) {
+    music?.pause();
+    emit();
+    return;
+  }
+  const want = wantedTrack === "battle" ? "battle" : `lobby:${lobbyIndex}`;
+  if (!music || loaded !== want) {
+    music?.pause();
+    const file = wantedTrack === "battle" ? BATTLE_FILE : LOBBY_PLAYLIST[lobbyIndex].file;
+    const el = new Audio(file);
+    el.loop = wantedTrack === "battle";
+    if (wantedTrack === "lobby")
+      el.addEventListener("ended", () => {
+        lobbyIndex = nextTrack(lobbyIndex, LOBBY_PLAYLIST.length);
+        syncMusic();
+      });
+    music = el;
+    loaded = want;
+  }
+  music.volume = prefs.musicVolume;
+  void music.play().catch(() => undefined);
+  emit();
+}
+
 export const arenaSound = {
   /** Call from a click handler: the first user gesture allows audio. */
   unlock() {
     ensureStarted();
+    if (unlocked) return;
     unlocked = true;
     syncMusic();
   },
@@ -97,20 +113,36 @@ export const arenaSound = {
     audio.volume = SFX_VOLUME;
     void audio.play().catch(() => undefined);
   },
-  /** The loop for the current screen; null stops the music. */
+  /** The music for the current screen; null stops it. */
   setMusic(track: MusicTrack | null) {
     ensureStarted();
     wantedTrack = track;
     syncMusic();
   },
+  /** The next lobby track (the dock's skip button). */
+  nextSong() {
+    ensureStarted();
+    lobbyIndex = nextTrack(lobbyIndex, LOBBY_PLAYLIST.length);
+    syncMusic();
+    emit();
+  },
   getPrefs(): SoundPrefs {
     ensureStarted();
     return prefs;
+  },
+  /** The lobby track now (an index into LOBBY_PLAYLIST). */
+  getTrack(): number {
+    ensureStarted();
+    return lobbyIndex;
+  },
+  isPlaying(): boolean {
+    return sounding();
   },
   setPrefs(next: Partial<SoundPrefs>) {
     ensureStarted();
     prefs = { ...prefs, ...next };
     savePrefs();
+    if (music) music.volume = prefs.musicVolume;
     syncMusic();
     emit();
   },
@@ -122,6 +154,7 @@ export const arenaSound = {
   stop() {
     wantedTrack = null;
     music?.pause();
+    emit();
   },
 };
 

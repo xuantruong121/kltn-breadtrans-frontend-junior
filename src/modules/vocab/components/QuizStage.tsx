@@ -28,7 +28,7 @@ export const QuizStage: React.FC<QuizStageProps> = ({
   return (
     <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6">
       {/* Question Header Card */}
-      <div className="w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 text-center space-y-4 shadow-xs">
+      <div className="glass-face w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 text-center space-y-4 shadow-xs">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
             <HelpCircle size={15} />
@@ -77,7 +77,7 @@ export const QuizStage: React.FC<QuizStageProps> = ({
         {options.map((option) => {
           const isSelected = selectedKey === option.key;
           let styleClass =
-            "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50/40 dark:hover:bg-sky-950/30";
+            "glass-fill bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 hover:border-sky-400 dark:hover:border-sky-500 hover:bg-sky-50/40 dark:hover:bg-sky-950/30";
 
           if (answered) {
             if (option.isCorrect) {

@@ -12,7 +12,7 @@ export function ArenaRecord({ stats, isGuest, isLoading }: { stats: ArenaStats |
   const s = stats;
   const share = (n: number) => (s && s.played > 0 ? `${(n / s.played) * 100}%` : "0%");
   return (
-    <section aria-labelledby="record-title" className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
+    <section aria-labelledby="record-title" className="glass-face flex flex-col rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6">
       <h2 id="record-title" className="text-lg font-bold text-slate-900 dark:text-slate-100">
         Thành tích của bạn
       </h2>

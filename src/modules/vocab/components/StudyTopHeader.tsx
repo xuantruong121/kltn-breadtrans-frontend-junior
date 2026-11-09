@@ -4,6 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Eye, Gamepad2, SlidersHorizontal } from "lucide-react";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
+import { AmbienceMenu } from "./AmbiencePanel";
 
 interface StudyTopHeaderProps {
   topicTitle: string;
@@ -33,6 +34,7 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
         activityLabel="Học từ vựng"
         onExit={() => router.push("/flashcard")}
         exitLabel="Thoát"
+        className="glass-bar"
         statusContent={
           <div className="flex items-center gap-1.5 xs:gap-2">
             <div className="text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-lg whitespace-nowrap">
@@ -65,6 +67,8 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
               </button>
             )}
 
+            <AmbienceMenu />
+
             <button
               type="button"
               onClick={onOpenSettings}
@@ -80,7 +84,7 @@ export const StudyTopHeader: React.FC<StudyTopHeaderProps> = ({
 
       {/* Top Progress Line across screen width */}
       <div
-        className="w-full h-1 bg-slate-800 overflow-hidden"
+        className="glass-bar w-full h-1 bg-slate-800 overflow-hidden"
         role="progressbar"
         aria-valuenow={completionPercentage}
         aria-valuemin={0}
