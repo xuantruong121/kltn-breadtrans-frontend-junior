@@ -33,7 +33,6 @@ export function ListeningAudioPlayer({
   onPlaybackChange,
 }: ListeningAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const objectUrlRef = useRef<string | null>(null);
 
   const [loadedQuestionId, setLoadedQuestionId] = useState<number | null>(null);
   const [errorQuestionId, setErrorQuestionId] = useState<number | null>(null);
@@ -53,22 +52,17 @@ export function ListeningAudioPlayer({
   const isLoading = loadedQuestionId !== questionId && errorQuestionId !== questionId;
   const error = errorQuestionId === questionId;
 
-  // Fetch audio blob with AbortController on question change or manual retry
+  // Ask where the audio lives on question change or manual retry; the browser
+  // then streams it from storage (and caches a dialogue's shared track once).
   useEffect(() => {
     const controller = new AbortController();
     const currentAudio = audioRef.current;
     let isMounted = true;
 
     quizService
-      .getQuestionAudioBlob(quizId, questionId, controller.signal)
-      .then((blob) => {
+      .getQuestionAudioUrl(quizId, questionId, controller.signal)
+      .then(({ url }) => {
         if (!isMounted) return;
-        if (objectUrlRef.current) {
-          URL.revokeObjectURL(objectUrlRef.current);
-        }
-        const url = URL.createObjectURL(blob);
-        objectUrlRef.current = url;
-
         if (currentAudio) {
           currentAudio.src = url;
           currentAudio.playbackRate = playbackRateRef.current;
@@ -95,10 +89,6 @@ export function ListeningAudioPlayer({
       if (currentAudio) {
         currentAudio.pause();
         currentAudio.src = "";
-      }
-      if (objectUrlRef.current) {
-        URL.revokeObjectURL(objectUrlRef.current);
-        objectUrlRef.current = null;
       }
     };
   }, [audioVersion, quizId, questionId, fetchKey]);
@@ -223,6 +213,13 @@ export function ListeningAudioPlayer({
             audioRef.current.playbackRate = playbackRateRef.current;
             onProgress?.(audioRef.current.currentTime, audioRef.current.duration || 0);
           }
+        }}
+        onError={(event) => {
+          // The audio now streams from storage: a dropped connection or an
+          // expired signed URL shows the retry button, which asks for a new URL.
+          // Clearing src on cleanup also fires this; that is not a failure.
+          if (!event.currentTarget.getAttribute("src")) return;
+          setErrorQuestionId(questionId);
         }}
         onPlay={() => {
           setIsPlaying(true);

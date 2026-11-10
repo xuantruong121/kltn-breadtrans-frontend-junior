@@ -1,6 +1,6 @@
 import type { PracticeLevel } from "@/lib/learning-path/practiceLevel";
 import {
-  buildQuestionAudioRequestPath,
+  buildQuestionAudioUrlRequestPath,
   type PublishedListeningAudioIdentity,
 } from "@/lib/audio/questionAudioRequest";
 import axiosClient from "../axiosClient";
@@ -255,15 +255,16 @@ export const quizService = {
     return await axiosClient.get(`/quizzes/${id}`);
   },
 
-  getQuestionAudioBlob: async (
+  /** Where the browser loads a question's audio from (storage, not the API). */
+  getQuestionAudioUrl: async (
     quizId: number,
     questionId: number,
     signal?: AbortSignal,
     artifact?: ListeningAudioArtifactIdentity | null,
-  ): Promise<Blob> => {
+  ): Promise<{ url: string }> => {
     return await axiosClient.get(
-      buildQuestionAudioRequestPath(quizId, questionId, artifact),
-      { responseType: "blob", signal },
+      buildQuestionAudioUrlRequestPath(quizId, questionId, artifact),
+      { signal },
     );
   },
 

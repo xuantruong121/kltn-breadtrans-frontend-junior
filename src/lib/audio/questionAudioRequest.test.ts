@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildQuestionAudioRequestPath } from "./questionAudioRequest.ts";
+import { buildQuestionAudioRequestPath, buildQuestionAudioUrlRequestPath } from "./questionAudioRequest.ts";
 
 test("question-level listening audio does not impersonate a quiz artifact", () => {
   assert.equal(
@@ -17,5 +17,13 @@ test("published quiz artifact identity is retained for continuous playback", () 
       checksumSha256: "checksum-v3",
     }),
     "/quizzes/25/questions/155/audio?artifactId=18&v=3&checksum=checksum-v3",
+  );
+});
+
+test("the audio-url request carries the same identity", () => {
+  assert.equal(buildQuestionAudioUrlRequestPath(25, 155), "/quizzes/25/questions/155/audio-url");
+  assert.equal(
+    buildQuestionAudioUrlRequestPath(25, 155, { id: 18, version: 3, checksumSha256: "checksum-v3" }),
+    "/quizzes/25/questions/155/audio-url?artifactId=18&v=3&checksum=checksum-v3",
   );
 });

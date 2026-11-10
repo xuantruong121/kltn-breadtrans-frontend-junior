@@ -109,6 +109,9 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
   const [audioError, setAudioError] = useState<string | null>(null);
+  // Signed master URL renewal: asked once per failure, then where to resume.
+  const masterRenewedRef = useRef(false);
+  const masterResumeRef = useRef<{ at: number; playing: boolean } | null>(null);
   const [realPosition, setRealPosition] = useState(0);
   const [clipDuration, setClipDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -127,7 +130,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const legacyStrict = Boolean(attempt?.section);
   const section = attempt?.section ?? null;
   const selectedParts = useMemo(() => attempt?.selectedParts ?? [], [attempt?.selectedParts]);
-  const { data: master } = useQuery({
+  const { data: master, refetch: refetchMaster } = useQuery({
     queryKey: ["toeic-listening-master", attemptId],
     queryFn: () => toeicService.getListeningMaster(attemptId),
     enabled: Boolean(attempt && !legacyStrict && attempt.status === "IN_PROGRESS"),
@@ -721,7 +724,11 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
               onRetry={() => {
                 if (audioError) {
                   if (strictGroup) void loadGroupClip(strictGroup, true);
-                  else if (masterReady) audioRef.current?.load();
+                  else if (masterReady?.url) {
+                    masterRenewedRef.current = false;
+                    setAudioError(null);
+                    void refetchMaster();
+                  } else if (masterReady) audioRef.current?.load();
                   else void loadGroupClip(listeningGroups[groupCursor], true);
                 } else void playElement();
               }}
@@ -805,13 +812,31 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
       <audio
         ref={audioRef}
         preload="metadata"
-        onLoadedMetadata={(e) => setClipDuration(e.currentTarget.duration || 0)}
+        onLoadedMetadata={(e) => {
+          setClipDuration(e.currentTarget.duration || 0);
+          // A renewed signed URL: carry on from where the learner was.
+          const resume = masterResumeRef.current;
+          if (resume) {
+            masterResumeRef.current = null;
+            e.currentTarget.currentTime = resume.at;
+            if (resume.playing) void e.currentTarget.play().catch(() => undefined);
+          }
+        }}
         onTimeUpdate={(e) => onTimeUpdate(e.currentTarget)}
         onPlay={() => setAudioPlaying(true)}
         onPause={() => setAudioPlaying(false)}
         onEnded={onEnded}
-        onError={() => {
-          if (masterReady) setAudioError("Không tải được bản ghi phần Nghe.");
+        onError={(e) => {
+          if (!masterReady) return;
+          // The master plays from storage through a signed URL that lasts the
+          // attempt; if it fails (expired, dropped), ask for a new one once.
+          if (masterReady.url && !masterRenewedRef.current) {
+            masterRenewedRef.current = true;
+            masterResumeRef.current = { at: e.currentTarget.currentTime, playing: !e.currentTarget.paused };
+            void refetchMaster();
+            return;
+          }
+          setAudioError("Không tải được bản ghi phần Nghe.");
         }}
         className="hidden"
       />
