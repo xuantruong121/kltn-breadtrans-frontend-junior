@@ -10,6 +10,7 @@ import { createFx, shake, spawnExplosion, spawnSparks, type FxState } from "@/mo
 import { FxLayer, type Aim } from "@/modules/word-blaster/components/FxLayer";
 import { clockAt, clockOffset } from "../dungeonLogic";
 import { monsterLine, saysOnHit } from "../dungeonStory";
+import { overlayArea, stageMode, type Rect } from "../stageLayout";
 import { FloorMap } from "./FloorMap";
 import { BossTyping } from "./BossTyping";
 import { DungeonHud, MonsterPlate } from "./DungeonHud";
@@ -71,6 +72,38 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
   const aimRef = useRef<Aim>(null);
   const floatId = useRef(0);
   const timedOutFor = useRef<number | null>(null);
+
+  // The HUD's height and where the answers sit, for the layout and the
+  // topping list (owner 2026-11-10: phones cut the answers off).
+  const [stage, setStage] = useState<{ w: number; h: number; hudBottom: number; answers: Rect | null }>({
+    w: 1366,
+    h: 900,
+    hudBottom: 96,
+    answers: null,
+  });
+  useEffect(() => {
+    const measure = () => {
+      const hud = document.querySelector("[data-dungeon-hud]")?.getBoundingClientRect();
+      const ans = document.querySelector("[data-dungeon-answers]")?.getBoundingClientRect();
+      const next = {
+        w: window.innerWidth,
+        h: window.innerHeight,
+        hudBottom: hud ? Math.round(hud.bottom) : 96,
+        answers: ans ? { top: Math.round(ans.top), left: Math.round(ans.left), right: Math.round(ans.right), bottom: Math.round(ans.bottom) } : null,
+      };
+      setStage((s) => (JSON.stringify(s) === JSON.stringify(next) ? s : next));
+    };
+    const first = window.requestAnimationFrame(measure);
+    const id = window.setInterval(measure, 250);
+    window.addEventListener("resize", measure);
+    return () => {
+      window.cancelAnimationFrame(first);
+      window.clearInterval(id);
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+  const mode = stageMode(stage.w, stage.h);
+  const area = overlayArea(stage.w, stage.h, stage.hudBottom, stage.answers);
 
   // A tenth of a second is enough for the clock bar.
   useEffect(() => {
@@ -226,31 +259,45 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
 
   const question = shown?.question ?? view.question;
   const choosing = view.phase === "pick" && !shown;
-  const monsterSize = typeof window !== "undefined" && window.innerHeight < 700 ? 150 : 210;
+  const monsterSize = mode.monsterSize;
+  const sideBySide = mode.landscape && !choosing;
 
   return (
     <div className="fixed inset-0 z-40 overflow-hidden bg-[#1a100c] text-white">
       <div ref={fieldRef} className="absolute inset-0 isolate flex flex-col overflow-hidden">
         <DungeonScene boss={view.monster.boss} reduce={reduce} />
 
-        <div className="relative flex flex-1 flex-col items-center justify-center gap-3 px-3 pb-4 pt-24 sm:pt-28">
+        {/* Scrolls only when a screen is too short for its content; short screens are laid out to fit first. */}
+        <div className="relative flex-1 overflow-y-auto overscroll-contain" data-dungeon-scroll>
+        <div
+          className={`mx-auto flex min-h-full w-full max-w-5xl items-center justify-center px-3 pb-4 ${sideBySide ? "flex-row gap-5" : "flex-col"} ${mode.compact ? "gap-2" : "gap-3"}`}
+          style={{ paddingTop: stage.hudBottom + 8 }}
+        >
           {!choosing && (
-            <>
+            <div className={`flex shrink-0 flex-col items-center ${mode.compact ? "gap-2" : "gap-3"}`}>
               <MonsterPlate view={view} />
               <div ref={monsterRef} className="relative">
                 <AnimatePresence>
                   {saying && (
-                    <motion.p
+                    // Beside the monster on a tall screen, kept inside the screen's width;
+                    // above it when the question sits beside the monster (a phone on its side),
+                    // so the words never cover an answer.
+                    <div
                       key={saying.key}
-                      role="status"
-                      initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.7, y: 8 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ type: "spring", stiffness: 380, damping: 22 }}
-                      className="absolute -top-4 left-[78%] z-10 w-max max-w-[min(15rem,60vw)] origin-bottom-left rounded-2xl rounded-bl-sm bg-amber-50 px-3 py-2 text-sm font-bold leading-snug text-amber-950 shadow-lg"
+                      className={`pointer-events-none absolute z-10 ${sideBySide ? "bottom-full left-1/2 mb-1 flex w-60 -translate-x-1/2 justify-center" : "-top-4 left-[78%]"}`}
                     >
-                      {saying.text}
-                    </motion.p>
+                      <motion.p
+                        role="status"
+                        initial={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.7, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ type: "spring", stiffness: 380, damping: 22 }}
+                        style={sideBySide ? undefined : { maxWidth: `min(15rem, max(7rem, calc(50vw - ${Math.round(0.28 * monsterSize + 12)}px)))` }}
+                        className={`w-max rounded-2xl bg-amber-50 px-3 py-2 text-sm font-bold leading-snug text-amber-950 shadow-lg ${sideBySide ? "max-w-60 origin-bottom text-center" : "origin-bottom-left rounded-bl-sm"}`}
+                      >
+                        {saying.text}
+                      </motion.p>
+                    </div>
                   )}
                 </AnimatePresence>
                 <Monster kind={view.monster.kind} floor={view.floor} hitKey={hitKey} dead={dying || (view.phase === "pick" && !shown)} reduce={reduce} size={monsterSize} />
@@ -274,13 +321,13 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
                   </AnimatePresence>
                 </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* The map stays while the learner picks a topping. */}
           {choosing && <FloorMap key={`next-${view.floor}`} floor={view.floor + 1} reduce={reduce} compact />}
 
-          <div className="relative flex w-full justify-center">
+          <div className={`relative flex justify-center ${sideBySide ? "min-w-0 flex-1" : "w-full"}`}>
             {choosing ? (
               <ToppingChoice view={view} pending={pending} reduce={reduce} onPick={(id) => void pick(id)} />
             ) : question?.type === "choice" ? (
@@ -293,6 +340,7 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
                 outcome={shown?.outcome ?? null}
                 disabled={pending || Boolean(shown) || intro || view.phase !== "fight"}
                 onPick={(i) => void answer({ choice: i })}
+                compact={mode.compact}
               />
             ) : question?.type === "typed" ? (
               <BossTyping
@@ -306,9 +354,11 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
                 shakeKey={typeShake}
                 onChange={setTyped}
                 onSubmit={() => void answer({ text: typed })}
+                compact={mode.compact}
               />
             ) : null}
           </div>
+        </div>
         </div>
 
         <FxLayer fx={fxRef} aim={aimRef} shakeRef={fieldRef} reduce={reduce} />
@@ -327,10 +377,10 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
         </AnimatePresence>
       </div>
 
-      <DungeonHud view={view} reduce={reduce} onLeave={() => setLeaveOpen(true)} />
+      <DungeonHud view={view} reduce={reduce} area={area} onLeave={() => setLeaveOpen(true)} />
 
       {/* The learner's own losses and saves show under their health bar (top left), not by the monster. */}
-      <div className="pointer-events-none absolute inset-x-0 top-[4.75rem] z-30 sm:top-[5.25rem]" aria-hidden="true">
+      <div className="pointer-events-none absolute inset-x-0 z-30" style={{ top: stage.hudBottom - 12 }} aria-hidden="true">
         <div className="mx-auto max-w-5xl px-5 sm:px-8">
           <AnimatePresence>
             {floaters

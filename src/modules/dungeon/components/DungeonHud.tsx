@@ -5,7 +5,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Backpack, Flame, Heart, LogOut } from "lucide-react";
 import type { DungeonView } from "@/lib/api/services/dungeon.service";
 import { SoundToggle } from "@/modules/arena/components/SoundToggle";
-import { MONSTER_NAME, floorLabel, hpTone } from "../dungeonLogic";
+import { MONSTER_NAME, hpTone } from "../dungeonLogic";
+import type { OverlayArea } from "../stageLayout";
 import { ToppingChips, ToppingPanel } from "./HeldToppings";
 
 
@@ -20,30 +21,45 @@ function Bar({ share, tone, label }: { share: number; tone: "ok" | "low" | "crit
 }
 
 /** The top of the cellar: the learner's health and floor, the toppings, sound and the way out. */
-export function DungeonHud({ view, reduce, onLeave }: { view: DungeonView; reduce: boolean; onLeave: () => void }) {
+export function DungeonHud({
+  view,
+  reduce,
+  area,
+  onLeave,
+}: {
+  view: DungeonView;
+  reduce: boolean;
+  /** Where the topping list and a chip's card may sit (under the HUD, clear of the answers). */
+  area: OverlayArea;
+  onLeave: () => void;
+}) {
   const me = hpTone(view.hp, view.maxHp);
   const [listOpen, setListOpen] = useState(false);
   const held = view.toppingsHeld ?? [];
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 px-2 pt-2 sm:px-4 sm:pt-3">
-      <div className="pointer-events-auto mx-auto flex max-w-5xl items-center gap-3 rounded-2xl border border-white/10 bg-black/55 px-3 py-2 text-white shadow-[0_8px_30px_rgba(0,0,0,0.4)] sm:gap-5 sm:px-4">
+      <div data-dungeon-hud className="pointer-events-auto mx-auto flex max-w-5xl items-center gap-2 rounded-2xl border border-white/10 bg-black/55 px-3 py-2 text-white shadow-[0_8px_30px_rgba(0,0,0,0.4)] sm:gap-5 sm:px-4">
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between text-xs font-bold">
-            <span className="inline-flex items-center gap-1 text-emerald-300">
+          <div className="flex items-center justify-between gap-2 text-xs font-bold">
+            <span className="inline-flex items-center gap-1 whitespace-nowrap text-emerald-300">
               <Heart size={13} strokeWidth={2.5} className="fill-current" aria-hidden="true" />
               <span className="tabular-nums">
                 {Math.max(0, view.hp)}/{view.maxHp}
               </span>
             </span>
-            <span className="text-amber-200">{floorLabel(view.floor, view.monster.boss)}</span>
+            <span className="whitespace-nowrap text-amber-200">
+              {/* The boss badge is on the monster's plate too; narrow phones keep only the floor. */}
+              Tầng {view.floor}
+              {view.monster.boss && <span className="max-[379px]:hidden"> · Boss</span>}
+            </span>
           </div>
           <div className="mt-1">
             <Bar share={me.share} tone={me.tone} label="Máu của bạn" />
           </div>
-          <ToppingChips held={held} />
+          <ToppingChips held={held} area={area} />
         </div>
 
-        <div className="flex h-9 w-16 shrink-0 items-center justify-center" aria-live="polite">
+        <div className="flex h-9 w-12 shrink-0 items-center justify-center sm:w-16" aria-live="polite">
           <AnimatePresence>
             {view.combo >= 2 && (
               <motion.span
@@ -81,15 +97,16 @@ export function DungeonHud({ view, reduce, onLeave }: { view: DungeonView; reduc
           <button
             type="button"
             onClick={onLeave}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-white/85 transition-colors hover:bg-rose-500/20 hover:text-rose-200"
+            aria-label="Rời hầm"
+            className="inline-flex min-h-9 min-w-9 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-white/85 transition-colors hover:bg-rose-500/20 hover:text-rose-200 sm:px-2.5"
           >
             <LogOut size={16} strokeWidth={2.25} aria-hidden="true" />
-            Rời hầm
+            <span className="max-[379px]:hidden">Rời hầm</span>
           </button>
         </div>
       </div>
       <div className="pointer-events-auto">
-        <ToppingPanel held={held} open={listOpen} onClose={() => setListOpen(false)} />
+        <ToppingPanel held={held} area={area} open={listOpen} onClose={() => setListOpen(false)} />
       </div>
     </div>
   );

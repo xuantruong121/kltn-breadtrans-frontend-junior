@@ -21,6 +21,7 @@ export function QuestionPanel({
   outcome,
   disabled,
   onPick,
+  compact = false,
 }: {
   question: Choice;
   share: number;
@@ -30,6 +31,8 @@ export function QuestionPanel({
   outcome: DungeonOutcome | null;
   disabled: boolean;
   onPick: (index: number) => void;
+  /** A short screen: answers two by two and tighter spacing, so all four stay on screen. */
+  compact?: boolean;
 }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -46,16 +49,19 @@ export function QuestionPanel({
 
   const urgent = started && share < 0.3;
   return (
-    <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-black/60 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.5)] sm:p-5">
+    <div
+      data-dungeon-answers
+      className={`w-full max-w-2xl rounded-2xl border border-white/10 bg-black/60 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ${compact ? "p-3" : "p-4 sm:p-5"}`}
+    >
       <div className="mb-3 h-2 overflow-hidden rounded-full bg-white/10" role="timer" aria-label={`Còn ${secondsLeft} giây`}>
         <div
           className={`h-full rounded-full transition-[width] duration-100 ease-linear ${urgent ? "bg-rose-500" : "bg-amber-400"}`}
           style={{ width: `${(started ? share : 1) * 100}%` }}
         />
       </div>
-      <p className="text-center text-lg font-bold leading-snug text-white sm:text-xl">{question.prompt}</p>
+      <p className={`text-center font-bold leading-snug text-white ${compact ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}>{question.prompt}</p>
       {question.ipa && <p className="mt-1 text-center text-sm text-white/70">/{question.ipa}/</p>}
-      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <div className={`grid gap-2 ${compact ? "mt-3 grid-cols-2" : "mt-4 sm:grid-cols-2"}`}>
         {question.options.map((option, i) => {
           const gone = question.removed.includes(i);
           const chosen = picked === i;
@@ -68,7 +74,7 @@ export function QuestionPanel({
               disabled={disabled || gone}
               onClick={() => onPick(i)}
               whileTap={disabled ? undefined : { scale: 0.97 }}
-              className={`flex min-h-12 items-center gap-3 rounded-xl border-2 px-3 py-2.5 text-left text-base font-semibold transition-colors ${
+              className={`flex items-center rounded-xl border-2 text-left font-semibold transition-colors ${compact ? "min-h-11 gap-2 px-2 py-1.5 text-sm sm:text-base" : "min-h-12 gap-3 px-3 py-2.5 text-base"} ${
                 gone
                   ? "border-white/5 bg-white/5 text-white/25 line-through"
                   : showRight

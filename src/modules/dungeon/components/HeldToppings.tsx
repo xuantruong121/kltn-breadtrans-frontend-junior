@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import type { HeldTopping, ToppingId } from "@/lib/api/services/dungeon.service";
 import { TOPPING_ICON } from "./toppingIcons";
 import { heldLevelLabel } from "../dungeonLogic";
+import type { OverlayArea } from "../stageLayout";
 
 /** Closes on Escape and on a press outside `ref` (owner 2026-11-10: the clock keeps running, so it must close easily). */
 function useDismiss(open: boolean, ref: React.RefObject<HTMLElement | null>, close: () => void) {
@@ -26,12 +27,21 @@ function useDismiss(open: boolean, ref: React.RefObject<HTMLElement | null>, clo
   }, [open, ref, close]);
 }
 
+/** `area` as inline style: fixed under the HUD, clear of the answers, scrolling inside if long. */
+const areaStyle = (area: OverlayArea): React.CSSProperties => ({
+  position: "fixed",
+  top: area.top,
+  left: area.left,
+  width: area.width,
+  maxHeight: area.maxHeight,
+});
+
 /**
  * The toppings in the HUD. Each chip is a button: a press, a hover or the
  * keyboard shows a small card under the HUD (over the cellar, never over the
  * answers) saying what it does now.
  */
-export function ToppingChips({ held }: { held: HeldTopping[] }) {
+export function ToppingChips({ held, area }: { held: HeldTopping[]; area: OverlayArea }) {
   const [active, setActive] = useState<ToppingId | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   useDismiss(active !== null, ref, () => setActive(null));
@@ -81,7 +91,8 @@ export function ToppingChips({ held }: { held: HeldTopping[] }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.12 }}
-            className="absolute left-0 top-full z-40 mt-2 w-[min(18rem,calc(100vw-2rem))] rounded-xl border border-white/15 bg-[#22150f] p-3 text-left text-white shadow-[0_12px_30px_rgba(0,0,0,0.5)]"
+            style={{ ...areaStyle(area), width: Math.min(area.width, 288) }}
+            className="z-40 overflow-y-auto rounded-xl border border-white/15 bg-[#22150f] p-3 text-left text-white shadow-[0_12px_30px_rgba(0,0,0,0.5)]"
           >
             <HeldCard h={shown} />
           </motion.div>
@@ -109,11 +120,12 @@ function HeldCard({ h }: { h: HeldTopping }) {
 }
 
 /**
- * Every topping held, from the HUD's bag button. Wide screens get a column at
- * the right edge, beside the answers; narrow ones a short sheet under the HUD,
- * above them. The question's clock does not stop.
+ * Every topping held, from the HUD's bag button, in `area` (stageLayout.ts):
+ * a column at the right edge on wide screens, the column left of the answers
+ * on a phone on its side, else the strip between the HUD and the answers.
+ * The question's clock does not stop.
  */
-export function ToppingPanel({ held, open, onClose }: { held: HeldTopping[]; open: boolean; onClose: () => void }) {
+export function ToppingPanel({ held, area, open, onClose }: { held: HeldTopping[]; area: OverlayArea; open: boolean; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   useDismiss(open, ref, onClose);
@@ -132,7 +144,8 @@ export function ToppingPanel({ held, open, onClose }: { held: HeldTopping[]; ope
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.15 }}
-          className="absolute inset-x-2 top-[4.5rem] z-40 flex max-h-[34vh] flex-col rounded-2xl border border-white/15 bg-[#22150f]/95 text-white shadow-[0_16px_40px_rgba(0,0,0,0.55)] sm:inset-x-4 sm:top-[5rem] xl:inset-x-auto xl:right-4 xl:top-[5.5rem] xl:max-h-[calc(100vh-7rem)] xl:w-72"
+          style={areaStyle(area)}
+          className="z-40 flex flex-col rounded-2xl border border-white/15 bg-[#22150f] text-white shadow-[0_16px_40px_rgba(0,0,0,0.55)]"
         >
           <div className="flex items-start gap-2 border-b border-white/10 px-3 py-2">
             <div className="min-w-0 flex-1">
