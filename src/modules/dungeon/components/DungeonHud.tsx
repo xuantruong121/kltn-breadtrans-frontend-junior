@@ -1,45 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  Crosshair,
-  Droplet,
-  Egg,
-  Eye,
-  Flame,
-  Heart,
-  HeartPulse,
-  Hourglass,
-  Leaf,
-  LogOut,
-  Scissors,
-  Shield,
-  ShieldHalf,
-  Sword,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
-import type { DungeonView, ToppingId } from "@/lib/api/services/dungeon.service";
+import { Backpack, Flame, Heart, LogOut } from "lucide-react";
+import type { DungeonView } from "@/lib/api/services/dungeon.service";
 import { SoundToggle } from "@/modules/arena/components/SoundToggle";
-import { MONSTER_NAME, TOPPING_NAME, floorLabel, hpTone } from "../dungeonLogic";
+import { MONSTER_NAME, floorLabel, hpTone } from "../dungeonLogic";
+import { ToppingChips, ToppingPanel } from "./HeldToppings";
 
-export const TOPPING_ICON: Record<ToppingId, LucideIcon> = {
-  garlic_butter: Sword,
-  sesame: HeartPulse,
-  cheese: Shield,
-  pate: Crosshair,
-  chili: Flame,
-  condensed_milk: Hourglass,
-  floss: Scissors,
-  egg: Egg,
-  sausage: Heart,
-  shallot: Zap,
-  cucumber: Leaf,
-  chili_sauce: Droplet,
-  breadstick: Eye,
-  salt_pepper: ShieldHalf,
-};
 
 function Bar({ share, tone, label }: { share: number; tone: "ok" | "low" | "critical" | "monster"; label: string }) {
   const fill =
@@ -54,7 +22,8 @@ function Bar({ share, tone, label }: { share: number; tone: "ok" | "low" | "crit
 /** The top of the cellar: the learner's health and floor, the toppings, sound and the way out. */
 export function DungeonHud({ view, reduce, onLeave }: { view: DungeonView; reduce: boolean; onLeave: () => void }) {
   const me = hpTone(view.hp, view.maxHp);
-  const owned = (Object.entries(view.toppings) as [ToppingId, number][]).filter(([, n]) => n > 0);
+  const [listOpen, setListOpen] = useState(false);
+  const held = view.toppingsHeld ?? [];
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 px-2 pt-2 sm:px-4 sm:pt-3">
       <div className="pointer-events-auto mx-auto flex max-w-5xl items-center gap-3 rounded-2xl border border-white/10 bg-black/55 px-3 py-2 text-white shadow-[0_8px_30px_rgba(0,0,0,0.4)] sm:gap-5 sm:px-4">
@@ -71,20 +40,7 @@ export function DungeonHud({ view, reduce, onLeave }: { view: DungeonView; reduc
           <div className="mt-1">
             <Bar share={me.share} tone={me.tone} label="Máu của bạn" />
           </div>
-          {owned.length > 0 && (
-            <ul className="mt-1.5 flex flex-wrap gap-1" aria-label="Topping đang có">
-              {owned.map(([id, n]) => {
-                const Icon = TOPPING_ICON[id];
-                return (
-                  <li key={id} title={`${TOPPING_NAME[id]}${n > 1 ? ` cấp ${n}` : ""}`} className="inline-flex items-center gap-0.5 rounded-md bg-white/10 px-1.5 py-0.5 text-[11px] font-semibold text-amber-100">
-                    <Icon size={12} strokeWidth={2.5} aria-hidden="true" />
-                    <span className="hidden sm:inline">{TOPPING_NAME[id]}</span>
-                    {n > 1 && <span className="tabular-nums">×{n}</span>}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <ToppingChips held={held} />
         </div>
 
         <div className="flex h-9 w-16 shrink-0 items-center justify-center" aria-live="polite">
@@ -109,6 +65,21 @@ export function DungeonHud({ view, reduce, onLeave }: { view: DungeonView; reduc
           </div>
           <button
             type="button"
+            onClick={() => setListOpen((o) => !o)}
+            aria-expanded={listOpen}
+            aria-label={`Topping đang có (${held.length})`}
+            title="Topping đang có"
+            className={`relative inline-flex size-9 items-center justify-center rounded-lg text-white/85 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${listOpen ? "bg-white/15" : ""}`}
+          >
+            <Backpack size={17} strokeWidth={2.25} aria-hidden="true" />
+            {held.length > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-amber-400 px-1 text-[10px] font-bold leading-4 text-amber-950 tabular-nums" aria-hidden="true">
+                {held.length}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
             onClick={onLeave}
             className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-semibold text-white/85 transition-colors hover:bg-rose-500/20 hover:text-rose-200"
           >
@@ -116,6 +87,9 @@ export function DungeonHud({ view, reduce, onLeave }: { view: DungeonView; reduc
             Rời hầm
           </button>
         </div>
+      </div>
+      <div className="pointer-events-auto">
+        <ToppingPanel held={held} open={listOpen} onClose={() => setListOpen(false)} />
       </div>
     </div>
   );

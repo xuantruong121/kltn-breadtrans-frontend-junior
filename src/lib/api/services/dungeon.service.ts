@@ -83,6 +83,24 @@ export interface DungeonResult {
   dailyRank: number | null;
 }
 
+/** A number a topping moves, before and after taking it, as the server words it. */
+export interface ToppingEffect {
+  label: string;
+  now: string;
+  next: string;
+}
+
+/** A topping the run holds: what it does now and the number it sets. */
+export interface HeldTopping {
+  id: ToppingId;
+  name: string;
+  level: number;
+  max: number;
+  line: string;
+  label: string;
+  value: string;
+}
+
 export interface DungeonView {
   sessionId: string;
   mode: DungeonMode;
@@ -94,7 +112,9 @@ export interface DungeonView {
   toppings: Partial<Record<ToppingId, number>>;
   monster: { kind: MonsterKind; hp: number; maxHp: number; boss: boolean };
   phase: "fight" | "pick" | "over";
-  offers: { id: ToppingId; name: string; line: string; rarity: "common" | "rare" | "epic"; level: number }[];
+  /** `line`: what the topping does at the level it would reach; `effect`: the number it moves, now and after. */
+  offers: { id: ToppingId; name: string; line: string; rarity: "common" | "rare" | "epic"; level: number; max: number; effect: ToppingEffect }[];
+  toppingsHeld: HeldTopping[];
   question: DungeonQuestion | null;
   questionStartsAt: number | null;
   questionDeadline: number | null;

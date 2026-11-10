@@ -42,6 +42,17 @@ export const TOPPING_NAME: Record<ToppingId, string> = {
 
 export const RARITY_LABEL = { common: "Thường", rare: "Hiếm", epic: "Quý" } as const;
 
+/** A topping with no real cap (Dưa leo, max 99) counts uses, not levels. */
+const counted = (max: number) => max > 9;
+
+/** The level a held topping is at: "Cấp 2/3", or "Đã dùng 2 lần" for Dưa leo. */
+export const heldLevelLabel = (t: { level: number; max: number }) =>
+  counted(t.max) ? `Đã dùng ${t.level} lần` : `Cấp ${t.level}/${t.max}`;
+
+/** What taking an offer does to its level: "Mới", "Lên cấp 2/3", or for Dưa leo "Đã dùng 1 lần". */
+export const offerLevelLabel = (t: { level: number; max: number }) =>
+  t.level === 0 ? "Mới" : counted(t.max) ? `Đã dùng ${t.level} lần` : `Lên cấp ${t.level + 1}/${t.max}`;
+
 /** Server time minus browser time, measured when a reply arrives. */
 export const clockOffset = (serverNow: number, browserNow: number) => serverNow - browserNow;
 

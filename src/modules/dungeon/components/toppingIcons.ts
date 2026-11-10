@@ -1,0 +1,35 @@
+import {
+  Crosshair,
+  Droplet,
+  Egg,
+  Eye,
+  Flame,
+  Heart,
+  HeartPulse,
+  Hourglass,
+  Leaf,
+  Scissors,
+  Shield,
+  ShieldHalf,
+  Sword,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+import type { ToppingId } from "@/lib/api/services/dungeon.service";
+
+export const TOPPING_ICON: Record<ToppingId, LucideIcon> = {
+  garlic_butter: Sword,
+  sesame: HeartPulse,
+  cheese: Shield,
+  pate: Crosshair,
+  chili: Flame,
+  condensed_milk: Hourglass,
+  floss: Scissors,
+  egg: Egg,
+  sausage: Heart,
+  shallot: Zap,
+  cucumber: Leaf,
+  chili_sauce: Droplet,
+  breadstick: Eye,
+  salt_pepper: ShieldHalf,
+};
