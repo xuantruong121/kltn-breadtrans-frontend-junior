@@ -136,13 +136,14 @@ export function RankingBoard({
 
       {rest.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-          <table className="w-full text-sm">
+          {/* Fixed layout: a long name truncates instead of pushing the value column out. */}
+          <table className="w-full table-fixed text-sm">
             <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800/60 dark:text-slate-400">
               <tr>
-                <th scope="col" className="w-16 px-4 py-3 text-left sm:px-6">Hạng</th>
+                <th scope="col" className="w-14 px-4 py-3 text-left sm:w-20 sm:px-6">Hạng</th>
                 <th scope="col" className="px-2 py-3 text-left">Học viên</th>
-                <th scope="col" className="hidden px-2 py-3 text-center sm:table-cell">Cấp độ</th>
-                <th scope="col" className="px-4 py-3 text-right sm:px-6">{valueHeading(metric)}</th>
+                <th scope="col" className="hidden w-24 px-2 py-3 text-center sm:table-cell">Cấp độ</th>
+                <th scope="col" className="w-28 px-4 py-3 text-right sm:w-32 sm:px-6">{valueHeading(metric)}</th>
               </tr>
             </thead>
             <tbody>

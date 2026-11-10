@@ -4,6 +4,7 @@ import {
   MAIN_NAV_ORDER,
   MORE_DROPDOWN_ITEMS,
   MAX_HEADER_NAV_BUTTONS,
+  MAX_GUEST_HEADER_NAV_BUTTONS,
   splitNavOverflow,
   isExamRoute,
   isListeningRoute,
@@ -62,6 +63,14 @@ describe("Header Navigation Restructure Verification", () => {
       visible: [1, 2, 3, 4, 5, 6, 7, 8],
       overflow: [9, 10],
     });
+  });
+
+  it("a guest gets fewer header buttons: its sign-up buttons need the room", () => {
+    assert.ok(MAX_GUEST_HEADER_NAV_BUTTONS < MAX_HEADER_NAV_BUTTONS);
+    const ten = Array.from({ length: 10 }, (_, i) => i);
+    const guest = splitNavOverflow(ten, MAX_GUEST_HEADER_NAV_BUTTONS);
+    assert.equal(guest.visible.length, MAX_GUEST_HEADER_NAV_BUTTONS);
+    assert.deepEqual([...guest.visible, ...guest.overflow], ten);
   });
 
   it("activates 'Đọc' for both Reading and Grammar routes", () => {

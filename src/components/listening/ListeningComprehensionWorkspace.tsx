@@ -2025,6 +2025,7 @@ export function ListeningComprehensionWorkspace({
           </button>
 
           <ReportIssueButton
+            labelFromSm
             area="LISTENING"
             context={{
               route:
@@ -2041,11 +2042,11 @@ export function ListeningComprehensionWorkspace({
             }}
           />
 
-          {/* Dictionary lookup for a selected word */}
+          {/* Dictionary lookup for a selected word; under 360px the footer has no room. */}
           <button
             type="button"
             onClick={handleDictionaryLookup}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            className="hidden min-[360px]:inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
             title="Bôi đen một từ tiếng Anh rồi tra từ"
           >
             <BookOpen size={15} className="text-sky-600 dark:text-sky-400" />
@@ -2094,7 +2095,7 @@ export function ListeningComprehensionWorkspace({
 
         {/* Right Navigation Dock */}
         <div
-          className="flex items-center gap-2 sm:gap-3 relative"
+          className="flex min-w-0 items-center gap-2 sm:gap-3 relative"
           ref={matrixPopoverRef}
         >
           {/* ← Câu trước */}
@@ -2106,9 +2107,10 @@ export function ListeningComprehensionWorkspace({
               if (currentIndex > 0) setCurrentIndex((p) => p - 1);
             }}
             disabled={currentIndex === 0}
-            className="px-3.5 sm:px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors text-sm"
+            aria-label="Câu trước"
+            className="min-h-11 shrink-0 px-3 sm:px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors text-sm"
           >
-            ← Câu trước
+            ←<span className="hidden sm:inline"> Câu trước</span>
           </button>
 
           {/* Question Stepper Matrix Trigger */}
@@ -2127,7 +2129,7 @@ export function ListeningComprehensionWorkspace({
 
           {/* Question Stepper Matrix Popover */}
           {showMatrixPopover && (
-            <div className="absolute right-36 bottom-full mb-3 w-72 sm:w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div className="absolute right-0 sm:right-36 bottom-full mb-3 w-72 sm:w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
                 <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
                   Bảng câu hỏi ({Object.keys(checkResults).length}/
@@ -2183,11 +2185,12 @@ export function ListeningComprehensionWorkspace({
 
           {/* Action Button: feedback is immediate after selecting an answer. */}
           {!isChecked ? (
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {/* On phones the hint is read out but not shown: the dock has no room. */}
               <div
                 role="status"
                 aria-live="polite"
-                className="inline-flex min-h-11 items-center gap-2 px-3 text-sm font-semibold text-slate-600 dark:text-slate-400"
+                className={`${isChecking ? "inline-flex" : "sr-only sm:not-sr-only sm:inline-flex"} min-h-11 items-center gap-2 px-3 text-sm font-semibold text-slate-600 dark:text-slate-400`}
               >
                 {isChecking ? (
                   <>

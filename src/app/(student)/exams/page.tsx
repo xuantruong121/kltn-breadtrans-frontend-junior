@@ -990,7 +990,7 @@ function ExamPracticeHub() {
                           <button
                             type="button"
                             onClick={() => setSelectedCert(cert.id)}
-                            className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                            className="min-h-8 text-xs font-semibold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
                           >
                             <span>Chi tiết</span>
                             <ChevronRight size={12} />

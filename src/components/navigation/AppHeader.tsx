@@ -66,6 +66,8 @@ import {
   isMarketRoute,
   isArenaRoute,
   splitNavOverflow,
+  MAX_HEADER_NAV_BUTTONS,
+  MAX_GUEST_HEADER_NAV_BUTTONS,
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SuggestionModal } from "@/components/suggestion/SuggestionModal";
@@ -362,7 +364,10 @@ export function AppHeader() {
   ];
   // Contact and suggestions are account actions in the user dropdown.
   const { visible: desktopNavLinks, overflow: moreDropdownItems } =
-    splitNavOverflow(headerNavLinks);
+    splitNavOverflow(
+      headerNavLinks,
+      user ? MAX_HEADER_NAV_BUTTONS : MAX_GUEST_HEADER_NAV_BUTTONS,
+    );
   const isMoreActive = moreDropdownItems.some((item) => item.active);
 
   // Mobile drawer links
@@ -857,7 +862,10 @@ export function AppHeader() {
           {/* If Guest */}
           {!user && (
             <>
-              <ThemeToggle className="hidden sm:inline-flex" />
+              {/* Wrapped: ThemeToggle's own inline-flex beats a passed `hidden`. */}
+              <span className="hidden sm:inline-flex">
+                <ThemeToggle />
+              </span>
               <Link
                 href="/plans"
                 className="hidden sm:inline-flex shrink-0 whitespace-nowrap text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 font-bold text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 transition-colors text-center items-center gap-1.5 cursor-pointer"
@@ -867,7 +875,7 @@ export function AppHeader() {
               </Link>
               <Link
                 href="/login"
-                className="shrink-0 whitespace-nowrap border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
+                className="hidden min-[380px]:inline-block shrink-0 whitespace-nowrap border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
               >
                 Đăng nhập
               </Link>
@@ -876,7 +884,7 @@ export function AppHeader() {
                 className="shrink-0 whitespace-nowrap btn-tactile-primary bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm transition-all text-center cursor-pointer"
               >
                 <span>Đăng ký</span>
-                <span className="hidden sm:inline"> miễn phí</span>
+                <span className="hidden sm:inline xl:hidden 2xl:inline"> miễn phí</span>
               </Link>
             </>
           )}

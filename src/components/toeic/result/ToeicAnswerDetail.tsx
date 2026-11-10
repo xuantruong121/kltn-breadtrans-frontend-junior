@@ -142,7 +142,7 @@ export function ToeicAnswerBody({
           {splitPassageDocuments(question.passageText).map((doc, i) => (
             <div key={i}>
               {doc.heading && <p className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">{doc.heading}</p>}
-              <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">{doc.body}</p>
+              <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200 [overflow-wrap:anywhere]">{doc.body}</p>
             </div>
           ))}
         </div>
@@ -158,9 +158,9 @@ export function ToeicAnswerBody({
               ? "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40"
               : "border-slate-200 dark:border-slate-700";
           return (
-            <li key={index} className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-[15px] ${tone}`}>
+            <li key={index} className={`flex flex-wrap items-start gap-x-2 gap-y-1 rounded-lg border px-3 py-2 text-[15px] ${tone}`}>
               <span className="font-bold text-slate-900 dark:text-slate-100">{letter(index)}.</span>
-              <span className="min-w-0 flex-1 text-slate-800 dark:text-slate-200">{option}</span>
+              <span className="min-w-0 flex-[1_1_8rem] text-slate-800 dark:text-slate-200 [overflow-wrap:anywhere]">{option}</span>
               {correct && <span className="shrink-0 text-xs font-bold text-emerald-700 dark:text-emerald-300">Đáp án đúng</span>}
               {chosen && !correct && <span className="shrink-0 text-xs font-bold text-rose-700 dark:text-rose-300">Bạn chọn</span>}
               {chosen && correct && <span className="sr-only">, bạn chọn</span>}

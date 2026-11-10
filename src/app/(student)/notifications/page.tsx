@@ -116,7 +116,7 @@ export default function NotificationsPage() {
 
       <div className="mb-4 flex w-full gap-1 overflow-x-auto rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-800 dark:bg-slate-900/70" role="tablist" aria-label="Bộ lọc thông báo">
         {([["all", "Tất cả"], ["unread", "Chưa đọc"], ["read", "Đã đọc"]] as const).map(([value, label]) => (
-          <button key={value} type="button" role="tab" aria-selected={filter === value} onClick={() => changeFilter(value)} className={`min-h-10 flex-1 whitespace-nowrap rounded-xl px-4 text-sm font-bold transition-colors ${filter === value ? "bg-white text-amber-700 shadow-sm dark:bg-slate-800 dark:text-amber-300" : "text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"}`}>
+          <button key={value} type="button" role="tab" aria-selected={filter === value} onClick={() => changeFilter(value)} className={`min-h-10 flex-1 whitespace-nowrap rounded-xl px-3 sm:px-4 text-sm font-bold transition-colors ${filter === value ? "bg-white text-amber-700 shadow-sm dark:bg-slate-800 dark:text-amber-300" : "text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"}`}>
             {label}
           </button>
         ))}
@@ -146,7 +146,7 @@ export default function NotificationsPage() {
                     <span className="mt-2 inline-flex items-center gap-1 text-xs text-slate-600 dark:text-slate-400"><Clock size={13} /> {formatNotificationTime(item.createdAt)}</span>
                   </button>
                   <div className="flex shrink-0 flex-col items-end gap-2">
-                    {target && label && <button type="button" onClick={() => openItem(item)} className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2.5 text-xs font-extrabold text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/50">{label}<ExternalLink size={13} /></button>}
+                    {target && label && <button type="button" onClick={() => openItem(item)} aria-label={label} className="inline-flex min-h-10 min-w-10 items-center justify-center gap-1 rounded-lg px-2.5 text-xs font-extrabold text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/50"><span className="hidden sm:inline">{label}</span><ExternalLink size={13} aria-hidden="true" /></button>}
                     <button type="button" aria-label={`Xóa thông báo ${item.title}`} onClick={() => setDeleteTarget(item)} className="grid min-h-10 min-w-10 place-items-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"><Trash2 size={16} /></button>
                   </div>
                 </article>

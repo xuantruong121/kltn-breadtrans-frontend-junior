@@ -72,7 +72,7 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
 
   const played = board?.me.playedToday ?? false;
   return (
-    <section aria-labelledby="dungeon-title" className="glass-face grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr]">
+    <section aria-labelledby="dungeon-title" className="glass-face grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr] [&>*]:min-w-0">
       <div className="flex flex-col">
         <h1 id="dungeon-title" className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
           Hầm Bánh Mì
@@ -158,7 +158,8 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
             }}
           />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_110%,rgba(251,146,60,0.45),transparent_60%)]" />
-          <motion.div className="relative mb-2 flex items-end gap-2" animate={reduce ? undefined : { y: [0, -4, 0] }} transition={{ duration: 2.4, repeat: Infinity }}>
+          {/* Three monsters are 376px wide; scaled so a 320-400px phone shows all of them. */}
+          <motion.div className="relative mb-2 flex origin-bottom items-end gap-2 max-[420px]:scale-[0.78]" animate={reduce ? undefined : { y: [0, -4, 0] }} transition={{ duration: 2.4, repeat: Infinity }}>
             <Monster kind="moldy" floor={1} hitKey={0} dead={false} reduce size={110} />
             <Monster kind="sourdough_king" floor={5} hitKey={0} dead={false} reduce size={150} />
             <Monster kind="mouse" floor={2} hitKey={0} dead={false} reduce size={100} />
