@@ -1,5 +1,6 @@
 "use client";
 
+import { LOBBY_PLAYLIST } from "@/modules/arena/sound/arenaSoundLogic";
 import { DEFAULT_AMBIENCE, layerVolume, nextTrack, parseAmbience, type AmbiencePrefs } from "./studyAmbienceLogic";
 
 /**
@@ -14,11 +15,8 @@ import { DEFAULT_AMBIENCE, layerVolume, nextTrack, parseAmbience, type AmbienceP
  * The rain plays through Web Audio from a decoded WAV, so its loop has no gap;
  * an <audio> element would click at every turn.
  */
-export const TRACKS = [
-  { file: "/sounds/study/first-snow.mp3", title: "First Snow" },
-  { file: "/sounds/study/snow-drift.mp3", title: "Snow Drift" },
-  { file: "/sounds/study/laundry-on-the-wire.mp3", title: "Laundry On The Wire" },
-] as const;
+/** The same lofi playlist as the Arena lobby (owner 2026-11-10 asked for more tracks). */
+export const TRACKS = LOBBY_PLAYLIST;
 const RAIN_FILE = "/sounds/study/rain.wav";
 const SFX_FILES = {
   flip: "/sounds/study/card-flip.wav",
