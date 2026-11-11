@@ -2,7 +2,7 @@
 
 import React, { useEffect, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
-import { Flame, PawPrint, Croissant, } from "lucide-react";
+import { Flame, PawPrint, Croissant, ShieldCheck } from "lucide-react";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
@@ -80,9 +80,10 @@ export const GamificationBar: React.FC = () => {
         {Boolean((profile as any)?.stats?.streakFreezes && (profile as any).stats.streakFreezes > 0) && (
           <span
             className="ml-0.5 text-xs font-black bg-blue-100 text-blue-800 border border-blue-200 px-1.5 py-0.5 rounded-md flex items-center gap-0.5"
-            title={`Bạn đang có ${(profile as any).stats.streakFreezes} khiên bảo vệ chuỗi`}
+            title={`Bạn có ${(profile as any).stats.streakFreezes} khiên giữ chuỗi. Lỡ một ngày học, 1 khiên tự được dùng.`}
           >
-            🛡️ {(profile as any).stats.streakFreezes}
+            <ShieldCheck size={12} strokeWidth={2.25} aria-hidden="true" />
+            {(profile as any).stats.streakFreezes}
           </span>
         )}
       </motion.div>

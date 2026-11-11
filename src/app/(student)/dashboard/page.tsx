@@ -891,10 +891,11 @@ export default function DashboardPage() {
               {stats?.streakFreezes ? (
                 <span
                   className="inline-flex items-center gap-1 text-xs text-amber-800 dark:text-amber-300 font-bold ml-1 pl-2.5 border-l border-slate-200 dark:border-slate-700"
-                  title={`Bạn đang có ${stats.streakFreezes} khiên bảo vệ chuỗi`}
+                  title={`Bạn có ${stats.streakFreezes} khiên giữ chuỗi. Lỡ một ngày học, 1 khiên tự được dùng để chuỗi không bị mất.`}
+                  aria-label={`${stats.streakFreezes} khiên giữ chuỗi, tự dùng khi bạn lỡ một ngày học`}
                 >
-                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" />
-                  <span>{stats.streakFreezes} khiên</span>
+                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  <span aria-hidden="true">{stats.streakFreezes} khiên</span>
                 </span>
               ) : null}
             </div>

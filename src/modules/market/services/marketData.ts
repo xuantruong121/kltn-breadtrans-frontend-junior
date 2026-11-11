@@ -11,11 +11,11 @@ export interface MarketItemData {
 export const MARKET_ITEMS: MarketItemData[] = [
   {
     id: "streak-freeze",
-    name: "Vé bảo vệ chuỗi học (Streak Freeze)",
+    name: "Khiên giữ chuỗi",
     category: "boost",
     price: 250,
     icon: "/images/market/streak-freeze.svg",
-    description: "Tự động kích hoạt giữ chuỗi học tập nếu bạn bận rộn bỏ lỡ 1 ngày.",
+    description: "Tự được dùng khi bạn lỡ một ngày học, để chuỗi ngày học không bị mất. Mỗi ngày lỡ dùng 1 khiên.",
     rarity: "rare",
   },
   {

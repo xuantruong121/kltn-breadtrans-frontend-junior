@@ -55,10 +55,10 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: true,
   },
   {
-    name: "Thẻ giữ chuỗi tặng kèm mỗi 30 ngày",
+    name: "Khiên giữ chuỗi tặng kèm mỗi 30 ngày",
     free: false,
-    plus: "1 thẻ",
-    pro: "3 thẻ",
+    plus: "1 khiên",
+    pro: "3 khiên",
   },
   {
     category: "Có ở mọi gói",

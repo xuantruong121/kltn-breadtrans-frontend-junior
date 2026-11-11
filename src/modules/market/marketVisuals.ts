@@ -30,7 +30,7 @@ const CATEGORY_FALLBACKS: Record<string, string> = {
 const VISUAL_ALT: Record<string, string> = {
   "badge-star": "huy hiệu ngôi sao thành tích",
   "frame-orange": "khung avatar cam",
-  "streak-freeze": "vé khiên băng bảo vệ chuỗi học",
+  "streak-freeze": "khiên giữ chuỗi",
   "pet-bun": "thú cưng Bun đồng hành",
   "double-bread": "thẻ nhân đôi Bánh Mì trong 24 giờ",
   "badge-master": "huy hiệu bậc thầy từ vựng",

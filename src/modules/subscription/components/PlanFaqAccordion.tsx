@@ -44,7 +44,7 @@ const FAQS: FaqItem[] = [
     id: "plus-vs-pro",
     question: "Gói Plus và gói Pro khác nhau thế nào?",
     answer:
-      `Nghe và Đọc miễn phí ở mọi mức, trừ Nghe chép Trung cấp trở lên. Plus mở Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên. Plus còn có 30 bài Nói, Viết được AI chấm mỗi ngày (Free 10), 30 lượt hỏi trợ lý, sửa và nộp lại bài viết 2 lần mỗi bài và 1 thẻ giữ chuỗi mỗi 30 ngày. Pro gồm toàn bộ Plus, thêm Nói và Viết Nâng cao, đề TOEIC Speaking & Writing và đề 4 kỹ năng, 60 bài AI chấm mỗi ngày, 100 lượt hỏi trợ lý, sửa bài 5 lần và 3 thẻ giữ chuỗi mỗi 30 ngày. Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và đề TOEIC Listening & Reading miễn phí với mọi tài khoản.`,
+      `Nghe và Đọc miễn phí ở mọi mức, trừ Nghe chép Trung cấp trở lên. Plus mở Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên. Plus còn có 30 bài Nói, Viết được AI chấm mỗi ngày (Free 10), 30 lượt hỏi trợ lý, sửa và nộp lại bài viết 2 lần mỗi bài và 1 khiên giữ chuỗi mỗi 30 ngày (khiên tự được dùng khi bạn lỡ một ngày học, để chuỗi không bị mất). Pro gồm toàn bộ Plus, thêm Nói và Viết Nâng cao, đề TOEIC Speaking & Writing và đề 4 kỹ năng, 60 bài AI chấm mỗi ngày, 100 lượt hỏi trợ lý, sửa bài 5 lần và 3 khiên giữ chuỗi mỗi 30 ngày. Bài Cơ bản của bốn kỹ năng, flashcard, từ vựng, ngữ pháp, bài kiểm tra đầu vào và đề TOEIC Listening & Reading miễn phí với mọi tài khoản.`,
   },
   {
     id: "support-channel",

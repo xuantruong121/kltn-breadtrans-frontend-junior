@@ -244,7 +244,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Tặng 1 thẻ giữ chuỗi mỗi 30 ngày</span>
+              <span>Tặng 1 khiên giữ chuỗi mỗi 30 ngày</span>
             </li>
             <li className="flex items-start gap-3 text-slate-500 dark:text-slate-400">
               <Minus size={18} className="text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
@@ -383,7 +383,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </li>
           <li className="flex items-start gap-3">
             <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
-            <span>Sửa và nộp lại bài viết 5 lần mỗi bài; tặng 3 thẻ giữ chuỗi mỗi 30 ngày</span>
+            <span>Sửa và nộp lại bài viết 5 lần mỗi bài; tặng 3 khiên giữ chuỗi mỗi 30 ngày</span>
           </li>
         </ul>
       </div>

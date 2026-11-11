@@ -16,7 +16,7 @@ import type { MarketProduct } from "./types.ts";
 const MOCK_PRODUCT: MarketProduct = {
   id: 101,
   slug: "streak-freeze-24h",
-  name: "Khiên Bảo Vệ Streak 24h",
+  name: "Khiên giữ chuỗi",
   description: "Bảo vệ chuỗi học tập khi lỡ quên 1 ngày.",
   category: "BOOST",
   rarity: "RARE",
