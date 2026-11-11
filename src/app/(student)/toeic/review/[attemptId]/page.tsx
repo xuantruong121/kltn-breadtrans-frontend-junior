@@ -77,7 +77,7 @@ export default function ToeicReviewPage({
                     <h3 className="font-bold text-slate-900 dark:text-slate-100">Câu {q.questionNumber}</h3>
                     <StatusBadge status={q.status} />
                   </div>
-                  <ToeicAnswerBody attemptId={attemptId} question={view} audio={firstOfGroup ? audioFor(q) : null} audioNote={firstOfGroup ? note : null} />
+                  <ToeicAnswerBody question={view} audio={firstOfGroup ? audioFor(q) : null} audioNote={firstOfGroup ? note : null} />
                 </article>
               );
             })}

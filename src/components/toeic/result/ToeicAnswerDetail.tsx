@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AskTutorButton } from "@/components/tutor/AskTutorButton";
 import { CheckCircle2, ChevronLeft, ChevronRight, CircleSlash2, CircleX, Pause, Play, X } from "lucide-react";
 import type { ToeicReviewQuestion } from "@/lib/api/services/toeic.service";
 import { ToeicGraphic } from "@/components/toeic/paper/ToeicGraphic";
@@ -107,15 +106,10 @@ export function ToeicAnswerBody({
   question,
   audio,
   audioNote,
-  attemptId,
-  onAskTutor,
 }: {
   question: ToeicReviewQuestion;
   audio: GroupAudio;
   audioNote?: string | null;
-  /** With the attempt id, the item gets a "Hỏi gia sư" button. */
-  attemptId?: number;
-  onAskTutor?: () => void;
 }) {
   const [showTranscript, setShowTranscript] = useState(false);
   const listening = question.part <= 4;
@@ -178,20 +172,7 @@ export function ToeicAnswerBody({
         Bạn chọn: <strong>{letter(question.selectedIndex) ?? "Không trả lời"}</strong> · Đáp án: <strong>{letter(question.correctIndex)}</strong>
       </p>
       <section className="border-t border-slate-200 pt-3 dark:border-slate-700">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết đáp án</h3>
-          {attemptId !== undefined && (
-            <AskTutorButton
-              onAsk={onAskTutor}
-              context={{
-                sourceType: "TOEIC_ATTEMPT",
-                sourceId: attemptId,
-                questionId: question.questionId,
-                label: `Câu ${question.questionNumber}, Part ${question.part}`,
-              }}
-            />
-          )}
-        </div>
+        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết đáp án</h3>
         <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
           {question.explanation ?? "Câu này chưa có lời giải thích."}
         </p>
@@ -297,10 +278,8 @@ export function ToeicAnswerDialog({
   onPrev,
   onNext,
   onClose,
-  attemptId,
 }: {
   examTitle: string;
-  attemptId?: number;
   question: ToeicReviewQuestion;
   audio: GroupAudio;
   audioNote?: string | null;
@@ -337,8 +316,7 @@ export function ToeicAnswerDialog({
         </>
       }
     >
-      {/* The tutor panel opens beside the page, so the dialog closes first. */}
-      <ToeicAnswerBody key={question.questionId} question={question} audio={audio} audioNote={audioNote} attemptId={attemptId} onAskTutor={onClose} />
+      <ToeicAnswerBody key={question.questionId} question={question} audio={audio} audioNote={audioNote} />
     </ResultDialog>
   );
 }
