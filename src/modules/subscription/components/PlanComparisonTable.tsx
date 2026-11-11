@@ -29,6 +29,13 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: "Mọi mức",
   },
   {
+    // Enforced by the tutor's daily limit per plan (backend tutorDailyLimit).
+    name: "Lượt hỏi Trợ lý Bánh Mì mỗi ngày",
+    free: "10 lượt",
+    plus: "30 lượt",
+    pro: "100 lượt",
+  },
+  {
     name: "Thời hạn",
     free: "Không giới hạn",
     plus: "30 ngày",
@@ -79,7 +86,7 @@ export function PlanComparisonTable() {
             <span>So sánh chi tiết 3 gói dịch vụ</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Ba dòng đầu là chỗ các gói khác nhau. Phần còn lại gói nào cũng có.
+            Bốn dòng đầu là chỗ các gói khác nhau. Phần còn lại gói nào cũng có.
           </p>
         </div>
 
