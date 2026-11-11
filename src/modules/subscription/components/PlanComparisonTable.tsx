@@ -14,40 +14,40 @@ interface ComparisonFeature {
 // Only privileges the API actually enforces (canonical plan catalog and the
 // practice level policy). Do not list a feature here that no plan unlocks.
 const COMPARISON_FEATURES: ComparisonFeature[] = [
+  // The rows where the plans differ come first; a level names the highest one the plan opens.
   {
-    category: "Luyện 4 kỹ năng",
-    name: "Luyện Nghe và Đọc",
-    free: "Mọi mức",
-    plus: "Mọi mức",
-    pro: "Mọi mức",
+    category: "Khác nhau giữa các gói",
+    name: "Luyện Nói và Viết, có AI chấm",
+    free: "Đến mức Cơ bản",
+    plus: "Đến mức Trung cấp",
+    pro: "Đến mức Nâng cao",
   },
   {
     name: "Nghe chép",
-    free: "Cơ bản",
+    free: "Đến mức Cơ bản",
     plus: "Mọi mức",
     pro: "Mọi mức",
   },
   {
-    name: "Luyện Nói và Viết",
-    free: "Cơ bản",
-    plus: "Thêm Trung cấp",
-    pro: "Mọi mức, gồm Nâng cao",
+    name: "Thời hạn",
+    free: "Không giới hạn",
+    plus: "30 ngày",
+    pro: "30 ngày",
   },
   {
-    name: "Chấm bài Nói và Viết tự động (AI)",
-    free: "Với các bài được mở",
-    plus: "Với các bài được mở",
-    pro: "Với các bài được mở",
+    category: "Có ở mọi gói",
+    name: "Luyện Nghe và Đọc, mọi mức",
+    free: true,
+    plus: true,
+    pro: true,
   },
   {
-    category: "Từ vựng và ngữ pháp",
     name: "Thẻ ghi nhớ, từ vựng và ngữ pháp",
     free: true,
     plus: true,
     pro: true,
   },
   {
-    category: "Kiểm tra và luyện đề",
     name: "Bài đánh giá đầu vào",
     free: true,
     plus: true,
@@ -60,17 +60,10 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: true,
   },
   {
-    category: "Khác",
     name: "Đấu trường từ vựng, cửa hàng và thú cưng",
     free: true,
     plus: true,
     pro: true,
-  },
-  {
-    name: "Thời hạn",
-    free: "Không giới hạn",
-    plus: "30 ngày",
-    pro: "30 ngày",
   },
 ];
 
@@ -86,7 +79,7 @@ export function PlanComparisonTable() {
             <span>So sánh chi tiết 3 gói dịch vụ</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Quyền lợi của từng gói
+            Ba dòng đầu là chỗ các gói khác nhau. Phần còn lại gói nào cũng có.
           </p>
         </div>
 
