@@ -44,6 +44,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import axiosClient from "@/lib/api/axiosClient";
 import { useApiQuery } from "@/hooks/useApiQuery";
@@ -228,6 +229,8 @@ export function AppHeader() {
     enabled: !!user && user.role === "STUDENT",
     refetchInterval: 30000,
   });
+  const setTutorOpen = useChatAssistantStore((state) => state.setIsOpen);
+  const openTutor = () => setTutorOpen(true);
   const messageUnreadCount = messageUnreadData?.count || 0;
 
   const { data: inboxData, isLoading: isInboxLoading } = useQuery({
@@ -752,15 +755,19 @@ export function AppHeader() {
                       <span>Tiến độ học tập</span>
                     </Link>
 
-                    <Link
-                      href="/messages"
-                      onClick={closeMenus}
-                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                    {/* Messages with an admin live in the tutor panel; this opens it. */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeMenus();
+                        openTutor();
+                      }}
+                      className="flex w-full items-center gap-2.5 p-2 rounded-xl text-left text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap cursor-pointer"
                     >
                       <MessageSquare size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
-                      <span className="flex-1">Tin nhắn</span>
+                      <span className="flex-1">Trợ lý và hỗ trợ</span>
                       {messageUnreadCount > 0 && <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-xs font-black leading-none text-white" aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} tin nhắn chưa đọc`}>{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
-                    </Link>
+                    </button>
 
                     <Link
                       href="/pet"
@@ -1130,14 +1137,17 @@ export function AppHeader() {
                         <User size={16} />
                         <span>Thông tin cá nhân</span>
                       </Link>
-                      <Link
-                        href="/messages"
-                        onClick={closeMenus}
-                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          closeMenus();
+                          openTutor();
+                        }}
+                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                       >
                         <MessageSquare size={16} />
-                        <span>Tin nhắn{messageUnreadCount > 0 ? ` (${messageUnreadCount > 99 ? "99+" : messageUnreadCount})` : ""}</span>
-                      </Link>
+                        <span>Trợ lý và hỗ trợ{messageUnreadCount > 0 ? ` (${messageUnreadCount > 99 ? "99+" : messageUnreadCount})` : ""}</span>
+                      </button>
                       <a
                         href="https://www.facebook.com/truongngynz.121"
                         target="_blank"

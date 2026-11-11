@@ -176,6 +176,20 @@ function AdminMessagesContent() {
       toast.error("Gửi tin nhắn thất bại. Nội dung vẫn được giữ lại."),
   });
 
+  const modeMutation = useMutation({
+    mutationFn: ({ conversationId, mode }: { conversationId: number; mode: "AI" | "HUMAN" }) =>
+      supportService.toggleAdminMode(conversationId, mode),
+    onSuccess: (_data, { mode }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-support"] });
+      toast.success(
+        mode === "AI"
+          ? "Trợ lý AI tiếp tục trả lời học viên này."
+          : "Bạn đang trả lời học viên này; trợ lý AI tạm dừng.",
+      );
+    },
+    onError: () => toast.error("Không đổi được chế độ trả lời. Vui lòng thử lại."),
+  });
+
   const submit = () => {
     if (!selectedId || !draft.trim() || sendMutation.isPending) return;
     sendMutation.mutate({ conversationId: selectedId, content: draft.trim() });
@@ -312,7 +326,16 @@ function AdminMessagesContent() {
                       >
                         {conversation.studentName}
                       </span>
-                      <span className="shrink-0 text-xs text-slate-600 dark:text-slate-400">
+                      <span className="flex shrink-0 items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                        <span
+                          className={`rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${
+                            conversation.mode === "AI"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300"
+                              : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300"
+                          }`}
+                        >
+                          {conversation.mode === "AI" ? "AI trả lời" : "Quản trị viên"}
+                        </span>
                         {formatListPreviewTime(conversation.lastMessageTime)}
                       </span>
                     </span>
@@ -388,12 +411,44 @@ function AdminMessagesContent() {
                   </div>
                 </div>
                 {selectedConversation && (
-                  <Link
-                    href="/admin/users"
-                    className="text-xs font-semibold text-blue-700 hover:underline dark:text-blue-400 shrink-0"
-                  >
-                    Xem hồ sơ
-                  </Link>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {/* Who answers this learner: the tutor or an admin. Sending a reply also takes over. */}
+                    <div
+                      role="group"
+                      aria-label="Người trả lời học viên"
+                      className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 dark:border-slate-700 dark:bg-slate-800"
+                    >
+                      {(
+                        [
+                          ["AI", "AI tự động trả lời"],
+                          ["HUMAN", "Quản trị viên trả lời"],
+                        ] as const
+                      ).map(([mode, label]) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          aria-pressed={selectedConversation.mode === mode}
+                          disabled={modeMutation.isPending || selectedConversation.mode === mode}
+                          onClick={() => modeMutation.mutate({ conversationId: selectedConversation.id, mode })}
+                          className={`rounded-md px-2.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer disabled:cursor-default ${
+                            selectedConversation.mode === mode
+                              ? mode === "AI"
+                                ? "bg-emerald-600 text-white"
+                                : "bg-blue-600 text-white"
+                              : "text-slate-700 hover:bg-white dark:text-slate-300 dark:hover:bg-slate-700"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <Link
+                      href="/admin/users"
+                      className="hidden text-xs font-semibold text-blue-700 hover:underline dark:text-blue-400 sm:inline"
+                    >
+                      Xem hồ sơ
+                    </Link>
+                  </div>
                 )}
               </header>
 

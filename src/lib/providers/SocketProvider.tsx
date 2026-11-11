@@ -200,8 +200,10 @@ export default function SocketProvider({ children }: { children: React.ReactNode
     // 🔄 4. Lắng nghe sự kiện Chuyển Đổi Chế Độ Chat Real-time
     socketInstance.on("chat:mode_updated", (payload: any) => {
       console.log("⚡ [WebSocket] chat:mode_updated received:", payload);
-      const { studentId, mode, adminName } = payload;
-      useChatAssistantStore.getState().setThreadMode(studentId, mode, adminName);
+      const { studentId, mode, systemMessage } = payload;
+      useChatAssistantStore.getState().setThreadMode(studentId, mode, systemMessage);
+      queryClient.invalidateQueries({ queryKey: ["admin-support"] });
+      queryClient.invalidateQueries({ queryKey: ["support"] });
     });
 
     return () => {

@@ -34,7 +34,7 @@ interface ChatAssistantState {
   setAdminView: (view: 'list' | 'chat') => void;
   setActiveStudentId: (studentId: string) => void;
   setIsLoading: (isLoading: boolean) => void;
-  setThreadMode: (studentId: string, mode: 'AI' | 'HUMAN', senderName?: string) => void;
+  setThreadMode: (studentId: string, mode: 'AI' | 'HUMAN', systemMessage?: string) => void;
   loadThreadFromBackend: (
     studentId: string,
     conversationId: number,
@@ -73,15 +73,18 @@ export const useChatAssistantStore = create<ChatAssistantState>()((set, get) => 
     set({ activeStudentId, adminView: 'chat' });
   },
 
-  setThreadMode: (studentId, mode, senderName) => {
+  setThreadMode: (studentId, mode, systemMessage) => {
     set((state) => {
       const currentThread = state.threads[studentId];
-      if (!currentThread) return state;
+      // The switch arrives twice for whoever made it (their own click and the
+      // server's event); the second one must not add a second line.
+      if (!currentThread || currentThread.mode === mode) return state;
 
       const sysContent =
-        mode === 'HUMAN'
-          ? `${senderName ? `[${senderName}]` : 'Quản trị viên'} đã chuyển sang chế độ hỗ trợ trực tiếp. Mọi thắc mắc của bạn sẽ được phản hồi trực tiếp bởi Quản trị viên!`
-          : 'Đã kích hoạt lại chế độ phản hồi tự động. Hệ thống sẽ tự động hỗ trợ giải đáp thắc mắc học tập của bạn!';
+        systemMessage ||
+        (mode === 'HUMAN'
+          ? 'Quản trị viên đã tham gia trò chuyện. Trợ lý AI tạm dừng trả lời.'
+          : 'Trợ lý AI tiếp tục trả lời trong cuộc trò chuyện này.');
 
       const sysMsg: AssistantMessage = {
         id: `sys-${Date.now()}`,

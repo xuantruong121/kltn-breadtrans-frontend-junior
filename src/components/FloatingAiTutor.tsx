@@ -19,7 +19,6 @@ import {
   Croissant,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { aiService } from "@/lib/api/services/ai.service";
 import { supportService } from "@/lib/api/services/support.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatAssistantStore, StudentThread, AssistantMessage } from "@/stores/chatAssistantStore";
@@ -177,6 +176,8 @@ function FloatingAiTutorInner() {
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
+  // Questions left today on the learner's plan, as the last reply reported it.
+  const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -565,17 +566,8 @@ function FloatingAiTutorInner() {
 
     addMessageToThread(studentThreadId, studentMetadata, studentMsg);
 
-    // Bắn sự kiện Socket Real-time cho Admin
-    socket?.emit("chat:sendMessage", {
-      studentId: studentThreadId,
-      studentName: currentDisplayName,
-      studentEmail: user?.email,
-      studentAvatar: user?.profile?.avatar,
-      message: studentMsg,
-      fromRole: "STUDENT",
-      targetUserId: user?.id,
-    });
-
+    // One request stores the message; the server tells the admins and, on AI
+    // mode, writes the tutor's reply itself and returns it.
     let currentConvId = conversationId || currentThread.conversationId;
     if (!currentConvId && user?.id) {
       try {
@@ -587,91 +579,40 @@ function FloatingAiTutorInner() {
       }
     }
 
-    if (currentConvId) {
-      try {
-        const persisted = await supportService.sendMessage(
-          currentConvId,
-          messageText,
-          studentClientMessageId
-        );
+    try {
+      if (!currentConvId) throw new Error("no conversation");
+      const persisted = await supportService.sendMessage(
+        currentConvId,
+        messageText,
+        studentClientMessageId
+      );
+      addMessageToThread(studentThreadId, studentMetadata, {
+        id: persisted.id,
+        clientMessageId: studentClientMessageId,
+        role: "user",
+        senderName: persisted.senderName || currentDisplayName,
+        content: persisted.content,
+        timestamp: new Date(persisted.createdAt).getTime(),
+        pending: false,
+      });
+      const aiReply = persisted.aiReply;
+      if (aiReply) {
+        setQuota(aiReply.quota);
         addMessageToThread(studentThreadId, studentMetadata, {
-          id: persisted.id,
-          clientMessageId: studentClientMessageId,
-          role: "user",
-          senderName: persisted.senderName || currentDisplayName,
-          content: persisted.content,
-          timestamp: new Date(persisted.createdAt).getTime(),
+          id: aiReply.id,
+          clientMessageId: aiReply.clientMessageId || undefined,
+          role: "assistant",
+          senderName: aiReply.senderName || "Trợ Lý Bánh Mì",
+          content: aiReply.content,
+          timestamp: new Date(aiReply.createdAt).getTime(),
           pending: false,
         });
-      } catch (err) {
-        console.error("Failed to persist student message:", err);
       }
-    }
-
-    // Nếu học sinh đang ở chế độ HUMAN MODE -> không gọi AI
-    if (currentThread.mode === "HUMAN") {
-      setIsLoading(false);
-      return;
-    }
-
-    // 3. Chế độ AI (AI MODE) -> Gọi Gemini AI
-    try {
-      const aiPayload = currentThread.messages
-        .filter((m) => m.role === "user" || m.role === "assistant")
-        .concat({ id: "temp", role: "user", content: messageText, timestamp: Date.now() })
-        .map((m) => ({
-          role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
-          content: m.content,
-        }));
-
-      const res = await aiService.chat(aiPayload);
-      const aiClientMessageId = `aimsg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      const aiMsg = {
-        id: aiClientMessageId,
-        clientMessageId: aiClientMessageId,
-        role: "assistant" as const,
-        senderName: "Trợ Lý Bánh Mì",
-        content: res.answer || "Bánh Mì đã nhận được câu hỏi rồi nhé!",
-        timestamp: Date.now(),
-        pending: false,
-      };
-      addMessageToThread(studentThreadId, studentMetadata, aiMsg);
-
-      if (currentConvId) {
-        try {
-          const persistedAi = await supportService.saveAiMessage(
-            currentConvId,
-            aiMsg.content,
-            aiClientMessageId
-          );
-          addMessageToThread(studentThreadId, studentMetadata, {
-            id: persistedAi.id,
-            clientMessageId: aiClientMessageId,
-            role: "assistant",
-            senderName: "Trợ Lý Bánh Mì",
-            content: persistedAi.content,
-            timestamp: new Date(persistedAi.createdAt).getTime(),
-            pending: false,
-          });
-        } catch (err) {
-          console.error("Failed to persist AI message:", err);
-        }
-      }
-
-      // Đồng bộ câu trả lời của AI tới Admin qua socket
-      socket?.emit("chat:sendMessage", {
-        studentId: studentThreadId,
-        studentName: currentDisplayName,
-        message: aiMsg,
-        fromRole: "STUDENT",
-        targetUserId: user?.id,
-      });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Failed to send student message:", err);
       addMessageToThread(studentThreadId, studentMetadata, {
-        role: "assistant",
-        senderName: "Trợ Lý Bánh Mì",
-        content: "Bánh Mì đang gặp chút trục trặc nhỏ. Bạn thử hỏi lại câu khác nhé!",
+        role: "system",
+        content: "Tin nhắn chưa gửi được. Bạn kiểm tra kết nối rồi gửi lại.",
       });
     } finally {
       setIsLoading(false);
@@ -694,15 +635,15 @@ function FloatingAiTutorInner() {
       }
     }
 
-    setThreadMode(studentThreadId, nextMode, currentDisplayName);
-
-    // Bắn sự kiện Socket Real-time thay đổi Mode
-    socket?.emit("chat:toggleMode", {
-      studentId: studentThreadId,
-      mode: nextMode,
-      adminName: currentDisplayName,
-      targetUserId: Number(studentThreadId.replace("student_", "")) || undefined,
-    });
+    // The server stores the line both sides read and sends the event; this
+    // keeps the panel right when the socket is down.
+    setThreadMode(
+      studentThreadId,
+      nextMode,
+      !isAdmin && nextMode === "HUMAN"
+        ? "Bạn đã yêu cầu trao đổi với quản trị viên. Trợ lý AI tạm dừng trả lời; quản trị viên sẽ phản hồi tại đây."
+        : undefined
+    );
   };
 
   const handleQuickQuestion = (question: string) => {
@@ -898,7 +839,11 @@ function FloatingAiTutorInner() {
                             }`}
                           />
                           <span>
-                            {currentThread.mode === "AI" ? "Chế độ phản hồi tự động" : "Tư Vấn Trực Tiếp"}
+                            {currentThread.mode === "AI"
+                              ? "Phản hồi tự động"
+                              : isAdmin
+                                ? "Quản trị viên trả lời"
+                                : "Đang trao đổi với quản trị viên"}
                           </span>
                         </div>
                       </div>
@@ -941,11 +886,25 @@ function FloatingAiTutorInner() {
                       </button>
                     </div>
                   ) : (
-                    currentThread.mode === "HUMAN" && (
-                      <div className="bg-blue-600/40 border border-blue-300/40 rounded-xl px-2.5 py-1 text-xs font-bold text-blue-100 flex items-center gap-1.5">
-                        <UserCheck size={14} /> Quản Trị Viên đang trực tiếp hỗ trợ bạn.
-                      </div>
-                    )
+                    <div className="mt-1 flex items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/15 px-2.5 py-1.5 text-xs font-bold">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {currentThread.mode === "HUMAN" && <UserCheck size={14} className="shrink-0" aria-hidden="true" />}
+                        <span className="truncate">
+                          {currentThread.mode === "HUMAN"
+                            ? "Quản trị viên sẽ trả lời tại đây"
+                            : quota
+                              ? `Còn ${quota.remaining}/${quota.limit} lượt hỏi hôm nay`
+                              : "Trợ lý AI đang trả lời"}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleToggleMode}
+                        className="shrink-0 rounded-lg bg-white/90 px-2.5 py-1 text-xs font-black text-orange-700 transition-colors hover:bg-white cursor-pointer"
+                      >
+                        {currentThread.mode === "AI" ? "Gặp quản trị viên" : "Quay lại trợ lý AI"}
+                      </button>
+                    </div>
                   )}
                 </div>
 
