@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Heart,
   Smile,
@@ -13,7 +13,6 @@ import {
   ExternalLink,
   ChevronRight,
   TrendingUp,
-  MessageCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -21,7 +20,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { gamificationService } from "@/lib/api/services/gamification.service";
-import { supportService } from "@/lib/api/services/support.service";
+import { TutorEntryButton, useTutorUnreadCount } from "./TutorEntryButton";
 import { useCompanionPetRuntime } from "../useCompanionPetRuntime";
 import { usePetDialogue } from "../usePetDialogue";
 import { PetSpeechBubble } from "./PetSpeechBubble";
@@ -44,27 +43,13 @@ import { useCompanionPetStore } from "@/stores/companionPetStore";
 const FloatingCompanionPetInner: React.FC = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const { isOpen: isTutorOpen, setIsOpen: setTutorOpen } = useChatAssistantStore();
+  const { isOpen: isTutorOpen } = useChatAssistantStore();
 
   const { isFocusMode, pet, balance, today, isLoading } = useCompanionPetRuntime();
 
-  // Messages from an admin show as a number on the pet, the one entry to the
+  // Messages from an admin show as a number on the pet, the entry to the
   // tutor panel; opening the panel reads them.
-  const { data: unreadMessages } = useQuery({
-    queryKey: ["support", "unread-count"],
-    queryFn: supportService.getMyUnreadCount,
-    enabled: !!user && user.role === "STUDENT",
-    refetchInterval: 10000,
-  });
-  const unreadMessageCount = isTutorOpen ? 0 : unreadMessages?.count || 0;
-  useEffect(() => {
-    if (!isTutorOpen) return;
-    const timer = window.setTimeout(
-      () => void queryClient.invalidateQueries({ queryKey: ["support", "unread-count"] }),
-      1500,
-    );
-    return () => window.clearTimeout(timer);
-  }, [isTutorOpen, queryClient]);
+  const unreadMessageCount = useTutorUnreadCount();
 
   // Floating UI state machine
   const [isExpanded, setIsExpanded] = useState(false);
@@ -433,25 +418,7 @@ const FloatingCompanionPetInner: React.FC = () => {
           )}
 
           {/* Shared learning entry point: the pet opens the existing tutor panel. */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsExpanded(false);
-              setTutorOpen(true);
-            }}
-            className="mb-3.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border border-blue-200 dark:border-sky-800/60 bg-blue-50/70 dark:bg-sky-950/40 px-3 py-2.5 text-left text-xs font-semibold text-blue-900 dark:text-sky-300 transition-colors hover:border-blue-300 dark:hover:border-sky-700 hover:bg-blue-100 dark:hover:bg-sky-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            <span className="flex items-center gap-2">
-              <MessageCircle size={15} className="text-blue-700 dark:text-sky-400" aria-hidden="true" />
-              <span>Hỏi trợ lý học tập</span>
-            </span>
-            {unreadMessageCount > 0 && (
-              <span className="rounded-full bg-rose-600 px-1.5 py-0.5 text-[11px] font-bold leading-none text-white">
-                {unreadMessageCount > 99 ? "99+" : unreadMessageCount} tin mới
-              </span>
-            )}
-            <ChevronRight size={14} className="text-blue-700 dark:text-sky-400" aria-hidden="true" />
-          </button>
+          <TutorEntryButton onOpen={() => setIsExpanded(false)} className="mb-3.5" />
 
           {/* Feed Button & Satiety */}
           <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">

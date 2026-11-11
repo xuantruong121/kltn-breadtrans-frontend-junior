@@ -26,6 +26,7 @@ import {
   petLevelProgress,
 } from "../petLogic";
 import { CompanionPet2D } from "./CompanionPet2D";
+import { TutorEntryButton } from "./TutorEntryButton";
 
 interface DashboardCompanionCardProps {
   className?: string;
@@ -415,6 +416,9 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet.dailyRewardedFeedCount ?? 0}/{pet.dailyRewardLimit ?? 3}
               </p>
             )}
+
+            {/* The floating pet is hidden on this page, so its tutor entry lives here. */}
+            <TutorEntryButton />
 
             {/* Link to Full Pet Room */}
             <Link
