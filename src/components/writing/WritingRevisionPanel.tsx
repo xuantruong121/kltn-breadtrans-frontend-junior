@@ -257,9 +257,33 @@ export function WritingRevisionPanel({
         </section>
       )}
 
-      {!revision.canRevise && revision.isLatest && revision.remaining === 0 && (
+      {/* The plan decides how many revisions an answer gets: none on Free, 2 on Plus, 5 on Pro. */}
+      {!revision.canRevise && revision.isLatest && revision.limit === 0 && (
+        <div className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-800 dark:text-slate-200">
+            Sửa bài theo nhận xét rồi nộp lại để được chấm lần nữa là quyền lợi của gói Plus (2 lần mỗi bài) và Pro (5
+            lần mỗi bài).
+          </p>
+          <Link
+            href="/plans"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 px-4 text-sm font-bold text-white hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+          >
+            Xem các gói
+          </Link>
+        </div>
+      )}
+      {!revision.canRevise && revision.isLatest && revision.limit > 0 && revision.remaining === 0 && (
         <p className="rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
           Bạn đã dùng hết {revision.limit} lần sửa cho bài viết này.
+          {revision.limit < 5 && (
+            <>
+              {" "}
+              <Link href="/plans" className="font-bold text-blue-700 underline underline-offset-2 dark:text-sky-300">
+                Gói Pro được sửa 5 lần mỗi bài
+              </Link>
+              .
+            </>
+          )}
         </p>
       )}
       {!revision.isLatest && latest && (

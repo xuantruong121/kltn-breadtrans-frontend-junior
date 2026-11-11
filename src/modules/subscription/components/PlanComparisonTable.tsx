@@ -11,8 +11,10 @@ interface ComparisonFeature {
   pro: string | boolean;
 }
 
-// Only privileges the API actually enforces (canonical plan catalog and the
-// practice level policy). Do not list a feature here that no plan unlocks.
+// Only privileges the API actually enforces: the practice level policy and
+// the per-plan numbers in the backend's subscription/plan-limits.ts. Do not
+// list a feature here that no plan unlocks, and change a number here only
+// together with that file.
 const COMPARISON_FEATURES: ComparisonFeature[] = [
   // The rows where the plans differ come first; a level names the highest one the plan opens.
   {
@@ -29,17 +31,34 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: "Mọi mức",
   },
   {
-    // Enforced by the tutor's daily limit per plan (backend tutorDailyLimit).
+    name: "Bài Nói và Viết được AI chấm mỗi ngày",
+    free: "10 bài",
+    plus: "30 bài",
+    pro: "60 bài",
+  },
+  {
     name: "Lượt hỏi Trợ lý Bánh Mì mỗi ngày",
     free: "10 lượt",
     plus: "30 lượt",
     pro: "100 lượt",
   },
   {
-    name: "Thời hạn",
-    free: "Không giới hạn",
-    plus: "30 ngày",
-    pro: "30 ngày",
+    name: "Sửa và nộp lại bài viết",
+    free: false,
+    plus: "2 lần mỗi bài",
+    pro: "5 lần mỗi bài",
+  },
+  {
+    name: "Đề TOEIC Speaking & Writing và đề 4 kỹ năng",
+    free: false,
+    plus: false,
+    pro: true,
+  },
+  {
+    name: "Thẻ giữ chuỗi tặng kèm mỗi 30 ngày",
+    free: false,
+    plus: "1 thẻ",
+    pro: "3 thẻ",
   },
   {
     category: "Có ở mọi gói",
@@ -61,7 +80,7 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: true,
   },
   {
-    name: "Luyện đề TOEIC (L&R, S&W, 4 kỹ năng)",
+    name: "Luyện đề TOEIC Listening & Reading",
     free: true,
     plus: true,
     pro: true,
@@ -86,7 +105,7 @@ export function PlanComparisonTable() {
             <span>So sánh chi tiết 3 gói dịch vụ</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Bốn dòng đầu là chỗ các gói khác nhau. Phần còn lại gói nào cũng có.
+            Bảy dòng đầu là chỗ các gói khác nhau. Phần còn lại gói nào cũng có.
           </p>
         </div>
 

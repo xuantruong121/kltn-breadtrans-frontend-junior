@@ -26,6 +26,7 @@ import {
   BookmarkCheck,
   ShieldCheck,
   BarChart3,
+  Lock,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -836,6 +837,12 @@ function ExamPracticeHub() {
                               )}
                               <span>{formatLabel}</span>
                             </span>
+                            {(isFourSkill || isSpeakingWriting) && (
+                              <span className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-800 dark:border-blue-800/50 dark:bg-blue-950/40 dark:text-blue-300">
+                                <Lock size={12} strokeWidth={2} aria-hidden="true" />
+                                Gói Pro
+                              </span>
+                            )}
 
                             {isCompleted ? (
                               <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/40">

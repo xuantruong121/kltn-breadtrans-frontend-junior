@@ -99,7 +99,11 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Nói và Viết mức Cơ bản</span>
+              <span>Nói và Viết mức Cơ bản, AI chấm 10 bài mỗi ngày</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>Đề TOEIC Listening &amp; Reading</span>
             </li>
             <li className="flex items-start gap-3">
               <Check size={18} className="text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
@@ -161,7 +165,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </div>
 
           <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-            Mở Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên.
+            Mở Nói, Viết Trung cấp, Nghe chép mọi mức và AI chấm 30 bài mỗi ngày.
           </p>
 
           <div className="mt-6 pb-6 border-b border-slate-100 dark:border-slate-800">
@@ -230,9 +234,21 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
               <span>Nghe chép Trung cấp trở lên</span>
             </li>
+            <li className="flex items-start gap-3">
+              <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>AI chấm 30 bài Nói, Viết mỗi ngày; 30 lượt hỏi trợ lý</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>Sửa và nộp lại bài viết 2 lần mỗi bài</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Check size={18} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>Tặng 1 thẻ giữ chuỗi mỗi 30 ngày</span>
+            </li>
             <li className="flex items-start gap-3 text-slate-500 dark:text-slate-400">
               <Minus size={18} className="text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" aria-hidden="true" />
-              <span>Không gồm Nói, Viết Nâng cao</span>
+              <span>Không gồm Nói, Viết Nâng cao và đề TOEIC Speaking &amp; Writing, 4 kỹ năng</span>
             </li>
           </ul>
         </div>
@@ -312,7 +328,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         </div>
 
         <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400 leading-relaxed">
-          Toàn bộ quyền lợi Plus, thêm Nói và Viết Nâng cao.
+          Toàn bộ quyền lợi Plus, thêm Nói và Viết Nâng cao và đề TOEIC đủ bốn kỹ năng có AI chấm.
         </p>
 
         <div className="mt-6 pb-6 border-b border-slate-200/80 dark:border-slate-800">
@@ -356,6 +372,18 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           <li className="flex items-start gap-3">
             <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
             <span>Nói và Viết ở mọi mức, gồm Nâng cao</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>Đề TOEIC Speaking &amp; Writing và đề 4 kỹ năng</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>AI chấm 60 bài Nói, Viết mỗi ngày; 100 lượt hỏi trợ lý</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <Check size={18} className="text-blue-500 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>Sửa và nộp lại bài viết 5 lần mỗi bài; tặng 3 thẻ giữ chuỗi mỗi 30 ngày</span>
           </li>
         </ul>
       </div>
