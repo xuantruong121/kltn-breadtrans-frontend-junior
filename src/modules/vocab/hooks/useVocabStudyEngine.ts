@@ -84,21 +84,31 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   const currentWord = currentItem?.word;
   const currentMode = currentItem?.mode ?? "FLASHCARD";
 
+  // After the server stored a word's progress: refresh what shows it.
+  const refreshProgress = useCallback(() => {
+    const currentUserId = useAuthStore.getState().user?.id;
+    queryClient.invalidateQueries({ queryKey: ["dashboard-today", currentUserId] });
+    queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
+    queryClient.invalidateQueries({ queryKey: ["vocab-topic", topicId] });
+    queryClient.invalidateQueries({ queryKey: ["vocab-topics"] });
+    queryClient.invalidateQueries({ queryKey: ["myQuests"] });
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("breadtrans:learning-event"));
+    }
+  }, [queryClient, topicId]);
+
   // Backend mastery mutation
   const toggleMasteredMut = useMutation({
     mutationFn: ({ wordId, isMastered }: { wordId: number; isMastered: boolean }) =>
       vocabService.masterWord(wordId, isMastered),
-    onSuccess: () => {
-      const currentUserId = useAuthStore.getState().user?.id;
-      queryClient.invalidateQueries({ queryKey: ["dashboard-today", currentUserId] });
-      queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] });
-      queryClient.invalidateQueries({ queryKey: ["vocab-topic", topicId] });
-      queryClient.invalidateQueries({ queryKey: ["vocab-topics"] });
-      queryClient.invalidateQueries({ queryKey: ["myQuests"] });
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("breadtrans:learning-event"));
-      }
-    },
+    onSuccess: refreshProgress,
+  });
+
+  // A self-rating after the last step: the server reschedules the word by it.
+  const reviewMut = useMutation({
+    mutationFn: ({ wordId, grade }: { wordId: number; grade: SrsRating }) =>
+      vocabService.reviewWord(wordId, grade),
+    onSuccess: refreshProgress,
   });
 
   // Audio Play helper
@@ -174,7 +184,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   // -------------------------------------------------------------
   // ACTION: "ĐÃ THUỘC" (Mastered)
   // -------------------------------------------------------------
-  const handleMarkMastered = useCallback(() => {
+  const finishWord = useCallback((grade?: SrsRating) => {
     if (!currentWord || isCompleted) return;
 
     playChime("success");
@@ -189,7 +199,9 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       return updated;
     });
 
-    toggleMasteredMut.mutate({ wordId: currentWord.id, isMastered: true });
+    // A self-rating carries its own schedule; the plain "Đã thuộc" does not.
+    if (grade) reviewMut.mutate({ wordId: currentWord.id, grade });
+    else toggleMasteredMut.mutate({ wordId: currentWord.id, isMastered: true });
 
     // 2. Remove word from active queue
     const remainingQueue = queue.filter((_, idx) => idx !== currentIndex);
@@ -200,7 +212,10 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     } else {
       advanceQueue(remainingQueue, currentIndex < remainingQueue.length ? currentIndex : 0);
     }
-  }, [currentWord, isCompleted, queue, currentIndex, toggleMasteredMut, advanceQueue]);
+  }, [currentWord, isCompleted, queue, currentIndex, toggleMasteredMut, reviewMut, advanceQueue]);
+
+  // Bound to buttons and keys, so it must ignore whatever they pass.
+  const handleMarkMastered = useCallback(() => finishWord(), [finishWord]);
 
   // -------------------------------------------------------------
   // ACTION: "CHƯA NHỚ" (Escalate to next sequential mode)
@@ -415,6 +430,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       if (rating === "AGAIN") {
         playChime("step");
         setDirection(1);
+        reviewMut.mutate({ wordId: currentWord.id, grade: "AGAIN" });
 
         const withoutCurrent = queue.filter((_, idx) => idx !== currentIndex);
         const nextQueue = [
@@ -429,11 +445,11 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
         const nextIdx = currentIndex < withoutCurrent.length ? currentIndex : 0;
         advanceQueue(nextQueue, nextIdx);
       } else {
-        // HARD, GOOD, EASY -> Mark as mastered and remove from review queue
-        handleMarkMastered();
+        // HARD, GOOD, EASY -> known for now, next review by the rating
+        finishWord(rating);
       }
     },
-    [currentWord, isCompleted, queue, currentIndex, advanceQueue, handleMarkMastered]
+    [currentWord, isCompleted, queue, currentIndex, advanceQueue, finishWord, reviewMut]
   );
 
   // Directly switch mode via stage pill tabs
