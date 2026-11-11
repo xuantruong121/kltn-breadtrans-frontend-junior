@@ -121,7 +121,8 @@ export function AppHeader() {
   const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [notificationsExpanded, setNotificationsExpanded] = useState(true);
+  // Closed until the learner asks: the count on the row says there is something to read.
+  const [notificationsExpanded, setNotificationsExpanded] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [suggestionOpen, setSuggestionOpen] = useState(false);
 
@@ -168,6 +169,7 @@ export function AppHeader() {
     setMobileOpen(false);
     setProfileMenuOpen(false);
     setMoreOpen(false);
+    setNotificationsExpanded(false);
   };
 
   const openSuggestion = () => {
@@ -235,7 +237,7 @@ export function AppHeader() {
   const { data: inboxData, isLoading: isInboxLoading } = useQuery({
     queryKey: ["notifications", "recent", "unread"],
     queryFn: () => notificationService.getInbox(3, undefined, "unread"),
-    enabled: !!user && user.role === "STUDENT" && profileMenuOpen,
+    enabled: !!user && user.role === "STUDENT" && profileMenuOpen && notificationsExpanded,
   });
   const recentNotifications = inboxData?.items || [];
 
@@ -528,7 +530,11 @@ export function AppHeader() {
               <div ref={profileRef} className="relative shrink-0">
                 <button
                   type="button"
-                  onClick={() => setProfileMenuOpen((prev) => !prev)}
+                  onClick={() => {
+                    // Each opening starts with the notifications closed.
+                    setNotificationsExpanded(false);
+                    setProfileMenuOpen((prev) => !prev);
+                  }}
                   aria-expanded={profileMenuOpen}
                   aria-label="Menu tài khoản"
                   className="relative flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-1 ring-slate-200/90 dark:ring-slate-700/80 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-750 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-pointer shrink-0"
@@ -603,12 +609,16 @@ export function AppHeader() {
                         onClick={() => setNotificationsExpanded((prev) => !prev)}
                         className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
                         aria-expanded={notificationsExpanded}
+                        aria-controls="account-menu-notifications"
                       >
                         <div className="flex items-center gap-2.5">
                           <Bell size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
                           <span>Thông báo</span>
                           {unreadCount > 0 && (
-                            <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-xs font-black text-white leading-none">
+                            <span
+                              className="rounded-full bg-rose-600 px-1.5 py-0.5 text-xs font-black text-white leading-none"
+                              aria-label={`${unreadCount > 99 ? "99+" : unreadCount} thông báo chưa đọc`}
+                            >
                               {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                           )}
@@ -622,7 +632,7 @@ export function AppHeader() {
                       </button>
 
                       {notificationsExpanded && (
-                        <div className="mt-1 px-1 space-y-1.5 animate-in fade-in duration-150">
+                        <div id="account-menu-notifications" className="mt-1 px-1 space-y-1.5 animate-in fade-in duration-150">
                           {isInboxLoading ? (
                             <div className="flex items-center justify-center py-4 text-slate-600 dark:text-slate-400">
                               <Loader2 size={16} className="animate-spin text-amber-500" />
