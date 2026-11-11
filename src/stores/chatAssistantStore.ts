@@ -27,7 +27,8 @@ export interface StudentThread {
 
 /** The answered item a learner is asking the tutor about: ids for the server, a label for the panel. */
 export interface TutorItemContext {
-  sourceType: 'QUIZ_SUBMISSION' | 'GRAMMAR_ATTEMPT';
+  // TOEIC_ATTEMPT is sent from the mistake notebook only; the TOEIC review has no tutor button.
+  sourceType: 'TOEIC_ATTEMPT' | 'QUIZ_SUBMISSION' | 'GRAMMAR_ATTEMPT';
   sourceId: number;
   questionId?: number;
   label: string;

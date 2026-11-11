@@ -41,7 +41,9 @@ import {
   Mail,
   Croissant,
   Zap,
+  NotebookPen,
 } from "lucide-react";
+import { mistakesService } from "@/lib/api/services/mistakes.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import axiosClient from "@/lib/api/axiosClient";
@@ -219,6 +221,15 @@ export function AppHeader() {
     refetchInterval: 30000,
   });
   const unreadCount = unreadData?.count || 0;
+
+  // Open mistakes, shown beside "Sổ lỗi" in the account menu.
+  const { data: mistakeSummary } = useQuery({
+    queryKey: ["mistakes", "summary"],
+    queryFn: mistakesService.getSummary,
+    enabled: !!user && user.role === "STUDENT",
+    staleTime: 60_000,
+  });
+  const openMistakes = mistakeSummary?.open ?? 0;
 
 
   const { data: inboxData, isLoading: isInboxLoading } = useQuery({
@@ -743,6 +754,25 @@ export function AppHeader() {
                       <span>Tiến độ học tập</span>
                     </Link>
 
+                    {isStudent && (
+                    <Link
+                      href="/mistakes"
+                      onClick={closeMenus}
+                      className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                    >
+                      <NotebookPen size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="flex-1">Sổ lỗi</span>
+                      {openMistakes > 0 && (
+                        <span
+                          className="min-w-5 rounded-full bg-slate-200 px-1.5 py-0.5 text-center text-xs font-black leading-none text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+                          aria-label={`${openMistakes > 99 ? "99+" : openMistakes} lỗi chưa khắc phục`}
+                        >
+                          {openMistakes > 99 ? "99+" : openMistakes}
+                        </span>
+                      )}
+                    </Link>
+                    )}
+
                     <Link
                       href="/pet"
                       onClick={closeMenus}
@@ -1110,6 +1140,14 @@ export function AppHeader() {
                       >
                         <User size={16} />
                         <span>Thông tin cá nhân</span>
+                      </Link>
+                      <Link
+                        href="/mistakes"
+                        onClick={closeMenus}
+                        className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        <NotebookPen size={16} />
+                        <span>Sổ lỗi{openMistakes > 0 ? ` (${openMistakes > 99 ? "99+" : openMistakes})` : ""}</span>
                       </Link>
                       <a
                         href="https://www.facebook.com/truongngynz.121"

@@ -30,12 +30,15 @@ test("Reading micro-skill telemetry remains internal and is not rendered in Acco
   const progressTab = read("components/profile/LearningProgressTab.tsx");
   const readingHome = read("app/(student)/reading/page.tsx");
   const mistakesPage = read("app/(student)/reading/mistakes/page.tsx");
+  const notebook = read("components/mistakes/MistakeNotebook.tsx");
   const nextConfig = read("../next.config.ts");
 
   assert.doesNotMatch(progressTab, /Theo dõi kỹ năng con/);
   assert.doesNotMatch(progressTab, /readingService\.getTracking/);
   assert.doesNotMatch(progressTab, /href="\/reading\/mistakes"/);
-  assert.match(mistakesPage, /href="\/hub\?tab=learning-progress"/);
+  // Reading mistakes moved into the notebook of all skills; the old address forwards there.
+  assert.match(mistakesPage, /router\.replace\("\/mistakes\?skill=reading"\)/);
+  assert.doesNotMatch(notebook, /readingService\.getTracking/);
   assert.doesNotMatch(nextConfig, /practice\/reading\/mistakes/);
   assert.doesNotMatch(nextConfig, /rewrites\(\)/);
   assert.doesNotMatch(readingHome, /Theo dõi tiến bộ theo kỹ năng con/);
