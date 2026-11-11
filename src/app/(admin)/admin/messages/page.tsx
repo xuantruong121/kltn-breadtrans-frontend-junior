@@ -84,7 +84,7 @@ function AdminMessagesContent() {
         search: debouncedSearch || undefined,
         unreadOnly: filter === "unread",
       }),
-    refetchInterval: 15000,
+    refetchInterval: 4000,
   });
 
   const selectedConversation = useMemo(
@@ -104,7 +104,7 @@ function AdminMessagesContent() {
     queryKey: ["admin-support", "messages", selectedId],
     queryFn: () => supportService.getAdminMessages(selectedId!, 1, 100),
     enabled: !!selectedId,
-    refetchInterval: 15000,
+    refetchInterval: 4000,
   });
 
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {

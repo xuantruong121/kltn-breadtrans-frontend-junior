@@ -166,6 +166,7 @@ function FloatingAiTutorInner() {
     prependMessagesToThread,
     setThreadHasMore,
     addMessageToThread,
+    syncThreadFromServer,
   } = useChatAssistantStore();
 
   const [input, setInput] = useState("");
@@ -376,6 +377,39 @@ function FloatingAiTutorInner() {
     return () => window.clearTimeout(loadTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user?.id, isAdmin]);
+
+  // The socket brings messages at once; this sync covers a dropped socket,
+  // so neither side ever has to reload to see the other's message.
+  const openConversationId = currentThread.conversationId || conversationId;
+  const syncActive =
+    isOpen && !!openConversationId && !!user?.id && (!isAdmin || (adminView === "chat" && !!activeStudentId));
+  useEffect(() => {
+    if (!syncActive || !openConversationId) return;
+    let cancelled = false;
+    const sync = async () => {
+      if (document.hidden) return;
+      try {
+        const res = isAdmin
+          ? await supportService.getAdminMessages(openConversationId, 1, 50)
+          : await supportService.getMessages(openConversationId, 1, 50);
+        if (cancelled) return;
+        syncThreadFromServer(
+          studentThreadId,
+          res.mode,
+          (res.data || []).map(mapSupportMessageToAssistantMessage)
+        );
+      } catch {
+        // The next tick tries again.
+      }
+    };
+    const timer = window.setInterval(sync, 4000);
+    socket?.on("connect", sync);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      socket?.off("connect", sync);
+    };
+  }, [syncActive, openConversationId, isAdmin, studentThreadId, socket, syncThreadFromServer]);
 
   // When admin selects a student to chat
   useEffect(() => {

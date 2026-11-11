@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { mergeServerMessages } from "@/lib/chat/threadSync";
 
 export interface AssistantMessage {
   id: string | number;
@@ -49,6 +50,12 @@ interface ChatAssistantState {
     olderMessages: AssistantMessage[],
   ) => void;
   setThreadHasMore: (studentId: string, hasMore: boolean) => void;
+  /** Adds what the server holds and the thread does not, and takes the server's mode, without a system line. */
+  syncThreadFromServer: (
+    studentId: string,
+    mode: 'AI' | 'HUMAN',
+    serverMessages: AssistantMessage[],
+  ) => void;
   addMessageToThread: (
     studentId: string,
     studentMeta: { name: string; email?: string; avatar?: string },
@@ -148,6 +155,26 @@ export const useChatAssistantStore = create<ChatAssistantState>()((set, get) => 
           [studentId]: {
             ...currentThread,
             messages: [...uniqueOlder, ...currentThread.messages],
+          },
+        },
+      };
+    });
+  },
+
+  syncThreadFromServer: (studentId, mode, serverMessages) => {
+    set((state) => {
+      const currentThread = state.threads[studentId];
+      if (!currentThread) return state;
+      const messages = mergeServerMessages(currentThread.messages, serverMessages);
+      if (messages === currentThread.messages && currentThread.mode === mode) return state;
+      return {
+        threads: {
+          ...state.threads,
+          [studentId]: {
+            ...currentThread,
+            mode,
+            messages,
+            lastMessageTime: messages.length > 0 ? messages[messages.length - 1].timestamp : currentThread.lastMessageTime,
           },
         },
       };
