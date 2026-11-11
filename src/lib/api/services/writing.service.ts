@@ -125,6 +125,29 @@ export function practiceDetailOf(value: Partial<PracticeWritingDetail> | null | 
     : null;
 }
 
+/** Guided rewrite: where a submission stands in its chain of revisions. */
+export interface WritingRevisionView {
+  rootSubmissionId: number;
+  /** 0 is the first submission, 1 and 2 are revisions. */
+  number: number;
+  used: number;
+  limit: number;
+  remaining: number;
+  isLatest: boolean;
+  canRevise: boolean;
+  chain: Array<{ submissionId: number; number: number; score: number; maxScore: number; submittedAt: string }>;
+  comparison: {
+    previousSubmissionId: number;
+    previousAnswer: string;
+    scoreBefore: number;
+    scoreAfter: number;
+    maxScore: number;
+    criteria: Array<{ key: string; label: string; before: number | null; after: number; max: number }>;
+    fixed: Array<{ original: string; corrected: string; explanation: string }>;
+    remaining: Array<{ original: string; corrected: string; explanation: string }>;
+  } | null;
+}
+
 export type WritingExamParentContext = {
   attemptId: number;
   componentId: number;
@@ -163,6 +186,18 @@ export const writingService = {
       answer,
       clientAttemptId,
       ...(questionId ? { questionId } : {}),
+    });
+  },
+
+  /** Grades a corrected text for a graded practice answer (at most 2 per answer, no reward). */
+  revise: async (
+    submissionId: number,
+    answer: string,
+    clientAttemptId: string,
+  ): Promise<WritingEvaluation & { revision: WritingRevisionView | null }> => {
+    return await axiosClient.post(`/writing/submissions/${submissionId}/revise`, {
+      answer,
+      clientAttemptId,
     });
   },
 

@@ -17,6 +17,7 @@ import {
 } from "@/lib/reading/readingQuizUtils";
 import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
+import { WritingRevisionPanel } from "@/components/writing/WritingRevisionPanel";
 import { practiceDetailOf } from "@/lib/api/services/writing.service";
 
 export default function SubmissionAnalyticsPage(props: {
@@ -110,6 +111,11 @@ export default function SubmissionAnalyticsPage(props: {
                   {writingFeedback ? ` / ${writingFeedback.maxScore}` : ""}
                 </span>
               </p>
+              {analytics.writingRevision && analytics.writingRevision.number > 0 && (
+                <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Bản sửa {analytics.writingRevision.number}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -122,7 +128,7 @@ export default function SubmissionAnalyticsPage(props: {
               }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-white hover:bg-sky-600"
             >
-              <RefreshCw size={16} /> Viết lại
+              <RefreshCw size={16} /> Viết bài mới
             </button>
           </div>
 
@@ -165,6 +171,16 @@ export default function SubmissionAnalyticsPage(props: {
 
           {practiceDetailOf(writingFeedback?.practice) && (
             <PracticeWritingDetail detail={practiceDetailOf(writingFeedback?.practice)!} />
+          )}
+
+          {analytics.writingRevision && typeof analytics.submittedAnswer === "string" && (
+            <WritingRevisionPanel
+              key={submissionId}
+              submissionId={submissionId}
+              revision={analytics.writingRevision}
+              answer={analytics.submittedAnswer}
+              wordRange={practiceDetailOf(writingFeedback?.practice)?.wordRange ?? null}
+            />
           )}
 
           <AskTutorButton
