@@ -9,6 +9,7 @@ import {
   recordSeen,
   STREAK_REMINDER_HOUR,
   type PetNudgeInput,
+  hungerLine,
 } from "./dialogueLogic.ts";
 
 const quest = (title: string, isCompleted: boolean) => ({
@@ -112,4 +113,28 @@ test("no line hard-codes a pet name, uses emoji, or sends everyone to listening"
 test("hourInVietnam is UTC+7", () => {
   assert.equal(hourInVietnam(new Date("2026-11-09T11:30:00Z")), 18);
   assert.equal(hourInVietnam(new Date("2026-11-09T20:00:00Z")), 3);
+});
+
+test("a pet fed and hungry again the same day says so again", () => {
+  const morning = activeNudges({ ...base, satietyState: "HUNGRY", lastFedAt: "2026-11-10T01:00:00.000Z" });
+  const evening = activeNudges({ ...base, satietyState: "HUNGRY", lastFedAt: "2026-11-11T04:58:00.000Z" });
+  assert.notEqual(morning[0].key, evening[0].key);
+  // The morning line was seen; the evening one is new.
+  assert.equal(pickNudge(evening, [morning[0].key])?.kind, "HUNGRY");
+  // The same hunger is still said once.
+  assert.equal(pickNudge(evening, [evening[0].key])?.kind === "HUNGRY", false);
+});
+
+test("the pet's own card says it is hungry, and only then", () => {
+  assert.equal(hungerLine({ satietyState: "NORMAL", balance: 50, feedCost: 10 }), null);
+  assert.equal(hungerLine({ satietyState: "FULL", balance: 50, feedCost: 10 }), null);
+  assert.deepEqual(hungerLine({ satietyState: "HUNGRY", balance: 50, feedCost: 10 }), {
+    veryHungry: false,
+    short: 0,
+    text: "Bụng tớ đói rồi. Cho tớ ăn một phần nhé?",
+  });
+  const broke = hungerLine({ satietyState: "VERY_HUNGRY", balance: 4, feedCost: 20 });
+  assert.equal(broke?.veryHungry, true);
+  assert.equal(broke?.short, 16);
+  assert.match(broke?.text ?? "", /Cậu còn thiếu 16 Bánh Mì/);
 });

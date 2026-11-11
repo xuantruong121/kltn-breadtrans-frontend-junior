@@ -310,9 +310,15 @@ function LrResultView({
                       {q.questionNumber}
                     </span>
                     <span className="min-w-0 flex-1 text-slate-800 dark:text-slate-200">
-                      Bạn chọn: <strong className={q.status === "INCORRECT" ? "text-rose-700 dark:text-rose-300" : ""}>{letter(q.selectedIndex)}</strong>
-                      <span className="mx-1.5 text-slate-600 dark:text-slate-400">·</span>
-                      Đáp án: <strong className="text-emerald-700 dark:text-emerald-300">{letter(q.correctIndex)}</strong>
+                      {q.correctIndex === null ? (
+                        "Chưa trả lời"
+                      ) : (
+                        <>
+                          Bạn chọn: <strong className={q.status === "INCORRECT" ? "text-rose-700 dark:text-rose-300" : ""}>{letter(q.selectedIndex)}</strong>
+                          <span className="mx-1.5 text-slate-600 dark:text-slate-400">·</span>
+                          Đáp án: <strong className="text-emerald-700 dark:text-emerald-300">{letter(q.correctIndex)}</strong>
+                        </>
+                      )}
                     </span>
                     <StatusBadge status={q.status} />
                     <button type="button" onClick={() => onOpen(q)} className="shrink-0 rounded-md px-2 py-1.5 text-sm font-semibold text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40">

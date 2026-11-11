@@ -2370,7 +2370,7 @@ export default function SkillCmsWorkspace({
 
       {/* Two columns from 1280px: the work on the left; the audio and the
           publish checklist in a 400px rail that stays in view (24px gap). */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start [&>*]:min-w-0">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
@@ -2867,7 +2867,8 @@ export default function SkillCmsWorkspace({
                     : "border-slate-200 hover:border-slate-300"
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
+                {/* Wraps on phones: beside the buttons the prompt was squeezed to 53px at 320px (responsive crawl 2026-11-10). */}
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   {current.content?.imageUrl && (
                     <AdminImageThumb
                       src={current.content.imageUrl}
@@ -2875,7 +2876,7 @@ export default function SkillCmsWorkspace({
                       className="h-16 w-20"
                     />
                   )}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-[1_1_12rem]">
                     <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
                       Câu {index + 1} ·{" "}
                       {isWriting

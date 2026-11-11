@@ -7,7 +7,7 @@
  * idempotency key, and the same runtime route after Start.
  */
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
@@ -27,6 +27,9 @@ type AssessmentDetail = {
   title: string;
   description: string | null;
   productFamily: string;
+  /** Speaking & Writing and four-skill exams need Pro to start a new session. */
+  requiredPlan?: "FREE" | "PRO";
+  isLocked?: boolean;
   components: ToeicAssessmentComponentView[];
   attempt?: { id: number; status: string } | null;
 };
@@ -120,7 +123,17 @@ export default function ToeicAssessmentDetail({
       summaryHeading="Thông tin bài thi"
       summaryRows={summaryRows}
       notices={
-        !readiness.ready && (
+        data.isLocked ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100">
+            <p className="flex items-start gap-2">
+              <Lock size={16} strokeWidth={2} className="mt-0.5 shrink-0" aria-hidden="true" />
+              <span>
+                Đề TOEIC Speaking &amp; Writing và đề 4 kỹ năng là quyền lợi của gói Pro. Đề Listening &amp; Reading mở
+                cho mọi gói.
+              </span>
+            </p>
+          </div>
+        ) : !readiness.ready && (
           <div className="rounded-lg border border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/30 p-3 text-sm text-rose-800 dark:text-rose-200 font-medium">
             <p>Đề thi này chưa đủ điều kiện để bắt đầu.</p>
             <ul className="mt-1 list-disc space-y-0.5 pl-4 font-medium">
@@ -131,16 +144,25 @@ export default function ToeicAssessmentDetail({
           </div>
         )
       }
-      cta={{
-        label: "Bắt đầu làm bài",
-        onClick: () => {
-          // Fullscreen must come from this click; the room keeps the same document.
-          enterFullscreen();
-          start.mutate();
-        },
-        disabled: !readiness.ready,
-        pending: start.isPending,
-      }}
+      cta={
+        data.isLocked
+          ? {
+              label: "Nâng cấp lên Pro",
+              onClick: () => router.push("/plans?highlight=pro"),
+              disabled: false,
+              pending: false,
+            }
+          : {
+              label: "Bắt đầu làm bài",
+              onClick: () => {
+                // Fullscreen must come from this click; the room keeps the same document.
+                enterFullscreen();
+                start.mutate();
+              },
+              disabled: !readiness.ready,
+              pending: start.isPending,
+            }
+      }
       ctaError={error || null}
     />
   );

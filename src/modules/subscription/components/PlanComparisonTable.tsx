@@ -11,66 +11,85 @@ interface ComparisonFeature {
   pro: string | boolean;
 }
 
-// Only privileges the API actually enforces (canonical plan catalog and the
-// practice level policy). Do not list a feature here that no plan unlocks.
+// Only privileges the API actually enforces: the practice level policy and
+// the per-plan numbers in the backend's subscription/plan-limits.ts. Do not
+// list a feature here that no plan unlocks, and change a number here only
+// together with that file.
 const COMPARISON_FEATURES: ComparisonFeature[] = [
+  // The rows where the plans differ come first; a level names the highest one the plan opens.
   {
-    category: "Luyện 4 kỹ năng",
-    name: "Luyện Nghe và Đọc",
-    free: "Mọi mức",
-    plus: "Mọi mức",
-    pro: "Mọi mức",
+    category: "Khác nhau giữa các gói",
+    name: "Luyện Nói và Viết, có AI chấm",
+    free: "Đến mức Cơ bản",
+    plus: "Đến mức Trung cấp",
+    pro: "Đến mức Nâng cao",
   },
   {
     name: "Nghe chép",
-    free: "Cơ bản",
+    free: "Đến mức Cơ bản",
     plus: "Mọi mức",
     pro: "Mọi mức",
   },
   {
-    name: "Luyện Nói và Viết",
-    free: "Cơ bản",
-    plus: "Thêm Trung cấp",
-    pro: "Mọi mức, gồm Nâng cao",
+    name: "Bài Nói và Viết được AI chấm mỗi ngày",
+    free: "10 bài",
+    plus: "30 bài",
+    pro: "60 bài",
   },
   {
-    name: "Chấm bài Nói và Viết tự động (AI)",
-    free: "Với các bài được mở",
-    plus: "Với các bài được mở",
-    pro: "Với các bài được mở",
+    name: "Lượt hỏi Trợ lý Bánh Mì mỗi ngày",
+    free: "10 lượt",
+    plus: "30 lượt",
+    pro: "100 lượt",
   },
   {
-    category: "Từ vựng và ngữ pháp",
+    name: "Sửa và nộp lại bài viết",
+    free: false,
+    plus: "2 lần mỗi bài",
+    pro: "5 lần mỗi bài",
+  },
+  {
+    name: "Đề TOEIC Speaking & Writing và đề 4 kỹ năng",
+    free: false,
+    plus: false,
+    pro: true,
+  },
+  {
+    name: "Khiên giữ chuỗi tặng kèm mỗi 30 ngày",
+    free: false,
+    plus: "1 khiên",
+    pro: "3 khiên",
+  },
+  {
+    category: "Có ở mọi gói",
+    name: "Luyện Nghe và Đọc, mọi mức",
+    free: true,
+    plus: true,
+    pro: true,
+  },
+  {
     name: "Thẻ ghi nhớ, từ vựng và ngữ pháp",
     free: true,
     plus: true,
     pro: true,
   },
   {
-    category: "Kiểm tra và luyện đề",
     name: "Bài đánh giá đầu vào",
     free: true,
     plus: true,
     pro: true,
   },
   {
-    name: "Luyện đề TOEIC (L&R, S&W, 4 kỹ năng)",
+    name: "Luyện đề TOEIC Listening & Reading",
     free: true,
     plus: true,
     pro: true,
   },
   {
-    category: "Khác",
     name: "Đấu trường từ vựng, cửa hàng và thú cưng",
     free: true,
     plus: true,
     pro: true,
-  },
-  {
-    name: "Thời hạn",
-    free: "Không giới hạn",
-    plus: "30 ngày",
-    pro: "30 ngày",
   },
 ];
 
@@ -86,7 +105,7 @@ export function PlanComparisonTable() {
             <span>So sánh chi tiết 3 gói dịch vụ</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-            Quyền lợi của từng gói
+            Bảy dòng đầu là chỗ các gói khác nhau. Phần còn lại gói nào cũng có.
           </p>
         </div>
 

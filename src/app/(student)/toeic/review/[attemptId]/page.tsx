@@ -65,7 +65,7 @@ export default function ToeicReviewPage({
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
             Part {p.part} <span className="text-base font-semibold text-slate-600 dark:text-slate-400">· {PART_TITLES[p.part]}</span>
           </h2>
-          <div className="mt-3 grid items-start gap-4 xl:grid-cols-2">
+          <div className="mt-3 grid items-start gap-4 xl:grid-cols-2 [&>*]:min-w-0">
             {p.questions.map((q) => {
               const firstOfGroup = !seenGroups.has(q.groupId);
               seenGroups.add(q.groupId);

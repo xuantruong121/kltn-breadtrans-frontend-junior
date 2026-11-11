@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { gamificationService, Pet } from "@/lib/api/services/gamification.service";
 import { CompanionPetStage2D } from "@/modules/pet/components/CompanionPetStage2D";
 import { PetSelectorModal } from "@/modules/pet/components/PetSelectorModal";
+import { TutorEntryButton } from "@/modules/pet/components/TutorEntryButton";
 import { PET_SPECIES_LIST, getSpeciesIdFromPetName, PetSpecies } from "@/modules/pet/types";
 import toast from "react-hot-toast";
 import { ArrowLeft, RefreshCw, Award, Heart, Zap, AlertCircle, Loader2 } from "lucide-react";
@@ -148,7 +149,11 @@ export default function PetPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+          {/* The floating pet is hidden on this page, so its tutor entry lives here. */}
+          <div className="w-60 max-w-full">
+            <TutorEntryButton />
+          </div>
           <Link
             href="/market"
             className="flex items-center gap-2 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3.5 py-2 rounded-xl text-amber-900 dark:text-amber-300 font-bold text-xs hover:bg-amber-100 dark:hover:bg-amber-900/60 transition-colors focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"

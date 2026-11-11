@@ -402,7 +402,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
 
       {/* Two columns from 1280px: the lesson and its questions on the left; a
           400px rail with the checklist and the learner view (24px gap). */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start [&>*]:min-w-0">
         <section className="rounded-xl border border-slate-200 bg-white p-5 xl:col-start-1">
           <h2 className="font-semibold text-slate-950">Bài học</h2>
           <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">

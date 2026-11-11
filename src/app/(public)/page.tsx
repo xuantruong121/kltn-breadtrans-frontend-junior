@@ -78,7 +78,7 @@ const FAQ_LIST = [
   },
   {
     q: "Bánh Mì dùng để làm gì?",
-    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài kiểm tra đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú cưng ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, vé bảo vệ chuỗi học và một số quà tặng.",
+    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài kiểm tra đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú cưng ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, khiên giữ chuỗi và một số quà tặng.",
   },
   {
     q: "Tôi có học được trên điện thoại không?",
@@ -635,7 +635,7 @@ export default function PublicLandingPage() {
                     <Gift size={16} className="text-amber-600 dark:text-amber-400" />
                     Cửa Hàng Đổi Quà
                   </span>
-                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Dùng Bánh Mì đổi khung avatar, vé bảo vệ chuỗi học và quà tặng</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Dùng Bánh Mì đổi khung avatar, khiên giữ chuỗi và quà tặng</p>
                 </div>
               </div>
             </div>

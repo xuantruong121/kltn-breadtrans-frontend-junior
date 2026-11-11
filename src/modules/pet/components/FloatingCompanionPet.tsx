@@ -13,7 +13,6 @@ import {
   ExternalLink,
   ChevronRight,
   TrendingUp,
-  MessageCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
@@ -21,6 +20,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { gamificationService } from "@/lib/api/services/gamification.service";
+import { TutorEntryButton, useTutorUnreadCount } from "./TutorEntryButton";
 import { useCompanionPetRuntime } from "../useCompanionPetRuntime";
 import { usePetDialogue } from "../usePetDialogue";
 import { PetSpeechBubble } from "./PetSpeechBubble";
@@ -43,9 +43,13 @@ import { useCompanionPetStore } from "@/stores/companionPetStore";
 const FloatingCompanionPetInner: React.FC = () => {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const { isOpen: isTutorOpen, setIsOpen: setTutorOpen } = useChatAssistantStore();
+  const { isOpen: isTutorOpen } = useChatAssistantStore();
 
   const { isFocusMode, pet, balance, today, isLoading } = useCompanionPetRuntime();
+
+  // Messages from an admin show as a number on the pet, the entry to the
+  // tutor panel; opening the panel reads them.
+  const unreadMessageCount = useTutorUnreadCount();
 
   // Floating UI state machine
   const [isExpanded, setIsExpanded] = useState(false);
@@ -93,13 +97,16 @@ const FloatingCompanionPetInner: React.FC = () => {
     isVisible: isDialogueVisible,
     dismiss: dismissDialogue,
   } = usePetDialogue({
-    ready: !isLoading && Boolean(pet) && Boolean(today),
+    // Only while the pet is on screen: a line counts as said once the learner
+    // could see it, not on a page where the pet is hidden.
+    ready: !isLoading && Boolean(pet) && Boolean(today) && !isFocusMode && !isTutorOpen && !isExpanded,
     userId: user?.id,
     dateKey: today?.dateKey,
     petName: petDisplayName,
     satietyState: pet ? (pet.satietyState ?? getPetSatietyState(satiety)) : undefined,
     balance,
     feedCost,
+    lastFedAt: pet?.lastFedAt,
     streak,
     activitiesCount: today?.activities?.length ?? 0,
     quests: todayQuests,
@@ -414,20 +421,7 @@ const FloatingCompanionPetInner: React.FC = () => {
           )}
 
           {/* Shared learning entry point: the pet opens the existing tutor panel. */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsExpanded(false);
-              setTutorOpen(true);
-            }}
-            className="mb-3.5 flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border border-blue-200 dark:border-sky-800/60 bg-blue-50/70 dark:bg-sky-950/40 px-3 py-2.5 text-left text-xs font-semibold text-blue-900 dark:text-sky-300 transition-colors hover:border-blue-300 dark:hover:border-sky-700 hover:bg-blue-100 dark:hover:bg-sky-900/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-          >
-            <span className="flex items-center gap-2">
-              <MessageCircle size={15} className="text-blue-700 dark:text-sky-400" aria-hidden="true" />
-              <span>Hỏi trợ lý học tập</span>
-            </span>
-            <ChevronRight size={14} className="text-blue-700 dark:text-sky-400" aria-hidden="true" />
-          </button>
+          <TutorEntryButton onOpen={() => setIsExpanded(false)} className="mb-3.5" />
 
           {/* Feed Button & Satiety */}
           <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-slate-800">
@@ -495,13 +489,22 @@ const FloatingCompanionPetInner: React.FC = () => {
             : { duration: 0.2 }
         }
         aria-expanded={isExpanded}
-        aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}. Nhấn để mở bảng tình trạng thú cưng.`}
+        aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}.${
+          unreadMessageCount > 0 ? ` ${unreadMessageCount} tin nhắn chưa đọc.` : ""
+        } Nhấn để mở bảng tình trạng thú cưng.`}
         className="relative size-12 sm:size-14 rounded-full bg-card dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 shadow-md hover:shadow-lg hover:border-amber-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none group"
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
 
-        {/* Small badge when a learning quest is pending */}
-        {recommendation && (
+        {/* Unread messages from an admin take the corner; else the quest dot. */}
+        {unreadMessageCount > 0 ? (
+          <span
+            className="absolute -top-1.5 -right-1.5 grid min-w-5 h-5 place-items-center rounded-full border-2 border-white bg-rose-600 px-1 text-[11px] font-bold leading-none text-white dark:border-slate-900"
+            aria-hidden="true"
+          >
+            {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
+          </span>
+        ) : recommendation && (
           <span
             className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"
             aria-hidden="true"

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { PetHungerLine } from "./PetHungerLine";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,6 +27,7 @@ import {
   petLevelProgress,
 } from "../petLogic";
 import { CompanionPet2D } from "./CompanionPet2D";
+import { TutorEntryButton } from "./TutorEntryButton";
 
 interface DashboardCompanionCardProps {
   className?: string;
@@ -268,6 +270,8 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
             </div>
           </div>
 
+          <PetHungerLine satietyState={pet.satietyState} balance={userBalance} feedCost={feedCost} />
+
           {/* Health & Happiness & Satiety Progress Meters */}
           <div className="space-y-2.5 bg-slate-50/50 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
             {/* Level Progress: EXP inside the current level (1,000 EXP a level) */}
@@ -415,6 +419,9 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                 Tiêu hao {feedCost} Bánh Mì • {satietyText} • EXP hôm nay {pet.dailyRewardedFeedCount ?? 0}/{pet.dailyRewardLimit ?? 3}
               </p>
             )}
+
+            {/* The floating pet is hidden on this page, so its tutor entry lives here. */}
+            <TutorEntryButton />
 
             {/* Link to Full Pet Room */}
             <Link

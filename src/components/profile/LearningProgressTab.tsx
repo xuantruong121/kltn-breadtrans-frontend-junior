@@ -214,6 +214,12 @@ export function LearningProgressTab() {
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Theo dõi quá trình học và tiếp tục từ nơi bạn đã dừng lại.
             </p>
+            <Link
+              href="/mistakes"
+              className="mt-2 inline-flex min-h-9 items-center text-sm font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-sky-300 dark:hover:text-sky-200"
+            >
+              Mở sổ lỗi
+            </Link>
           </div>
           {streak > 0 && (
             <div className="mt-2 inline-flex items-center gap-1.5 self-start rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:border-amber-800/80 dark:bg-amber-950/40 dark:text-amber-300 sm:mt-0 sm:self-auto">

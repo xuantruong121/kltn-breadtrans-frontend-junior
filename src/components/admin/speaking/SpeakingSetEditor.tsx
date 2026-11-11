@@ -476,7 +476,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
 
       {/* Two columns from 1280px: the set and its exercises on the left; a
           400px rail with the checklist and the overview (24px gap). */}
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start [&>*]:min-w-0">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-950">Thông tin bộ luyện</h2>
@@ -936,7 +936,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                         <span className="flex size-7 flex-none items-center justify-center rounded-md bg-slate-100 text-xs font-semibold tabular-nums text-slate-700">
                           {index + 1}
                         </span>
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-[1_1_12rem]">
                           <p className="text-sm text-slate-600">
                             {taskTypeLabel(exercise.taskType)} ·{" "}
                             {difficultyLabel(exercise.difficulty)}

@@ -12,6 +12,16 @@ export interface SupportMessageItem {
   createdAt: string | number;
 }
 
+/** A learner message as the server stored it, with the tutor's reply on AI mode. */
+export interface SupportSentMessage extends SupportMessageItem {
+  aiReply:
+    | (SupportMessageItem & {
+        quota: { limit: number; remaining: number };
+        limited: boolean;
+      })
+    | null;
+}
+
 export interface SupportConversationSummary {
   id: number;
   studentId: number;
@@ -80,18 +90,8 @@ export const supportService = {
     conversationId: number,
     content: string,
     clientMessageId?: string,
-  ): Promise<SupportMessageItem> =>
+  ): Promise<SupportSentMessage> =>
     axiosClient.post(`/support/conversations/${conversationId}/messages`, {
-      content,
-      clientMessageId,
-    }),
-
-  saveAiMessage: (
-    conversationId: number,
-    content: string,
-    clientMessageId?: string,
-  ): Promise<SupportMessageItem> =>
-    axiosClient.post(`/support/conversations/${conversationId}/ai-messages`, {
       content,
       clientMessageId,
     }),

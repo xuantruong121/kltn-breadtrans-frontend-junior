@@ -16,6 +16,7 @@ import {
 } from "@/lib/reading/readingQuizUtils";
 import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
+import { WritingRevisionPanel } from "@/components/writing/WritingRevisionPanel";
 import { practiceDetailOf } from "@/lib/api/services/writing.service";
 
 export default function SubmissionAnalyticsPage(props: {
@@ -109,6 +110,11 @@ export default function SubmissionAnalyticsPage(props: {
                   {writingFeedback ? ` / ${writingFeedback.maxScore}` : ""}
                 </span>
               </p>
+              {analytics.writingRevision && analytics.writingRevision.number > 0 && (
+                <p className="mt-1 text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Bản sửa {analytics.writingRevision.number}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -121,7 +127,7 @@ export default function SubmissionAnalyticsPage(props: {
               }
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-500 px-4 py-3 text-sm font-black text-white hover:bg-sky-600"
             >
-              <RefreshCw size={16} /> Viết lại
+              <RefreshCw size={16} /> Viết bài mới
             </button>
           </div>
 
@@ -164,6 +170,16 @@ export default function SubmissionAnalyticsPage(props: {
 
           {practiceDetailOf(writingFeedback?.practice) && (
             <PracticeWritingDetail detail={practiceDetailOf(writingFeedback?.practice)!} />
+          )}
+
+          {analytics.writingRevision && typeof analytics.submittedAnswer === "string" && (
+            <WritingRevisionPanel
+              key={submissionId}
+              submissionId={submissionId}
+              revision={analytics.writingRevision}
+              answer={analytics.submittedAnswer}
+              wordRange={practiceDetailOf(writingFeedback?.practice)?.wordRange ?? null}
+            />
           )}
 
           {writingFeedback ? (
@@ -217,7 +233,9 @@ export default function SubmissionAnalyticsPage(props: {
       ? `/listening/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`
       : null;
   const readingMistakesHref =
-    isReadingResult && wrongQuestionIds.length > 0 ? "/reading/mistakes" : null;
+    wrongQuestionIds.length > 0 && (isReadingResult || isListeningResult)
+      ? `/mistakes?skill=${isListeningResult ? "listening" : "reading"}`
+      : null;
   const practiceCatalogHref = isListeningResult
     ? "/listening"
     : isReadingResult
@@ -455,7 +473,7 @@ export default function SubmissionAnalyticsPage(props: {
               {readingMistakesHref && (
                 <Link href={readingMistakesHref} className="w-full">
                   <button className="w-full flex items-center justify-center gap-2 border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
-                    <Target size={18} /> Xem trong lỗi cần ôn lại
+                    <Target size={18} /> Xem trong sổ lỗi
                   </button>
                 </Link>
               )}

@@ -43,6 +43,7 @@ import { LevelChoiceCard } from "@/components/dashboard/LevelChoiceCard";
 import { SkillLevelsCard } from "@/components/dashboard/SkillLevelsCard";
 import { StarterRoadmapCard } from "@/components/learning-path/StarterRoadmapCard";
 import { ProgressCard } from "@/components/learning-path/ProgressCard";
+import { MistakesDashboardCard } from "@/components/mistakes/MistakesDashboardCard";
 import { TodayPlanCard } from "@/components/learning-path/TodayPlanCard";
 import { WeekPlanCard } from "@/components/learning-path/WeekPlanCard";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
@@ -890,10 +891,11 @@ export default function DashboardPage() {
               {stats?.streakFreezes ? (
                 <span
                   className="inline-flex items-center gap-1 text-xs text-amber-800 dark:text-amber-300 font-bold ml-1 pl-2.5 border-l border-slate-200 dark:border-slate-700"
-                  title={`Bạn đang có ${stats.streakFreezes} khiên bảo vệ chuỗi`}
+                  title={`Bạn có ${stats.streakFreezes} khiên giữ chuỗi. Lỡ một ngày học, 1 khiên tự được dùng để chuỗi không bị mất.`}
+                  aria-label={`${stats.streakFreezes} khiên giữ chuỗi, tự dùng khi bạn lỡ một ngày học`}
                 >
-                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" />
-                  <span>{stats.streakFreezes} khiên</span>
+                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                  <span aria-hidden="true">{stats.streakFreezes} khiên</span>
                 </span>
               ) : null}
             </div>
@@ -911,7 +913,7 @@ export default function DashboardPage() {
               KẾT QUẢ HỌC TẬP
             </h2>
 
-            <div className="inline-flex items-center gap-1 p-1 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <div className="inline-flex max-w-full flex-wrap items-center gap-1 p-1 rounded-2xl bg-white/70 dark:bg-slate-900/70 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
               {FILTER_PERIODS.map((period) => {
                 const isActive = filterPeriod === period.key;
                 const requiresUpgrade = !canAccessFilterPeriod(period.key, userPlanCode);
@@ -983,7 +985,7 @@ export default function DashboardPage() {
           {/* Row 1: 5 Summary Metric Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {/* 1. Study Time */}
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+            <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                 <Clock size={20} aria-hidden="true" />
               </div>
@@ -998,7 +1000,7 @@ export default function DashboardPage() {
             </div>
 
             {/* 2. Questions Practiced */}
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+            <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                 <ListChecks size={20} aria-hidden="true" />
               </div>
@@ -1013,7 +1015,7 @@ export default function DashboardPage() {
             </div>
 
             {/* 3. Vocab Learned */}
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+            <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                 <BookOpen size={20} aria-hidden="true" />
               </div>
@@ -1028,7 +1030,7 @@ export default function DashboardPage() {
             </div>
 
             {/* 4. Streak */}
-            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
+            <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
                 <Flame size={20} className="fill-amber-500 text-amber-500" aria-hidden="true" />
               </div>
@@ -1353,6 +1355,7 @@ export default function DashboardPage() {
       <SkillLevelsCard profile={learnerProfile} />
       <WeekPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
       <ProgressCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
+      <MistakesDashboardCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
       <TodayPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
 
       {/* ========================================================================= */}

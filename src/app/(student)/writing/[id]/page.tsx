@@ -41,6 +41,7 @@ import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingWorkspace } from "@/components/writing/PictureWritingWorkspace";
 import { isPictureQuiz } from "@/lib/writing/pictureWriting";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export default function WritingDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -277,9 +278,16 @@ export default function WritingDetailPage(props: {
       router.push(
         `/writing/submissions/${result.submissionId}`,
       );
-    } catch {
+    } catch (error) {
       setIsEvaluating(false);
-      toast.error("Chưa chấm được bài. Bài viết của bạn vẫn còn, hãy thử gửi lại.");
+      // Out of AI gradings for today: the server says which plan ran out and what the next one gives.
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      toast.error(
+        status === 429
+          ? `${getApiErrorMessage(error, "Bạn đã dùng hết lượt AI chấm của hôm nay.")} Bài viết của bạn vẫn còn.`
+          : "Chưa chấm được bài. Bài viết của bạn vẫn còn, hãy thử gửi lại.",
+        status === 429 ? { duration: 8000 } : undefined,
+      );
     } finally {
       submittingRef.current = false;
     }

@@ -39,10 +39,11 @@ import {
   Sun,
   Moon,
   Mail,
-  MessageSquare,
   Croissant,
   Zap,
+  NotebookPen,
 } from "lucide-react";
+import { mistakesService } from "@/lib/api/services/mistakes.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import axiosClient from "@/lib/api/axiosClient";
@@ -66,10 +67,11 @@ import {
   isMarketRoute,
   isArenaRoute,
   splitNavOverflow,
+  MAX_HEADER_NAV_BUTTONS,
+  MAX_GUEST_HEADER_NAV_BUTTONS,
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SuggestionModal } from "@/components/suggestion/SuggestionModal";
-import { supportService } from "@/lib/api/services/support.service";
 
 const emptySubscribe = () => () => {};
 
@@ -119,7 +121,8 @@ export function AppHeader() {
   const queryClient = useQueryClient();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [notificationsExpanded, setNotificationsExpanded] = useState(true);
+  // Closed until the learner asks: the count on the row says there is something to read.
+  const [notificationsExpanded, setNotificationsExpanded] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [suggestionOpen, setSuggestionOpen] = useState(false);
 
@@ -166,6 +169,7 @@ export function AppHeader() {
     setMobileOpen(false);
     setProfileMenuOpen(false);
     setMoreOpen(false);
+    setNotificationsExpanded(false);
   };
 
   const openSuggestion = () => {
@@ -220,18 +224,20 @@ export function AppHeader() {
   });
   const unreadCount = unreadData?.count || 0;
 
-  const { data: messageUnreadData } = useQuery({
-    queryKey: ["support", "unread-count"],
-    queryFn: supportService.getMyUnreadCount,
+  // Open mistakes, shown beside "Sổ lỗi" in the account menu.
+  const { data: mistakeSummary } = useQuery({
+    queryKey: ["mistakes", "summary"],
+    queryFn: mistakesService.getSummary,
     enabled: !!user && user.role === "STUDENT",
-    refetchInterval: 30000,
+    staleTime: 60_000,
   });
-  const messageUnreadCount = messageUnreadData?.count || 0;
+  const openMistakes = mistakeSummary?.open ?? 0;
+
 
   const { data: inboxData, isLoading: isInboxLoading } = useQuery({
     queryKey: ["notifications", "recent", "unread"],
     queryFn: () => notificationService.getInbox(3, undefined, "unread"),
-    enabled: !!user && user.role === "STUDENT" && profileMenuOpen,
+    enabled: !!user && user.role === "STUDENT" && profileMenuOpen && notificationsExpanded,
   });
   const recentNotifications = inboxData?.items || [];
 
@@ -362,7 +368,10 @@ export function AppHeader() {
   ];
   // Contact and suggestions are account actions in the user dropdown.
   const { visible: desktopNavLinks, overflow: moreDropdownItems } =
-    splitNavOverflow(headerNavLinks);
+    splitNavOverflow(
+      headerNavLinks,
+      user ? MAX_HEADER_NAV_BUTTONS : MAX_GUEST_HEADER_NAV_BUTTONS,
+    );
   const isMoreActive = moreDropdownItems.some((item) => item.active);
 
   // Mobile drawer links
@@ -521,7 +530,11 @@ export function AppHeader() {
               <div ref={profileRef} className="relative shrink-0">
                 <button
                   type="button"
-                  onClick={() => setProfileMenuOpen((prev) => !prev)}
+                  onClick={() => {
+                    // Each opening starts with the notifications closed.
+                    setNotificationsExpanded(false);
+                    setProfileMenuOpen((prev) => !prev);
+                  }}
                   aria-expanded={profileMenuOpen}
                   aria-label="Menu tài khoản"
                   className="relative flex size-9 sm:size-auto sm:min-h-11 sm:min-w-11 items-center justify-center sm:gap-1.5 rounded-full bg-white dark:bg-slate-800/90 p-0.5 sm:px-1.5 ring-1 ring-slate-200/90 dark:ring-slate-700/80 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-750 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 cursor-pointer shrink-0"
@@ -596,12 +609,16 @@ export function AppHeader() {
                         onClick={() => setNotificationsExpanded((prev) => !prev)}
                         className="w-full flex items-center justify-between p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors cursor-pointer"
                         aria-expanded={notificationsExpanded}
+                        aria-controls="account-menu-notifications"
                       >
                         <div className="flex items-center gap-2.5">
                           <Bell size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
                           <span>Thông báo</span>
                           {unreadCount > 0 && (
-                            <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-xs font-black text-white leading-none">
+                            <span
+                              className="rounded-full bg-rose-600 px-1.5 py-0.5 text-xs font-black text-white leading-none"
+                              aria-label={`${unreadCount > 99 ? "99+" : unreadCount} thông báo chưa đọc`}
+                            >
                               {unreadCount > 99 ? "99+" : unreadCount}
                             </span>
                           )}
@@ -615,7 +632,7 @@ export function AppHeader() {
                       </button>
 
                       {notificationsExpanded && (
-                        <div className="mt-1 px-1 space-y-1.5 animate-in fade-in duration-150">
+                        <div id="account-menu-notifications" className="mt-1 px-1 space-y-1.5 animate-in fade-in duration-150">
                           {isInboxLoading ? (
                             <div className="flex items-center justify-center py-4 text-slate-600 dark:text-slate-400">
                               <Loader2 size={16} className="animate-spin text-amber-500" />
@@ -747,15 +764,24 @@ export function AppHeader() {
                       <span>Tiến độ học tập</span>
                     </Link>
 
+                    {isStudent && (
                     <Link
-                      href="/messages"
+                      href="/mistakes"
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
                     >
-                      <MessageSquare size={16} className="text-slate-500 dark:text-slate-400 shrink-0" />
-                      <span className="flex-1">Tin nhắn</span>
-                      {messageUnreadCount > 0 && <span className="min-w-5 rounded-full bg-amber-500 px-1.5 py-0.5 text-center text-xs font-black leading-none text-white" aria-label={`${messageUnreadCount > 99 ? "99+" : messageUnreadCount} tin nhắn chưa đọc`}>{messageUnreadCount > 99 ? "99+" : messageUnreadCount}</span>}
+                      <NotebookPen size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                      <span className="flex-1">Sổ lỗi</span>
+                      {openMistakes > 0 && (
+                        <span
+                          className="min-w-5 rounded-full bg-slate-200 px-1.5 py-0.5 text-center text-xs font-black leading-none text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+                          aria-label={`${openMistakes > 99 ? "99+" : openMistakes} lỗi chưa khắc phục`}
+                        >
+                          {openMistakes > 99 ? "99+" : openMistakes}
+                        </span>
+                      )}
                     </Link>
+                    )}
 
                     <Link
                       href="/pet"
@@ -857,7 +883,10 @@ export function AppHeader() {
           {/* If Guest */}
           {!user && (
             <>
-              <ThemeToggle className="hidden sm:inline-flex" />
+              {/* Wrapped: ThemeToggle's own inline-flex beats a passed `hidden`. */}
+              <span className="hidden sm:inline-flex">
+                <ThemeToggle />
+              </span>
               <Link
                 href="/plans"
                 className="hidden sm:inline-flex shrink-0 whitespace-nowrap text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-400 font-bold text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 transition-colors text-center items-center gap-1.5 cursor-pointer"
@@ -867,7 +896,7 @@ export function AppHeader() {
               </Link>
               <Link
                 href="/login"
-                className="shrink-0 whitespace-nowrap border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
+                className="hidden min-[380px]:inline-block shrink-0 whitespace-nowrap border border-slate-300 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 font-bold text-xs sm:text-sm transition-colors text-center cursor-pointer"
               >
                 Đăng nhập
               </Link>
@@ -876,7 +905,7 @@ export function AppHeader() {
                 className="shrink-0 whitespace-nowrap btn-tactile-primary bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl px-3 sm:px-5 py-1.5 sm:py-2 text-xs sm:text-sm transition-all text-center cursor-pointer"
               >
                 <span>Đăng ký</span>
-                <span className="hidden sm:inline"> miễn phí</span>
+                <span className="hidden sm:inline xl:hidden 2xl:inline"> miễn phí</span>
               </Link>
             </>
           )}
@@ -1123,12 +1152,12 @@ export function AppHeader() {
                         <span>Thông tin cá nhân</span>
                       </Link>
                       <Link
-                        href="/messages"
+                        href="/mistakes"
                         onClick={closeMenus}
                         className="flex min-h-[44px] items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-700 px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                       >
-                        <MessageSquare size={16} />
-                        <span>Tin nhắn{messageUnreadCount > 0 ? ` (${messageUnreadCount > 99 ? "99+" : messageUnreadCount})` : ""}</span>
+                        <NotebookPen size={16} />
+                        <span>Sổ lỗi{openMistakes > 0 ? ` (${openMistakes > 99 ? "99+" : openMistakes})` : ""}</span>
                       </Link>
                       <a
                         href="https://www.facebook.com/truongngynz.121"

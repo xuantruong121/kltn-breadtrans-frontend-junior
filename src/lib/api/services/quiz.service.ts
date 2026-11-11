@@ -155,6 +155,8 @@ export interface SubmissionAnalytics {
         prompt: string | null;
       })
     | null;
+  /** Practice Writing only: the chain of revisions this submission is in. */
+  writingRevision?: import("./writing.service").WritingRevisionView | null;
   submittedAnswer?: unknown;
 }
 

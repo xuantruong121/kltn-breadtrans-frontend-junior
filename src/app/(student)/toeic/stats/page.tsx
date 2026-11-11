@@ -258,7 +258,7 @@ function AssessmentSection() {
                   <td className="py-2.5 text-right">
                     <Link
                       href={`/toeic/assessments/${a.assessmentId}/attempts/${a.id}${a.status === "COMPLETED" ? "/result" : ""}`}
-                      className="font-semibold text-blue-700 hover:underline dark:text-blue-300"
+                      className="inline-flex min-h-8 items-center font-semibold text-blue-700 hover:underline dark:text-blue-300"
                     >
                       {a.status === "COMPLETED" ? "Xem chi tiết" : "Làm tiếp"}
                     </Link>

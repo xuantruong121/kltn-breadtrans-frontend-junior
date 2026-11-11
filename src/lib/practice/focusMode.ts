@@ -36,7 +36,7 @@ export function classifyPracticeRoute(pathname: string): PracticeRouteKind {
 
   // 1. Specific sub-routes that are Results or Reviews (check before general [id])
   if (
-    /^\/(?:listening|reading|exams)\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/(?:listening|reading|writing|exams)\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/toeic\/results\/[^/]+(?:\/|$)/.test(pathname)
   ) {
     return "RESULT_OR_REVIEW";
@@ -100,7 +100,7 @@ export function isLearningFocusRoute(pathname: string): boolean {
 
   // Explicitly exclude results and reviews
   if (
-    /^\/(?:listening|reading|exams)\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
+    /^\/(?:listening|reading|writing|exams)\/submissions\/[^/]+(?:\/|$)/.test(pathname) ||
     /^\/toeic\/results\/[^/]+(?:\/|$)/.test(pathname)
   ) {
     return false;

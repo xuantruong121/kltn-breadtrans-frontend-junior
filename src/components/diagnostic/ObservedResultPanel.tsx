@@ -132,7 +132,7 @@ export function ObservedResultPanel({
       )}
 
       {!compact && breakdown && (
-        <div className="mt-7 grid gap-4 lg:grid-cols-2">
+        <div className="mt-7 grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
           {(["LISTENING", "READING"] as const).map((section) => (
             <BreakdownCard key={section} title={section === "LISTENING" ? "Nghe" : "Đọc"} data={breakdown[section]} />
           ))}
@@ -211,14 +211,14 @@ function GroupList({
       <ul className="mt-2 space-y-2">
         {groups.map((group) => (
           <li key={group.key} className="flex items-center gap-3 text-base">
-            <span className="w-40 shrink-0 text-slate-800 dark:text-slate-200">{format(group.key)}</span>
+            <span className="w-24 shrink-0 text-slate-800 dark:text-slate-200 sm:w-40">{format(group.key)}</span>
             <span className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
               <span
                 className="block h-full rounded-full bg-blue-600 dark:bg-blue-500"
                 style={{ width: `${group.total ? (group.correct / group.total) * 100 : 0}%` }}
               />
             </span>
-            <span className="w-20 shrink-0 text-right text-sm font-bold text-slate-900 dark:text-slate-100">
+            <span className="w-16 shrink-0 text-right text-sm font-bold sm:w-20 text-slate-900 dark:text-slate-100">
               {group.correct}/{group.total} đúng
             </span>
           </li>

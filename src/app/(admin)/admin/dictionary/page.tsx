@@ -265,7 +265,7 @@ export default function AdminDictionaryPage() {
         </div>
       ) : (
         <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,1.6fr)_8rem_7rem_16rem] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 lg:grid">
+          <div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,1.6fr)_8rem_7rem_16rem] gap-4 border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-600 xl:grid">
             <span>Từ</span>
             <span>Nghĩa</span>
             <span>Nguồn</span>
@@ -285,7 +285,7 @@ export default function AdminDictionaryPage() {
               const busy = busyId === entry.id;
               return (
                   <li key={entry.id} className={`px-4 py-3 ${editing ? "bg-blue-50/40" : ""}`}>
-                    <div className="grid gap-x-4 gap-y-2 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.6fr)_8rem_7rem_16rem] lg:items-center">
+                    <div className="grid gap-x-4 gap-y-2 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1.6fr)_8rem_7rem_16rem] xl:items-center">
                       <div className="min-w-0">
                         <p className="flex flex-wrap items-baseline gap-x-2 text-base font-semibold text-slate-950">
                           {entry.displayWord}
@@ -304,7 +304,7 @@ export default function AdminDictionaryPage() {
                           <p className="mt-0.5 line-clamp-1 text-sm text-slate-600">{entry.exampleEn}</p>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 lg:flex-col lg:items-start">
+                      <div className="flex flex-wrap items-center gap-1.5 xl:flex-col xl:items-start">
                         <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${badge.tone}`}>
                           {badge.label}
                         </span>
@@ -324,7 +324,7 @@ export default function AdminDictionaryPage() {
                           <span className="text-sm text-slate-600">Chỉ tra từ</span>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 lg:justify-end">
+                      <div className="flex flex-wrap items-center gap-1.5 xl:justify-end">
                         {entry.status !== "APPROVED" && (
                           <button
                             type="button"

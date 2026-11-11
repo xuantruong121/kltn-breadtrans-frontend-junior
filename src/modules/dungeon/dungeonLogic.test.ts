@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { clockAt, fitsHint, floorLabel, hpTone, MONSTER_NAME, typedCells } from "./dungeonLogic.ts";
+import { clockAt, fitsHint, floorLabel, heldLevelLabel, hpTone, MONSTER_NAME, offerLevelLabel, typedCells } from "./dungeonLogic.ts";
 
 describe("clockAt", () => {
   test("waits while the last outcome shows, then runs down", () => {
@@ -51,4 +51,17 @@ test("the monsters, nine and five bosses, are named for their Kenney sprites (ow
   assert.equal(MONSTER_NAME.sourdough_king, "Vua Bột Chua");
   assert.equal(Object.keys(MONSTER_NAME).length, 14);
   assert.equal(MONSTER_NAME.yeast_frog, "Ếch Chúa Men");
+});
+
+describe("topping level labels", () => {
+  test("an offer says whether it is new or what level it reaches", () => {
+    assert.equal(offerLevelLabel({ level: 0, max: 3 }), "Mới");
+    assert.equal(offerLevelLabel({ level: 1, max: 3 }), "Lên cấp 2/3");
+    assert.equal(offerLevelLabel({ level: 2, max: 99 }), "Đã dùng 2 lần");
+  });
+  test("a held topping says its level, or its uses for Dưa leo", () => {
+    assert.equal(heldLevelLabel({ level: 2, max: 3 }), "Cấp 2/3");
+    assert.equal(heldLevelLabel({ level: 1, max: 1 }), "Cấp 1/1");
+    assert.equal(heldLevelLabel({ level: 3, max: 99 }), "Đã dùng 3 lần");
+  });
 });

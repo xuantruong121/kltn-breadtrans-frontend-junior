@@ -26,5 +26,6 @@ export function getNotificationActionLabel(item: NotificationItem): string | nul
   if (!resolveNotificationAction(item)) return null;
   if (item.type === "vocab_review") return "Ôn tập ngay";
   if (item.type === "streak") return "Học ngay";
+  if (item.type === "streak_shield_used") return "Học ngay";
   return "Xem chi tiết";
 }

@@ -150,7 +150,7 @@ export default function AdminCostsPage() {
           <div className="h-32 rounded-xl border border-slate-200 bg-slate-50" />
           <div className="h-32 rounded-xl border border-slate-200 bg-slate-50" />
         </div>
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           <div className="h-72 rounded-xl border border-slate-200 bg-slate-50" />
           <div className="h-72 rounded-xl border border-slate-200 bg-slate-50" />
           <div className="h-72 rounded-xl border border-slate-200 bg-slate-50" />
@@ -312,13 +312,14 @@ export default function AdminCostsPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        {/* Three columns only from 1280px: beside the sidebar at 1024px the badges ran out of the cards (responsive crawl 2026-11-10). */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {/* Card 1: Google Gemini Generative AI */}
           {services?.gemini && (
             <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
               <div>
                 {/* Provider Header */}
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100">
                       <Cpu className="h-5 w-5" />
@@ -358,7 +359,7 @@ export default function AdminCostsPage() {
                 {/* 2x2 Metric Grid */}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Tổng Request
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -366,7 +367,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Redis Cache
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -375,7 +376,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Input Tokens
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -383,7 +384,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Output Tokens
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -406,7 +407,7 @@ export default function AdminCostsPage() {
             <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
               <div>
                 {/* Provider Header */}
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
                       <Mic className="h-5 w-5" />
@@ -475,7 +476,7 @@ export default function AdminCostsPage() {
                 {/* 2x2 Metric Grid */}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Bài nộp Nói tháng này
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -483,7 +484,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Tổng bài nộp Nói
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -491,7 +492,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Thời lượng chấm
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -500,7 +501,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Chi phí phát sinh
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-emerald-700 tabular-nums">
@@ -524,7 +525,7 @@ export default function AdminCostsPage() {
             <div className="flex flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-5 shadow-xs transition hover:border-slate-300">
               <div>
                 {/* Provider Header */}
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-4">
+                <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
                       <HardDrive className="h-5 w-5" />
@@ -574,7 +575,7 @@ export default function AdminCostsPage() {
                 {/* 2x2 Metric Grid */}
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Ghi âm học viên
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -582,7 +583,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Đã dọn dẹp (TTL 90d)
                     </p>
                     <p className="mt-1 font-mono text-lg font-bold text-slate-900 tabular-nums">
@@ -590,7 +591,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Tổng file đang lưu
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
@@ -599,7 +600,7 @@ export default function AdminCostsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg border border-slate-100 bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                       Phí Egress (Tải ra)
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-emerald-700 tabular-nums">

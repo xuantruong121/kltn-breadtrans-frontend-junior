@@ -96,6 +96,12 @@ export interface NavItemConfig {
 
 /** The desktop header shows at most this many destination buttons. */
 export const MAX_HEADER_NAV_BUTTONS = 8;
+/**
+ * A guest's header also carries "Gói dịch vụ", "Đăng nhập" and "Đăng ký miễn
+ * phí". With 8 buttons it ran 90-135px past the screen at 1280-1536 px wide
+ * (responsive crawl 2026-11-10), so a guest gets fewer buttons and a longer More.
+ */
+export const MAX_GUEST_HEADER_NAV_BUTTONS = 6;
 
 /**
  * Splits the ordered header destinations: the first `max` are buttons, the

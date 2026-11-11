@@ -1,5 +1,6 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
 
 import { DEFAULT_SOUND_PREFS, LOBBY_PLAYLIST, nextTrack, parseSoundPrefs } from "./arenaSoundLogic.ts";
 
@@ -20,9 +21,17 @@ describe("parseSoundPrefs", () => {
 });
 
 describe("playlist", () => {
-  test("three lofi tracks, going round", () => {
-    assert.equal(LOBBY_PLAYLIST.length, 3);
-    assert.equal(nextTrack(2, 3), 0);
-    assert.equal(nextTrack(0, 3), 1);
+  test("21 lofi tracks, going round", () => {
+    assert.equal(LOBBY_PLAYLIST.length, 21);
+    assert.equal(nextTrack(20, 21), 0);
+    assert.equal(nextTrack(0, 21), 1);
+  });
+  test("every track is shipped, once, and credited", () => {
+    const credits = readFileSync("public/sounds/CREDITS.md", "utf8");
+    assert.equal(new Set(LOBBY_PLAYLIST.map((t) => t.file)).size, LOBBY_PLAYLIST.length);
+    for (const t of LOBBY_PLAYLIST) {
+      assert.ok(existsSync(`public${t.file}`), t.file);
+      assert.ok(credits.includes(t.file.replace("/sounds/", "")), t.file);
+    }
   });
 });

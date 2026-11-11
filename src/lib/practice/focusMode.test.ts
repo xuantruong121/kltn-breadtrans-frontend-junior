@@ -51,6 +51,9 @@ test("Route classification: Catalog, pre-start briefing, and hub pages retain gl
 test("Route classification: Result and review pages retain global navigation", () => {
   assert.equal(isLearningFocusRoute("/listening/submissions/123"), false);
   assert.equal(isLearningFocusRoute("/reading/submissions/sub-uuid"), false);
+  // A graded essay is a result page too: it keeps the header and the tutor panel.
+  assert.equal(isLearningFocusRoute("/writing/submissions/45"), false);
+  assert.equal(isLearningFocusRoute("/writing/45"), true);
   assert.equal(isLearningFocusRoute("/toeic/results/456"), false);
   assert.equal(isLearningFocusRoute("/toeic/results/attempt-uuid"), false);
 });

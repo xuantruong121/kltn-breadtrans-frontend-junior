@@ -4,6 +4,7 @@ import React from "react";
 import { Mic, Volume2, FastForward, CheckCircle2, AlertCircle } from "lucide-react";
 import { VocabWord } from "@/lib/api/services/vocab.service";
 import { SrsRating } from "../types/study";
+import { formatReviewInterval } from "../utils/reviewInterval";
 
 interface SpeakingStageProps {
   word: VocabWord;
@@ -22,35 +23,30 @@ interface SpeakingStageProps {
 const SRS_OPTIONS: Array<{
   rating: SrsRating;
   label: string;
-  intervalText: string;
   styleClass: string;
   keyNumber: string;
 }> = [
   {
     rating: "AGAIN",
     label: "Học lại",
-    intervalText: "1m",
     styleClass: "bg-rose-500 hover:bg-rose-600 text-white border-rose-600 shadow-xs",
     keyNumber: "1",
   },
   {
     rating: "HARD",
     label: "Khó",
-    intervalText: "4d",
     styleClass: "bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-300",
     keyNumber: "2",
   },
   {
     rating: "GOOD",
     label: "Tốt",
-    intervalText: "6d",
     styleClass: "bg-emerald-50 hover:bg-emerald-100/80 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300",
     keyNumber: "3",
   },
   {
     rating: "EASY",
     label: "Dễ",
-    intervalText: "8d",
     styleClass: "bg-blue-50 hover:bg-blue-100/80 border-blue-200 text-blue-800 dark:bg-blue-950/40 dark:border-blue-900/60 dark:text-blue-300",
     keyNumber: "4",
   },
@@ -198,7 +194,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
       {canRateSrs && (
         <div className="w-full space-y-2 animate-fadeIn">
           <p className="text-xs font-bold text-slate-600 dark:text-slate-400 text-center uppercase tracking-wider">
-            Đánh giá mức độ ghi nhớ (Spaced Repetition SRS):
+            Bạn nhớ từ này đến mức nào?
           </p>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -215,9 +211,11 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
                     {opt.keyNumber}
                   </kbd>
                 </div>
-                <span className="text-xs font-medium opacity-85 mt-0.5">
-                  Ôn lại: {opt.intervalText}
-                </span>
+                {word.reviewPreview && (
+                  <span className="text-xs font-medium opacity-85 mt-0.5">
+                    Ôn lại sau {formatReviewInterval(word.reviewPreview[opt.rating])}
+                  </span>
+                )}
               </button>
             ))}
           </div>

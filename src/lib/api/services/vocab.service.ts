@@ -45,7 +45,11 @@ export interface VocabWord {
   // Metadata cho user
   isStarred?: boolean;
   isMastered?: boolean;
+  /** Days until the next review for each self-rating; 0 means ten minutes. */
+  reviewPreview?: Record<SrsGrade, number>;
 }
+
+export type SrsGrade = "AGAIN" | "HARD" | "GOOD" | "EASY";
 
 export interface VocabTopicDetail {
   topicId: number;
@@ -119,8 +123,12 @@ export const vocabService = {
     return await axiosClient.post(`/vocab/words/${id}/master`, { isMastered });
   },
 
-  reviewWord: async (id: number, isCorrect: boolean): Promise<any> => {
-    return await axiosClient.post(`/vocab/words/${id}/review`, { isCorrect });
+  /** One self-rated review; the server keeps the word's own schedule. */
+  reviewWord: async (id: number, grade: SrsGrade): Promise<any> => {
+    return await axiosClient.post(`/vocab/words/${id}/review`, {
+      grade,
+      isCorrect: grade !== "AGAIN",
+    });
   },
 
   getSavedWords: async (): Promise<VocabWord[]> => {

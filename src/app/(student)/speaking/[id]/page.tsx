@@ -1947,7 +1947,7 @@ export default function SpeakingExerciseDetailPage() {
                           disabled={isPlayingTTS}
                           onClick={() => setTtsRate(opt.value)}
                           aria-pressed={selected}
-                          className={`px-2 py-0.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
+                          className={`min-h-8 px-2 py-0.5 rounded-lg text-xs sm:text-sm font-bold transition-all ${
                             isPlayingTTS
                               ? "cursor-not-allowed"
                               : "cursor-pointer"
@@ -2427,10 +2427,11 @@ export default function SpeakingExerciseDetailPage() {
         )}
 
         {/* 3. Full-Width Bottom Action Dock */}
-        <footer className="w-full h-14 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
+        <footer className="w-full h-14 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-3 sm:px-4 md:px-6 flex items-center justify-between gap-2 shrink-0 shadow-sm z-30 select-none">
           {/* Left: Quick utilities */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-2">
             <ReportIssueButton
+              labelFromSm
               area="SPEAKING"
               context={{
                 route:
@@ -2450,7 +2451,8 @@ export default function SpeakingExerciseDetailPage() {
             <button
               type="button"
               onClick={handleDictionaryLookup}
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              aria-label="Tra từ"
+              className="hidden min-[360px]:inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 px-3 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
               title="Bôi đen một từ tiếng Anh rồi bấm để tra cứu"
             >
               <BookOpen size={15} className="text-sky-600 dark:text-sky-400" />
@@ -2479,6 +2481,7 @@ export default function SpeakingExerciseDetailPage() {
               title={
                 isSaved ? "Bỏ lưu bài tập" : "Lưu bài tập để luyện lại sau"
               }
+              aria-label={isSaved ? "Bỏ lưu bài tập" : "Lưu bài tập"}
             >
               <Star
                 size={15}
@@ -2500,7 +2503,8 @@ export default function SpeakingExerciseDetailPage() {
           )}
 
           {/* Right Navigation Dock */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Phones (320-412px) hold only icons and short labels here: the full labels ran past the screen (responsive crawl 2026-11-10). */}
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
             {previousExerciseId && (
               <button
                 type="button"
@@ -2511,15 +2515,17 @@ export default function SpeakingExerciseDetailPage() {
                   router.push(`/speaking/${previousExerciseId}${query}`);
                 }}
                 disabled={phase === "RECORDING" || isAnalyzing}
-                className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Câu trước"
+                className="min-h-11 shrink-0 px-3 sm:px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <ArrowLeft size={14} aria-hidden="true" /> Câu trước
+                <ArrowLeft size={14} aria-hidden="true" /><span className="hidden sm:inline"> Câu trước</span>
               </button>
             )}
+            {/* Below 640px the header's "Thoát" does the same, so this one is hidden. */}
             <button
               type="button"
               onClick={() => confirmExit(exitHref)}
-              className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm"
+              className="hidden sm:inline-flex px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm"
             >
               ← Danh sách bài
             </button>
@@ -2547,7 +2553,8 @@ export default function SpeakingExerciseDetailPage() {
                 className="px-4 sm:px-5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm"
               >
                 <Mic size={15} aria-hidden="true" />
-                <span>Bắt đầu thu âm</span>
+                <span className="sm:hidden">Thu âm</span>
+                <span className="hidden sm:inline">Bắt đầu thu âm</span>
                 <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-amber-600/60 font-mono text-xs text-white">
                   Space
                 </kbd>
@@ -2557,9 +2564,10 @@ export default function SpeakingExerciseDetailPage() {
                 <button
                   type="button"
                   onClick={handleRetryRecord}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all hover:bg-slate-50"
+                  aria-label="Thu lại"
+                  className="min-h-11 px-3 sm:px-3.5 py-1.5 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all hover:bg-slate-50"
                 >
-                  <RotateCcw size={14} aria-hidden="true" /> Thu lại
+                  <RotateCcw size={14} aria-hidden="true" /><span className="hidden sm:inline">Thu lại</span>
                 </button>
                 <button
                   type="button"
@@ -2576,9 +2584,10 @@ export default function SpeakingExerciseDetailPage() {
                   onClick={handleCancelRecording}
                   className="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-600 hover:text-rose-600 hover:border-rose-300 font-bold transition-all text-xs sm:text-sm cursor-pointer inline-flex items-center gap-1 active:scale-95"
                   title="Hủy lượt thu âm này"
+                  aria-label="Hủy lượt thu âm này"
                 >
-                  <X size={14} className="text-rose-500" />
-                  <span>Hủy</span>
+                  <X size={14} className="text-rose-500" aria-hidden="true" />
+                  <span className="hidden sm:inline">Hủy</span>
                 </button>
                 <button
                   type="button"
@@ -2586,7 +2595,8 @@ export default function SpeakingExerciseDetailPage() {
                   className="px-4 sm:px-5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold shadow-xs hover:shadow-sm active:scale-95 transition-all cursor-pointer inline-flex items-center gap-1.5 text-xs sm:text-sm animate-pulse"
                 >
                   <StopCircle size={15} aria-hidden="true" />
-                  <span>Dừng &amp; chấm điểm</span>
+                  <span className="sm:hidden">Dừng</span>
+                  <span className="hidden sm:inline">Dừng &amp; chấm điểm</span>
                   <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-rose-700 font-mono text-xs text-white">
                     Space
                   </kbd>
@@ -2597,10 +2607,11 @@ export default function SpeakingExerciseDetailPage() {
                 <button
                   type="button"
                   onClick={handleRetryRecord}
-                  className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
+                  aria-label="Ghi âm lại"
+                  className="min-h-11 px-3 sm:px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
                 >
                   <RotateCcw size={14} aria-hidden="true" />
-                  <span>Ghi âm lại</span>
+                  <span className="hidden sm:inline">Ghi âm lại</span>
                 </button>
 
                 <button
@@ -2631,7 +2642,8 @@ export default function SpeakingExerciseDetailPage() {
                     className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs sm:text-sm inline-flex items-center gap-1.5 transition-all shadow-xs hover:shadow-sm active:scale-95 cursor-pointer"
                   >
                     <RotateCcw size={14} aria-hidden="true" />
-                    <span>Thử lại với bản ghi này</span>
+                    <span className="sm:hidden">Gửi lại</span>
+                    <span className="hidden sm:inline">Thử lại với bản ghi này</span>
                   </button>
                 )}
                 <button

@@ -19,12 +19,12 @@ import {
   Croissant,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { aiService } from "@/lib/api/services/ai.service";
 import { supportService } from "@/lib/api/services/support.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useChatAssistantStore, StudentThread, AssistantMessage } from "@/stores/chatAssistantStore";
 import { useSocket } from "@/lib/providers/SocketProvider";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
+import { composerHeight, isNearBottom as nearBottomOf, jumpButtonLabel, scrollActionFor, sendsOnKey } from "@/lib/chat/chatScroll";
 
 // 🌟 Component parse và format Markdown sạch đẹp (tránh lộ kí tự ***, **, gạch đầu dòng, chuẩn màu tương phản)
 function FormattedMessage({ content, isWhiteText = false }: { content: string; isWhiteText?: boolean }) {
@@ -167,6 +167,7 @@ function FloatingAiTutorInner() {
     prependMessagesToThread,
     setThreadHasMore,
     addMessageToThread,
+    syncThreadFromServer,
   } = useChatAssistantStore();
 
   const [input, setInput] = useState("");
@@ -177,12 +178,22 @@ function FloatingAiTutorInner() {
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
+  // Questions left today on the learner's plan, as the last reply reported it.
+  const [quota, setQuota] = useState<{ limit: number; remaining: number } | null>(null);
 
   const messageListRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const prevScrollHeightRef = useRef<number | null>(null);
   const prevMessagesLengthRef = useRef<number>(0);
+  // False until the list has been put on its latest message after the panel opened.
+  const placedRef = useRef(false);
+  // While the panel itself is scrolling to the end, the positions it passes
+  // through are not the reader leaving the end.
+  const followingUntilRef = useRef(0);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  // What had the focus before the panel opened; it gets the focus back on close.
+  const focusBeforeOpenRef = useRef<HTMLElement | null>(null);
 
   const { socket } = useSocket();
 
@@ -352,15 +363,6 @@ function FloatingAiTutorInner() {
     }
   };
 
-  // Restore scroll position after prepending older messages so reading position does not jump
-  useLayoutEffect(() => {
-    if (prevScrollHeightRef.current !== null && messageListRef.current) {
-      const newHeight = messageListRef.current.scrollHeight;
-      const heightDiff = newHeight - prevScrollHeightRef.current;
-      messageListRef.current.scrollTop += heightDiff;
-      prevScrollHeightRef.current = null;
-    }
-  }, [currentThread.messages]);
 
   // Trigger loads on auth or modal open
   useEffect(() => {
@@ -375,6 +377,39 @@ function FloatingAiTutorInner() {
     return () => window.clearTimeout(loadTimer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user?.id, isAdmin]);
+
+  // The socket brings messages at once; this sync covers a dropped socket,
+  // so neither side ever has to reload to see the other's message.
+  const openConversationId = currentThread.conversationId || conversationId;
+  const syncActive =
+    isOpen && !!openConversationId && !!user?.id && (!isAdmin || (adminView === "chat" && !!activeStudentId));
+  useEffect(() => {
+    if (!syncActive || !openConversationId) return;
+    let cancelled = false;
+    const sync = async () => {
+      if (document.hidden) return;
+      try {
+        const res = isAdmin
+          ? await supportService.getAdminMessages(openConversationId, 1, 50)
+          : await supportService.getMessages(openConversationId, 1, 50);
+        if (cancelled) return;
+        syncThreadFromServer(
+          studentThreadId,
+          res.mode,
+          (res.data || []).map(mapSupportMessageToAssistantMessage)
+        );
+      } catch {
+        // The next tick tries again.
+      }
+    };
+    const timer = window.setInterval(sync, 4000);
+    socket?.on("connect", sync);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      socket?.off("connect", sync);
+    };
+  }, [syncActive, openConversationId, isAdmin, studentThreadId, socket, syncThreadFromServer]);
 
   // When admin selects a student to chat
   useEffect(() => {
@@ -409,6 +444,8 @@ function FloatingAiTutorInner() {
   // Smart scroll controls
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     if (messageListRef.current) {
+      isNearBottomRef.current = true;
+      followingUntilRef.current = Date.now() + (behavior === "smooth" ? 900 : 100);
       messageListRef.current.scrollTo({
         top: messageListRef.current.scrollHeight,
         behavior,
@@ -419,8 +456,9 @@ function FloatingAiTutorInner() {
   const handleScroll = () => {
     const el = messageListRef.current;
     if (!el) return;
-    const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
-    const near = distanceFromBottom < 80;
+    // A smooth scroll to the end is under way: a reply that arrives now must
+    // still be followed, so its half-way positions do not count as "left".
+    const near = nearBottomOf(el) || Date.now() < followingUntilRef.current;
     setIsNearBottom(near);
     isNearBottomRef.current = near;
     if (near) {
@@ -428,41 +466,91 @@ function FloatingAiTutorInner() {
     }
   };
 
-  // Initial scroll to bottom when opening chat or switching thread
+  const chatVisible = isOpen && (!isAdmin || adminView === "chat");
+
+  // Opening the panel, or switching conversation, starts over: the next list
+  // with messages is put on its latest message.
   useEffect(() => {
-    if (isOpen && (!isAdmin || adminView === "chat")) {
-      const timer = setTimeout(() => {
+    placedRef.current = false;
+    if (!chatVisible) return;
+    // The panel animates in; settle on the end once more after it has its size.
+    const timer = setTimeout(() => {
+      if (messageListRef.current && messageListRef.current.scrollHeight > 0) {
         scrollToBottom("auto");
         setIsNearBottom(true);
         isNearBottomRef.current = true;
         setNewMessagesCount(0);
-      }, 60);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, adminView, studentThreadId, isAdmin]);
-
-  // Smart auto-scroll when new messages arrive
-  useEffect(() => {
-    if (!isOpen || (isAdmin && adminView !== "chat")) return;
-
-    const currentLen = currentThread.messages.length;
-    const prevLen = prevMessagesLengthRef.current;
-    prevMessagesLengthRef.current = currentLen;
-
-    if (currentLen > prevLen && prevLen > 0) {
-      const lastMsg = currentThread.messages[currentLen - 1];
-      const isMyMessage =
-        (isAdmin && lastMsg?.role === "admin") ||
-        (!isAdmin && lastMsg?.role === "user");
-
-      if (isMyMessage || isNearBottomRef.current) {
-        scrollToBottom("smooth");
-        setNewMessagesCount(0);
-      } else {
-        setNewMessagesCount((prev) => prev + 1);
       }
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [chatVisible, studentThreadId]);
+
+  // One place decides what the list does when its messages change: stay put
+  // after older messages are added, jump to the end on opening, follow a new
+  // message only for a reader already at the end (see lib/chat/chatScroll).
+  useLayoutEffect(() => {
+    const el = messageListRef.current;
+    const count = currentThread.messages.length;
+    const previousCount = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = count;
+    if (!chatVisible || !el) return;
+
+    const lastMsg = currentThread.messages[count - 1];
+    const action = scrollActionFor({
+      placed: placedRef.current,
+      previousCount,
+      count,
+      prepended: prevScrollHeightRef.current !== null,
+      lastIsMine: (isAdmin && lastMsg?.role === "admin") || (!isAdmin && lastMsg?.role === "user"),
+      nearBottom: isNearBottomRef.current,
+    });
+    if (action === "KEEP_POSITION") {
+      el.scrollTop += el.scrollHeight - (prevScrollHeightRef.current ?? el.scrollHeight);
+      prevScrollHeightRef.current = null;
+    } else if (action === "JUMP_TO_BOTTOM") {
+      placedRef.current = true;
+      el.scrollTop = el.scrollHeight;
+      setIsNearBottom(true);
+      isNearBottomRef.current = true;
+      setNewMessagesCount(0);
+    } else if (action === "FOLLOW") {
+      scrollToBottom("smooth");
+      setNewMessagesCount(0);
+    } else if (action === "COUNT_UNSEEN") {
+      setNewMessagesCount((prev) => prev + 1);
     }
-  }, [currentThread.messages, isOpen, adminView, isAdmin]);
+  }, [currentThread.messages, chatVisible, isAdmin]);
+
+  // The "is writing" line appears below the last message: a reader at the end stays at the end.
+  useEffect(() => {
+    if (chatVisible && isLoading && isNearBottomRef.current) scrollToBottom("smooth");
+  }, [isLoading, chatVisible]);
+
+  // On a device with a mouse the caret is ready in the message box when the
+  // panel opens; on a phone that would raise the keyboard over the panel.
+  // Closing gives the focus back to what had it.
+  useEffect(() => {
+    if (!chatVisible) return;
+    focusBeforeOpenRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const timer = setTimeout(() => {
+      if (window.matchMedia?.("(hover: hover) and (pointer: fine)").matches) composerRef.current?.focus();
+    }, 120);
+    return () => {
+      clearTimeout(timer);
+      const before = focusBeforeOpenRef.current;
+      if (before && document.contains(before)) before.focus({ preventScroll: true });
+    };
+  }, [chatVisible]);
+
+  // The message box grows with its text, up to four lines.
+  useLayoutEffect(() => {
+    const el = composerRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const style = window.getComputedStyle(el);
+    const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 2;
+    el.style.height = `${composerHeight(el.scrollHeight + 2, parseFloat(style.lineHeight) || 20, padding)}px`;
+  }, [input, chatVisible]);
 
   // Close on Escape key (A11y)
   useEffect(() => {
@@ -565,17 +653,8 @@ function FloatingAiTutorInner() {
 
     addMessageToThread(studentThreadId, studentMetadata, studentMsg);
 
-    // Bắn sự kiện Socket Real-time cho Admin
-    socket?.emit("chat:sendMessage", {
-      studentId: studentThreadId,
-      studentName: currentDisplayName,
-      studentEmail: user?.email,
-      studentAvatar: user?.profile?.avatar,
-      message: studentMsg,
-      fromRole: "STUDENT",
-      targetUserId: user?.id,
-    });
-
+    // One request stores the message; the server tells the admins and, on AI
+    // mode, writes the tutor's reply itself and returns it.
     let currentConvId = conversationId || currentThread.conversationId;
     if (!currentConvId && user?.id) {
       try {
@@ -587,91 +666,40 @@ function FloatingAiTutorInner() {
       }
     }
 
-    if (currentConvId) {
-      try {
-        const persisted = await supportService.sendMessage(
-          currentConvId,
-          messageText,
-          studentClientMessageId
-        );
+    try {
+      if (!currentConvId) throw new Error("no conversation");
+      const persisted = await supportService.sendMessage(
+        currentConvId,
+        messageText,
+        studentClientMessageId
+      );
+      addMessageToThread(studentThreadId, studentMetadata, {
+        id: persisted.id,
+        clientMessageId: studentClientMessageId,
+        role: "user",
+        senderName: persisted.senderName || currentDisplayName,
+        content: persisted.content,
+        timestamp: new Date(persisted.createdAt).getTime(),
+        pending: false,
+      });
+      const aiReply = persisted.aiReply;
+      if (aiReply) {
+        setQuota(aiReply.quota);
         addMessageToThread(studentThreadId, studentMetadata, {
-          id: persisted.id,
-          clientMessageId: studentClientMessageId,
-          role: "user",
-          senderName: persisted.senderName || currentDisplayName,
-          content: persisted.content,
-          timestamp: new Date(persisted.createdAt).getTime(),
+          id: aiReply.id,
+          clientMessageId: aiReply.clientMessageId || undefined,
+          role: "assistant",
+          senderName: aiReply.senderName || "Trợ Lý Bánh Mì",
+          content: aiReply.content,
+          timestamp: new Date(aiReply.createdAt).getTime(),
           pending: false,
         });
-      } catch (err) {
-        console.error("Failed to persist student message:", err);
       }
-    }
-
-    // Nếu học sinh đang ở chế độ HUMAN MODE -> không gọi AI
-    if (currentThread.mode === "HUMAN") {
-      setIsLoading(false);
-      return;
-    }
-
-    // 3. Chế độ AI (AI MODE) -> Gọi Gemini AI
-    try {
-      const aiPayload = currentThread.messages
-        .filter((m) => m.role === "user" || m.role === "assistant")
-        .concat({ id: "temp", role: "user", content: messageText, timestamp: Date.now() })
-        .map((m) => ({
-          role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
-          content: m.content,
-        }));
-
-      const res = await aiService.chat(aiPayload);
-      const aiClientMessageId = `aimsg_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-      const aiMsg = {
-        id: aiClientMessageId,
-        clientMessageId: aiClientMessageId,
-        role: "assistant" as const,
-        senderName: "Trợ Lý Bánh Mì",
-        content: res.answer || "Bánh Mì đã nhận được câu hỏi rồi nhé!",
-        timestamp: Date.now(),
-        pending: false,
-      };
-      addMessageToThread(studentThreadId, studentMetadata, aiMsg);
-
-      if (currentConvId) {
-        try {
-          const persistedAi = await supportService.saveAiMessage(
-            currentConvId,
-            aiMsg.content,
-            aiClientMessageId
-          );
-          addMessageToThread(studentThreadId, studentMetadata, {
-            id: persistedAi.id,
-            clientMessageId: aiClientMessageId,
-            role: "assistant",
-            senderName: "Trợ Lý Bánh Mì",
-            content: persistedAi.content,
-            timestamp: new Date(persistedAi.createdAt).getTime(),
-            pending: false,
-          });
-        } catch (err) {
-          console.error("Failed to persist AI message:", err);
-        }
-      }
-
-      // Đồng bộ câu trả lời của AI tới Admin qua socket
-      socket?.emit("chat:sendMessage", {
-        studentId: studentThreadId,
-        studentName: currentDisplayName,
-        message: aiMsg,
-        fromRole: "STUDENT",
-        targetUserId: user?.id,
-      });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error("Failed to send student message:", err);
       addMessageToThread(studentThreadId, studentMetadata, {
-        role: "assistant",
-        senderName: "Trợ Lý Bánh Mì",
-        content: "Bánh Mì đang gặp chút trục trặc nhỏ. Bạn thử hỏi lại câu khác nhé!",
+        role: "system",
+        content: "Tin nhắn chưa gửi được. Bạn kiểm tra kết nối rồi gửi lại.",
       });
     } finally {
       setIsLoading(false);
@@ -694,15 +722,15 @@ function FloatingAiTutorInner() {
       }
     }
 
-    setThreadMode(studentThreadId, nextMode, currentDisplayName);
-
-    // Bắn sự kiện Socket Real-time thay đổi Mode
-    socket?.emit("chat:toggleMode", {
-      studentId: studentThreadId,
-      mode: nextMode,
-      adminName: currentDisplayName,
-      targetUserId: Number(studentThreadId.replace("student_", "")) || undefined,
-    });
+    // The server stores the line both sides read and sends the event; this
+    // keeps the panel right when the socket is down.
+    setThreadMode(
+      studentThreadId,
+      nextMode,
+      !isAdmin && nextMode === "HUMAN"
+        ? "Bạn đã yêu cầu trao đổi với quản trị viên. Trợ lý AI tạm dừng trả lời; quản trị viên sẽ phản hồi tại đây."
+        : undefined
+    );
   };
 
   const handleQuickQuestion = (question: string) => {
@@ -898,7 +926,11 @@ function FloatingAiTutorInner() {
                             }`}
                           />
                           <span>
-                            {currentThread.mode === "AI" ? "Chế độ phản hồi tự động" : "Tư Vấn Trực Tiếp"}
+                            {currentThread.mode === "AI"
+                              ? "Phản hồi tự động"
+                              : isAdmin
+                                ? "Quản trị viên trả lời"
+                                : "Đang trao đổi với quản trị viên"}
                           </span>
                         </div>
                       </div>
@@ -941,11 +973,25 @@ function FloatingAiTutorInner() {
                       </button>
                     </div>
                   ) : (
-                    currentThread.mode === "HUMAN" && (
-                      <div className="bg-blue-600/40 border border-blue-300/40 rounded-xl px-2.5 py-1 text-xs font-bold text-blue-100 flex items-center gap-1.5">
-                        <UserCheck size={14} /> Quản Trị Viên đang trực tiếp hỗ trợ bạn.
-                      </div>
-                    )
+                    <div className="mt-1 flex items-center justify-between gap-2 rounded-xl border border-white/20 bg-white/15 px-2.5 py-1.5 text-xs font-bold">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {currentThread.mode === "HUMAN" && <UserCheck size={14} className="shrink-0" aria-hidden="true" />}
+                        <span className="truncate">
+                          {currentThread.mode === "HUMAN"
+                            ? "Quản trị viên sẽ trả lời tại đây"
+                            : quota
+                              ? `Còn ${quota.remaining}/${quota.limit} lượt hỏi hôm nay`
+                              : "Trợ lý AI đang trả lời"}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleToggleMode}
+                        className="shrink-0 rounded-lg bg-white/90 px-2.5 py-1 text-xs font-black text-orange-700 transition-colors hover:bg-white cursor-pointer"
+                      >
+                        {currentThread.mode === "AI" ? "Gặp quản trị viên" : "Quay lại trợ lý AI"}
+                      </button>
+                    </div>
                   )}
                 </div>
 
@@ -953,8 +999,10 @@ function FloatingAiTutorInner() {
                 <div
                   ref={messageListRef}
                   onScroll={handleScroll}
+                  role="log"
                   aria-live="polite"
-                  className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3.5 bg-slate-50 dark:bg-slate-950"
+                  aria-label="Tin nhắn"
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 flex flex-col gap-3.5 bg-slate-50 dark:bg-slate-950"
                 >
                   {/* Tải tin nhắn trước đó (Reverse cursor pagination) */}
                   {currentThread.hasMoreHistory && (
@@ -1111,8 +1159,9 @@ function FloatingAiTutorInner() {
                 )}
 
                 {/* Floating "Tin mới nhất" Pill */}
-                {!isNearBottom && newMessagesCount > 0 && (
+                {!isNearBottom && (
                   <button
+                    type="button"
                     onClick={() => {
                       scrollToBottom("smooth");
                       setNewMessagesCount(0);
@@ -1121,18 +1170,27 @@ function FloatingAiTutorInner() {
                     }}
                     className="absolute bottom-18 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer animate-fade-in"
                   >
-                    <ArrowDown size={13} strokeWidth={2.5} />
-                    <span>Tin mới nhất ({newMessagesCount})</span>
+                    <ArrowDown size={13} strokeWidth={2.5} aria-hidden="true" />
+                    <span>{jumpButtonLabel(newMessagesCount)}</span>
                   </button>
                 )}
 
                 {/* Input Area */}
-                <div className="p-3.5 bg-white dark:bg-slate-900 border-t-2 border-slate-100 dark:border-slate-800 flex items-center gap-2 shrink-0">
-                  <input
-                    type="text"
+                <div className="p-3.5 bg-white dark:bg-slate-900 border-t-2 border-slate-100 dark:border-slate-800 flex items-end gap-2 shrink-0">
+                  <textarea
+                    ref={composerRef}
+                    rows={1}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                    onKeyDown={(e) => {
+                      // Enter sends, Shift+Enter is a new line; the Enter that
+                      // confirms a Telex/VNI word is neither.
+                      if (!sendsOnKey({ key: e.key, shiftKey: e.shiftKey, isComposing: e.nativeEvent.isComposing, keyCode: e.keyCode })) return;
+                      e.preventDefault();
+                      void handleSend();
+                    }}
+                    aria-label="Nội dung tin nhắn"
+                    enterKeyHint="send"
                     placeholder={
                       isAdmin
                         ? currentThread.mode === "HUMAN"
@@ -1142,15 +1200,17 @@ function FloatingAiTutorInner() {
                         ? "Nhập tin nhắn gửi đến Quản Trị Viên..."
                         : "Hỏi Trợ Lý Bánh Mì bất kỳ điều gì..."
                     }
-                    className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-orange-400/50 transition-all border border-slate-200 dark:border-slate-700"
+                    className="flex-1 resize-none overflow-y-auto bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 rounded-2xl px-4 py-3 text-sm leading-5 font-medium outline-none focus:ring-2 focus:ring-orange-400/50 border border-slate-200 dark:border-slate-700"
                   />
                   <button
+                    type="button"
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
                     className="bg-orange-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-sm cursor-pointer shrink-0"
                     title="Gửi tin nhắn"
+                    aria-label="Gửi tin nhắn"
                   >
-                    <Send size={18} />
+                    <Send size={18} aria-hidden="true" />
                   </button>
                 </div>
               </div>

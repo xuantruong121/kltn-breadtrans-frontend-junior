@@ -113,6 +113,8 @@ export function ToeicAnswerBody({
 }) {
   const [showTranscript, setShowTranscript] = useState(false);
   const listening = question.part <= 4;
+  // A skipped question comes without its key and explanation.
+  const keyShown = question.correctIndex !== null;
   return (
     <div className="space-y-4">
       {listening && (audio ? <GroupAudioPlayer audio={audio} /> : audioNote ? <p className="text-sm text-slate-600 dark:text-slate-300">{audioNote}</p> : null)}
@@ -142,7 +144,7 @@ export function ToeicAnswerBody({
           {splitPassageDocuments(question.passageText).map((doc, i) => (
             <div key={i}>
               {doc.heading && <p className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">{doc.heading}</p>}
-              <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">{doc.body}</p>
+              <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200 [overflow-wrap:anywhere]">{doc.body}</p>
             </div>
           ))}
         </div>
@@ -158,9 +160,9 @@ export function ToeicAnswerBody({
               ? "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40"
               : "border-slate-200 dark:border-slate-700";
           return (
-            <li key={index} className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-[15px] ${tone}`}>
+            <li key={index} className={`flex flex-wrap items-start gap-x-2 gap-y-1 rounded-lg border px-3 py-2 text-[15px] ${tone}`}>
               <span className="font-bold text-slate-900 dark:text-slate-100">{letter(index)}.</span>
-              <span className="min-w-0 flex-1 text-slate-800 dark:text-slate-200">{option}</span>
+              <span className="min-w-0 flex-[1_1_8rem] text-slate-800 dark:text-slate-200 [overflow-wrap:anywhere]">{option}</span>
               {correct && <span className="shrink-0 text-xs font-bold text-emerald-700 dark:text-emerald-300">Đáp án đúng</span>}
               {chosen && !correct && <span className="shrink-0 text-xs font-bold text-rose-700 dark:text-rose-300">Bạn chọn</span>}
               {chosen && correct && <span className="sr-only">, bạn chọn</span>}
@@ -168,15 +170,23 @@ export function ToeicAnswerBody({
           );
         })}
       </ul>
-      <p className="text-sm text-slate-700 dark:text-slate-300">
-        Bạn chọn: <strong>{letter(question.selectedIndex) ?? "Không trả lời"}</strong> · Đáp án: <strong>{letter(question.correctIndex)}</strong>
-      </p>
-      <section className="border-t border-slate-200 pt-3 dark:border-slate-700">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết đáp án</h3>
-        <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
-          {question.explanation ?? "Câu này chưa có lời giải thích."}
+      {keyShown ? (
+        <>
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            Bạn chọn: <strong>{letter(question.selectedIndex) ?? "Không trả lời"}</strong> · Đáp án: <strong>{letter(question.correctIndex)}</strong>
+          </p>
+          <section className="border-t border-slate-200 pt-3 dark:border-slate-700">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết đáp án</h3>
+            <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
+              {question.explanation ?? "Câu này chưa có lời giải thích."}
+            </p>
+          </section>
+        </>
+      ) : (
+        <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+          Bạn chưa trả lời câu này nên đáp án không hiển thị. Hãy làm lại đề để xem đáp án và lời giải.
         </p>
-      </section>
+      )}
     </div>
   );
 }

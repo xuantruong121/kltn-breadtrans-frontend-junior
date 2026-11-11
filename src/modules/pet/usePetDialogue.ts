@@ -58,13 +58,15 @@ export interface UsePetDialogueOptions {
   satietyState?: string;
   balance: number;
   feedCost: number;
+  lastFedAt?: string | null;
   streak: number;
   activitiesCount: number;
   quests: PetNudgeQuest[];
 }
 
 export function usePetDialogue(options: UsePetDialogueOptions) {
-  const { ready, dateKey = "", petName, satietyState, balance, feedCost, streak, activitiesCount, quests } = options;
+  const { ready, dateKey = "", petName, satietyState, balance, feedCost, lastFedAt, streak, activitiesCount, quests } =
+    options;
   const userId = options.userId == null ? "" : String(options.userId);
   const live = ready && userId !== "" && dateKey !== "";
   const hourVN = hourInVietnam(now());
@@ -73,9 +75,9 @@ export function usePetDialogue(options: UsePetDialogueOptions) {
   const nudges = useMemo(
     () =>
       live
-        ? activeNudges({ petName, satietyState, balance, feedCost, streak, hourVN, activitiesCount, quests })
+        ? activeNudges({ petName, satietyState, balance, feedCost, lastFedAt, streak, hourVN, activitiesCount, quests })
         : [],
-    [live, petName, satietyState, balance, feedCost, streak, hourVN, activitiesCount, quests],
+    [live, petName, satietyState, balance, feedCost, lastFedAt, streak, hourVN, activitiesCount, quests],
   );
   const seen = useMemo(() => (live ? parseSeen(raw, userId, dateKey) : []), [live, raw, userId, dateKey]);
   const candidate = live ? pickNudge(nudges, seen) : null;

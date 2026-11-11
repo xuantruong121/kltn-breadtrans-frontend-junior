@@ -119,7 +119,8 @@ export function ArenaMusicDock() {
             className="flex items-center gap-2 rounded-2xl border border-white/15 bg-slate-950/85 py-1.5 pl-2.5 pr-1.5 text-white shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
           >
             <span className="flex size-9 items-center justify-center rounded-full bg-black/40 ring-1 ring-amber-300/30">{record}</span>
-            <span className="w-[8.5rem] min-w-0 sm:w-40">
+            {/* The buttons take ~14rem with the gaps; the title gets what is left of the screen. */}
+            <span className="w-[min(10rem,calc(100vw-16rem))] min-w-0">
               <span className="block truncate text-sm font-bold" title={LOBBY_PLAYLIST[track].title}>
                 {prefs.music ? LOBBY_PLAYLIST[track].title : "Nhạc đang tắt"}
               </span>
