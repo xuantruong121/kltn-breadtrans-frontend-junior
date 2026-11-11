@@ -1,6 +1,7 @@
 "use client";
 
 import { dependsOnLevel } from "@/lib/learning-path/levelLock";
+import { AskTutorButton } from "@/components/tutor/AskTutorButton";
 import React, { useState, useEffect } from "react";
 import {
   CheckCircle2,
@@ -53,7 +54,7 @@ const PracticeGuidance: React.FC<{ hasAnswer: boolean }> = ({ hasAnswer }) => (
   </div>
 );
 
-const FeedbackPanel: React.FC<{ qr: QuestionResult }> = ({ qr }) => (
+const FeedbackPanel: React.FC<{ qr: QuestionResult; attemptId?: number }> = ({ qr, attemptId }) => (
   <div className="space-y-4" role="status" aria-live="polite">
     {/* Correct / Incorrect banner */}
     <div
@@ -136,6 +137,17 @@ const FeedbackPanel: React.FC<{ qr: QuestionResult }> = ({ qr }) => (
           {qr.explanation}
         </p>
       </div>
+    )}
+
+    {attemptId !== undefined && (
+      <AskTutorButton
+        context={{
+          sourceType: "GRAMMAR_ATTEMPT",
+          sourceId: attemptId,
+          questionId: qr.questionId,
+          label: "Câu ngữ pháp vừa làm",
+        }}
+      />
     )}
   </div>
 );
@@ -458,7 +470,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
             {/* Mobile-only: inline theory / feedback below question */}
             <div className="md:hidden mt-6" data-testid="grammar-mobile-support">
               {result && currentResult ? (
-                <FeedbackPanel qr={currentResult} />
+                <FeedbackPanel qr={currentResult} attemptId={result?.attemptId} />
               ) : (
                 <GrammarVideoPlayer topic={topic} />
               )}
@@ -476,7 +488,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
             {result ? (
               // After submission: Show Feedback First, with Theory accessible below
               <>
-                {currentResult && <FeedbackPanel qr={currentResult} />}
+                {currentResult && <FeedbackPanel qr={currentResult} attemptId={result?.attemptId} />}
                 <div className="border-t border-slate-200/80 pt-6 dark:border-slate-800">
                   <GrammarVideoPlayer topic={topic} />
                 </div>

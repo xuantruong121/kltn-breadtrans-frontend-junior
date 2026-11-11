@@ -25,8 +25,20 @@ export interface StudentThread {
   hasMoreHistory?: boolean;
 }
 
+/** The answered item a learner is asking the tutor about: ids for the server, a label for the panel. */
+export interface TutorItemContext {
+  sourceType: 'TOEIC_ATTEMPT' | 'QUIZ_SUBMISSION' | 'GRAMMAR_ATTEMPT';
+  sourceId: number;
+  questionId?: number;
+  label: string;
+}
+
 interface ChatAssistantState {
   threads: Record<string, StudentThread>;
+  tutorContext: TutorItemContext | null;
+  /** Opens the tutor panel with this item attached to the next questions. */
+  askTutorAbout: (context: TutorItemContext) => void;
+  clearTutorContext: () => void;
   activeStudentId: string; // ID học sinh đang được chọn (dành cho Admin)
   isOpen: boolean;
   adminView: 'list' | 'chat';
@@ -66,6 +78,9 @@ interface ChatAssistantState {
 
 export const useChatAssistantStore = create<ChatAssistantState>()((set, get) => ({
   threads: {},
+  tutorContext: null,
+  askTutorAbout: (tutorContext) => set({ tutorContext, isOpen: true }),
+  clearTutorContext: () => set({ tutorContext: null }),
   activeStudentId: '',
   isOpen: false,
   adminView: 'list',

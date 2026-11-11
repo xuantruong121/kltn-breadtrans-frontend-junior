@@ -337,6 +337,7 @@ function LrResultView({
       {open && (
         <ToeicAnswerDialog
           examTitle={review.exam.title}
+          attemptId={review.attemptId}
           question={open}
           audio={audioFor(open)}
           audioNote={note}
