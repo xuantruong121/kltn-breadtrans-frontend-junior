@@ -36,6 +36,11 @@ export interface PetNudgeInput {
   satietyState?: string;
   balance: number;
   feedCost: number;
+  /**
+   * When the pet last ate. A pet that is fed and gets hungry again later the
+   * same day says so again: that is a new thing happening.
+   */
+  lastFedAt?: string | null;
   streak: number;
   /** Hour of the day in Vietnam time, 0-23. */
   hourVN: number;
@@ -46,6 +51,29 @@ export interface PetNudgeInput {
 
 /** From this hour on, a learner who has not studied today is reminded about the streak. */
 export const STREAK_REMINDER_HOUR = 18;
+
+/**
+ * What a hungry pet says, or null when it is not hungry. Used by the floating
+ * bubble and, without the once-a-day rule, by the pet's own card on the
+ * dashboard and on the pet page (the floating pet is not shown there).
+ */
+export function hungerLine(input: {
+  satietyState?: string;
+  balance: number;
+  feedCost: number;
+}): { veryHungry: boolean; text: string; short: number } | null {
+  if (input.satietyState !== "HUNGRY" && input.satietyState !== "VERY_HUNGRY") return null;
+  const veryHungry = input.satietyState === "VERY_HUNGRY";
+  const short = Math.max(0, input.feedCost - input.balance);
+  const opening = veryHungry
+    ? "Tớ đói lả rồi. Nhịn lâu nữa là sức khỏe tụt đó."
+    : "Bụng tớ đói rồi. Cho tớ ăn một phần nhé?";
+  return {
+    veryHungry,
+    short,
+    text: short > 0 ? `${opening} Cậu còn thiếu ${short} Bánh Mì, làm nhiệm vụ hôm nay là có thêm.` : opening,
+  };
+}
 
 /** Everything worth saying right now, most important first. */
 export function activeNudges(input: PetNudgeInput): PetNudge[] {
@@ -58,18 +86,15 @@ export function activeNudges(input: PetNudgeInput): PetNudge[] {
   const done = input.quests.filter((q) => q.isCompleted).length;
   const nudges: PetNudge[] = [];
 
-  if (input.satietyState === "HUNGRY" || input.satietyState === "VERY_HUNGRY") {
-    const veryHungry = input.satietyState === "VERY_HUNGRY";
-    const short = Math.max(0, input.feedCost - input.balance);
-    const opening = veryHungry
-      ? "Tớ đói lả rồi. Nhịn lâu nữa là sức khỏe tụt đó."
-      : "Bụng tớ đói rồi. Cho tớ ăn một phần nhé?";
+  const hunger = hungerLine(input);
+  if (hunger) {
     nudges.push({
-      key: `hungry:${input.satietyState}`,
+      // One line per hunger: fed and hungry again later is said again.
+      key: `hungry:${input.satietyState}${input.lastFedAt ? `:${input.lastFedAt}` : ""}`,
       kind: "HUNGRY",
       header: `${name} · Đang đói`,
-      text: short > 0 ? `${opening} Cậu còn thiếu ${short} Bánh Mì, làm nhiệm vụ hôm nay là có thêm.` : opening,
-      action: short > 0 ? nextLink : { type: "feed", label: `Cho ăn (${input.feedCost} Bánh Mì)` },
+      text: hunger.text,
+      action: hunger.short > 0 ? nextLink : { type: "feed", label: `Cho ăn (${input.feedCost} Bánh Mì)` },
     });
   }
 

@@ -113,6 +113,8 @@ export function ToeicAnswerBody({
 }) {
   const [showTranscript, setShowTranscript] = useState(false);
   const listening = question.part <= 4;
+  // A skipped question comes without its key and explanation.
+  const keyShown = question.correctIndex !== null;
   return (
     <div className="space-y-4">
       {listening && (audio ? <GroupAudioPlayer audio={audio} /> : audioNote ? <p className="text-sm text-slate-600 dark:text-slate-300">{audioNote}</p> : null)}
@@ -168,15 +170,23 @@ export function ToeicAnswerBody({
           );
         })}
       </ul>
-      <p className="text-sm text-slate-700 dark:text-slate-300">
-        Bạn chọn: <strong>{letter(question.selectedIndex) ?? "Không trả lời"}</strong> · Đáp án: <strong>{letter(question.correctIndex)}</strong>
-      </p>
-      <section className="border-t border-slate-200 pt-3 dark:border-slate-700">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết đáp án</h3>
-        <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
-          {question.explanation ?? "Câu này chưa có lời giải thích."}
+      {keyShown ? (
+        <>
+          <p className="text-sm text-slate-700 dark:text-slate-300">
+            Bạn chọn: <strong>{letter(question.selectedIndex) ?? "Không trả lời"}</strong> · Đáp án: <strong>{letter(question.correctIndex)}</strong>
+          </p>
+          <section className="border-t border-slate-200 pt-3 dark:border-slate-700">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết đáp án</h3>
+            <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
+              {question.explanation ?? "Câu này chưa có lời giải thích."}
+            </p>
+          </section>
+        </>
+      ) : (
+        <p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+          Bạn chưa trả lời câu này nên đáp án không hiển thị. Hãy làm lại đề để xem đáp án và lời giải.
         </p>
-      </section>
+      )}
     </div>
   );
 }

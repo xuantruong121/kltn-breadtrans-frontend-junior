@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { PetHungerLine } from "./PetHungerLine";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -268,6 +269,8 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
               </div>
             </div>
           </div>
+
+          <PetHungerLine satietyState={pet.satietyState} balance={userBalance} feedCost={feedCost} />
 
           {/* Health & Happiness & Satiety Progress Meters */}
           <div className="space-y-2.5 bg-slate-50/50 dark:bg-slate-900/80 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">

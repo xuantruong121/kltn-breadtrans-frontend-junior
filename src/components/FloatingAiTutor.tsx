@@ -24,6 +24,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useChatAssistantStore, StudentThread, AssistantMessage } from "@/stores/chatAssistantStore";
 import { useSocket } from "@/lib/providers/SocketProvider";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
+import { composerHeight, isNearBottom as nearBottomOf, jumpButtonLabel, scrollActionFor, sendsOnKey } from "@/lib/chat/chatScroll";
 
 // 🌟 Component parse và format Markdown sạch đẹp (tránh lộ kí tự ***, **, gạch đầu dòng, chuẩn màu tương phản)
 function FormattedMessage({ content, isWhiteText = false }: { content: string; isWhiteText?: boolean }) {
@@ -167,8 +168,6 @@ function FloatingAiTutorInner() {
     setThreadHasMore,
     addMessageToThread,
     syncThreadFromServer,
-    tutorContext,
-    clearTutorContext,
   } = useChatAssistantStore();
 
   const [input, setInput] = useState("");
@@ -187,6 +186,14 @@ function FloatingAiTutorInner() {
   const isNearBottomRef = useRef(true);
   const prevScrollHeightRef = useRef<number | null>(null);
   const prevMessagesLengthRef = useRef<number>(0);
+  // False until the list has been put on its latest message after the panel opened.
+  const placedRef = useRef(false);
+  // While the panel itself is scrolling to the end, the positions it passes
+  // through are not the reader leaving the end.
+  const followingUntilRef = useRef(0);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
+  // What had the focus before the panel opened; it gets the focus back on close.
+  const focusBeforeOpenRef = useRef<HTMLElement | null>(null);
 
   const { socket } = useSocket();
 
@@ -356,15 +363,6 @@ function FloatingAiTutorInner() {
     }
   };
 
-  // Restore scroll position after prepending older messages so reading position does not jump
-  useLayoutEffect(() => {
-    if (prevScrollHeightRef.current !== null && messageListRef.current) {
-      const newHeight = messageListRef.current.scrollHeight;
-      const heightDiff = newHeight - prevScrollHeightRef.current;
-      messageListRef.current.scrollTop += heightDiff;
-      prevScrollHeightRef.current = null;
-    }
-  }, [currentThread.messages]);
 
   // Trigger loads on auth or modal open
   useEffect(() => {
@@ -446,6 +444,8 @@ function FloatingAiTutorInner() {
   // Smart scroll controls
   const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
     if (messageListRef.current) {
+      isNearBottomRef.current = true;
+      followingUntilRef.current = Date.now() + (behavior === "smooth" ? 900 : 100);
       messageListRef.current.scrollTo({
         top: messageListRef.current.scrollHeight,
         behavior,
@@ -456,8 +456,9 @@ function FloatingAiTutorInner() {
   const handleScroll = () => {
     const el = messageListRef.current;
     if (!el) return;
-    const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
-    const near = distanceFromBottom < 80;
+    // A smooth scroll to the end is under way: a reply that arrives now must
+    // still be followed, so its half-way positions do not count as "left".
+    const near = nearBottomOf(el) || Date.now() < followingUntilRef.current;
     setIsNearBottom(near);
     isNearBottomRef.current = near;
     if (near) {
@@ -465,41 +466,91 @@ function FloatingAiTutorInner() {
     }
   };
 
-  // Initial scroll to bottom when opening chat or switching thread
+  const chatVisible = isOpen && (!isAdmin || adminView === "chat");
+
+  // Opening the panel, or switching conversation, starts over: the next list
+  // with messages is put on its latest message.
   useEffect(() => {
-    if (isOpen && (!isAdmin || adminView === "chat")) {
-      const timer = setTimeout(() => {
+    placedRef.current = false;
+    if (!chatVisible) return;
+    // The panel animates in; settle on the end once more after it has its size.
+    const timer = setTimeout(() => {
+      if (messageListRef.current && messageListRef.current.scrollHeight > 0) {
         scrollToBottom("auto");
         setIsNearBottom(true);
         isNearBottomRef.current = true;
         setNewMessagesCount(0);
-      }, 60);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, adminView, studentThreadId, isAdmin]);
-
-  // Smart auto-scroll when new messages arrive
-  useEffect(() => {
-    if (!isOpen || (isAdmin && adminView !== "chat")) return;
-
-    const currentLen = currentThread.messages.length;
-    const prevLen = prevMessagesLengthRef.current;
-    prevMessagesLengthRef.current = currentLen;
-
-    if (currentLen > prevLen && prevLen > 0) {
-      const lastMsg = currentThread.messages[currentLen - 1];
-      const isMyMessage =
-        (isAdmin && lastMsg?.role === "admin") ||
-        (!isAdmin && lastMsg?.role === "user");
-
-      if (isMyMessage || isNearBottomRef.current) {
-        scrollToBottom("smooth");
-        setNewMessagesCount(0);
-      } else {
-        setNewMessagesCount((prev) => prev + 1);
       }
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [chatVisible, studentThreadId]);
+
+  // One place decides what the list does when its messages change: stay put
+  // after older messages are added, jump to the end on opening, follow a new
+  // message only for a reader already at the end (see lib/chat/chatScroll).
+  useLayoutEffect(() => {
+    const el = messageListRef.current;
+    const count = currentThread.messages.length;
+    const previousCount = prevMessagesLengthRef.current;
+    prevMessagesLengthRef.current = count;
+    if (!chatVisible || !el) return;
+
+    const lastMsg = currentThread.messages[count - 1];
+    const action = scrollActionFor({
+      placed: placedRef.current,
+      previousCount,
+      count,
+      prepended: prevScrollHeightRef.current !== null,
+      lastIsMine: (isAdmin && lastMsg?.role === "admin") || (!isAdmin && lastMsg?.role === "user"),
+      nearBottom: isNearBottomRef.current,
+    });
+    if (action === "KEEP_POSITION") {
+      el.scrollTop += el.scrollHeight - (prevScrollHeightRef.current ?? el.scrollHeight);
+      prevScrollHeightRef.current = null;
+    } else if (action === "JUMP_TO_BOTTOM") {
+      placedRef.current = true;
+      el.scrollTop = el.scrollHeight;
+      setIsNearBottom(true);
+      isNearBottomRef.current = true;
+      setNewMessagesCount(0);
+    } else if (action === "FOLLOW") {
+      scrollToBottom("smooth");
+      setNewMessagesCount(0);
+    } else if (action === "COUNT_UNSEEN") {
+      setNewMessagesCount((prev) => prev + 1);
     }
-  }, [currentThread.messages, isOpen, adminView, isAdmin]);
+  }, [currentThread.messages, chatVisible, isAdmin]);
+
+  // The "is writing" line appears below the last message: a reader at the end stays at the end.
+  useEffect(() => {
+    if (chatVisible && isLoading && isNearBottomRef.current) scrollToBottom("smooth");
+  }, [isLoading, chatVisible]);
+
+  // On a device with a mouse the caret is ready in the message box when the
+  // panel opens; on a phone that would raise the keyboard over the panel.
+  // Closing gives the focus back to what had it.
+  useEffect(() => {
+    if (!chatVisible) return;
+    focusBeforeOpenRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const timer = setTimeout(() => {
+      if (window.matchMedia?.("(hover: hover) and (pointer: fine)").matches) composerRef.current?.focus();
+    }, 120);
+    return () => {
+      clearTimeout(timer);
+      const before = focusBeforeOpenRef.current;
+      if (before && document.contains(before)) before.focus({ preventScroll: true });
+    };
+  }, [chatVisible]);
+
+  // The message box grows with its text, up to four lines.
+  useLayoutEffect(() => {
+    const el = composerRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const style = window.getComputedStyle(el);
+    const padding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom) + 2;
+    el.style.height = `${composerHeight(el.scrollHeight + 2, parseFloat(style.lineHeight) || 20, padding)}px`;
+  }, [input, chatVisible]);
 
   // Close on Escape key (A11y)
   useEffect(() => {
@@ -620,14 +671,7 @@ function FloatingAiTutorInner() {
       const persisted = await supportService.sendMessage(
         currentConvId,
         messageText,
-        studentClientMessageId,
-        tutorContext && currentThread.mode === "AI"
-          ? {
-              sourceType: tutorContext.sourceType,
-              sourceId: tutorContext.sourceId,
-              questionId: tutorContext.questionId,
-            }
-          : undefined
+        studentClientMessageId
       );
       addMessageToThread(studentThreadId, studentMetadata, {
         id: persisted.id,
@@ -955,8 +999,10 @@ function FloatingAiTutorInner() {
                 <div
                   ref={messageListRef}
                   onScroll={handleScroll}
+                  role="log"
                   aria-live="polite"
-                  className="flex-1 min-h-0 overflow-y-auto p-4 flex flex-col gap-3.5 bg-slate-50 dark:bg-slate-950"
+                  aria-label="Tin nhắn"
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 flex flex-col gap-3.5 bg-slate-50 dark:bg-slate-950"
                 >
                   {/* Tải tin nhắn trước đó (Reverse cursor pagination) */}
                   {currentThread.hasMoreHistory && (
@@ -1088,7 +1134,7 @@ function FloatingAiTutorInner() {
                 </div>
 
                 {/* Quick Chips (Dành cho học sinh) */}
-                {!isAdmin && !tutorContext && currentThread.messages.length <= 2 && (
+                {!isAdmin && currentThread.messages.length <= 2 && (
                   <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs shrink-0 no-scrollbar">
                     <span className="text-slate-600 dark:text-slate-400 font-bold shrink-0">Gợi ý:</span>
                     <button
@@ -1113,8 +1159,9 @@ function FloatingAiTutorInner() {
                 )}
 
                 {/* Floating "Tin mới nhất" Pill */}
-                {!isNearBottom && newMessagesCount > 0 && (
+                {!isNearBottom && (
                   <button
+                    type="button"
                     onClick={() => {
                       scrollToBottom("smooth");
                       setNewMessagesCount(0);
@@ -1123,49 +1170,27 @@ function FloatingAiTutorInner() {
                     }}
                     className="absolute bottom-18 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer animate-fade-in"
                   >
-                    <ArrowDown size={13} strokeWidth={2.5} />
-                    <span>Tin mới nhất ({newMessagesCount})</span>
+                    <ArrowDown size={13} strokeWidth={2.5} aria-hidden="true" />
+                    <span>{jumpButtonLabel(newMessagesCount)}</span>
                   </button>
                 )}
 
-                {/* The item being asked about; stays for follow-up questions until removed. */}
-                {!isAdmin && tutorContext && currentThread.mode === "AI" && (
-                  <div className="shrink-0 border-t border-blue-100 bg-blue-50 px-3.5 py-2 dark:border-sky-900/60 dark:bg-sky-950/40">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="min-w-0 text-xs text-blue-900 dark:text-sky-200">
-                        <span className="font-bold">Đang hỏi về:</span> {tutorContext.label}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={clearTutorContext}
-                        aria-label="Bỏ câu đang hỏi"
-                        className="grid size-6 shrink-0 place-items-center rounded-md text-blue-800 hover:bg-blue-100 cursor-pointer dark:text-sky-300 dark:hover:bg-sky-900/60"
-                      >
-                        <X size={14} aria-hidden="true" />
-                      </button>
-                    </div>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {["Vì sao đáp án của mình sai?", "Giải thích đáp án đúng", "Cho mình một ví dụ tương tự"].map((question) => (
-                        <button
-                          key={question}
-                          type="button"
-                          onClick={() => handleQuickQuestion(question)}
-                          className="rounded-lg border border-blue-200 bg-white px-2 py-1 text-xs font-semibold text-blue-800 hover:bg-blue-100 cursor-pointer dark:border-sky-800 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-sky-900/50"
-                        >
-                          {question}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Input Area */}
-                <div className="p-3.5 bg-white dark:bg-slate-900 border-t-2 border-slate-100 dark:border-slate-800 flex items-center gap-2 shrink-0">
-                  <input
-                    type="text"
+                <div className="p-3.5 bg-white dark:bg-slate-900 border-t-2 border-slate-100 dark:border-slate-800 flex items-end gap-2 shrink-0">
+                  <textarea
+                    ref={composerRef}
+                    rows={1}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                    onKeyDown={(e) => {
+                      // Enter sends, Shift+Enter is a new line; the Enter that
+                      // confirms a Telex/VNI word is neither.
+                      if (!sendsOnKey({ key: e.key, shiftKey: e.shiftKey, isComposing: e.nativeEvent.isComposing, keyCode: e.keyCode })) return;
+                      e.preventDefault();
+                      void handleSend();
+                    }}
+                    aria-label="Nội dung tin nhắn"
+                    enterKeyHint="send"
                     placeholder={
                       isAdmin
                         ? currentThread.mode === "HUMAN"
@@ -1173,19 +1198,19 @@ function FloatingAiTutorInner() {
                           : "Chuyển sang hỗ trợ trực tiếp để trò chuyện..."
                         : currentThread.mode === "HUMAN"
                         ? "Nhập tin nhắn gửi đến Quản Trị Viên..."
-                        : tutorContext
-                        ? "Hỏi về câu này..."
                         : "Hỏi Trợ Lý Bánh Mì bất kỳ điều gì..."
                     }
-                    className="flex-1 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-2xl px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-orange-400/50 transition-all border border-slate-200 dark:border-slate-700"
+                    className="flex-1 resize-none overflow-y-auto bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 rounded-2xl px-4 py-3 text-sm leading-5 font-medium outline-none focus:ring-2 focus:ring-orange-400/50 border border-slate-200 dark:border-slate-700"
                   />
                   <button
+                    type="button"
                     onClick={handleSend}
                     disabled={!input.trim() || isLoading}
                     className="bg-orange-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-sm cursor-pointer shrink-0"
                     title="Gửi tin nhắn"
+                    aria-label="Gửi tin nhắn"
                   >
-                    <Send size={18} />
+                    <Send size={18} aria-hidden="true" />
                   </button>
                 </div>
               </div>

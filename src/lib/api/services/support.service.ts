@@ -90,13 +90,10 @@ export const supportService = {
     conversationId: number,
     content: string,
     clientMessageId?: string,
-    /** The answered item asked about; the server reads it, only ids are sent. */
-    context?: { sourceType: string; sourceId: number; questionId?: number },
   ): Promise<SupportSentMessage> =>
     axiosClient.post(`/support/conversations/${conversationId}/messages`, {
       content,
       clientMessageId,
-      ...(context ? { context } : {}),
     }),
 
   toggleMode: (

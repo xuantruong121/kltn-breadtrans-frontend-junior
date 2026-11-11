@@ -183,7 +183,8 @@ export type ToeicReviewQuestion = {
   questionText: string | null;
   options: string[];
   selectedIndex: number | null;
-  correctIndex: number;
+  /** Null for a question the learner skipped: the key is shown only for answered questions. */
+  correctIndex: number | null;
   learnerAnswer: string | null;
   standardAnswer: string | null;
   status: ToeicReviewStatus;

@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { Check, RotateCcw, Undo2 } from "lucide-react";
 
-import { AskTutorButton } from "@/components/tutor/AskTutorButton";
 import type { MistakeItem } from "@/lib/api/services/mistakes.service";
 import {
   MISTAKE_SKILL_LABEL,
   choiceText,
   mistakeRedoLink,
   mistakeTagLabel,
-  mistakeTutorContext,
   progressLabel,
 } from "@/lib/mistakes/mistakeView";
 
@@ -29,7 +27,6 @@ export function MistakeCard({
   const { detail } = item;
   const tag = mistakeTagLabel(item);
   const redo = mistakeRedoLink(item);
-  const tutor = mistakeTutorContext(item);
   const progress = item.resolvedAt ? null : progressLabel(item, resolveAfter);
   const yours =
     detail.kind === "CHOICE"
@@ -117,7 +114,6 @@ export function MistakeCard({
             {redo.label}
           </Link>
         )}
-        {tutor && <AskTutorButton context={tutor} />}
         <button
           type="button"
           disabled={busy}

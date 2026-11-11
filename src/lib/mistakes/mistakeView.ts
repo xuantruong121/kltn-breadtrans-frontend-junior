@@ -11,7 +11,6 @@ export const MISTAKE_SKILL_LABEL: Record<MistakeSkill, string> = {
   READING: "Đọc",
   WRITING: "Viết",
   GRAMMAR: "Ngữ pháp",
-  TOEIC: "Luyện đề",
 };
 
 const READING_TAG: Record<string, string> = {
@@ -47,13 +46,6 @@ export function mistakeRedoLink(
       return item.skill === "LISTENING"
         ? { href: `/listening/${ref.quizId}`, label: "Làm lại bài nghe" }
         : { href: `/reading/${ref.quizId}`, label: "Làm lại bài đọc" };
-    case "TOEIC_QUESTION":
-      return ref.attemptId
-        ? {
-            href: `/toeic/review/${ref.attemptId}${ref.questionNumber ? `#q-${ref.questionNumber}` : ""}`,
-            label: "Xem trong bài làm",
-          }
-        : null;
     case "GRAMMAR_QUESTION":
       return { href: "/grammar", label: "Mở phần ngữ pháp" };
     case "WRITING_CORRECTION":
@@ -63,30 +55,6 @@ export function mistakeRedoLink(
     default:
       return null;
   }
-}
-
-export type MistakeTutorContext = {
-  sourceType: "TOEIC_ATTEMPT" | "QUIZ_SUBMISSION" | "GRAMMAR_ATTEMPT";
-  sourceId: number;
-  questionId?: number;
-  label: string;
-};
-
-/** The ids the tutor needs to read the item on the server; null when it cannot. */
-export function mistakeTutorContext(
-  item: Pick<MistakeItem, "skill" | "sourceType"> & { detail: Pick<MistakeDetail, "ref" | "title"> },
-): MistakeTutorContext | null {
-  const { ref, title } = item.detail;
-  const label = `Lỗi ${MISTAKE_SKILL_LABEL[item.skill].toLowerCase()}: ${title}`;
-  if (item.sourceType === "QUIZ_QUESTION" && ref.submissionId && ref.questionId)
-    return { sourceType: "QUIZ_SUBMISSION", sourceId: ref.submissionId, questionId: ref.questionId, label };
-  if (item.sourceType === "WRITING_CORRECTION" && ref.submissionId)
-    return { sourceType: "QUIZ_SUBMISSION", sourceId: ref.submissionId, label };
-  if (item.sourceType === "TOEIC_QUESTION" && ref.attemptId && ref.questionId)
-    return { sourceType: "TOEIC_ATTEMPT", sourceId: ref.attemptId, questionId: ref.questionId, label };
-  if (item.sourceType === "GRAMMAR_QUESTION" && ref.attemptId && ref.questionId)
-    return { sourceType: "GRAMMAR_ATTEMPT", sourceId: ref.attemptId, questionId: ref.questionId, label };
-  return null;
 }
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];

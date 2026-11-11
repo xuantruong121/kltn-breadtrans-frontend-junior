@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
+import { PetHungerLine } from "./PetHungerLine";
 import {
   Heart,
   Smile,
@@ -318,6 +319,8 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 </>
               )}
             </button>
+
+            <PetHungerLine satietyState={pet?.satietyState} balance={banhRan} feedCost={feedCost} />
 
             {/* Satiety or balance status */}
             {!feedEligibility.allowed && (pet?.satietyState === "FULL" || satiety >= 80) ? (

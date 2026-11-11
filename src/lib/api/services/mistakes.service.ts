@@ -1,11 +1,10 @@
 import axiosClient from "../axiosClient";
 
-export const MISTAKE_SKILLS = ["LISTENING", "SPEAKING", "READING", "WRITING", "GRAMMAR", "TOEIC"] as const;
+export const MISTAKE_SKILLS = ["LISTENING", "SPEAKING", "READING", "WRITING", "GRAMMAR"] as const;
 export type MistakeSkill = (typeof MISTAKE_SKILLS)[number];
 
 export type MistakeSource =
   | "QUIZ_QUESTION"
-  | "TOEIC_QUESTION"
   | "GRAMMAR_QUESTION"
   | "WRITING_CORRECTION"
   | "SPEAKING_WORD";
@@ -29,9 +28,6 @@ export interface MistakeDetail {
     submissionId?: number;
     questionId?: number;
     attemptId?: number;
-    examId?: number;
-    questionNumber?: number;
-    part?: number;
     topicId?: number;
     exerciseId?: number;
   };

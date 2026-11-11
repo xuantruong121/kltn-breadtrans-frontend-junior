@@ -97,13 +97,16 @@ const FloatingCompanionPetInner: React.FC = () => {
     isVisible: isDialogueVisible,
     dismiss: dismissDialogue,
   } = usePetDialogue({
-    ready: !isLoading && Boolean(pet) && Boolean(today),
+    // Only while the pet is on screen: a line counts as said once the learner
+    // could see it, not on a page where the pet is hidden.
+    ready: !isLoading && Boolean(pet) && Boolean(today) && !isFocusMode && !isTutorOpen && !isExpanded,
     userId: user?.id,
     dateKey: today?.dateKey,
     petName: petDisplayName,
     satietyState: pet ? (pet.satietyState ?? getPetSatietyState(satiety)) : undefined,
     balance,
     feedCost,
+    lastFedAt: pet?.lastFedAt,
     streak,
     activitiesCount: today?.activities?.length ?? 0,
     quests: todayQuests,

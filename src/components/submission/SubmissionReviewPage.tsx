@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { AskTutorButton } from "@/components/tutor/AskTutorButton";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
@@ -182,14 +181,6 @@ export default function SubmissionAnalyticsPage(props: {
               wordRange={practiceDetailOf(writingFeedback?.practice)?.wordRange ?? null}
             />
           )}
-
-          <AskTutorButton
-            context={{
-              sourceType: "QUIZ_SUBMISSION",
-              sourceId: submissionId,
-              label: `Bài viết${analytics.quizTitle ? `: ${analytics.quizTitle}` : ""}`,
-            }}
-          />
 
           {writingFeedback ? (
             <div className="grid gap-4 sm:grid-cols-2">
@@ -378,15 +369,6 @@ export default function SubmissionAnalyticsPage(props: {
                             )}
                           </div>
                         </div>
-                        <AskTutorButton
-                          className="mt-3"
-                          context={{
-                            sourceType: "QUIZ_SUBMISSION",
-                            sourceId: submissionId,
-                            questionId: Number(q.id),
-                            label: `Câu ${idx + 1}${analytics.quizTitle ? `, ${analytics.quizTitle}` : ""}`,
-                          }}
-                        />
                       </div>
                     </div>
                   </motion.div>
