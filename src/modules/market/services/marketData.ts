@@ -20,7 +20,7 @@ export const MARKET_ITEMS: MarketItemData[] = [
   },
   {
     id: "double-bread",
-    name: "Thẻ nhân đôi Bánh Mì (24h Boost)",
+    name: "Thẻ nhân đôi Bánh Mì (24 giờ)",
     category: "boost",
     price: 200,
     icon: "/images/market/double-bread.svg",

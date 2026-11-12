@@ -79,6 +79,7 @@ const WORD_RULES: WordRule[] = [
   { name: "paid content", wrong: /\bPremium\b/, right: "gói Plus / gói Pro" },
   { name: "plan code shown", wrong: /^\s*(FREE|PLUS|PRO)\s*$/, right: "Free / Plus / Pro", jsxOnly: true },
   { name: "help", wrong: /^\s*FAQ\s*$|Trung tâm trợ giúp/, right: "Trợ giúp" },
+  { name: "English unit", wrong: /\b24h\b|\bBoost\b/, right: "24 giờ" },
   {
     name: "Title Case term",
     wrong: /Khung Avatar|Huy Hiệu|Thú Cưng|Cửa Hàng|Đấu Trường|Bảng Xếp Hạng|Nhiệm Vụ|Sổ Lỗi|Thông Báo|Ngữ Pháp|Luyện Đề|Giữ Chuỗi|Tiến Độ|Nghe Chép|Trợ Lý/,
@@ -112,13 +113,7 @@ const NEAR_RULES: Array<{ word: RegExp; icon: RegExp; right: string }> = [
   { word: /^\s*Bánh M[iì]\s*$|>\s*Bánh M[iì]\s*</m, icon: /<(Gift|Coins|Croissant)\b/, right: "BreadCoinIcon" },
 ];
 
-const ALLOW: Array<{ file: string; rule: string; why: string }> = [
-  {
-    file: "lib/providers/SocketProvider.tsx",
-    rule: "Title Case term",
-    why: '"Đấu Trường" is matched against the wallet reason the backend sends, not shown',
-  },
-];
+const ALLOW: Array<{ file: string; rule: string; why: string }> = [];
 const allowed = (file: string, rule: string) => ALLOW.some((a) => a.file === file && a.rule === rule);
 
 test("no emoji anywhere in the source", () => {
