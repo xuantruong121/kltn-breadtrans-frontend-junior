@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   choiceText,
   groupMistakes,
+  mistakeGroupPosition,
   mistakeRedoLink,
   mistakeRowLabel,
   mistakeSourceTitle,
@@ -104,4 +105,26 @@ test("the notebook list groups mistakes by exercise and gives each one line", ()
   );
   assert.equal(mistakeRowLabel(items[0]), "Why Tuesday?");
   assert.equal(mistakeRowLabel(items[3]), "schedule");
+});
+
+test("the detail pane names the mistake's place in its exercise", () => {
+  const row = (id: number, quizId: number) =>
+    ({
+      id,
+      skill: "LISTENING",
+      sourceType: "QUIZ_QUESTION",
+      tag: null,
+      wrongCount: 1,
+      correctStreak: 0,
+      firstSeenAt: "2026-11-12",
+      lastSeenAt: "2026-11-12",
+      resolvedAt: null,
+      detail: { kind: "CHOICE", answerable: false, title: "t", ref: { quizId } },
+    }) as never;
+  const groups = groupMistakes([row(1, 47), row(2, 12), row(3, 47)]);
+  const where = mistakeGroupPosition(groups, 3);
+  assert.equal(where?.index, 2);
+  assert.equal(where?.total, 2);
+  assert.equal(where?.group.items.length, 2);
+  assert.equal(mistakeGroupPosition(groups, 99), null);
 });

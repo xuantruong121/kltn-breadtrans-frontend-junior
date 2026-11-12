@@ -19,8 +19,11 @@ export function MistakeCard({
   resolveAfter,
   busy,
   onToggleResolved,
+  positionLabel,
 }: {
   item: MistakeItem;
+  /** Where the mistake sits in its exercise, "Câu 1/2"; matches the list beside it. */
+  positionLabel?: string;
   resolveAfter: number;
   busy: boolean;
   onToggleResolved: (resolved: boolean) => void;
@@ -59,6 +62,7 @@ export function MistakeCard({
 
       <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
         {mistakeSourceTitle(item.skill, detail.title, detail.ref)}
+        {positionLabel && <span className="font-normal text-slate-500 dark:text-slate-400"> · {positionLabel}</span>}
       </p>
 
       {detail.kind === "WORD" ? (

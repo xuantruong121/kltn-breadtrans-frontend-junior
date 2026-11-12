@@ -116,3 +116,15 @@ export function groupMistakes(items: MistakeItem[]): MistakeGroup[] {
   }
   return [...groups.values()];
 }
+
+/** Where a mistake sits in its exercise's group, for "Câu 1/2" in the detail pane. */
+export function mistakeGroupPosition(
+  groups: MistakeGroup[],
+  id: number,
+): { group: MistakeGroup; index: number; total: number } | null {
+  for (const group of groups) {
+    const at = group.items.findIndex((item) => item.id === id);
+    if (at >= 0) return { group, index: at + 1, total: group.items.length };
+  }
+  return null;
+}

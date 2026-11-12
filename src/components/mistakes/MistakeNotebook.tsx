@@ -4,12 +4,19 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowLeft, ChevronRight, Loader2, RotateCcw } from "lucide-react";
 
 import { MistakeCard } from "@/components/mistakes/MistakeCard";
 import { MistakeReview } from "@/components/mistakes/MistakeReview";
 import { MISTAKE_SKILLS, mistakesService, type MistakeItem, type MistakeSkill } from "@/lib/api/services/mistakes.service";
-import { MISTAKE_SKILL_LABEL, groupMistakes, mistakeRowLabel, parseMistakeSkill } from "@/lib/mistakes/mistakeView";
+import {
+  MISTAKE_SKILL_LABEL,
+  groupMistakes,
+  mistakeGroupPosition,
+  mistakeRedoLink,
+  mistakeRowLabel,
+  parseMistakeSkill,
+} from "@/lib/mistakes/mistakeView";
 
 /**
  * "Sổ lỗi": every mistake the learner has not put right yet. A compact list
@@ -68,14 +75,18 @@ export function MistakeNotebook() {
         : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
     }`;
 
-  const detail = (item: MistakeItem) => (
-    <MistakeCard
-      item={item}
-      resolveAfter={resolveAfter}
-      busy={toggle.isPending}
-      onToggleResolved={(resolved) => toggle.mutate({ id: item.id, resolved })}
-    />
-  );
+  const detail = (item: MistakeItem) => {
+    const where = mistakeGroupPosition(groups, item.id);
+    return (
+      <MistakeCard
+        item={item}
+        positionLabel={where && where.total > 1 ? `Câu ${where.index}/${where.total}` : undefined}
+        resolveAfter={resolveAfter}
+        busy={toggle.isPending}
+        onToggleResolved={(resolved) => toggle.mutate({ id: item.id, resolved })}
+      />
+    );
+  };
 
   return (
     <div className="w-full pb-20">
@@ -176,60 +187,94 @@ export function MistakeNotebook() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
-          {/* The list */}
+          {/* The list: one panel per exercise, set apart by space; the exercise names the panel in
+              bold, its questions sit under it in regular weight (owner 2026-11-12: the grey band of
+              the exercise read as one more question). */}
           <div className="min-w-0">
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-              {groups.map((group) => (
-                <section key={group.key} aria-label={group.title} className="border-b border-slate-100 last:border-b-0 dark:border-slate-800">
-                  <h2 className="flex items-baseline justify-between gap-3 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-900 dark:bg-slate-800/60 dark:text-slate-100">
-                    <span className="min-w-0 truncate">
-                      {group.title}
-                      <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">{MISTAKE_SKILL_LABEL[group.skill]}</span>
-                    </span>
-                    <span className="shrink-0 tabular-nums text-slate-500 dark:text-slate-400">{group.items.length}</span>
-                  </h2>
-                  <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {group.items.map((item) => {
-                      const selected = chosen?.id === item.id;
-                      const phoneOpen = phoneOpenId === item.id;
-                      return (
-                        <li key={item.id}>
-                          <button
-                            type="button"
-                            aria-current={selected ? "true" : undefined}
-                            aria-expanded={phoneOpen}
-                            onClick={() => {
-                              setChosenId(item.id);
-                              setPhoneOpenId((current) => (current === item.id ? null : item.id));
-                            }}
-                            className={`flex w-full min-h-12 items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 ${
-                              selected
-                                ? "lg:bg-slate-100 lg:dark:bg-slate-800"
-                                : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                            }`}
-                          >
-                            <span className="min-w-0 flex-1 truncate text-[15px] text-slate-900 dark:text-slate-100">
-                              {mistakeRowLabel(item)}
-                            </span>
-                            {item.wrongCount > 1 && (
-                              <span className="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-950/50 dark:text-rose-300">
-                                Sai {item.wrongCount} lần
+            <div className="space-y-4">
+              {groups.map((group) => {
+                const holdsChosen = group.items.some((item) => item.id === chosen?.id);
+                const redo = mistakeRedoLink(group.items[0]);
+                return (
+                  <section
+                    key={group.key}
+                    aria-label={group.title}
+                    className={`overflow-hidden rounded-xl border bg-white transition-colors dark:bg-slate-900 ${
+                      holdsChosen
+                        ? "border-slate-400 dark:border-slate-500"
+                        : "border-slate-200 dark:border-slate-800"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                      <div className="min-w-0">
+                        <h2 className="break-words text-base font-bold leading-snug text-slate-900 dark:text-slate-100">
+                          {group.title}
+                        </h2>
+                        <p className="mt-0.5 text-[13px] text-slate-500 dark:text-slate-400">
+                          {MISTAKE_SKILL_LABEL[group.skill]} · {group.items.length} câu sai
+                        </p>
+                      </div>
+                      {redo && (
+                        <Link
+                          href={redo.href}
+                          className="inline-flex min-h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-[13px] font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                        >
+                          <RotateCcw size={14} strokeWidth={2} aria-hidden="true" />
+                          {redo.label}
+                        </Link>
+                      )}
+                    </div>
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {group.items.map((item) => {
+                        const selected = chosen?.id === item.id;
+                        const phoneOpen = phoneOpenId === item.id;
+                        return (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              aria-current={selected ? "true" : undefined}
+                              aria-expanded={phoneOpen}
+                              onClick={() => {
+                                setChosenId(item.id);
+                                setPhoneOpenId((current) => (current === item.id ? null : item.id));
+                              }}
+                              className={`flex w-full min-h-12 items-center gap-3 px-4 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500 ${
+                                selected
+                                  ? "lg:bg-slate-100 lg:dark:bg-slate-800"
+                                  : "hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                              }`}
+                            >
+                              <span
+                                className={`min-w-0 flex-1 truncate text-[15px] text-slate-700 dark:text-slate-300 ${
+                                  selected ? "lg:font-semibold lg:text-slate-900 lg:dark:text-slate-100" : ""
+                                }`}
+                              >
+                                {mistakeRowLabel(item)}
                               </span>
+                              {item.wrongCount > 1 && (
+                                <span className="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-950/50 dark:text-rose-300">
+                                  Sai {item.wrongCount} lần
+                                </span>
+                              )}
+                              <ChevronRight
+                                size={16}
+                                aria-hidden="true"
+                                className={`shrink-0 transition-transform ${phoneOpen ? "rotate-90 lg:rotate-0" : ""} ${
+                                  selected ? "text-slate-500 lg:text-slate-900 lg:dark:text-slate-100" : "text-slate-400"
+                                }`}
+                              />
+                            </button>
+                            {/* Phone: the mistake opens under its row. */}
+                            {phoneOpen && (
+                              <div className="border-t border-slate-100 p-3 dark:border-slate-800 lg:hidden">{detail(item)}</div>
                             )}
-                            <ChevronRight
-                              size={16}
-                              aria-hidden="true"
-                              className={`shrink-0 text-slate-400 transition-transform lg:rotate-0 ${phoneOpen ? "rotate-90" : ""}`}
-                            />
-                          </button>
-                          {/* Phone: the mistake opens under its row. */}
-                          {phoneOpen && <div className="border-t border-slate-100 p-3 dark:border-slate-800 lg:hidden">{detail(item)}</div>}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              ))}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                );
+              })}
             </div>
 
             {pages > 1 && (
