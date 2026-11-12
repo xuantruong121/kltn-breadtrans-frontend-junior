@@ -91,37 +91,42 @@ export function ListeningExerciseCard({
 
   const containerClasses = {
     IN_PROGRESS:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-teal-300 dark:border-teal-700/60 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xs cursor-pointer group",
+      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-teal-300 dark:border-teal-700/60 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xs cursor-pointer group",
     COMPLETED:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
+      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
     NOT_STARTED:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
+      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
     LOCKED:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-5 opacity-90 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-2xs cursor-pointer group",
+      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-5 opacity-90 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-2xs cursor-pointer group",
   }[status];
 
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Optional status banner: only when completed */}
+        {/* Completed: a readable status and the score on the first line (owner 2026-11-12:
+            the 12 px green note alone in the corner was hard to read). */}
         {status === "COMPLETED" && (
-          <div className="flex items-center justify-between gap-2">
-            <span />
-
-            {status === "COMPLETED" ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                <Check className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>
-                  Đã hoàn thành{quiz.score != null ? ` · ${quiz.score}/100` : ""}
-                </span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[13px] font-semibold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+              <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+              Đã hoàn thành
+            </span>
+            {quiz.score != null && (
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                Điểm <span className="font-bold tabular-nums text-slate-900 dark:text-slate-100">{quiz.score}</span>
+                <span className="tabular-nums">/100</span>
               </span>
-            ) : null}
+            )}
           </div>
         )}
 
         {/* Title & Pedagogical Description */}
         <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors line-clamp-1 break-words">
+          <h3
+            className={`text-base font-semibold text-slate-900 dark:text-slate-100 transition-colors line-clamp-1 break-words ${
+              status === "COMPLETED" ? "" : "group-hover:text-teal-600 dark:group-hover:text-teal-400"
+            }`}
+          >
             {quiz.title}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[38px] mt-1.5">
@@ -137,7 +142,7 @@ export function ListeningExerciseCard({
               <span className="font-semibold text-teal-700 dark:text-teal-400">50%</span>
             </div>
             <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-              <div className="h-full rounded-full bg-teal-600 w-1/2 transition-all duration-300" />
+              <div className="h-full rounded-full bg-teal-600 w-1/2 transition-[width] duration-300" />
             </div>
           </div>
         )}
@@ -147,7 +152,7 @@ export function ListeningExerciseCard({
       <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Tertiary inline metadata */}
-          <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+          <div className="flex flex-wrap items-center gap-1.5 text-[13px] text-slate-600 dark:text-slate-400 font-medium">
             <span>
               {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title, quiz.practiceLevel) ?? cefr.label}
             </span>
@@ -174,10 +179,10 @@ export function ListeningExerciseCard({
                 type="button"
                 onClick={() => onStart?.(quiz)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 text-sm font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
-                <span>Luyện lại</span>
                 <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Luyện lại</span>
               </button>
             ) : status === "IN_PROGRESS" ? (
               <button
