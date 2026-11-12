@@ -71,7 +71,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                 id="pet-selector-title"
                 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight"
               >
-                Chọn Thú Cưng Đồng Hành
+                Chọn thú cưng đồng hành
               </h2>
               <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
                 Mỗi loài thú cưng sở hữu cấp độ độc lập và hiệu ứng bổ trợ học tập riêng biệt

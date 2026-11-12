@@ -176,7 +176,7 @@ function AdminRewardCreateEditModalInner({
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-400">
                 {isEditing
-                  ? `Cập nhật quà tặng #${product?.id} trong Cửa Hàng Bánh Mì`
+                  ? `Cập nhật quà tặng #${product?.id} trong Cửa hàng Bánh Mì`
                   : "Tạo vật phẩm đổi thưởng mới cho học viên"}
               </p>
             </div>

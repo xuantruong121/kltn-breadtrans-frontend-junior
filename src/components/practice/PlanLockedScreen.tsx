@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Lock } from "lucide-react";
 import { plansHrefFor } from "@/modules/subscription/practicePlan";
 import { SampleGradedResult } from "./SampleGradedResult";
+import { planName } from "@/lib/ui/glossary";
 
 /** Shown instead of an exercise the learner's plan does not open. */
 export function PlanLockedScreen({
@@ -27,12 +28,12 @@ export function PlanLockedScreen({
         <Lock className="mx-auto size-7 text-amber-600 dark:text-amber-400" aria-hidden="true" />
         <div>
           <h2 className="text-lg font-bold text-slate-900 sm:text-xl dark:text-slate-100">
-            Nội dung dành cho gói {plan}
+            Nội dung dành cho gói {planName(plan)}
           </h2>
           <p className="mt-2 text-sm text-slate-700 sm:text-base dark:text-slate-300">
             {plan === "PRO"
-              ? "Bài luyện này có trong hệ thống và chỉ mở cho gói PRO. Gói PLUS không bao gồm bài này."
-              : "Bài luyện này có trong hệ thống và mở cho gói PLUS hoặc PRO."}
+              ? "Bài luyện này có trong hệ thống và chỉ mở cho gói Pro. Gói Plus không bao gồm bài này."
+              : "Bài luyện này có trong hệ thống và mở cho gói Plus hoặc Pro."}
           </p>
         </div>
         {sample && <SampleGradedResult skill={sample} />}
@@ -47,7 +48,7 @@ export function PlanLockedScreen({
             href={plansHrefFor(plan)}
             className="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-center text-sm font-bold text-slate-950 transition hover:bg-amber-600"
           >
-            Xem gói {plan}
+            Xem gói {planName(plan)}
           </Link>
         </div>
       </div>

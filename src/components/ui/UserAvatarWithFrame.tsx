@@ -1,4 +1,5 @@
 import React from "react";
+import { BadgeGlyph } from "@/components/ui/BadgeGlyph";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import {
   resolveAvatarFrame,
@@ -90,21 +91,13 @@ export const UserAvatarWithFrame: React.FC<UserAvatarWithFrameProps> = ({
         )}
       </div>
 
-      {/* 3. BADGE INDICATOR (SVG OR EMOJI) */}
+      {/* 3. BADGE INDICATOR (picture or icon) */}
       {showBadge && badge && (
         <div
           className={`absolute ${badgeSizeClasses[size]} bg-white dark:bg-slate-900 rounded-full shadow-md border border-slate-200 dark:border-slate-700 z-30 flex items-center justify-center leading-none select-none overflow-hidden`}
           title={badge.name}
         >
-          {badge.type === "svg" ? (
-            <img
-              src={badge.content}
-              alt={badge.name}
-              className="w-full h-full object-contain p-[1px]"
-            />
-          ) : (
-            <span className="leading-none">{badge.content}</span>
-          )}
+          <BadgeGlyph badge={badge} className="size-3/4" imgClassName="w-full h-full object-contain p-[1px]" />
         </div>
       )}
     </div>

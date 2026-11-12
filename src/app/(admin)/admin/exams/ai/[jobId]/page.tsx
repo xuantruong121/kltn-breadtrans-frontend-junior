@@ -608,7 +608,7 @@ export default function ExamAiCandidateWorkspacePage({
                             {group.transcript !== null && (
                               <div>
                                 <label className="text-xs text-slate-600 dark:text-slate-400">
-                                  Transcript
+                                  Lời thoại
                                 </label>
                                 <textarea
                                   className="mt-1 w-full rounded-md border border-slate-300 p-2 text-sm dark:border-slate-700 dark:bg-slate-800"

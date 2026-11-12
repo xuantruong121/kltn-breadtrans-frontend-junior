@@ -129,7 +129,7 @@ const LISTENING_MODE_OPTIONS: Array<{
   label: string;
 }> = [
   { value: "COMPREHENSION", label: "Nghe hiểu" },
-  { value: "DICTATION", label: "Chép chính tả" },
+  { value: "DICTATION", label: "Nghe chép" },
   { value: "DIALOGUE", label: "Hội thoại" },
 ];
 
@@ -702,10 +702,10 @@ export default function SkillCmsWorkspace({
       } else if (data?.mode === "DICTATION" && typeof data.text === "string") {
         setListeningContentAiSuggestion({ mode: "DICTATION", text: data.text });
       } else {
-        toast.error("Không nhận được transcript hợp lệ từ AI");
+        toast.error("Không nhận được lời thoại hợp lệ từ AI");
         return;
       }
-      toast.success("Đã nhận transcript nháp. Hãy kiểm tra trước khi lưu.");
+      toast.success("Đã nhận lời thoại nháp. Hãy kiểm tra trước khi lưu.");
     } catch (error: any) {
       toast.error(
         getApiErrorMessage(error, "Không thể gợi ý nội dung nghe lúc này."),
@@ -724,7 +724,7 @@ export default function SkillCmsWorkspace({
           .join("\n")
       : listeningSourceText();
     if (!sourceText) {
-      toast.error("Vui lòng nhập transcript trước khi tạo câu hỏi.");
+      toast.error("Vui lòng nhập lời thoại trước khi tạo câu hỏi.");
       return;
     }
     setIsListeningQuestionsAiLoading(true);
@@ -1036,7 +1036,7 @@ export default function SkillCmsWorkspace({
 
   const saveQuestion = async (withAudio = false) => {
     if (!id || !question.prompt.trim()) {
-      toast.error("Cần nhập đề bài hoặc transcript");
+      toast.error("Cần nhập đề bài hoặc lời thoại");
       return;
     }
     setBusy(true);
@@ -1261,8 +1261,8 @@ export default function SkillCmsWorkspace({
       toast.success(
         action === "validate"
           ? result.valid
-            ? "Transcript hợp lệ"
-            : "Transcript chưa hợp lệ"
+            ? "Lời thoại hợp lệ"
+            : "Lời thoại chưa hợp lệ"
           : "Đã cập nhật audio artifact",
       );
       await refreshArtifacts();
@@ -2176,7 +2176,7 @@ export default function SkillCmsWorkspace({
           {isListening && question.type === "DIALOGUE" && (
             <div className="md:col-span-2 space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium">Transcript turns</label>
+                <label className="text-sm font-medium">Lượt lời thoại</label>
                 <button
                   type="button"
                   onClick={() =>
@@ -3021,7 +3021,7 @@ export default function SkillCmsWorkspace({
                 <div className="rounded-lg border border-blue-300 bg-blue-50/30 p-4">
                   <div className="mb-3 flex flex-wrap items-center gap-2">
                     <input
-                      aria-label="Chủ đề các câu chép chính tả"
+                      aria-label="Chủ đề các câu nghe chép"
                       value={dictationTopic}
                       onChange={(event) => setDictationTopic(event.target.value)}
                       placeholder="Chủ đề, ví dụ: đặt lịch hẹn"
@@ -3199,7 +3199,7 @@ export default function SkillCmsWorkspace({
               <label className="block text-xs font-semibold text-slate-700">
                 {fullDraft.domain === "reading"
                   ? "Đoạn đọc"
-                  : "Transcript / nội dung nguồn"}
+                  : "Lời thoại / nội dung nguồn"}
                 <textarea
                   rows={fullDraft.domain === "reading" ? 8 : 6}
                   value={fullDraft.passage}
@@ -3521,7 +3521,7 @@ export default function SkillCmsWorkspace({
                 </div>
               ) : listeningContentAiSuggestion.mode === "DICTATION" ? (
                 <label className="text-sm font-semibold text-slate-700">
-                  Transcript Dictation
+                  Câu nghe chép
                   <textarea
                     value={listeningContentAiSuggestion.text || ""}
                     onChange={(event) =>
@@ -3655,7 +3655,7 @@ export default function SkillCmsWorkspace({
                     );
                     setIsListeningContentAiOpen(false);
                     toast.success(
-                      "Đã áp dụng transcript vào biểu mẫu. Bạn có thể chỉnh sửa trước khi lưu.",
+                      "Đã áp dụng lời thoại vào biểu mẫu. Bạn có thể chỉnh sửa trước khi lưu.",
                     );
                   }}
                   className="min-h-10 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
@@ -3696,7 +3696,7 @@ export default function SkillCmsWorkspace({
                   AI gợi ý câu hỏi nghe nháp
                 </h3>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  Câu hỏi được tạo từ transcript hiện tại, không tự thêm vào
+                  Câu hỏi được tạo từ lời thoại hiện tại, không tự thêm vào
                   database.
                 </p>
               </div>
@@ -3746,7 +3746,7 @@ export default function SkillCmsWorkspace({
             <div className="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
               {listeningQuestionsAiCandidates.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-600 dark:text-slate-400">
-                  Nhập transcript ở form trước, sau đó nhấn “AI gợi ý câu hỏi
+                  Nhập lời thoại ở biểu mẫu trước, sau đó nhấn “AI gợi ý câu hỏi
                   nháp”.
                 </div>
               ) : (

@@ -47,7 +47,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
           {isLocked ? (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300/80 bg-amber-50 px-2.5 py-0.5 text-sm font-semibold text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
               <Lock size={12} aria-hidden="true" />
-              <span>Premium</span>
+              <span>Plus</span>
             </span>
           ) : (
             <span

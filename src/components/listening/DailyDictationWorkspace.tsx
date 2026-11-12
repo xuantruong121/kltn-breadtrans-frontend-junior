@@ -1180,12 +1180,12 @@ export function DailyDictationWorkspace({
         } else {
           setAudioError(true);
           setAudioLoading(false);
-          setTranscriptError("Audio toàn bộ kịch bản chưa sẵn sàng. Bạn hãy thử lại.");
+          setTranscriptError("Âm thanh toàn bộ lời thoại chưa sẵn sàng. Bạn hãy thử lại.");
         }
       } catch (error: any) {
         if (error?.name === "AbortError" || error?.name === "CanceledError") return;
         if (!ownsPlayback("FULL_SCRIPT", generation)) return;
-        setTranscriptError("Chưa tải được toàn bộ kịch bản. Bạn hãy thử lại.");
+        setTranscriptError("Chưa tải được toàn bộ lời thoại. Bạn hãy thử lại.");
         setAudioError(true);
         setAudioLoading(false);
       } finally {
@@ -1315,7 +1315,7 @@ export function DailyDictationWorkspace({
               : "text-stone-600 dark:text-slate-400 hover:text-stone-900 dark:hover:text-slate-200"
           }`}
         >
-          Nghe chép chính tả (Dictation)
+          Nghe chép
         </button>
         <button
           type="button"
@@ -1326,7 +1326,7 @@ export function DailyDictationWorkspace({
               : "text-stone-600 dark:text-slate-400 hover:text-stone-900 dark:hover:text-slate-200"
           }`}
         >
-          Toàn bộ kịch bản (Full transcript)
+          Toàn bộ lời thoại
         </button>
       </div>
 
@@ -1441,7 +1441,7 @@ export function DailyDictationWorkspace({
                   </button>
                 </div>
 
-                {/* Right: ⚙ Settings */}
+                {/* Right: settings */}
                 <div className="flex items-center gap-2.5">
                   <div className="relative" ref={settingsRef}>
                     <button
@@ -1707,7 +1707,7 @@ export function DailyDictationWorkspace({
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1.5 text-sm sm:text-base font-extrabold px-4 py-2 rounded-xl border bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
-                        ✓ Chính xác
+                        <Check size={14} strokeWidth={2.5} aria-hidden="true" className="inline align-[-2px]" /> Chính xác
                       </span>
                     )}
                   </div>
@@ -1908,7 +1908,7 @@ export function DailyDictationWorkspace({
                           Bản dịch {selectedLanguage === "vi" ? "tiếng Việt" : selectedLanguage === "en" ? "tiếng Anh" : "bản địa"}
                         </span>
                         <span className="text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-md">
-                          AI Bilingual
+                          Song ngữ
                         </span>
                       </div>
                       <p className="text-lg sm:text-xl lg:text-[22px] font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
@@ -1942,10 +1942,10 @@ export function DailyDictationWorkspace({
                           title="Cung cấp bản dịch cải thiện cho Admin"
                         >
                           <Pencil size={14} className="text-slate-500" />
-                          <span>Edit</span>
+                          <span>Sửa</span>
                         </button>
 
-                        {/* More options: Change language, Add another language */}
+                        {/* More options: change language, add another language */}
                         <div className="relative" ref={translationMenuRef}>
                           <button
                             type="button"
@@ -1968,7 +1968,7 @@ export function DailyDictationWorkspace({
                                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors cursor-pointer"
                               >
                                 <Globe size={13} className="text-slate-500 shrink-0" />
-                                <span>Change language</span>
+                                <span>Đổi ngôn ngữ</span>
                               </button>
                               <button
                                 type="button"
@@ -1979,7 +1979,7 @@ export function DailyDictationWorkspace({
                                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-slate-100 transition-colors cursor-pointer"
                               >
                                 <Plus size={13} className="text-slate-500 shrink-0" />
-                                <span>Add another language</span>
+                                <span>Thêm ngôn ngữ</span>
                               </button>
                             </div>
                           )}
@@ -2256,7 +2256,7 @@ export function DailyDictationWorkspace({
             {/* Right Column: Scrollable Playlist of Sentences */}
             <div className="lg:col-span-6 flex flex-col justify-between rounded-xl bg-stone-50/40 dark:bg-slate-800/40 border border-stone-200/80 dark:border-slate-700/80 p-3 sm:p-4 min-h-[460px]">
               {isTranscriptLoading && fullTranscript.length === 0 ? (
-                    <div className="space-y-2 p-2" aria-live="polite" aria-label="Đang tải kịch bản">
+                    <div className="space-y-2 p-2" aria-live="polite" aria-label="Đang tải lời thoại">
                       {questions.slice(0, Math.min(6, questions.length)).map((question) => (
                         <div key={question.id} className="h-12 animate-pulse rounded-xl bg-stone-100 dark:bg-slate-800" />
                       ))}
@@ -2274,14 +2274,14 @@ export function DailyDictationWorkspace({
                     </div>
               ) : displayTranscriptItems.length === 0 ? (
                     <div className="rounded-xl border border-stone-200 dark:border-slate-700 bg-stone-50 dark:bg-slate-800 p-5 text-sm text-stone-600 dark:text-slate-400 text-center">
-                      Bài này chưa có dữ liệu kịch bản để hiển thị.
+                      Bài này chưa có lời thoại để hiển thị.
                     </div>
               ) : (
                   <div
                     ref={transcriptListRef}
                     className="h-[360px] sm:h-[400px] overflow-y-auto space-y-1.5 pr-1.5 custom-scrollbar"
                     role="list"
-                    aria-label="Danh sách câu kịch bản"
+                    aria-label="Danh sách câu lời thoại"
                   >
                     {transcriptGroups.map((group, groupIndex) => {
                       const isCurrent =
@@ -2636,7 +2636,7 @@ export function DailyDictationWorkspace({
             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800 mb-4">
               <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
                 <Globe size={18} className="text-blue-600 dark:text-blue-400" />
-                Change language
+                Đổi ngôn ngữ
               </h3>
               <button
                 type="button"
@@ -2707,7 +2707,7 @@ export function DailyDictationWorkspace({
               <div>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
                   <Plus size={18} className="text-blue-600 dark:text-blue-400" />
-                  Add another language
+                  Thêm ngôn ngữ
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                   Đóng góp bản dịch ngôn ngữ mới cho câu này tới Admin.

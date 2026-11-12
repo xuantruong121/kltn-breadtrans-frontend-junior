@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Check, Wheat, Truck } from "lucide-react";
+import { Check, Truck } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import clsx from "clsx";
 import { MarketProduct } from "../types";
 import { getMarketItemVisual } from "../marketVisuals";
@@ -161,7 +162,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
           <span className="text-xs uppercase tracking-wider font-medium text-slate-600 dark:text-slate-400">Giá</span>
           <span className="flex items-center gap-1 text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 leading-none">
             {product.price.toLocaleString("vi-VN")}
-            <Wheat size={15} className="text-amber-500 dark:text-amber-400" aria-hidden="true" />
+            <BreadCoinIcon size={15} className="text-amber-500 dark:text-amber-400" aria-hidden="true" />
           </span>
         </div>
 

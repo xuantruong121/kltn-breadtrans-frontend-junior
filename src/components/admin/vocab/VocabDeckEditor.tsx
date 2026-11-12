@@ -500,7 +500,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 }
                 className="size-4 rounded border-slate-300"
               />
-              Chỉ cho gói PRO
+              Chỉ cho gói Pro
             </label>
             <label className="text-sm font-medium text-slate-800 md:col-span-2">
               Mô tả ngắn (hiện trên thẻ bộ từ của học viên)

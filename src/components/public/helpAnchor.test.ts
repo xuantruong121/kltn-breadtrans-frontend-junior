@@ -15,9 +15,9 @@ const helpPage = readFileSync(
   "utf8",
 );
 
-test("More contains leaderboard and FAQ, but not account support actions", () => {
+test("Thêm contains leaderboard and Trợ giúp, but not account support actions", () => {
   assert.match(navUtils, /\{ label: "Bảng xếp hạng", href: "\/ranking" \}/);
-  assert.match(navUtils, /\{ label: "FAQ", href: "\/help" \}/);
+  assert.match(navUtils, /\{ label: "Trợ giúp", href: "\/help" \}/);
   assert.doesNotMatch(navUtils, /Liên hệ/);
   assert.doesNotMatch(navUtils, /Đề xuất/);
   assert.doesNotMatch(header, /href:\s*["']\/help#feedback["']/);

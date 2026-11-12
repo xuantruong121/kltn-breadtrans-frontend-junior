@@ -1336,8 +1336,8 @@ function DiagnosticResultView({
               { id: "ALL", label: `Tất cả (${result.questionsResult.length})` },
               { id: "INCORRECT", label: `Câu sai (${incorrectCount})` },
               { id: "GRAMMAR_VOCAB", label: "Ngữ pháp & Từ vựng" },
-              { id: "READING", label: "Reading" },
-              { id: "LISTENING", label: "Listening" },
+              { id: "READING", label: "Đọc" },
+              { id: "LISTENING", label: "Nghe" },
             ].map((f) => (
               <button
                 key={f.id}

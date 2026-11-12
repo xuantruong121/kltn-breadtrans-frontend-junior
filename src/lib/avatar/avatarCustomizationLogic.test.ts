@@ -94,20 +94,20 @@ describe("AvatarCustomizationLogic: Badge Resolution", () => {
   it("resolves arena badges to corresponding emojis", () => {
     const b1 = resolveUserBadge("badge_1");
     assert.ok(b1);
-    assert.equal(b1.type, "emoji");
-    assert.equal(b1.content, "🛡️");
+    assert.equal(b1.type, "icon");
+    assert.equal(b1.content, "shield");
 
     const b2 = resolveUserBadge("Chăm Chỉ");
     assert.ok(b2);
-    assert.equal(b2.type, "emoji");
-    assert.equal(b2.content, "🔥");
+    assert.equal(b2.type, "icon");
+    assert.equal(b2.content, "flame");
   });
 
   it("falls back gracefully for unknown badges", () => {
     const fallback = resolveUserBadge("random_badge");
     assert.ok(fallback);
-    assert.equal(fallback.type, "emoji");
-    assert.equal(fallback.content, "🎖️");
+    assert.equal(fallback.type, "icon");
+    assert.equal(fallback.content, "medal");
   });
 
   it("returns null when no badge is provided", () => {

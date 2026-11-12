@@ -2,7 +2,16 @@
 
 import React, { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Crown, Flame, Footprints, RotateCcw, Target, Trophy, Wheat, X } from "lucide-react";
+import {
+  Crown,
+  Flame,
+  Footprints,
+  RotateCcw,
+  Target,
+  Trophy,
+  X,
+} from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import type { DungeonResult } from "@/lib/api/services/dungeon.service";
 
 /** The end of a run: how deep, what it earned, and a record or a place on today's board. */
@@ -75,7 +84,7 @@ export function RunResult({ result, onAgain, onExit }: { result: DungeonResult; 
               }`}
             >
               {result.net > 0 ? `+${result.net}` : result.net < 0 ? `−${-result.net}` : "±0"}
-              <Wheat size={16} strokeWidth={2.25} aria-hidden="true" />
+              <BreadCoinIcon size={16} strokeWidth={2.25} aria-hidden="true" />
               <span className="sr-only">Bánh Mì</span>
             </span>
             <span className="inline-flex items-center rounded-full bg-sky-50 px-3.5 py-1.5 text-base font-extrabold tabular-nums text-sky-800 dark:bg-sky-950/40 dark:text-sky-300">

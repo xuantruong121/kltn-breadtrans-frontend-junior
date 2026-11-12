@@ -19,6 +19,7 @@ import { LevelLockButton } from "@/components/practice/LevelLockDialog";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { cueWordPairs, pictureCards } from "@/lib/writing/pictureWriting";
 import type { WritingTopicItem } from "@/components/writing/WritingTopicCard";
+import { planName } from "@/lib/ui/glossary";
 
 /**
  * "Viết câu theo tranh" catalog: one card per picture with its two cue words
@@ -157,11 +158,11 @@ export function PictureWritingCatalog({
                       <button
                         type="button"
                         onClick={() => onLocked(quiz)}
-                        aria-label={`Mở khóa tranh với từ ${task.keywords.join(", ")} bằng gói ${plan}`}
+                        aria-label={`Mở khóa tranh với từ ${task.keywords.join(", ")} bằng gói ${planName(plan)}`}
                         className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-3 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200 cursor-pointer"
                       >
                         <Lock size={14} strokeWidth={2} aria-hidden="true" />
-                        Mở khóa với {plan}
+                        Mở khóa với {planName(plan)}
                       </button>
                     ) : (
                       <button

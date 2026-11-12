@@ -11,7 +11,7 @@ export function AppFooter() {
           <div className="space-y-4">
             <BrandLogo href="/" variant="compact" size="lg" />
             <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-              Nền tảng tự học tiếng Anh 4 kỹ năng: thẻ ghi nhớ, ngữ pháp, luyện phát âm và luyện viết có chấm tự động.
+              Nền tảng tự học tiếng Anh 4 kỹ năng: Flashcard, ngữ pháp, luyện phát âm và luyện viết có chấm tự động.
             </p>
           </div>
 
@@ -106,7 +106,7 @@ export function AppFooter() {
           <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link href="/terms" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Điều khoản dịch vụ</Link>
             <Link href="/privacy" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Chính sách bảo mật</Link>
-            <Link href="/help" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Trung tâm trợ giúp</Link>
+            <Link href="/help" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Trợ giúp</Link>
           </div>
           <p>© {new Date().getFullYear()} BreadTrans — Nền tảng tự học tiếng Anh tương tác. Thiết kế lấy người học làm trung tâm.</p>
         </div>

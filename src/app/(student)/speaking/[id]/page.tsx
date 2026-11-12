@@ -19,9 +19,11 @@ import {
   StickyNote,
   StopCircle,
   Target,
+  Quote,
   Volume2,
   VolumeX,
   X,
+  Info,
 } from "lucide-react";
 import {
   speakingService,
@@ -798,7 +800,7 @@ export default function SpeakingExerciseDetailPage() {
         stopInFlightRef.current = false;
         toast(
           "Thời gian chấm điểm kéo dài hơn dự kiến. Trang vẫn tiếp tục kiểm tra kết quả, và kết quả cũng được lưu vào lịch sử bài làm.",
-          { icon: "ℹ️" },
+          { icon: <Info size={18} className="text-blue-600" aria-hidden="true" /> },
         );
       }
 
@@ -1750,8 +1752,8 @@ export default function SpeakingExerciseDetailPage() {
             <div className="max-w-5xl xl:max-w-6xl mx-auto w-full flex-1 flex flex-col items-center justify-center gap-3 sm:gap-4 my-auto">
               {/* Focal mode badge */}
               <div className="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-amber-100/90 text-amber-900 text-xs font-black uppercase tracking-wider shadow-2xs">
-                <Target size={13} className="text-amber-700" />
-                <span>Nhiệm vụ {speakingMode.label}</span>
+                <Mic size={13} className="text-amber-700" aria-hidden="true" />
+                <span>Dạng bài: {speakingMode.label}</span>
                 {practiceSetKey &&
                   currentPracticeSetPosition > 0 &&
                   practiceSetExercises.length > 1 && (
@@ -2209,8 +2211,8 @@ export default function SpeakingExerciseDetailPage() {
                 {/* Hero Practice Sentence Canvas with Word-Level Color Grading */}
                 <div className="bg-white w-full p-5 sm:p-6 rounded-3xl border-2 border-slate-200/90 shadow-sm my-2 flex flex-col items-center justify-center">
                   <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black uppercase tracking-wider mb-2.5">
-                    <Target size={14} className="text-amber-700" />
-                    <span>Nội dung nhiệm vụ {speakingMode.label}</span>
+                    <Quote size={14} className="text-amber-700" aria-hidden="true" />
+                    <span>Nội dung bài {speakingMode.label}</span>
                   </div>
 
                   {renderInteractiveTargetWords(

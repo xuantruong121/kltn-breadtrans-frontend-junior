@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Heart,
+  PawPrint,
   Smile,
   Utensils,
   ArrowRight,
@@ -166,9 +167,9 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <Heart size={16} className="text-rose-500 fill-rose-500" aria-hidden="true" />
+          <PawPrint size={16} className="text-rose-500" aria-hidden="true" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-            Thú Cưng Đồng Hành
+            Thú cưng đồng hành
           </h3>
         </div>
         {pet && (
@@ -210,7 +211,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
         /* Empty State */
         <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-5 text-center space-y-3">
           <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-            <Heart size={22} aria-hidden="true" />
+            <PawPrint size={22} aria-hidden="true" />
           </div>
           <div>
             <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Chưa có thú cưng đồng hành</h4>

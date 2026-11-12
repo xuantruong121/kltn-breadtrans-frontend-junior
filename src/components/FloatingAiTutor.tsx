@@ -26,7 +26,7 @@ import { useSocket } from "@/lib/providers/SocketProvider";
 import { useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { composerHeight, isNearBottom as nearBottomOf, jumpButtonLabel, scrollActionFor, sendsOnKey } from "@/lib/chat/chatScroll";
 
-// 🌟 Component parse và format Markdown sạch đẹp (tránh lộ kí tự ***, **, gạch đầu dòng, chuẩn màu tương phản)
+// Component parse và format Markdown sạch đẹp (tránh lộ kí tự ***, **, gạch đầu dòng, chuẩn màu tương phản)
 function FormattedMessage({ content, isWhiteText = false }: { content: string; isWhiteText?: boolean }) {
   const formattedElements = useMemo(() => {
     if (!content) return null;
@@ -689,7 +689,7 @@ function FloatingAiTutorInner() {
           id: aiReply.id,
           clientMessageId: aiReply.clientMessageId || undefined,
           role: "assistant",
-          senderName: aiReply.senderName || "Trợ Lý Bánh Mì",
+          senderName: aiReply.senderName || "Trợ lý Bánh Mì",
           content: aiReply.content,
           timestamp: new Date(aiReply.createdAt).getTime(),
           pending: false,
@@ -743,7 +743,7 @@ function FloatingAiTutorInner() {
 
   return (
     <>
-      {/* 🔘 NÚT NỔI FLOATING BUTTON */}
+      {/* NÚT NỔI FLOATING BUTTON */}
       {!isStudent && <motion.button
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
@@ -751,7 +751,7 @@ function FloatingAiTutorInner() {
         className={`bg-amber-500 fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-3.5 sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] sm:right-4 md:bottom-8 md:right-8 text-white min-h-[48px] min-w-[48px] p-3.5 sm:p-4 rounded-full shadow-xl hover:shadow-2xl z-[45] transition-all border-2 border-white flex items-center justify-center cursor-pointer ${
           isOpen ? "scale-0 pointer-events-none" : "scale-100"
         }`}
-        title={isAdmin ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ Lý Bánh Mì"}
+        title={isAdmin ? "Mở Trung Tâm Tin Nhắn Học Viên" : "Mở Trợ lý Bánh Mì"}
       >
         <div className="relative">
           <MessageCircle size={24} className="sm:w-7 sm:h-7" />
@@ -769,7 +769,7 @@ function FloatingAiTutorInner() {
         </div>
       </motion.button>}
 
-      {/* 💬 CỬA SỔ CHAT WINDOW */}
+      {/* CỬA SỔ CHAT WINDOW */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -917,7 +917,7 @@ function FloatingAiTutorInner() {
                       </div>
                       <div>
                         <h3 className="font-black text-sm leading-tight truncate max-w-[200px]">
-                          {isAdmin ? currentThread.studentName : "Trợ Lý Bánh Mì"}
+                          {isAdmin ? currentThread.studentName : "Trợ lý Bánh Mì"}
                         </h3>
                         <div className="flex items-center gap-1.5 text-xs font-bold text-amber-100">
                           <span
@@ -1198,7 +1198,7 @@ function FloatingAiTutorInner() {
                           : "Chuyển sang hỗ trợ trực tiếp để trò chuyện..."
                         : currentThread.mode === "HUMAN"
                         ? "Nhập tin nhắn gửi đến Quản Trị Viên..."
-                        : "Hỏi Trợ Lý Bánh Mì bất kỳ điều gì..."
+                        : "Hỏi Trợ lý Bánh Mì bất kỳ điều gì..."
                     }
                     className="flex-1 resize-none overflow-y-auto bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-500 dark:placeholder:text-slate-400 rounded-2xl px-4 py-3 text-sm leading-5 font-medium outline-none focus:ring-2 focus:ring-orange-400/50 border border-slate-200 dark:border-slate-700"
                   />

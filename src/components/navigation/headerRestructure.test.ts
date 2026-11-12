@@ -28,7 +28,7 @@ describe("Header Navigation Restructure Verification", () => {
       "Luyện đề",
       ...["Cửa hàng"],
       ...["Đấu trường"],
-      "More",
+      "Thêm",
     ];
 
     assert.equal(MAIN_NAV_ORDER.length, expectedLabels.length);
@@ -46,7 +46,7 @@ describe("Header Navigation Restructure Verification", () => {
 
   it("shows at most 8 destination buttons; the rest go into More", () => {
     const buttons = MAIN_NAV_ORDER.filter(
-      (item) => item.label !== "Home/Logo" && item.label !== "More",
+      (item) => item.label !== "Home/Logo" && item.label !== "Thêm",
     );
     assert.equal(MAX_HEADER_NAV_BUTTONS, 8);
     assert.equal(buttons.length, 8);

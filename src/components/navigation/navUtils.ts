@@ -105,7 +105,7 @@ export const MAX_GUEST_HEADER_NAV_BUTTONS = 6;
 
 /**
  * Splits the ordered header destinations: the first `max` are buttons, the
- * rest go into "More". With `max` or fewer there is no More menu at all.
+ * rest go into "Thêm". With `max` or fewer there is no Thêm menu at all.
  */
 export function splitNavOverflow<T>(
   items: readonly T[],
@@ -126,7 +126,7 @@ export const HEADER_NAV_ITEMS: NavItemConfig[] = [
   { label: "Cửa hàng", href: "/market" },
   { label: "Đấu trường", href: "/arena" },
   { label: "Bảng xếp hạng", href: "/ranking" },
-  { label: "FAQ", href: "/help" },
+  { label: "Trợ giúp", href: "/help" },
 ];
 
 const headerSplit = splitNavOverflow(HEADER_NAV_ITEMS);
@@ -134,7 +134,7 @@ const headerSplit = splitNavOverflow(HEADER_NAV_ITEMS);
 export const MAIN_NAV_ORDER: NavItemConfig[] = [
   { label: "Home/Logo", href: "/dashboard" },
   ...headerSplit.visible,
-  ...(headerSplit.overflow.length ? [{ label: "More", href: "#more" }] : []),
+  ...(headerSplit.overflow.length ? [{ label: "Thêm", href: "#more" }] : []),
 ];
 
 export const MORE_DROPDOWN_ITEMS: NavItemConfig[] = headerSplit.overflow;

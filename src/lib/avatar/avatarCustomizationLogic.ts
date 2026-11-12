@@ -6,11 +6,15 @@ export interface AvatarFrameConfig {
   fallbackBgClass: string;
 }
 
+/** Lucide icons a system badge is drawn with (components/ui/BadgeGlyph.tsx). */
+export type BadgeIconName = "shield" | "flame" | "crown" | "zap" | "star" | "swords" | "mic" | "paw" | "heart" | "medal";
+
 export interface UserBadgeConfig {
   key: string;
   name: string;
-  type: "svg" | "emoji";
-  content: string; // SVG asset path or emoji character
+  type: "svg" | "icon";
+  /** SVG asset path, or a BadgeIconName. Never an emoji (anti-slop rule). */
+  content: string;
 }
 
 /**
@@ -116,25 +120,25 @@ export function resolveUserBadge(badgeId?: string | number | null): UserBadgeCon
     };
   }
 
-  // 3. Arena & System Badges (mapped to high-fidelity glyphs)
-  const arenaMap: Record<string, { name: string; emoji: string }> = {
-    badge_1: { name: "Tân Binh", emoji: "🛡️" },
-    "tân binh": { name: "Tân Binh", emoji: "🛡️" },
-    badge_2: { name: "Chăm Chỉ", emoji: "🔥" },
-    "chăm chỉ": { name: "Chăm Chỉ", emoji: "🔥" },
-    badge_3: { name: "Siêu Sao", emoji: "👑" },
-    "siêu sao": { name: "Siêu Sao", emoji: "👑" },
-    badge_4: { name: "Thợ Săn", emoji: "⚡" },
-    "thợ săn": { name: "Thợ Săn", emoji: "⚡" },
-    badge_5: { name: "Học Bá", emoji: "⭐" },
-    "học bá": { name: "Học Bá", emoji: "⭐" },
-    badge_6: { name: "Đấu Sĩ Bất Bại", emoji: "⚔️" },
-    "đấu sĩ bất bại": { name: "Đấu Sĩ Bất Bại", emoji: "⚔️" },
-    item_badge_champion: { name: "Đấu Sĩ Bất Bại", emoji: "⚔️" },
-    badge_7: { name: "Giọng Đọc Vàng", emoji: "🎙️" },
-    "giọng đọc vàng": { name: "Giọng Đọc Vàng", emoji: "🎙️" },
-    badge_8: { name: "Chuyên Gia Nuôi Thú", emoji: "💖" },
-    "chuyên gia nuôi thú": { name: "Chuyên Gia Nuôi Thú", emoji: "💖" },
+  // 3. Arena & System Badges (drawn as lucide icons by BadgeGlyph)
+  const arenaMap: Record<string, { name: string; icon: BadgeIconName }> = {
+    badge_1: { name: "Tân Binh", icon: "shield" },
+    "tân binh": { name: "Tân Binh", icon: "shield" },
+    badge_2: { name: "Chăm Chỉ", icon: "flame" },
+    "chăm chỉ": { name: "Chăm Chỉ", icon: "flame" },
+    badge_3: { name: "Siêu Sao", icon: "crown" },
+    "siêu sao": { name: "Siêu Sao", icon: "crown" },
+    badge_4: { name: "Thợ Săn", icon: "zap" },
+    "thợ săn": { name: "Thợ Săn", icon: "zap" },
+    badge_5: { name: "Học Bá", icon: "star" },
+    "học bá": { name: "Học Bá", icon: "star" },
+    badge_6: { name: "Đấu Sĩ Bất Bại", icon: "swords" },
+    "đấu sĩ bất bại": { name: "Đấu Sĩ Bất Bại", icon: "swords" },
+    item_badge_champion: { name: "Đấu Sĩ Bất Bại", icon: "swords" },
+    badge_7: { name: "Giọng Đọc Vàng", icon: "mic" },
+    "giọng đọc vàng": { name: "Giọng Đọc Vàng", icon: "mic" },
+    badge_8: { name: "Chuyên Gia Nuôi Thú", icon: "paw" },
+    "chuyên gia nuôi thú": { name: "Chuyên Gia Nuôi Thú", icon: "paw" },
   };
 
   const matched = arenaMap[raw];
@@ -142,15 +146,15 @@ export function resolveUserBadge(badgeId?: string | number | null): UserBadgeCon
     return {
       key: raw,
       name: matched.name,
-      type: "emoji",
-      content: matched.emoji,
+      type: "icon",
+      content: matched.icon,
     };
   }
 
   return {
     key: raw,
     name: String(badgeId),
-    type: "emoji",
-    content: "🎖️",
+    type: "icon",
+    content: "medal",
   };
 }

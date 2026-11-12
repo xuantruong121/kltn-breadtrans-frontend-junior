@@ -485,7 +485,8 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
                 title="Hủy lượt thu âm này"
               >
                 <X size={14} className="text-rose-500" />
-                <span>✕ Hủy</span>
+                <X size={14} strokeWidth={2.5} aria-hidden="true" />
+                <span>Hủy</span>
               </button>
             )}
           </div>
@@ -680,7 +681,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             </p>
           </div>
 
-          {/* [ ⏯ Nghe lần lượt ] Button */}
+          {/* [Nghe lần lượt] button */}
           <button
             type="button"
             onClick={handleToggleComparativePlayback}

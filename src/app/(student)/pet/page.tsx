@@ -141,7 +141,7 @@ export default function PetPage() {
           </Link>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Thú Cưng Đồng Hành
+              Thú cưng đồng hành
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
               Chăm sóc thú cưng mỗi ngày để kích hoạt các hiệu ứng bổ trợ học tập
@@ -168,7 +168,7 @@ export default function PetPage() {
             className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
             <RefreshCw size={14} aria-hidden="true" />
-            <span>Đổi Thú Cưng</span>
+            <span>Đổi thú cưng</span>
           </button>
         </div>
       </div>

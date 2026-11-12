@@ -6,12 +6,15 @@ import {
   Check,
   Lock,
   RotateCcw,
+  Users,
+  Megaphone,
 } from "lucide-react";
 import type { ListeningPracticeCatalogItem } from "@/lib/api/services/quiz.service";
 import {
   type ListeningCardStatus,
   computeListeningCardStatus,
   resolveCefrBadge,
+  listeningFormatIcon,
   resolveListeningFormatTag,
   resolveListeningPedagogicalDescription,
 } from "./listeningCardLogic";
@@ -149,7 +152,11 @@ export function ListeningExerciseCard({
               {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title, quiz.practiceLevel) ?? cefr.label}
             </span>
             <span>·</span>
-            <span>{formatTag}</span>
+            <span className="inline-flex items-center gap-1">
+              {listeningFormatIcon(formatTag) === "dialogue" && <Users size={13} strokeWidth={2} aria-hidden="true" />}
+              {listeningFormatIcon(formatTag) === "talk" && <Megaphone size={13} strokeWidth={2} aria-hidden="true" />}
+              {formatTag}
+            </span>
             {accentText && (
               <>
                 <span>·</span>
@@ -202,7 +209,7 @@ export function ListeningExerciseCard({
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-3.5 py-1.5 text-sm font-semibold text-amber-900 dark:text-amber-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
               >
                 <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Mở khóa với PLUS</span>
+                <span>Mở khóa với Plus</span>
               </button>
             ) : (
               <button

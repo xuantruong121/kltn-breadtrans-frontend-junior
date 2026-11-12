@@ -8,7 +8,7 @@ import {
   resolveListeningSkillTags,
   resolveCefrBadge,
   resolveListeningFormatTheme,
-  resolveSpeakerContext,
+  listeningFormatIcon,
   resolveAudioAccentTag,
 } from "./listeningCardLogic.ts";
 import type { ListeningPracticeCatalogItem } from "@/lib/api/services/quiz.service";
@@ -54,7 +54,7 @@ test("Listening Format Tag: resolves topic format accurately", () => {
     description: null,
     mode: "DICTATION",
   };
-  assert.equal(resolveListeningFormatTag(dictationItem), "Chép chính tả");
+  assert.equal(resolveListeningFormatTag(dictationItem), "Nghe chép");
 
   const part1Item: ListeningPracticeCatalogItem = {
     id: 2,
@@ -131,7 +131,7 @@ test("CEFR Badging: maps standardized colorways to A1/A2, B1/B2, C1", () => {
 });
 
 test("Format Themed Accents: maps sky, indigo, and emerald themes to formats", () => {
-  const dictation = resolveListeningFormatTheme("Chép chính tả");
+  const dictation = resolveListeningFormatTheme("Nghe chép");
   assert.equal(dictation.themeName, "indigo");
   assert.ok(dictation.hoverBorderClass.includes("indigo-300"));
 
@@ -151,7 +151,7 @@ test("Pedagogical Context Metadata: resolves speaker context and audio accents",
     description: null,
     mode: "DIALOGUE",
   };
-  assert.equal(resolveSpeakerContext(dialogueItem), "👥 2 người đối thoại");
+  assert.equal(listeningFormatIcon(resolveListeningFormatTag(dialogueItem)), "dialogue");
 
   const talkItem: ListeningPracticeCatalogItem = {
     id: 11,
@@ -159,7 +159,8 @@ test("Pedagogical Context Metadata: resolves speaker context and audio accents",
     description: null,
     mode: "COMPREHENSION",
   };
-  assert.equal(resolveSpeakerContext(talkItem), "📢 Thông báo đơn (1 người)");
+  assert.equal(listeningFormatIcon(resolveListeningFormatTag(talkItem)), "talk");
+  assert.equal(listeningFormatIcon("Nghe chép"), null);
 
   const ukItem: ListeningPracticeCatalogItem = {
     id: 12,

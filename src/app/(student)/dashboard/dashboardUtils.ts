@@ -317,7 +317,7 @@ export const SKILL_DETAIL_CONFIGS: Record<SkillKey, SkillDetailConfig> = {
     targetUnit: "câu",
     parts: [
       { id: "listen-comprehension", name: "Nghe hiểu trắc nghiệm (Comprehension)", href: "/listening?mode=COMPREHENSION" },
-      { id: "listen-dictation", name: "Nghe chép chính tả (Dictation)", href: "/listening?mode=DICTATION" },
+      { id: "listen-dictation", name: "Nghe chép", href: "/listening?mode=DICTATION" },
       { id: "listen-dialogue", name: "Hội thoại phản xạ (Dialogue)", href: "/listening?mode=DIALOGUE" },
     ],
   },
@@ -426,7 +426,7 @@ export function matchPartActivity(
         );
       }
       if (partId === "listen-dictation") {
-        return type.includes("DICTATION") || title.includes("nghe chép") || title.includes("chép chính tả") || title.includes("dictation");
+        return type.includes("DICTATION") || title.includes("chép") || title.includes("dictation");
       }
       if (partId === "listen-dialogue") {
         return title.includes("hội thoại") || title.includes("dialogue");

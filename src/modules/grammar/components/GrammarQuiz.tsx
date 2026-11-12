@@ -169,7 +169,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
       ]);
       toast.success(
         data.rewardBanh || data.rewardXP
-          ? `Kết quả: ${data.correctCount}/${data.totalQuestions}. Bạn nhận ${data.rewardBanh} Bánh Mì và ${data.rewardXP} EXP.`
+          ? `Kết quả: ${data.correctCount}/${data.totalQuestions}. Bạn nhận ${data.rewardBanh} Bánh Mì và ${data.rewardXP} XP.`
           : `Kết quả: ${data.correctCount}/${data.totalQuestions}. Hãy luyện lại để cải thiện nhé.`,
       );
     },
@@ -368,7 +368,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
                 <div>
                   <p className="text-base font-bold text-slate-900 dark:text-slate-100">
                     Kết quả: {result.correctCount}/{result.totalQuestions} câu đúng
-                    {result.rewardXP > 0 && ` · +${result.rewardXP} EXP`}
+                    {result.rewardXP > 0 && ` · +${result.rewardXP} XP`}
                     {result.rewardBanh > 0 && ` · +${result.rewardBanh} Bánh Mì`}
                   </p>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">

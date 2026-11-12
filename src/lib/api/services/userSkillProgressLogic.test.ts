@@ -48,7 +48,7 @@ test("formatSkillDimension converts raw technical keys to friendly Vietnamese", 
   assert.equal(formatSkillDimension("accuracyScore"), "Độ chính xác");
   assert.equal(formatSkillDimension("fluencyScore"), "Độ lưu loát");
   assert.equal(formatSkillDimension("MULTIPLE_CHOICE"), "Trắc nghiệm");
-  assert.equal(formatSkillDimension("DICTATION"), "Chép chính tả");
+  assert.equal(formatSkillDimension("DICTATION"), "Nghe chép");
   assert.equal(formatSkillDimension("DETAIL"), "Chi tiết");
   assert.equal(formatSkillDimension(""), "");
   assert.equal(formatSkillDimension(null), "");

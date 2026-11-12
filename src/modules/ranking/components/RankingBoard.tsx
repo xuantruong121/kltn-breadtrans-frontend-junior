@@ -160,7 +160,7 @@ export function RankingBoard({
                     </span>
                   </td>
                   <td className="hidden px-2 py-3 text-center sm:table-cell">
-                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">Lv. {e.level}</span>
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">Cấp {e.level}</span>
                   </td>
                   <td className="px-4 py-3 text-right font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400 sm:px-6">{formatValue(metric, e.value)}</td>
                 </tr>
@@ -199,7 +199,7 @@ export function RankingBoard({
               {me && leagueLine(me.league) && <p className="truncate text-xs text-emerald-900 dark:text-emerald-200">{leagueLine(me.league)}</p>}
             </div>
             <div className="text-right">
-              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Lv. {me?.level ?? 1}</p>
+              <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Cấp {me?.level ?? 1}</p>
               <p className="font-extrabold tabular-nums text-slate-900 dark:text-slate-100">{formatValue(metric, me?.value ?? 0)}</p>
             </div>
           </>

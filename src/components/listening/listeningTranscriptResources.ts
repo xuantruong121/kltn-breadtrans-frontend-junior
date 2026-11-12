@@ -572,7 +572,7 @@ export async function probeOrPrefetchTranscript(
       const status = error?.response?.status ?? error?.status;
       if (
         status === 403 ||
-        error?.message?.includes("xác nhận xem transcript")
+        error?.message?.includes("xác nhận xem")
       ) {
         return unauthorizedEntry(quizId, quiz);
       }
@@ -721,7 +721,7 @@ async function fetchAuthorizedResources(
     } else {
       audioError = true;
       audioNotice =
-        "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem kịch bản.";
+        "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem lời thoại.";
     }
 
     const entry: TranscriptResourceCacheEntry = {
@@ -813,7 +813,7 @@ async function fetchAudioForTranscript(
   if (!effectiveArtifact) {
     audioError = true;
     audioNotice =
-      "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem kịch bản.";
+      "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem lời thoại.";
   } else {
     try {
       audioBlob = await fetcher.getTranscriptAudioBlob(
@@ -840,7 +840,7 @@ async function fetchAudioForTranscript(
       }
       audioError = true;
       audioNotice =
-        "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem kịch bản.";
+        "Bản ghi âm toàn bài đang được quản trị viên chuẩn bị. Bạn vẫn có thể xem lời thoại.";
     }
   }
 

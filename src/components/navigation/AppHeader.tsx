@@ -10,7 +10,6 @@ import {
   Crown,
   ChevronDown,
   Dumbbell,
-  GraduationCap,
   Headphones,
   Home,
   KeyRound,
@@ -27,7 +26,6 @@ import {
   Bell,
   LogOut,
   Flame,
-  Heart,
   Loader2,
   CheckCheck,
   Clock,
@@ -39,10 +37,12 @@ import {
   Sun,
   Moon,
   Mail,
-  Croissant,
   Zap,
   NotebookPen,
+  PawPrint,
 } from "lucide-react";
+import { NotificationIcon } from "@/components/notifications/NotificationIcon";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { mistakesService } from "@/lib/api/services/mistakes.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
@@ -358,7 +358,7 @@ export function AppHeader() {
       description: "Bảng xếp hạng tuần và huy hiệu",
     },
     {
-      label: "FAQ",
+      label: "Trợ giúp",
       href: "/help",
       icon: CircleHelp,
       active: isActivePath(pathname, "/help"),
@@ -376,12 +376,12 @@ export function AppHeader() {
 
   // Mobile drawer links
   const mobileSecondaryLinks: HeaderNavLink[] = [
-    { label: "Flashcard từ vựng", href: "/flashcard", icon: Layers },
+    { label: "Flashcard", href: "/flashcard", icon: Layers },
     { label: "Luyện đề", href: "/exams", icon: Target, isExam: true },
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
     { label: "Đấu trường", href: "/arena", icon: Swords },
     { label: "Bảng xếp hạng", href: "/ranking", icon: Trophy },
-    { label: "FAQ", href: "/help", icon: CircleHelp },
+    { label: "Trợ giúp", href: "/help", icon: CircleHelp },
   ];
 
   return (
@@ -447,7 +447,7 @@ export function AppHeader() {
               }`}
             >
               <MoreHorizontal size={16} className="shrink-0" aria-hidden="true" />
-              <span className="whitespace-nowrap">More</span>
+              <span className="whitespace-nowrap">Thêm</span>
               <ChevronDown
                 size={14}
                 className={`shrink-0 transition-transform duration-200 ${
@@ -575,7 +575,7 @@ export function AppHeader() {
 
                     {/* Gamification Stats Strip (Streak, Breads, Level) */}
                     <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 rounded-xl p-2.5 flex items-center justify-around my-2 text-xs">
-                      <div className="flex items-center gap-1.5" title={`Chuỗi học tập liên tục: ${streak || 1} ngày`}>
+                      <div className="flex items-center gap-1.5" title={`Chuỗi: ${streak || 1} ngày học liên tục`}>
                         <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
                         <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak || 1}</span>
                         <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
@@ -586,19 +586,19 @@ export function AppHeader() {
                       <Link
                         href="/market"
                         onClick={closeMenus}
-                        title={`Số dư bánh mì: ${breads || 0}`}
+                        title={`Số dư Bánh Mì: ${breads || 0}`}
                         className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
                       >
-                        <Croissant size={15} strokeWidth={2} className="text-amber-600" aria-label="Bánh Mì" />
+                        <BreadCoinIcon size={15} strokeWidth={2} />
                         <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">bánh</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Bánh Mì</span>
                       </Link>
 
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
 
-                      <div className="flex items-center gap-1.5" title={`Cấp độ ${level || 1} (${exp || 0} EXP)`}>
+                      <div className="flex items-center gap-1.5" title={`Cấp ${level || 1} (${exp || 0} XP)`}>
                         <Zap size={15} strokeWidth={2} className="text-orange-500" aria-hidden="true" />
-                        <span className="font-extrabold text-sky-600 dark:text-sky-400">Lv.{level || 1}</span>
+                        <span className="font-extrabold text-sky-600 dark:text-sky-400">Cấp {level || 1}</span>
                       </div>
                     </div>
 
@@ -653,8 +653,6 @@ export function AppHeader() {
                           ) : (
                             <>
                               {recentNotifications.slice(0, 2).map((item) => {
-                                const isVocab = item.type === "vocab_review";
-                                const isStreak = item.type === "streak";
                                 const action = resolveNotificationAction(item);
                                 const actionLabel = getNotificationActionLabel(item);
 
@@ -666,13 +664,7 @@ export function AppHeader() {
                                   >
                                     <div className="flex items-start gap-2">
                                       <div className="mt-0.5 text-xs shrink-0">
-                                        {isVocab ? (
-                                          <BookOpen size={14} className="text-amber-600 dark:text-amber-400" />
-                                        ) : isStreak ? (
-                                          <Flame size={14} className="text-orange-500" />
-                                        ) : (
-                                          <Bell size={14} className="text-amber-600 dark:text-amber-400" />
-                                        )}
+                                        <NotificationIcon type={item.type} size={14} className="text-amber-600 dark:text-amber-400" />
                                       </div>
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center justify-between gap-1">
@@ -788,7 +780,7 @@ export function AppHeader() {
                       onClick={closeMenus}
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
                     >
-                      <Heart size={16} className="text-rose-500 shrink-0" />
+                      <PawPrint size={16} className="text-rose-500 shrink-0" />
                       <span>Thú cưng đồng hành</span>
                     </Link>
 
@@ -1000,12 +992,12 @@ export function AppHeader() {
                         onClick={closeMenus}
                         className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-amber-900 dark:text-amber-300 shadow-2xs hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
                       >
-                        <span role="img" aria-label="Bánh Mì">🥖</span>
+                        <BreadCoinIcon size={14} strokeWidth={2.25} />
                         <span>{breads || 0}</span>
                       </Link>
                       <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-orange-200 dark:border-orange-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-orange-700 dark:text-orange-300 shadow-2xs">
                         <Flame size={14} className="fill-orange-500 text-orange-500" />
-                        <span>{streak || 1}d</span>
+                        <span>{streak || 1} ngày</span>
                       </div>
                     </div>
                   </div>
@@ -1122,7 +1114,7 @@ export function AppHeader() {
                           onClick={closeMenus}
                           className="flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-900 dark:hover:text-emerald-300 transition-colors"
                         >
-                          <Heart size={17} className="text-emerald-600 dark:text-emerald-400" />
+                          <PawPrint size={17} className="text-emerald-600 dark:text-emerald-400" />
                           <span>Thú cưng đồng hành</span>
                         </Link>
 

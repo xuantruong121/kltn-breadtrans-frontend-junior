@@ -543,7 +543,7 @@ function AdminMessagesContent() {
                           <div className="flex justify-start items-end gap-2 my-2.5 group">
                             <span
                               className="size-8 grid shrink-0 place-items-center rounded-full bg-teal-700 text-white font-bold text-xs select-none shadow-2xs mb-0.5"
-                              title="Trợ lý học tập AI"
+                              title="Trợ lý Bánh Mì"
                             >
                               <MessageSquare size={15} strokeWidth={1.75} aria-hidden="true" />
                             </span>

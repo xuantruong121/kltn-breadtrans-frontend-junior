@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {
+  Check,
   User,
   Crown,
   KeyRound,
@@ -847,7 +848,7 @@ export function AccountHub() {
                       </div>
                       {shippingProfileQuery.data?.shippingProfileComplete && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 w-fit">
-                          ✓ Đã hoàn thiện
+                          <Check size={14} strokeWidth={2.5} aria-hidden="true" className="inline align-[-2px]" /> Đã hoàn thiện
                         </span>
                       )}
                     </div>
@@ -1216,7 +1217,7 @@ export function AccountHub() {
                   className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1.5 shrink-0 transition-colors"
                 >
                   <ShoppingBag size={15} />
-                  <span>Cửa Hàng Bánh Mì</span>
+                  <span>Cửa hàng Bánh Mì</span>
                 </Link>
               </div>
 
@@ -1242,7 +1243,7 @@ export function AccountHub() {
                       : "bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
                   }`}
                 >
-                  Khung Avatar
+                  Khung avatar
                 </button>
                 <button
                   type="button"
@@ -1253,7 +1254,7 @@ export function AccountHub() {
                       : "bg-blue-50 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
                   }`}
                 >
-                  Huy Hiệu
+                  Huy hiệu
                 </button>
               </div>
 
@@ -1267,7 +1268,7 @@ export function AccountHub() {
                     href="/market"
                     className="inline-block mt-3 text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
                   >
-                    Đến Cửa Hàng Bánh Mì để mở khóa &rarr;
+                    Đến Cửa hàng Bánh Mì để mở khóa &rarr;
                   </Link>
                 </div>
               ) : (
