@@ -1,5 +1,6 @@
 /** Recommendation items from /learning-path (F6). Labels only; no I/O. */
 import type { PracticeLevel, PracticeSkill } from "./practiceLevel.ts";
+import { planName } from "../ui/terms.ts";
 
 export type RecommendationStatus = "OPEN" | "LOCKED_LEVEL" | "LOCKED_PLAN";
 export type LearningContentType = "QUIZ" | "SPEAKING_SET" | "CONTENT_TOPIC";
@@ -93,7 +94,7 @@ export const SKILL_LIST_ROUTE: Record<PracticeSkill, string> = {
 /** Short badge for a locked item; null when it is open. */
 export function lockLabel(status: RecommendationStatus, requiredPlan: string = "PLUS"): string | null {
   if (status === "LOCKED_LEVEL") return "Chưa mở mức";
-  if (status === "LOCKED_PLAN") return `Cần gói ${requiredPlan}`;
+  if (status === "LOCKED_PLAN") return `Cần gói ${planName(requiredPlan)}`;
   return null;
 }
 

@@ -174,7 +174,7 @@ test("skill standing comes from the advice profile on four-skill results", () =>
 });
 
 test("diagnosticBadgeLabel never shows the four-skill marker as a level", () => {
-  assert.equal(diagnosticBadgeLabel("FOUR_SKILL_PROFILE"), "Đã làm kiểm tra đầu vào");
+  assert.equal(diagnosticBadgeLabel("FOUR_SKILL_PROFILE"), "Đã làm đánh giá đầu vào");
   assert.equal(diagnosticBadgeLabel("Starter"), "Trình độ: Starter – Mới bắt đầu");
   assert.equal(diagnosticBadgeLabel(""), null);
   assert.equal(diagnosticBadgeLabel(null), null);

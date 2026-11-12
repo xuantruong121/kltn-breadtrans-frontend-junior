@@ -11,6 +11,7 @@ import {
   unlockPlanFor,
   type PaidPlanCode,
 } from "@/modules/subscription/practicePlan";
+import { planName } from "@/lib/ui/glossary";
 
 const emptySubscribe = () => () => {};
 
@@ -116,7 +117,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             </span>
             <div>
               <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
-                Nội dung {plan}
+                Nội dung {planName(plan)}
               </span>
             </div>
           </div>
@@ -126,7 +127,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
             id="paywall-title"
             className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100"
           >
-            {title ?? `Nội dung dành cho ${plan}`}
+            {title ?? `Nội dung dành cho ${planName(plan)}`}
           </h2>
 
           {itemTitle && (
@@ -141,8 +142,8 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
           >
             {description ??
               (plan === "PRO"
-                ? "Bài luyện nói và luyện viết mức Nâng cao thuộc gói PRO."
-                : "Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên thuộc gói PLUS.")}
+                ? "Bài luyện nói và luyện viết mức Nâng cao thuộc gói Pro."
+                : "Nói, Viết Trung cấp và Nghe chép Trung cấp trở lên thuộc gói Plus.")}
           </p>
 
           {/* Verified Entitlement Highlights */}
@@ -155,13 +156,13 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="mt-0.5 text-amber-700 dark:text-amber-400 font-bold">•</span>
-                  <span>Bài tập và thẻ ôn tập cho các chủ đề từ vựng Premium</span>
+                  <span>Bài tập và thẻ ôn tập cho mọi chủ đề từ vựng</span>
                 </div>
               </>
             ) : (
               (plan === "PRO"
                 ? [
-                    "Mọi quyền lợi của gói PLUS",
+                    "Mọi quyền lợi của gói Plus",
                     "Bài luyện nói và luyện viết Nâng cao",
                   ]
                 : [
@@ -192,7 +193,7 @@ export const PremiumContentPaywallModal: React.FC<PremiumContentPaywallModalProp
               onClick={handleNavigateToPlans}
               className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl bg-amber-500 px-5 text-sm font-bold text-white shadow-xs hover:bg-amber-600 transition-colors cursor-pointer"
             >
-              <span>Xem gói {plan}</span>
+              <span>Xem gói {planName(plan)}</span>
               <ArrowRight size={14} aria-hidden="true" />
             </button>
           </div>

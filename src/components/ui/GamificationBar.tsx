@@ -2,7 +2,8 @@
 
 import React, { useEffect, useSyncExternalStore } from "react";
 import { motion } from "framer-motion";
-import { Flame, PawPrint, Croissant, ShieldCheck } from "lucide-react";
+import { Flame, PawPrint, ShieldCheck } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useQuery } from "@tanstack/react-query";
@@ -94,10 +95,10 @@ export const GamificationBar: React.FC = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-1 sm:gap-1.5 bg-emerald-100/90 border-2 border-emerald-300 hover:border-emerald-400 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-pointer transition-all"
-          title="Thú cưng đồng hành"
+          title="Thú ảo đồng hành"
         >
           <PawPrint size={16} strokeWidth={2} className="text-emerald-700" aria-hidden="true" />
-          <span className="hidden sm:inline text-xs font-extrabold text-emerald-700 uppercase">Pet</span>
+          <span className="hidden sm:inline text-xs font-extrabold text-emerald-700 uppercase">Thú ảo</span>
         </motion.div>
       </Link>
 
@@ -108,9 +109,9 @@ export const GamificationBar: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-1.5 sm:gap-2 bg-amber-100/90 border-2 border-amber-300 hover:border-amber-400 px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-2xl shadow-sm cursor-pointer transition-all"
         >
-          <Croissant size={18} strokeWidth={2} className="text-amber-700" aria-hidden="true" />
+          <BreadCoinIcon size={18} strokeWidth={2} className="text-amber-700" />
           <span className="font-black text-amber-800 text-xs sm:text-sm">{breads}</span>
-          <span className="hidden sm:inline text-xs font-extrabold text-amber-600 uppercase bg-amber-200/80 px-1.5 py-0.5 rounded-md">Shop</span>
+          <span className="hidden sm:inline text-xs font-extrabold text-amber-600 uppercase bg-amber-200/80 px-1.5 py-0.5 rounded-md">Cửa hàng</span>
         </motion.div>
       </Link>
     </div>

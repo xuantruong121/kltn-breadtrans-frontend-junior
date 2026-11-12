@@ -18,6 +18,7 @@ import {
 } from "@/lib/learning-path/levelLock";
 import { PRACTICE_LEVEL_LABEL, PRACTICE_SKILL_LABEL, practiceLevelLabel } from "@/lib/learning-path/practiceLevel";
 import { plansHrefFor } from "@/modules/subscription/practicePlan";
+import { planName } from "@/lib/ui/glossary";
 
 const emptySubscribe = () => () => {};
 
@@ -104,9 +105,9 @@ function LevelLockBody({ lock, secondary, titleId }: { lock: LevelLock; secondar
           <div className="py-3">
             <dt className="font-semibold text-slate-900 dark:text-slate-100">Gói</dt>
             <dd className="mt-0.5 text-slate-600 dark:text-slate-400">
-              Bài này còn cần gói {lock.requiredPlan}, kể cả khi đã mở mức.{" "}
+              Bài này còn cần gói {planName(lock.requiredPlan)}, kể cả khi đã mở mức.{" "}
               <Link href={plansHrefFor(lock.requiredPlan)} className="font-semibold text-blue-700 underline dark:text-blue-300">
-                Xem gói {lock.requiredPlan}
+                Xem gói {planName(lock.requiredPlan)}
               </Link>
             </dd>
           </div>

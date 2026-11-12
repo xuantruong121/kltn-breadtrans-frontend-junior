@@ -1349,9 +1349,15 @@ export default function AdminExamsPage() {
                         : "bg-rose-50 text-rose-700 border border-rose-200"
                     }`}
                   >
-                    {issues.length === 0
-                      ? "✓ Sẵn sàng xuất bản"
-                      : `⚠ Có ${issues.length} cảnh báo`}
+                    {issues.length === 0 ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Check size={13} strokeWidth={2.5} aria-hidden="true" /> Sẵn sàng xuất bản
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1">
+                        <AlertTriangle size={13} strokeWidth={2.5} aria-hidden="true" /> Có {issues.length} cảnh báo
+                      </span>
+                    )}
                   </span>
                 </div>
               </div>

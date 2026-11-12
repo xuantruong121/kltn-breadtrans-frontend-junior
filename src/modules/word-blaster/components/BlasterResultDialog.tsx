@@ -3,7 +3,8 @@
 import React, { useEffect, useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import Confetti from "react-confetti";
-import { Crosshair, Flame, RotateCcw, Target, Wheat, X } from "lucide-react";
+import { Crosshair, Flame, RotateCcw, Target, X } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import type { BlasterResult } from "@/lib/api/services/wordBlaster.service";
 import { BreadMascot } from "@/modules/arena/components/BreadMascot";
 import { blasterResultCopy } from "../blasterResult";
@@ -70,7 +71,7 @@ export function BlasterResultDialog({
               }`}
             >
               {copy.banh}
-              <Wheat size={16} strokeWidth={2.25} aria-hidden="true" />
+              <BreadCoinIcon size={16} strokeWidth={2.25} aria-hidden="true" />
               <span className="sr-only">Bánh Mì</span>
             </motion.span>
             <motion.span

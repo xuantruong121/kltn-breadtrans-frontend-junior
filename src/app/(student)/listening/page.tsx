@@ -231,7 +231,7 @@ function ListeningCatalogContent() {
             </div>
 
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-              Rèn luyện Nghe hiểu, Chép chính tả & Phản xạ Hội thoại
+              Rèn luyện Nghe hiểu, Nghe chép & Phản xạ Hội thoại
             </h1>
 
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm max-w-3xl line-clamp-1 xl:line-clamp-none">

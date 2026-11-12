@@ -1,8 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NotificationIcon } from "@/components/notifications/NotificationIcon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, BookOpen, CheckCheck, Clock, ExternalLink, Flame, Inbox, Loader2, Trash2 } from "lucide-react";
+import {
+  CheckCheck,
+  Clock,
+  ExternalLink,
+  Inbox,
+  Loader2,
+  Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -23,9 +31,7 @@ function formatNotificationTime(value: string) {
 }
 
 function notificationIcon(item: NotificationItem) {
-  if (item.type === "vocab_review") return <BookOpen size={20} aria-hidden="true" />;
-  if (item.type === "streak") return <Flame size={20} aria-hidden="true" />;
-  return <Bell size={20} aria-hidden="true" />;
+  return <NotificationIcon type={item.type} size={20} />;
 }
 
 export default function NotificationsPage() {

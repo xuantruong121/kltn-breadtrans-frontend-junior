@@ -43,12 +43,12 @@ export function TutorEntryButton({ onOpen, className = "" }: { onOpen?: () => vo
         onOpen?.();
         setTutorOpen(true);
       }}
-      aria-label={unread > 0 ? `Hỏi trợ lý học tập, ${unread} tin nhắn chưa đọc` : "Hỏi trợ lý học tập"}
+      aria-label={unread > 0 ? `Hỏi Trợ lý Bánh Mì, ${unread} tin nhắn chưa đọc` : "Hỏi Trợ lý Bánh Mì"}
       className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-xl border border-blue-200 dark:border-sky-800/60 bg-blue-50/70 dark:bg-sky-950/40 px-3 py-2.5 text-left text-xs font-semibold text-blue-900 dark:text-sky-300 transition-colors hover:border-blue-300 dark:hover:border-sky-700 hover:bg-blue-100 dark:hover:bg-sky-900/50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${className}`}
     >
       <span className="flex items-center gap-2">
         <MessageCircle size={15} className="text-blue-700 dark:text-sky-400" aria-hidden="true" />
-        <span>Hỏi trợ lý học tập</span>
+        <span>Hỏi Trợ lý Bánh Mì</span>
       </span>
       <span className="flex items-center gap-2">
         {unread > 0 && (

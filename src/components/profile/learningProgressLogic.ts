@@ -202,7 +202,7 @@ function activitySubject(
   if (!t || t === category) return undefined;
   if (/^[A-Z0-9_]+$/.test(t)) return undefined;
   if (/^(Học từ vựng|Hoạt động học tập)$/i.test(t)) return undefined;
-  // Old rows may carry internal names ("Entry Diagnostic v2"); never show those.
+  // Old rows may carry internal names such as Entry Diagnostic v2; never show those.
   if (/\b[Vv]\d+(\.\d+)?\b|legacy|runtime/i.test(t)) return undefined;
   return t;
 }

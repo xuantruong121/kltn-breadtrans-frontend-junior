@@ -17,6 +17,7 @@ import {
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 import { LevelLockButton } from "@/components/practice/LevelLockDialog";
+import { planName } from "@/lib/ui/glossary";
 
 export interface WritingTopicItem extends WritingTopic {
   topicName?: string;
@@ -203,7 +204,7 @@ export function WritingTopicCard({
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 px-3.5 py-1.5 text-sm font-semibold text-amber-900 dark:text-amber-200 transition-colors cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500"
               >
                 <Lock className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>Mở khóa với {unlockPlan}</span>
+                <span>Mở khóa với {planName(unlockPlan)}</span>
               </button>
             ) : (
               <button

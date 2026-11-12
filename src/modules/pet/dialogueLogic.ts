@@ -77,7 +77,7 @@ export function hungerLine(input: {
 
 /** Everything worth saying right now, most important first. */
 export function activeNudges(input: PetNudgeInput): PetNudge[] {
-  const name = input.petName.trim() || "Thú cưng";
+  const name = input.petName.trim() || "Thú ảo";
   const next = getPetRecommendation(input.quests);
   const nextLink: PetNudgeAction | undefined = next
     ? { type: "link", label: next.actionLabel, url: next.actionUrl }
@@ -140,6 +140,17 @@ export function activeNudges(input: PetNudgeInput): PetNudge[] {
 /** The most important thing not yet said today, or null. */
 export function pickNudge(nudges: PetNudge[], seen: readonly string[]): PetNudge | null {
   return nudges.find((n) => !seen.includes(n.key)) ?? null;
+}
+
+/**
+ * Whether the learner can see what the pet says right now, so that it may be
+ * counted as said today. On a wide screen the line is in the speech bubble or
+ * in the open panel while the pet is on screen; on a phone the bubble is not
+ * shown, so the line is seen only in the open panel.
+ */
+export function petLineShown(input: { wideScreen: boolean; petOnScreen: boolean; panelOpen: boolean }): boolean {
+  if (!input.petOnScreen) return false;
+  return input.wideScreen || input.panelOpen;
 }
 
 /** localStorage key holding what the pet has already said today. */

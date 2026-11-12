@@ -7,8 +7,9 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useChatAssistantStore } from "@/stores/chatAssistantStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { Wheat } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
+import { currencyToastKind } from "./currencyToastLogic";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -89,7 +90,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
     socketInstance.on("connect", () => {
       setSocket(socketInstance);
       setIsConnected(true);
-      console.log("⚡ [WebSocket] Connected to server successfully! ID:", socketInstance.id);
+      console.log("[WebSocket] Connected to server successfully! ID:", socketInstance.id);
 
       // Join Room cá nhân ngay khi kết nối
       if (user?.id) {
@@ -103,12 +104,12 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
     socketInstance.on("disconnect", () => {
       setIsConnected(false);
-      console.log("⚡ [WebSocket] Disconnected from server!");
+      console.log("[WebSocket] Disconnected from server!");
     });
 
-    // 🍞 1. Lắng nghe sự kiện cộng/trừ Bánh Mì Real-time
+    // 1. Lắng nghe sự kiện cộng/trừ Bánh Mì Real-time
     socketInstance.on("user:currency_updated", (data: any) => {
-      console.log("⚡ [WebSocket] user:currency_updated received:", data);
+      console.log("[WebSocket] user:currency_updated received:", data);
 
       if (user?.id && data.userId === user.id) {
         // Cập nhật số dư tức thì trong Store
@@ -123,30 +124,26 @@ export default function SocketProvider({ children }: { children: React.ReactNode
           void queryClient.invalidateQueries({ queryKey: [...queryKey] });
         }
 
-        // The Vocabulary Arena shows stakes, payouts and refunds on its own
-        // screens (net, after the stake); a second toast with the gross amount
-        // only contradicted them. The balance above still updates.
-        const fromArena = typeof data.reason === "string" && data.reason.includes("Đấu Trường");
-        // Hiển thị thông báo chúc mừng / thông tin
-        if (fromArena) {
-          // no toast
-        } else if (data.amount > 0) {
+        // Song Đấu events (source "arena") update the balance above only; see
+        // currencyToastLogic.ts.
+        const kind = currencyToastKind(data);
+        if (kind === "gain") {
           toast.success(`+${data.amount} Bánh Mì! Lý do: ${data.reason || "Thưởng học tập"}`, {
             duration: 6000,
-            icon: <Wheat size={18} className="text-amber-600" aria-hidden="true" />,
+            icon: <BreadCoinIcon size={18} className="text-amber-600" aria-hidden="true" />,
           });
-        } else if (data.amount < 0) {
+        } else if (kind === "loss") {
           toast(`${data.amount} Bánh Mì. Lý do: ${data.reason || "Trừ điểm"}`, {
             duration: 6000,
-            icon: <Wheat size={18} className="text-slate-500" aria-hidden="true" />,
+            icon: <BreadCoinIcon size={18} className="text-slate-500" aria-hidden="true" />,
           });
         }
       }
     });
 
-    // 🎁 2. Lắng nghe sự kiện duyệt đơn Đổi Quà Real-time
+    // 2. Lắng nghe sự kiện duyệt đơn Đổi Quà Real-time
     socketInstance.on("market:order_updated", (data: any) => {
-      console.log("⚡ [WebSocket] market:order_updated received:", data);
+      console.log("[WebSocket] market:order_updated received:", data);
 
       if (user?.id && data.userId === user.id) {
         queryClient.invalidateQueries({ queryKey: ["market-orders"] });
@@ -164,9 +161,9 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       }
     });
 
-    // 💬 3. Lắng nghe sự kiện Tin Nhắn Chat Mới Real-time
+    // 3. Lắng nghe sự kiện Tin Nhắn Chat Mới Real-time
     socketInstance.on("chat:new_message", (payload: any) => {
-      console.log("⚡ [WebSocket] chat:new_message received:", payload);
+      console.log("[WebSocket] chat:new_message received:", payload);
       const { studentId, studentName, studentEmail, studentAvatar, message, fromRole, targetUserId } = payload;
       const chatStore = useChatAssistantStore.getState();
       queryClient.invalidateQueries({ queryKey: ["admin-support"] });
@@ -197,9 +194,9 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       }
     });
 
-    // 🔄 4. Lắng nghe sự kiện Chuyển Đổi Chế Độ Chat Real-time
+    // 4. Lắng nghe sự kiện Chuyển Đổi Chế Độ Chat Real-time
     socketInstance.on("chat:mode_updated", (payload: any) => {
-      console.log("⚡ [WebSocket] chat:mode_updated received:", payload);
+      console.log("[WebSocket] chat:mode_updated received:", payload);
       const { studentId, mode, systemMessage } = payload;
       useChatAssistantStore.getState().setThreadMode(studentId, mode, systemMessage);
       queryClient.invalidateQueries({ queryKey: ["admin-support"] });

@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { Package } from "lucide-react";
+import { BadgeGlyph } from "@/components/ui/BadgeGlyph";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useApiMutation } from "@/hooks/useApiMutation";
@@ -188,11 +190,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
 
                 {activeBadgeConfig ? (
                   <div className="mt-3 px-3 py-1 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-full text-amber-800 dark:text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-xs">
-                    {activeBadgeConfig.type === "svg" ? (
-                      <img src={activeBadgeConfig.content} alt="" className="size-4 object-contain" />
-                    ) : (
-                      <span className="leading-none">{activeBadgeConfig.content}</span>
-                    )}
+                    <BadgeGlyph badge={activeBadgeConfig} />
                     <span>{activeBadgeConfig.name}</span>
                   </div>
                 ) : (
@@ -326,11 +324,11 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
                     <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60">
                       <Crown size={14} className="text-amber-600 dark:text-amber-400" />
-                      {activeFrameItem ? activeFrameItem.name : "Chưa đeo Khung Avatar"}
+                      {activeFrameItem ? activeFrameItem.name : "Chưa đeo khung avatar"}
                     </span>
                     <span className="text-xs px-3 py-1 rounded-full font-bold flex items-center gap-1.5 bg-blue-50 text-blue-800 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/60">
                       <Medal size={14} className="text-blue-600 dark:text-blue-400" />
-                      {activeBadgeItem ? activeBadgeItem.name : "Chưa đeo Huy Hiệu"}
+                      {activeBadgeItem ? activeBadgeItem.name : "Chưa đeo huy hiệu"}
                     </span>
                   </div>
                 </div>
@@ -341,7 +339,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   href="/market"
                   className="bg-amber-500 hover:bg-amber-600 px-4 py-2.5 text-white font-black text-xs rounded-xl shadow-md shadow-amber-500/20 flex items-center gap-2 transition-all cursor-pointer"
                 >
-                  <ShoppingBag size={16} /> Đến Cửa Hàng Bánh Mì
+                  <ShoppingBag size={16} /> Đến Cửa hàng Bánh Mì
                 </Link>
               </div>
             </div>
@@ -369,7 +367,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                       : "bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50"
                   }`}
                 >
-                  Khung Avatar ({framesCount})
+                  Khung avatar ({framesCount})
                 </button>
                 <button
                   type="button"
@@ -418,7 +416,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                   href="/market"
                   className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-black rounded-xl transition-all shadow-md shadow-amber-500/20"
                 >
-                  <ShoppingBag size={15} /> Khám Phá Cửa Hàng
+                  <ShoppingBag size={15} /> Khám phá Cửa hàng
                 </Link>
               </div>
             ) : (
@@ -453,7 +451,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                             {item.icon?.startsWith("/") ? (
                               <img src={item.icon} alt={item.name} className="w-10 h-10 object-contain" />
                             ) : (
-                              <span className="text-2xl">{item.icon}</span>
+                              <Package size={24} strokeWidth={2} className="text-slate-500" aria-hidden="true" />
                             )}
                           </div>
                           <div>
@@ -466,7 +464,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                                   : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                               }`}
                             >
-                              {isFrame ? "Khung Avatar" : isBadge ? "Huy Hiệu" : "Hỗ Trợ"}
+                              {isFrame ? "Khung avatar" : isBadge ? "Huy hiệu" : "Hỗ trợ"}
                             </span>
                             <h4 className="font-black text-slate-800 dark:text-slate-100 text-sm mt-1">
                               {item.name}
@@ -535,7 +533,7 @@ function ProfileSettingsForm({ profile }: { profile: any }) {
                               </>
                             ) : (
                               <>
-                                <Medal size={15} /> Trang Bị Huy Hiệu Này
+                                <Medal size={15} /> Trang bị huy hiệu này
                               </>
                             )}
                           </button>

@@ -308,7 +308,7 @@ export default function WritingDetailPage(props: {
           category={
             isPictureTask
               ? "Viết câu theo tranh"
-              : topic?.taskType || topic?.type || "Writing"
+              : topic?.taskType || topic?.type || "Viết"
           }
           activityLabel="Luyện viết"
           onExit={() => confirmExit(exitHref)}

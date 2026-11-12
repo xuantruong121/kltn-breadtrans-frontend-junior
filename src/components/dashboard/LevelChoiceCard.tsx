@@ -52,7 +52,7 @@ export function LevelChoiceCard({ profile }: { profile: LearnerProfile | undefin
             href="/diagnostic"
             className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900 dark:text-blue-300"
           >
-            Làm bài kiểm tra để xếp mức từng kỹ năng
+            Làm bài đánh giá để xếp mức từng kỹ năng
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
         )}
@@ -71,7 +71,7 @@ export function LevelChoiceCard({ profile }: { profile: LearnerProfile | undefin
             Chọn mức luyện tập để nhận bài phù hợp
           </h2>
           <p className="mt-2 text-base text-slate-600 dark:text-slate-400">
-            Làm bài kiểm tra đầu vào để xếp mức riêng cho từng kỹ năng, hoặc tự chọn mức để bắt đầu ngay. Mức cao hơn
+            Làm bài đánh giá đầu vào để xếp mức riêng cho từng kỹ năng, hoặc tự chọn mức để bắt đầu ngay. Mức cao hơn
             mở bằng bài kiểm tra ngắn hoặc tiến độ luyện tập.
           </p>
           <Link
@@ -79,7 +79,7 @@ export function LevelChoiceCard({ profile }: { profile: LearnerProfile | undefin
             className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-bold text-white hover:bg-blue-700"
           >
             <ClipboardCheck size={18} aria-hidden="true" />
-            Làm bài kiểm tra đầu vào
+            Làm bài đánh giá đầu vào
           </Link>
         </div>
         <div className="w-full lg:max-w-md">

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Heart,
+  PawPrint,
   Smile,
   Utensils,
   ArrowRight,
@@ -124,13 +125,13 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
 
       if (leveledUp) {
         setIsLevelUp(true);
-        const msg = `Thú cưng đã thăng cấp lên Cấp ${updatedPet.level}!`;
+        const msg = `Thú ảo đã thăng cấp lên Cấp ${updatedPet.level}!`;
         setStatusFeedback(msg);
         toast.success(msg, { duration: 5000 });
         setTimeout(() => setIsLevelUp(false), 5000);
       } else {
         setIsJustFed(true);
-        const msg = `Đã cho thú cưng ăn thành công!`;
+        const msg = `Đã cho thú ảo ăn thành công!`;
         setStatusFeedback(msg);
         toast.success(msg);
         setTimeout(() => setIsJustFed(false), 4000);
@@ -156,7 +157,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
   return (
     <aside
       className={`rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs flex flex-col space-y-4 h-fit ${className}`}
-      aria-label="Thẻ thông tin thú cưng đồng hành"
+      aria-label="Thẻ thông tin thú ảo đồng hành"
     >
       {/* Accessible live region for feeding status */}
       <div className="sr-only" role="status" aria-live="polite">
@@ -166,9 +167,9 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <Heart size={16} className="text-rose-500 fill-rose-500" aria-hidden="true" />
+          <PawPrint size={16} className="text-rose-500" aria-hidden="true" />
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-            Thú Cưng Đồng Hành
+            Thú ảo đồng hành
           </h3>
         </div>
         {pet && (
@@ -181,7 +182,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
       {/* Body States */}
       {isPetLoading ? (
         /* Loading Skeleton */
-        <div className="space-y-4 animate-pulse" role="status" aria-label="Đang tải dữ liệu thú cưng">
+        <div className="space-y-4 animate-pulse" role="status" aria-label="Đang tải dữ liệu thú ảo">
           <div className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
             <div className="size-16 rounded-xl bg-slate-200 dark:bg-slate-700 shrink-0" />
             <div className="space-y-2 flex-1">
@@ -196,7 +197,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
         /* Error State */
         <div className="rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/70 dark:bg-rose-950/30 p-4 text-center space-y-2.5">
           <AlertCircle size={20} className="mx-auto text-rose-500" aria-hidden="true" />
-          <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải thông tin thú cưng</p>
+          <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Không thể tải thông tin thú ảo</p>
           <button
             type="button"
             onClick={() => refetchPet()}
@@ -210,10 +211,10 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
         /* Empty State */
         <div className="rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 p-5 text-center space-y-3">
           <div className="mx-auto flex size-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-            <Heart size={22} aria-hidden="true" />
+            <PawPrint size={22} aria-hidden="true" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Chưa có thú cưng đồng hành</h4>
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Chưa có thú ảo đồng hành</h4>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               Chọn một người bạn đồng hành 2D để rèn luyện tiếng Anh mỗi ngày và nhận buff học tập.
             </p>
@@ -222,7 +223,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
             href="/pet"
             className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl bg-amber-600 hover:bg-amber-700 active:scale-95 text-white text-xs font-bold transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
-            <span>Nhận thú cưng ngay</span>
+            <span>Nhận thú ảo ngay</span>
             <ArrowRight size={14} aria-hidden="true" />
           </Link>
         </div>
@@ -318,7 +319,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                 aria-valuenow={pet.health}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Sức khỏe thú cưng"
+                aria-label="Sức khỏe thú ảo"
               >
                 <div
                   className="h-full rounded-full bg-rose-500 transition-all duration-300 motion-reduce:transition-none"
@@ -341,7 +342,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                 aria-valuenow={pet.happiness}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Độ vui vẻ thú cưng"
+                aria-label="Độ vui vẻ thú ảo"
               >
                 <div
                   className="h-full rounded-full bg-amber-500 transition-all duration-300 motion-reduce:transition-none"
@@ -364,7 +365,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
                 aria-valuenow={satiety}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Độ no thú cưng"
+                aria-label="Độ no thú ảo"
               >
                 <div
                   className="h-full rounded-full bg-orange-500 transition-all duration-300 motion-reduce:transition-none"
@@ -387,7 +388,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
               type="button"
               onClick={handleFeedClick}
               disabled={feedMutation.isPending || !feedEligibility.allowed}
-              aria-label={`Cho thú cưng ăn, tiêu tốn ${feedCost} Bánh Mì`}
+              aria-label={`Cho thú ảo ăn, tiêu tốn ${feedCost} Bánh Mì`}
               className={`w-full inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl text-sm font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 text-white shadow-xs active:scale-[0.98]"
@@ -428,7 +429,7 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
               href="/pet"
               className="w-full inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
-              <span>Xem chi tiết thú cưng</span>
+              <span>Xem chi tiết thú ảo</span>
               <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>

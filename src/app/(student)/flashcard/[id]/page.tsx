@@ -49,13 +49,13 @@ export default function VocabPracticePage() {
         </span>
         <div>
           <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
-            Nội dung Premium
+            Nội dung gói Plus
           </span>
           <h2 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-slate-100">
-            Mở khóa chủ đề Premium
+            Mở khóa chủ đề này
           </h2>
           <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-            Nâng cấp BreadTrans Plus để truy cập chủ đề từ vựng Premium.
+            Nâng cấp BreadTrans Plus để học chủ đề từ vựng này.
           </p>
         </div>
 

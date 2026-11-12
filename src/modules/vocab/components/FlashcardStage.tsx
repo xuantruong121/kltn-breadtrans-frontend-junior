@@ -242,7 +242,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
       {/* Action Buttons Below Card */}
       <div className="w-full flex flex-col items-center gap-2.5">
         <div className="flex items-center gap-3.5 w-full">
-          {/* Left: [✔ Đã thuộc] */}
+          {/* Left: [Đã thuộc] */}
           <button
             type="button"
             onClick={onMarkMastered}

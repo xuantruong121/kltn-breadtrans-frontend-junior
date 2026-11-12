@@ -68,7 +68,7 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: true,
   },
   {
-    name: "Thẻ ghi nhớ, từ vựng và ngữ pháp",
+    name: "Flashcard, từ vựng và ngữ pháp",
     free: true,
     plus: true,
     pro: true,
@@ -86,7 +86,7 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: true,
   },
   {
-    name: "Đấu trường từ vựng, cửa hàng và thú cưng",
+    name: "Đấu trường từ vựng, cửa hàng và thú ảo",
     free: true,
     plus: true,
     pro: true,
@@ -147,7 +147,7 @@ export function PlanComparisonTable() {
                     <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-amber-500 text-white mb-1 shadow-2xs">
                       Đề xuất
                     </span>
-                    <div className="text-sm font-black">BreadTrans PLUS</div>
+                    <div className="text-sm font-black">BreadTrans Plus</div>
                     <span className="text-xs font-bold text-amber-700 dark:text-amber-400 block mt-0.5">
                       69.000 ₫ / 30 ngày
                     </span>
@@ -159,7 +159,7 @@ export function PlanComparisonTable() {
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 mb-1 shrink-0 whitespace-nowrap">
                       Đầy đủ quyền lợi
                     </span>
-                    <div className="text-sm font-black">BreadTrans PRO</div>
+                    <div className="text-sm font-black">BreadTrans Pro</div>
                     <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 block mt-0.5">
                       149.000 ₫ / 30 ngày
                     </span>

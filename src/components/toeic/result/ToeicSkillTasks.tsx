@@ -76,8 +76,8 @@ function SpeakingTaskDialog({ task, examTitle, onClose }: { task: ToeicSpeakingT
           <>
             {s.hasRecording && <PrivateRecording submissionId={s.id} />}
             <section>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Transcript</h3>
-              <p className="mt-1 whitespace-pre-line text-[15px] text-slate-800 dark:text-slate-200">{s.transcript || "Chưa có transcript."}</p>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">Lời bạn nói</h3>
+              <p className="mt-1 whitespace-pre-line text-[15px] text-slate-800 dark:text-slate-200">{s.transcript || "Chưa nhận dạng được lời nói."}</p>
             </section>
             {task.status === "GRADED" && (
               <section>

@@ -3,7 +3,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import Confetti from "react-confetti";
-import { RotateCcw, Wheat, X } from "lucide-react";
+import { RotateCcw, X } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { BreadMascot } from "./BreadMascot";
 import { resultCopy } from "../result";
 
@@ -149,7 +150,7 @@ export function MatchResultDialog({
               className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-base font-extrabold tabular-nums ${banhInk}`}
             >
               {copy.banh}
-              <Wheat size={16} strokeWidth={2.25} aria-hidden="true" />
+              <BreadCoinIcon size={16} strokeWidth={2.25} aria-hidden="true" />
               <span className="sr-only">Bánh Mì</span>
             </motion.span>
             {copy.xp && (

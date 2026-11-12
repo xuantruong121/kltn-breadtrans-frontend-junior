@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Swords, Wheat, X } from "lucide-react";
+import { Swords, X } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { BreadMascot } from "./BreadMascot";
 
 export const STAKES = [20, 50, 100] as const;
@@ -119,7 +120,7 @@ export function ArenaHero({
                   } ${ok ? "" : "opacity-45"}`}
                 >
                   <span className="text-lg font-extrabold tabular-nums leading-none">{s}</span>
-                  <Wheat size={14} strokeWidth={2.25} className="mt-0.5" aria-hidden="true" />
+                  <BreadCoinIcon size={14} strokeWidth={2.25} className="mt-0.5" aria-hidden="true" />
                   <span className="sr-only">Bánh Mì</span>
                 </button>
               );
@@ -144,7 +145,7 @@ export function ArenaHero({
                 <dt className="text-xs font-medium text-slate-500 dark:text-slate-400">{o.label}</dt>
                 <dd className={`mt-0.5 inline-flex items-center gap-1 text-lg font-extrabold tabular-nums ${o.ink}`}>
                   {o.value}
-                  <Wheat size={14} strokeWidth={2.25} aria-hidden="true" />
+                  <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
                 </dd>
                 <dd className="text-xs text-slate-500 dark:text-slate-400">{o.note}</dd>
               </div>

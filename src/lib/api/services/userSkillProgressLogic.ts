@@ -17,7 +17,7 @@ const DIMENSION_LABEL_MAP: Record<string, string> = {
   prosodyScore: "Ngữ điệu",
   pronunciationScore: "Phát âm",
   MULTIPLE_CHOICE: "Trắc nghiệm",
-  DICTATION: "Chép chính tả",
+  DICTATION: "Nghe chép",
   FILL_IN_BLANK: "Điền từ",
   CONVERSATION: "Hội thoại",
   SHORT_TALK: "Bài nói ngắn",

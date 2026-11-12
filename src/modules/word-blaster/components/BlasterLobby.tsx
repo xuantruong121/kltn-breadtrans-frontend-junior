@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { Crosshair, Heart, Wheat } from "lucide-react";
+import { Crosshair, Heart } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { wordBlasterService, type BlasterMode } from "@/lib/api/services/wordBlaster.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
@@ -74,7 +75,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
         <ul className="mt-4 space-y-1.5 text-sm text-slate-800 dark:text-slate-200">
           <li className="flex items-center gap-2"><Crosshair size={15} strokeWidth={2.25} aria-hidden="true" /> 20 khối, rơi dày và nhanh dần, về cuối có lúc hai khối cùng rơi. Qua hết mà còn mạng là thắng.</li>
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 3 mạng: mỗi khối chạm đất mất một mạng.</li>
-          <li className="flex items-center gap-2"><Wheat size={15} strokeWidth={2.25} aria-hidden="true" /> Gõ không dấu cũng được khi trả lời nghĩa tiếng Việt.</li>
+          <li className="flex items-center gap-2"><BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" /> Gõ không dấu cũng được khi trả lời nghĩa tiếng Việt.</li>
         </ul>
 
         <fieldset className="mt-5" disabled={starting}>
@@ -121,7 +122,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
                 } ${balance !== null && !isGuest && balance < s ? "opacity-45" : ""}`}
               >
                 <span className="text-lg font-extrabold tabular-nums leading-none">{s}</span>
-                <Wheat size={14} strokeWidth={2.25} className="mt-0.5" aria-hidden="true" />
+                <BreadCoinIcon size={14} strokeWidth={2.25} className="mt-0.5" aria-hidden="true" />
                 <span className="sr-only">Bánh Mì</span>
               </button>
             ))}
@@ -133,14 +134,14 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <div className="px-3 py-2.5">
             <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thắng</dt>
             <dd className="inline-flex items-center gap-1 text-lg font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400">
-              +{Math.floor(stake / 2)} <Wheat size={14} strokeWidth={2.25} aria-hidden="true" />
+              +{Math.floor(stake / 2)} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
             </dd>
             <dd className="text-xs text-slate-600 dark:text-slate-400">hoàn cược + 50%</dd>
           </div>
           <div className="px-3 py-2.5">
             <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thua</dt>
             <dd className="inline-flex items-center gap-1 text-lg font-extrabold tabular-nums text-rose-700 dark:text-rose-400">
-              −{stake} <Wheat size={14} strokeWidth={2.25} aria-hidden="true" />
+              −{stake} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
             </dd>
             <dd className="text-xs text-slate-600 dark:text-slate-400">mất cược</dd>
           </div>

@@ -1273,7 +1273,7 @@ export function ListeningComprehensionWorkspace({
               }`}
             >
               <FileText size={14} aria-hidden="true" />
-              <span className="hidden md:inline">Transcript</span>
+              <span className="hidden md:inline">Lời thoại</span>
             </button>
           ) : null
         }
@@ -1318,7 +1318,7 @@ export function ListeningComprehensionWorkspace({
                     aria-selected="true"
                     className="min-h-10 rounded-lg bg-sky-50 dark:bg-sky-950/50 px-4 text-sm font-extrabold text-sky-700 dark:text-sky-300"
                   >
-                    Dictation
+                    Nghe chép
                   </button>
                   <button
                     type="button"
@@ -1328,7 +1328,7 @@ export function ListeningComprehensionWorkspace({
                     onClick={() => setShowFullTranscript(true)}
                     className="min-h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Full transcript
+                    Toàn bộ lời thoại
                   </button>
                 </div>
                 <span className="shrink-0 text-xs font-bold text-slate-600 dark:text-slate-400">
@@ -1379,10 +1379,10 @@ export function ListeningComprehensionWorkspace({
             )}
 
             {showFullTranscript && isDictation && isChecked && currentCheck && (
-              <section className="my-4 rounded-2xl border border-sky-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4" aria-label="Transcript câu nghe chép">
+              <section className="my-4 rounded-2xl border border-sky-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-4" aria-label="Lời thoại câu nghe chép">
                 <div className="flex items-center gap-2 text-sm font-extrabold text-slate-900 dark:text-slate-100">
                   <FileText size={16} className="text-sky-600 dark:text-sky-400" aria-hidden="true" />
-                  Transcript câu nghe
+                  Lời thoại câu nghe
                 </div>
                 <p className="mt-2 text-base leading-relaxed text-slate-800 dark:text-slate-200">{currentCheck.correctAnswer}</p>
               </section>
@@ -1503,7 +1503,7 @@ export function ListeningComprehensionWorkspace({
                   size={15}
                   className={isDialogue || isChecked ? "text-sky-600 dark:text-sky-400" : "text-slate-500 dark:text-slate-400"}
                 />
-                <span>{isDialogue ? "Transcript song ngữ" : "Bản ghi âm & Lời thoại (Transcript)"}</span>
+                <span>{isDialogue ? "Lời thoại song ngữ" : "Âm thanh và lời thoại"}</span>
               </span>
               {isDialogue || isChecked ? (
                 <span className="flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-400">
@@ -1525,7 +1525,7 @@ export function ListeningComprehensionWorkspace({
             {transcriptOpen && (isDialogue || isChecked) && (
               <div className="mt-3 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300 animate-in fade-in duration-200">
                 {isDialogue ? (
-                  <ol className="space-y-2.5" aria-label="Transcript song ngữ của đoạn hội thoại">
+                  <ol className="space-y-2.5" aria-label="Lời thoại song ngữ của đoạn hội thoại">
                     {transcriptSegments.map((segment, index) => (
                       <li key={`transcript-${currentQuestion.id}-${index}`} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3 sm:p-4">
                         <p className="text-sm font-semibold leading-6 text-slate-900 dark:text-slate-100 sm:text-base">
@@ -1545,7 +1545,7 @@ export function ListeningComprehensionWorkspace({
                     <div>
                       <p className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
                         <Volume2 size={13} className="text-sky-600 dark:text-sky-400" aria-hidden="true" />
-                        Lời thoại tiếng Anh (Transcript):
+                        Lời thoại tiếng Anh:
                       </p>
                       {audioTranscriptText ? (
                         <blockquote className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3.5 text-sm sm:text-base font-medium text-slate-900 dark:text-slate-100 italic leading-relaxed">

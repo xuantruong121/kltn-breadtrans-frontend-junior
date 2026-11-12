@@ -62,7 +62,7 @@ export const CompanionPet2D: React.FC<CompanionPet2DProps> = ({
       <div
         className={`relative flex items-center justify-center transition-transform duration-300 motion-safe:hover:scale-105 ${sizeClasses}`}
         role="img"
-        aria-label={`Thú cưng đồng hành ${speciesId}, trạng thái ${stateInfo.text}`}
+        aria-label={`Thú ảo đồng hành ${speciesId}, trạng thái ${stateInfo.text}`}
       >
         {renderSvg()}
       </div>

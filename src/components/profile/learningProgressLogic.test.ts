@@ -115,7 +115,7 @@ test("groupRecentActivities groups same-day vocab entries and hides technical na
       id: 13,
       type: "DIAGNOSTIC",
       title: "Entry Diagnostic v2",
-      detail: "Bài kiểm tra đầu vào",
+      detail: "Bài đánh giá đầu vào",
       score: 85,
       durationSec: 600,
       occurredAt: "2026-10-21T10:00:00Z",

@@ -44,7 +44,7 @@ const RECOVERY_DESTINATIONS: RecoveryDestination[] = [
   {
     title: "Luyện 4 kỹ năng",
     badge: "Nghe - Nói - Đọc - Viết",
-    description: "Luyện nghe chép chính tả, luyện phát âm chuẩn, đọc hiểu và viết câu.",
+    description: "Luyện nghe chép, luyện phát âm chuẩn, đọc hiểu và viết câu.",
     href: "/listening",
     icon: Headphones,
     iconBg: "bg-amber-50 dark:bg-amber-950/50",

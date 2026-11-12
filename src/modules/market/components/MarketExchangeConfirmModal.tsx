@@ -2,7 +2,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { AlertCircle, AlertTriangle, Loader2, Truck, Wheat, X } from "lucide-react";
+import { AlertCircle, AlertTriangle, Loader2, Truck, X } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { MarketProduct } from "../types";
 import { calculateRemainingBalance, formatBanhMi } from "../marketExchangeLogic";
 import { UserShippingProfile } from "@/lib/api/services/user.service";
@@ -147,7 +148,7 @@ export const MarketExchangeConfirmModal: React.FC<MarketExchangeConfirmModalProp
         <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
-              {isPhysical ? <Truck size={22} aria-hidden="true" /> : <Wheat size={22} aria-hidden="true" />}
+              {isPhysical ? <Truck size={22} aria-hidden="true" /> : <BreadCoinIcon size={22} aria-hidden="true" />}
             </div>
             <div>
               <h2

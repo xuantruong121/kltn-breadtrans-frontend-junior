@@ -35,7 +35,7 @@ import { motion } from "framer-motion";
 const ROADMAP_STEPS = [
   {
     step: "01",
-    title: "Làm bài kiểm tra đầu vào",
+    title: "Làm bài đánh giá đầu vào",
     desc: "Trả lời bộ câu hỏi đầu vào để thấy kỹ năng nào đang mạnh, kỹ năng nào cần luyện thêm. Kết quả là ước lượng nội bộ để gợi ý bài luyện, không phải chứng chỉ hay cấp độ CEFR.",
     badge: "Miễn phí",
     icon: Target,
@@ -66,7 +66,7 @@ const ROADMAP_STEPS = [
 const FAQ_LIST = [
   {
     q: "BreadTrans có miễn phí để bắt đầu không?",
-    a: "Có. Bạn đăng ký bằng email, không cần thẻ ngân hàng, rồi làm bài kiểm tra đầu vào và các bài luyện được đánh dấu miễn phí. Một số bài cần gói PLUS hoặc PRO; các bài đó hiển thị nhãn khóa rõ ràng.",
+    a: "Có. Bạn đăng ký bằng email, không cần thẻ ngân hàng, rồi làm bài đánh giá đầu vào và các bài luyện được đánh dấu miễn phí. Một số bài cần gói Plus hoặc Pro; các bài đó hiển thị nhãn khóa rõ ràng.",
   },
   {
     q: "Bài Nói được chấm như thế nào?",
@@ -78,7 +78,7 @@ const FAQ_LIST = [
   },
   {
     q: "Bánh Mì dùng để làm gì?",
-    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài kiểm tra đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú cưng ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, khiên giữ chuỗi và một số quà tặng.",
+    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài đánh giá đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú ảo ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, khiên giữ chuỗi và một số quà tặng.",
   },
   {
     q: "Tôi có học được trên điện thoại không?",
@@ -272,7 +272,7 @@ export default function PublicLandingPage() {
                   type="button"
                 >
                   <Clock size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                  <span>Làm bài kiểm tra đầu vào</span>
+                  <span>Làm bài đánh giá đầu vào</span>
                 </button>
               </div>
 
@@ -310,7 +310,7 @@ export default function PublicLandingPage() {
                         <span className="relative inline-flex rounded-full size-3 bg-emerald-500" />
                       </span>
                       <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
-                        BreadTrans AI Tutor
+                        Trợ lý Bánh Mì
                       </span>
                     </div>
                     <span className="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
@@ -424,7 +424,7 @@ export default function PublicLandingPage() {
                 >
                   <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                   <p className="text-xs font-black text-slate-800 dark:text-slate-100">
-                    Thú cưng: <span className="text-amber-700 dark:text-amber-400 font-extrabold">Cấp 5 (No bụng)</span>
+                    Thú ảo: <span className="text-amber-700 dark:text-amber-400 font-extrabold">Cấp 5 (No bụng)</span>
                   </p>
                 </div>
               </div>
@@ -448,7 +448,7 @@ export default function PublicLandingPage() {
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl text-pretty">
             Luyện từng kỹ năng với phản hồi tự động, luyện đề theo cấu trúc TOEIC,
-            và giữ thói quen học bằng Bánh Mì, thú cưng và bảng xếp hạng.
+            và giữ thói quen học bằng Bánh Mì, thú ảo và bảng xếp hạng.
           </p>
         </div>
 
@@ -517,7 +517,7 @@ export default function PublicLandingPage() {
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">
-                  Luyện Đề Theo Cấu Trúc TOEIC
+                  Luyện đề theo cấu trúc TOEIC
                 </h3>
                 <p className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
                   Đề 200 câu làm trong 120 phút, đồng hồ do máy chủ tính. Sau khi nộp, xem lại từng câu kèm
@@ -607,10 +607,10 @@ export default function PublicLandingPage() {
               </div>
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
-                  Hệ Thống Gamification &amp; Thú Cưng Học Tập (Pet Companion)
+                  Hệ Thống Gamification &amp; Thú Ảo Học Tập (Pet Companion)
                 </h3>
                 <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Hoàn thành bài luyện để nhận Bánh Mì, dùng Bánh Mì cho thú cưng ăn để thú cưng lên cấp,
+                  Hoàn thành bài luyện để nhận Bánh Mì, dùng Bánh Mì cho thú ảo ăn để thú ảo lên cấp,
                   hoặc đổi vật phẩm trong Cửa hàng. Điểm tích lũy được xếp hạng theo tuần.
                 </p>
               </div>
@@ -619,7 +619,7 @@ export default function PublicLandingPage() {
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700 shadow-2xs">
                   <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                     <Flame size={16} className="text-orange-600 dark:text-orange-400 fill-orange-500" />
-                    Chuỗi Streak rực lửa
+                    Chuỗi ngày học
                   </span>
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Duy trì thói quen học tập không ngắt quãng</p>
                 </div>
@@ -633,7 +633,7 @@ export default function PublicLandingPage() {
                 <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-amber-200/70 dark:border-slate-700 shadow-2xs">
                   <span className="text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
                     <Gift size={16} className="text-amber-600 dark:text-amber-400" />
-                    Cửa Hàng Đổi Quà
+                    Cửa hàng đổi quà
                   </span>
                   <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Dùng Bánh Mì đổi khung avatar, khiên giữ chuỗi và quà tặng</p>
                 </div>
@@ -667,7 +667,7 @@ export default function PublicLandingPage() {
             Bắt đầu với BreadTrans trong 4 bước
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
-            Bắt đầu từ bài kiểm tra đầu vào, rồi luyện theo kỹ năng bạn cần nhất.
+            Bắt đầu từ bài đánh giá đầu vào, rồi luyện theo kỹ năng bạn cần nhất.
           </p>
         </div>
 
@@ -773,7 +773,7 @@ export default function PublicLandingPage() {
               Bắt đầu luyện tiếng Anh với BreadTrans
             </h2>
             <p className="text-white text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed text-pretty">
-              Đăng ký tài khoản miễn phí, làm bài kiểm tra đầu vào và nhận gợi ý bài luyện
+              Đăng ký tài khoản miễn phí, làm bài đánh giá đầu vào và nhận gợi ý bài luyện
               cho những kỹ năng bạn cần cải thiện.
             </p>
 

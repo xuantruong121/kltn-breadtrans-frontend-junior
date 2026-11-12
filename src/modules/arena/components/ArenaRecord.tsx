@@ -1,5 +1,6 @@
 import React from "react";
-import { Medal, Wheat } from "lucide-react";
+import { Medal } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import type { ArenaStats } from "@/lib/api/services/gamification.service";
 import { streakGoal, streakNote } from "../record";
 
@@ -49,7 +50,7 @@ export function ArenaRecord({ stats, isGuest, isLoading }: { stats: ArenaStats |
               >
                 {s.netBanh > 0 ? "+" : ""}
                 {s.netBanh.toLocaleString("vi-VN")}
-                <Wheat size={18} strokeWidth={2.25} aria-hidden="true" />
+                <BreadCoinIcon size={18} strokeWidth={2.25} aria-hidden="true" />
               </dd>
               <dd className="text-sm text-slate-600 dark:text-slate-400">Bánh Mì từ đấu trường</dd>
             </div>

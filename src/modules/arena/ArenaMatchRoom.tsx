@@ -3,7 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import toast from "react-hot-toast";
-import { CheckCircle2, LogOut, WifiOff, Wheat, XCircle } from "lucide-react";
+import { CheckCircle2, LogOut, WifiOff, XCircle } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import type { ArenaQuestionKind, MatchData, MatchResult, RoundResultData, RoundStartData } from "@/lib/hooks/useArenaSocket";
 import { useAuthStore } from "@/stores/authStore";
 import { ArenaBackdrop } from "./components/ArenaBackdrop";
@@ -185,7 +186,7 @@ export default function ArenaMatchRoom({
       <div className="flex items-center justify-between gap-3">
         <p className="inline-flex items-center gap-1.5 rounded-lg bg-white/80 px-3 py-1.5 text-sm font-semibold text-slate-700 backdrop-blur-sm dark:bg-slate-900/70 dark:text-slate-300">
           Cược {matchData.stake}
-          <Wheat size={15} strokeWidth={2.25} aria-hidden="true" />
+          <BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" />
           <span className="sr-only">Bánh Mì</span>
           <span className="text-slate-400">·</span>
           {question ? `Câu ${roundIdx + 1}/${totalRounds}` : "Chuẩn bị"}

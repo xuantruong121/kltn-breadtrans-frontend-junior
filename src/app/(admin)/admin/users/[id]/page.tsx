@@ -290,7 +290,7 @@ export default function AdminLearnerTrackingPage() {
           {data.recentActivity.length ? <div className="space-y-3">{data.recentActivity.slice(0, 10).map((item: Row) => <div key={item.id} className="flex gap-3 border-b border-slate-100 pb-3 last:border-0 last:pb-0"><div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-blue-500" /><div className="min-w-0"><p className="font-bold text-slate-900">{item.title}</p><p className="text-xs text-slate-500">{item.detail || item.type} · {dateTime(item.occurredAt)}{item.score !== null && item.score !== undefined ? ` · Điểm ${score(item.score)}` : ""}</p></div></div>)}</div> : <EmptyState />}
         </SectionCard>
         <SectionCard title="Gamification" icon={<Trophy size={18} />}>
-          <div className="grid grid-cols-2 gap-3"><Metric label="Streak" value={data.gamification.streakCount} detail="ngày" /><Metric label="Bánh Mì" value={data.gamification.totalBanhRan} /><Metric label="EXP tổng" value={data.gamification.totalPoints} /><Metric label="Bậc" value={data.gamification.tier} /></div>
+          <div className="grid grid-cols-2 gap-3"><Metric label="Chuỗi" value={data.gamification.streakCount} detail="ngày" /><Metric label="Bánh Mì" value={data.gamification.totalBanhRan} /><Metric label="XP tổng" value={data.gamification.totalPoints} /><Metric label="Bậc" value={data.gamification.tier} /></div>
           <p className="mt-4 text-xs text-slate-500">Dữ liệu phần thưởng chỉ hiển thị như ngữ cảnh hỗ trợ cho tiến độ học.</p>
         </SectionCard>
       </div>

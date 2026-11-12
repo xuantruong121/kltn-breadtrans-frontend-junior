@@ -51,6 +51,8 @@ const now = () => new Date();
 export interface UsePetDialogueOptions {
   /** The pet and today's data have loaded; nothing is decided before that. */
   ready: boolean;
+  /** The learner can see the line now (petLineShown); only then is it counted as said. */
+  shown: boolean;
   userId?: string | number | null;
   /** Today's date key from the server (Vietnam time). */
   dateKey?: string;
@@ -65,7 +67,7 @@ export interface UsePetDialogueOptions {
 }
 
 export function usePetDialogue(options: UsePetDialogueOptions) {
-  const { ready, dateKey = "", petName, satietyState, balance, feedCost, lastFedAt, streak, activitiesCount, quests } =
+  const { ready, shown, dateKey = "", petName, satietyState, balance, feedCost, lastFedAt, streak, activitiesCount, quests } =
     options;
   const userId = options.userId == null ? "" : String(options.userId);
   const live = ready && userId !== "" && dateKey !== "";
@@ -91,9 +93,9 @@ export function usePetDialogue(options: UsePetDialogueOptions) {
   // so the bubble comes back only when something new happens.
   const activeKeys = nudges.map((n) => n.key).join("|");
   useEffect(() => {
-    if (!live || !heldKey || !activeKeys) return;
+    if (!live || !shown || !heldKey || !activeKeys) return;
     writeSeenRaw(recordSeen(readSeenRaw(), userId, dateKey, activeKeys.split("|")));
-  }, [live, heldKey, activeKeys, userId, dateKey]);
+  }, [live, shown, heldKey, activeKeys, userId, dateKey]);
 
   // A held line disappears by itself once it stops being true (the pet was fed, say).
   const dialogue: PetNudge | null = heldKey ? (nudges.find((n) => n.key === heldKey) ?? null) : null;
@@ -101,6 +103,8 @@ export function usePetDialogue(options: UsePetDialogueOptions) {
   return {
     dialogue,
     isVisible: dialogue !== null && closedKey !== heldKey,
+    /** Not seen yet today: on a phone, the pet shows a dot until the panel is opened. */
+    isNew: dialogue !== null && !seen.includes(dialogue.key),
     dismiss: () => setClosedKey(heldKey),
   };
 }

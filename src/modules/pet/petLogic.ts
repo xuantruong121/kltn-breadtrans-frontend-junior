@@ -121,7 +121,7 @@ export function canFeedPet(
   if (!pet) {
     return {
       allowed: false,
-      reason: "Chưa có thông tin thú cưng",
+      reason: "Chưa có thông tin thú ảo",
       feedCost,
     };
   }
@@ -134,7 +134,7 @@ export function canFeedPet(
   if (isFull) {
     return {
       allowed: false,
-      reason: "Thú cưng đang no, chưa cần ăn thêm",
+      reason: "Thú ảo đang no, chưa cần ăn thêm",
       feedCost,
     };
   }
@@ -142,7 +142,7 @@ export function canFeedPet(
   if (userBalance < feedCost) {
     return {
       allowed: false,
-      reason: `Bạn cần ít nhất ${feedCost} Bánh Mì để cho thú cưng ăn`,
+      reason: `Bạn cần ít nhất ${feedCost} Bánh Mì để cho thú ảo ăn`,
       feedCost,
     };
   }
@@ -176,7 +176,7 @@ export function handleFeedFailure(
 ): { balance: number; errorMessage: string } {
   const backendMessage = getApiErrorMessage(
     error,
-    "Không thể cho thú cưng ăn lúc này. Vui lòng kiểm tra lại kết nối.",
+    "Không thể cho thú ảo ăn lúc này. Vui lòng kiểm tra lại kết nối.",
   );
 
   return {

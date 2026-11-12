@@ -23,6 +23,9 @@ import { gamificationService } from "@/lib/api/services/gamification.service";
 import { TutorEntryButton, useTutorUnreadCount } from "./TutorEntryButton";
 import { useCompanionPetRuntime } from "../useCompanionPetRuntime";
 import { usePetDialogue } from "../usePetDialogue";
+import { petLineShown } from "../dialogueLogic";
+import { PetNudgeContent } from "./PetNudgeContent";
+import { useWideScreen } from "../useWideScreen";
 import { PetSpeechBubble } from "./PetSpeechBubble";
 import {
   getPetVisualState,
@@ -91,15 +94,18 @@ const FloatingCompanionPetInner: React.FC = () => {
   const feedCost = pet?.feedCost ?? 10;
 
   const { streak } = useGamificationStore();
+  const wideScreen = useWideScreen();
   const todayQuests = useMemo(() => today?.quests ?? [], [today?.quests]);
   const {
     dialogue,
     isVisible: isDialogueVisible,
+    isNew: isDialogueNew,
     dismiss: dismissDialogue,
   } = usePetDialogue({
-    // Only while the pet is on screen: a line counts as said once the learner
-    // could see it, not on a page where the pet is hidden.
-    ready: !isLoading && Boolean(pet) && Boolean(today) && !isFocusMode && !isTutorOpen && !isExpanded,
+    ready: !isLoading && Boolean(pet) && Boolean(today),
+    // A line counts as said once the learner could see it: in the bubble on a
+    // wide screen, in the open panel on a phone; never while the pet is hidden.
+    shown: petLineShown({ wideScreen, petOnScreen: !isFocusMode && !isTutorOpen, panelOpen: isExpanded }),
     userId: user?.id,
     dateKey: today?.dateKey,
     petName: petDisplayName,
@@ -111,6 +117,9 @@ const FloatingCompanionPetInner: React.FC = () => {
     activitiesCount: today?.activities?.length ?? 0,
     quests: todayQuests,
   });
+
+  // On a phone the bubble is not shown: a dot says the pet has something new.
+  const showNudgeDot = !wideScreen && isDialogueNew && !isExpanded;
 
   // The avatar bounces when tapped.
   const [isBouncing, setIsBouncing] = useState(false);
@@ -187,13 +196,13 @@ const FloatingCompanionPetInner: React.FC = () => {
 
       if (leveledUp) {
         setIsLevelUp(true);
-        const msg = `Thú cưng đã thăng cấp lên Cấp ${updatedPet.level}!`;
+        const msg = `Thú ảo đã thăng cấp lên Cấp ${updatedPet.level}!`;
         setAriaFeedback(msg);
         toast.success(msg, { duration: 5000 });
         setTimeout(() => setIsLevelUp(false), 5000);
       } else {
         setIsJustFed(true);
-        const msg = "Đã cho thú cưng ăn no nê!";
+        const msg = "Đã cho thú ảo ăn no nê!";
         setAriaFeedback(msg);
         toast.success(msg);
         setTimeout(() => setIsJustFed(false), 4000);
@@ -292,12 +301,27 @@ const FloatingCompanionPetInner: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsExpanded(false)}
-              aria-label="Đóng bảng thông tin thú cưng"
+              aria-label="Đóng bảng thông tin thú ảo"
               className="size-8 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <X size={16} aria-hidden="true" />
             </button>
           </div>
+
+          {/* What the pet has to say, on every screen size (on a phone this is the only place). */}
+          {dialogue && (
+            <section
+              aria-labelledby="floating-pet-nudge-title"
+              data-pet-nudge={dialogue.kind}
+              className="mb-3.5 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 dark:border-amber-800/60 dark:bg-amber-950/30"
+            >
+              <h4 id="floating-pet-nudge-title" className="mb-1 text-sm font-bold text-amber-900 dark:text-amber-300">
+                {dialogue.header}
+              </h4>
+              {/* No onFeed: the feed button is already at the foot of this panel. */}
+              <PetNudgeContent dialogue={dialogue} onAction={() => setIsExpanded(false)} />
+            </section>
+          )}
 
           {/* Level Progress & Stats Meters */}
           <div className="space-y-3 bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60 mb-3.5">
@@ -315,7 +339,7 @@ const FloatingCompanionPetInner: React.FC = () => {
                 aria-valuenow={expPercentage}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Kinh nghiệm thú cưng"
+                aria-label="Kinh nghiệm thú ảo"
               >
                 <div
                   className="h-full rounded-full bg-amber-500 transition-all duration-300 motion-reduce:transition-none"
@@ -338,7 +362,7 @@ const FloatingCompanionPetInner: React.FC = () => {
                 aria-valuenow={health}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Sức khỏe thú cưng"
+                aria-label="Sức khỏe thú ảo"
               >
                 <div
                   className="h-full rounded-full bg-rose-500 transition-all duration-300 motion-reduce:transition-none"
@@ -361,7 +385,7 @@ const FloatingCompanionPetInner: React.FC = () => {
                 aria-valuenow={happiness}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Độ vui vẻ thú cưng"
+                aria-label="Độ vui vẻ thú ảo"
               >
                 <div
                   className="h-full rounded-full bg-amber-500 transition-all duration-300 motion-reduce:transition-none"
@@ -384,7 +408,7 @@ const FloatingCompanionPetInner: React.FC = () => {
                 aria-valuenow={satiety}
                 aria-valuemin={0}
                 aria-valuemax={100}
-                aria-label="Độ no thú cưng"
+                aria-label="Độ no thú ảo"
               >
                 <div
                   className="h-full rounded-full bg-orange-500 transition-all duration-300 motion-reduce:transition-none"
@@ -429,7 +453,7 @@ const FloatingCompanionPetInner: React.FC = () => {
               type="button"
               onClick={handleFeedClick}
               disabled={feedMutation.isPending || !feedEligibility.allowed}
-              aria-label={`Cho thú cưng ăn, tiêu hao ${feedCost} Bánh Mì`}
+              aria-label={`Cho thú ảo ăn, tiêu hao ${feedCost} Bánh Mì`}
               className={`w-full min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white shadow-xs"
@@ -467,7 +491,7 @@ const FloatingCompanionPetInner: React.FC = () => {
               onClick={() => setIsExpanded(false)}
               className="w-full min-h-[38px] inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-card dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
-              <span>Vào trang quản lý thú cưng</span>
+              <span>Vào trang quản lý thú ảo</span>
               <ExternalLink size={13} aria-hidden="true" />
             </Link>
           </div>
@@ -489,9 +513,9 @@ const FloatingCompanionPetInner: React.FC = () => {
             : { duration: 0.2 }
         }
         aria-expanded={isExpanded}
-        aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}.${
+        aria-label={`Thú ảo đồng hành ${petName}, cấp ${level}.${
           unreadMessageCount > 0 ? ` ${unreadMessageCount} tin nhắn chưa đọc.` : ""
-        } Nhấn để mở bảng tình trạng thú cưng.`}
+        }${showNudgeDot ? " Có lời nhắn mới." : ""} Nhấn để mở bảng tình trạng thú ảo.`}
         className="relative size-12 sm:size-14 rounded-full bg-card dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 shadow-md hover:shadow-lg hover:border-amber-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none group"
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
@@ -504,8 +528,9 @@ const FloatingCompanionPetInner: React.FC = () => {
           >
             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
           </span>
-        ) : recommendation && (
+        ) : (wideScreen ? recommendation : showNudgeDot) && (
           <span
+            data-pet-dot={wideScreen ? "quest" : "nudge"}
             className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"
             aria-hidden="true"
           />

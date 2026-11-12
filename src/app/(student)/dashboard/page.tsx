@@ -14,7 +14,6 @@ import {
   Crown,
   FileText,
   Flame,
-  Gift,
   Headphones,
   Layers,
   ListChecks,
@@ -27,6 +26,7 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { useAuthStore } from "@/stores/authStore";
 import {
   gamificationService,
@@ -818,7 +818,7 @@ export default function DashboardPage() {
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
                   <strong className="mt-1 block text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
-                    {stats?.weeklyExp ?? 0} EXP
+                    {stats?.weeklyExp ?? 0} XP
                   </strong>
                 )}
               </div>
@@ -830,8 +830,8 @@ export default function DashboardPage() {
                 title="Xem lịch sử và đổi quà Bánh Mì"
               >
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
-                  <Gift size={14} className="text-amber-600 dark:text-amber-400" />
-                  Bánh mì
+                  <BreadCoinIcon size={14} />
+                  Bánh Mì
                 </span>
                 {isStatsLoading ? (
                   <span className="inline-block h-6 w-14 rounded bg-slate-200 dark:bg-slate-800 animate-pulse mt-1" />
@@ -1359,7 +1359,7 @@ export default function DashboardPage() {
       <TodayPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
 
       {/* ========================================================================= */}
-      {/* 3. DAILY FOCUS BENTO HUB (Nhiệm Vụ 2 Cols + Thú Cưng 1 Col)              */}
+      {/* 3. DAILY FOCUS BENTO HUB (Nhiệm Vụ 2 Cols + Thú Ảo 1 Col)              */}
       {/* ========================================================================= */}
       <section className="grid gap-6 lg:grid-cols-3" aria-labelledby="today-quests-heading">
         {/* Left Column: Today's Quests List (2 Cols) */}

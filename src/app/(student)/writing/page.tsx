@@ -218,7 +218,7 @@ export default function WritingTopicsPage() {
           <div className="min-w-0 flex-1 space-y-2.5">
             <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 dark:border-teal-800/60 bg-teal-50/80 dark:bg-teal-950/40 px-3 py-1 text-xs font-bold text-teal-700 dark:text-teal-300">
               <PenTool size={14} aria-hidden="true" />
-              <span>Phòng Luyện Viết & Đánh Giá Ngữ Pháp</span>
+              <span>Phòng luyện viết & đánh giá ngữ pháp</span>
             </div>
 
             <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">

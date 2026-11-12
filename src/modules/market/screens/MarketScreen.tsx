@@ -11,11 +11,11 @@ import {
   AlertCircle,
   Clock,
   CheckCircle2,
-  Wheat,
   X,
   RefreshCw,
   Trophy,
 } from "lucide-react";
+import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -340,7 +340,7 @@ export const MarketScreen: React.FC = () => {
             <span className="text-xs text-slate-600 dark:text-slate-400">Số dư Bánh Mì</span>
             <p className="flex items-center gap-1.5 text-2xl font-semibold text-slate-900 dark:text-slate-100 leading-tight">
               {(balanceData?.totalBanh || 0).toLocaleString("vi-VN")}
-              <Wheat size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              <BreadCoinIcon size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
             </p>
           </div>
         ) : (

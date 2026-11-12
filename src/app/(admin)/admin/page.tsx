@@ -394,7 +394,7 @@ export default function AdminDashboardPage() {
                   <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
                     {(data.gamification?.totalBreads ?? 0).toLocaleString("vi-VN")}
                   </span>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">bánh</span>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">Bánh Mì</span>
                 </div>
               </div>
               <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">

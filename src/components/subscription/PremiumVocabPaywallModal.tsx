@@ -19,9 +19,9 @@ export const PremiumVocabPaywallModal: React.FC<PremiumVocabPaywallModalProps> =
       isOpen={isOpen}
       onClose={onClose}
       skillType="VOCABULARY"
-      title="Mở khóa chủ đề Premium"
+      title="Mở khóa chủ đề này"
       itemTitle={topicTitle}
-      description="Nâng cấp BreadTrans Plus để truy cập chủ đề từ vựng Premium."
+      description="Nâng cấp BreadTrans Plus để học chủ đề từ vựng này."
     />
   );
 };

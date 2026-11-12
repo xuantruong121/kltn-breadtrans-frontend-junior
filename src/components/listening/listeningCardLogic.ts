@@ -86,12 +86,12 @@ export interface FormatThemeConfig {
 /**
  * Skill-aligned format-based theme accents:
  * - Comprehension / Nghe hiểu: sky-blue
- * - Dictation / Chép chính tả: warm indigo/violet
+ * - Dictation / Nghe chép: warm indigo/violet
  * - Dialogue / Hội thoại ngắn: fresh emerald/teal
  */
 export function resolveListeningFormatTheme(formatTag: string): FormatThemeConfig {
   switch (formatTag) {
-    case "Chép chính tả":
+    case "Nghe chép":
       return {
         themeName: "indigo",
         hoverBorderClass: "hover:border-indigo-300 dark:hover:border-indigo-600",
@@ -120,16 +120,12 @@ export function resolveListeningFormatTheme(formatTag: string): FormatThemeConfi
 }
 
 /**
- * Resolves dialogue / speaker context tags
+ * The icon in front of a listening card's format tag (glossary.ts): two
+ * people for a dialogue, a megaphone for a talk, none otherwise.
  */
-export function resolveSpeakerContext(quiz: ListeningPracticeCatalogItem): string | null {
-  const formatTag = resolveListeningFormatTag(quiz);
-  if (formatTag === "Hội thoại ngắn") {
-    return "👥 2 người đối thoại";
-  }
-  if (formatTag === "Bài nói chuyện") {
-    return "📢 Thông báo đơn (1 người)";
-  }
+export function listeningFormatIcon(formatTag: string): "dialogue" | "talk" | null {
+  if (formatTag === "Hội thoại ngắn") return "dialogue";
+  if (formatTag === "Bài nói chuyện") return "talk";
   return null;
 }
 
@@ -196,8 +192,8 @@ export function resolveListeningFormatTag(
   const title = (quiz.title || "").toLowerCase();
   const mode = (quiz.mode || "").toUpperCase();
 
-  if (mode === "DICTATION" || title.includes("chép chính tả") || title.includes("dictation")) {
-    return "Chép chính tả";
+  if (mode === "DICTATION" || title.includes("chép") || title.includes("dictation")) {
+    return "Nghe chép";
   }
   if (
     title.includes("part 1") ||
@@ -252,7 +248,7 @@ export function resolveListeningPedagogicalDescription(
       return "Nắm bắt ngữ cảnh trao đổi giữa 2-3 người, suy luận địa điểm, nghề nghiệp và hành động tiếp theo.";
     case "Bài nói chuyện":
       return "Rèn luyện phản xạ bắt ý chính và chi tiết then chốt trong các bài phát biểu, quảng cáo hoặc thông báo công cộng.";
-    case "Chép chính tả":
+    case "Nghe chép":
       return "Thực hành nghe bắt từng từ vựng, củng cố nhận diện âm nối, âm nuốt và chính tả chuẩn xác theo từng câu.";
     default:
       return (
@@ -282,7 +278,7 @@ export function resolveListeningSkillTags(
         return ["Suy luận ngữ cảnh", accentTag];
       case "Bài nói chuyện":
         return ["Bắt ý then chốt", accentTag];
-      case "Chép chính tả":
+      case "Nghe chép":
         return ["Âm nối & Âm nuốt", accentTag];
       default:
         return ["Bắt từ khóa chính", accentTag];
@@ -298,7 +294,7 @@ export function resolveListeningSkillTags(
       return ["Suy luận ngữ cảnh", "Ý định người nói"];
     case "Bài nói chuyện":
       return ["Bắt thông tin chính", "Chi tiết lịch trình"];
-    case "Chép chính tả":
+    case "Nghe chép":
       return ["Nhận diện âm nuốt", "Chính tả chuẩn xác"];
     default:
       return ["Bắt từ khóa chính", "Độ trôi chảy"];

@@ -129,7 +129,7 @@ export function ToeicAnswerBody({
             aria-expanded={showTranscript}
             className="text-sm font-semibold text-blue-700 hover:underline dark:text-blue-300"
           >
-            {showTranscript ? "Ẩn Transcript" : "Hiện Transcript"}
+            {showTranscript ? "Ẩn lời thoại" : "Hiện lời thoại"}
           </button>
           {showTranscript && (
             <p className="mt-2 whitespace-pre-line rounded-xl bg-slate-50 p-3 text-[15px] leading-relaxed text-slate-800 dark:bg-slate-800/60 dark:text-slate-200">
