@@ -451,7 +451,7 @@ test("Popover: LISTENING_SHORTCUTS defines exactly the 4 required shortcuts with
 });
 
 // 8. Image layout invariant tests
-test("Image layout: ListeningComprehensionWorkspace uses balanced image sizing (larger than max-w-xl, without viewport stretching)", () => {
+test("Image layout: ListeningComprehensionWorkspace uses a compact, bounded image beside the question panel", () => {
   const workspacePath = path.resolve(
     process.cwd(),
     "src/components/listening/ListeningComprehensionWorkspace.tsx",
@@ -466,10 +466,63 @@ test("Image layout: ListeningComprehensionWorkspace uses balanced image sizing (
   assert.equal(content.includes("max-w-xl"), false);
   assert.ok(content.includes("max-w-4xl") || content.includes("max-w-5xl"));
 
-  // 3. Must use responsive width expansion and bounded height (+15% scale)
+  // 3. Must use responsive width and a bounded height that leaves room for the question panel
+  // (owner 2026-11-12: the image left wide empty space and pushed the explanation off screen).
   assert.ok(content.includes("w-fit") || content.includes("max-w-full"));
   assert.ok(content.includes("object-contain"));
-  assert.ok(content.includes("lg:max-h-[440px]") || content.includes("xl:max-h-[485px]"));
+  assert.ok(content.includes("lg:max-h-[300px]") && content.includes("xl:max-h-[360px]"));
+  assert.equal(content.includes("lg:max-h-[440px]"), false);
+});
+
+test("Layout: the listening workspace splits the screen in half and lays answers out two by two", () => {
+  const content = fs.readFileSync(
+    path.resolve(process.cwd(), "src/components/listening/ListeningComprehensionWorkspace.tsx"),
+    "utf-8",
+  );
+  assert.ok(content.includes("lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"));
+  assert.equal(content.includes("lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]"), false);
+  assert.ok(content.includes('<div className="grid grid-cols-1 gap-2.5 xl:grid-cols-2">'));
+  // Answer cards stay touch-sized after shrinking.
+  assert.ok(content.includes("min-h-11 px-4 py-3 rounded-2xl border-2"));
+});
+
+test("Layout: the action dock with Câu tiếp theo always stays on screen", () => {
+  const content = fs.readFileSync(
+    path.resolve(process.cwd(), "src/components/listening/ListeningComprehensionWorkspace.tsx"),
+    "utf-8",
+  );
+  // The page is one screen tall on desktop, so each panel scrolls on its own.
+  assert.ok(content.includes("min-h-dvh lg:h-dvh lg:overflow-hidden"));
+  assert.ok(content.includes('<footer className="sticky bottom-0'));
+  // The explanation is brought into view once the answer is checked.
+  assert.ok(content.includes("explanationRef.current?.scrollIntoView"));
+  // On a phone the next button keeps one line and its full name for screen readers.
+  assert.ok(content.includes('aria-label="Câu tiếp theo"'));
+  assert.ok(content.includes("shrink-0 whitespace-nowrap px-4 sm:px-6"));
+});
+
+test("Audio player: Câu tiếp theo starts the next question's audio", () => {
+  const workspace = fs.readFileSync(
+    path.resolve(process.cwd(), "src/components/listening/ListeningComprehensionWorkspace.tsx"),
+    "utf-8",
+  );
+  const player = fs.readFileSync(
+    path.resolve(process.cwd(), "src/components/listening/ListeningAudioPlayer.tsx"),
+    "utf-8",
+  );
+  const next = workspace.slice(
+    workspace.indexOf("const handleNextQuestion = () => {"),
+    workspace.indexOf("const handlePrevQuestion = () => {"),
+  );
+  assert.ok(next.includes("setAutoPlayQuestionId(nextQ?.id ?? null)"));
+  const prev = workspace.slice(
+    workspace.indexOf("const handlePrevQuestion = () => {"),
+    workspace.indexOf("const handleSkipQuestion = async () => {"),
+  );
+  assert.ok(prev.includes("setAutoPlayQuestionId(null)"));
+  assert.ok(workspace.includes("autoPlay={autoPlayQuestionId === currentQuestion.id}"));
+  assert.ok(player.includes("autoPlay?: boolean"));
+  assert.ok(player.includes("shouldAutoPlay({ requested, previousTrackKey: previous, trackKey })"));
 });
 
 test("Audio player: ListeningAudioPlayer no longer has conflicting Shift+ArrowLeft or Ctrl+Space listeners", () => {

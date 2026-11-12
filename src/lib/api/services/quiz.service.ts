@@ -263,7 +263,7 @@ export const quizService = {
     questionId: number,
     signal?: AbortSignal,
     artifact?: ListeningAudioArtifactIdentity | null,
-  ): Promise<{ url: string }> => {
+  ): Promise<{ url: string; artifact?: { id: number } | null }> => {
     return await axiosClient.get(
       buildQuestionAudioUrlRequestPath(quizId, questionId, artifact),
       { signal },

@@ -141,6 +141,10 @@ export function ListeningComprehensionWorkspace({
   const sessionKey = `breadtrans:listening-session:user-${userId ?? "unknown"}:quiz-${quizId ?? "unknown"}${reviewOnly ? ":wrong-review" : ""}`;
   const utilityKey = `breadtrans:listening-utilities:user-${userId ?? "unknown"}:quiz-${quizId ?? "unknown"}`;
   const [currentIndex, setCurrentIndex] = useState(0);
+  // The question reached with "Câu tiếp theo" plays its audio by itself.
+  const [autoPlayQuestionId, setAutoPlayQuestionId] = useState<number | null>(null);
+  const [lastTrackKey, setLastTrackKey] = useState<string | null>(null);
+  const explanationRef = useRef<HTMLDivElement | null>(null);
   const [answersByQuestionId, setAnswersByQuestionId] = useState<
     Record<number, string>
   >({});
@@ -754,6 +758,7 @@ export function ListeningComprehensionWorkspace({
           : answersByQuestionId,
         questionStates: checkResults,
       });
+      setAutoPlayQuestionId(nextQ?.id ?? null);
       setCurrentIndex((prev) => prev + 1);
     }
   };
@@ -783,6 +788,7 @@ export function ListeningComprehensionWorkspace({
         });
       }
       checkpointAttempt({ currentQuestionId: questions[currentIndex - 1]?.id });
+      setAutoPlayQuestionId(null);
       setCurrentIndex((prev) => prev - 1);
     }
   };
@@ -986,6 +992,17 @@ export function ListeningComprehensionWorkspace({
       toggleRevealAnswer,
     };
   });
+
+  // Once an answer is checked, bring the explanation into the question panel's view.
+  const hasExplanation = isChecked && Boolean(parsedExplanation);
+  useEffect(() => {
+    if (!hasExplanation) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    explanationRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: reduceMotion ? "auto" : "smooth",
+    });
+  }, [hasExplanation, currentQuestion?.id]);
 
   useEffect(() => {
     const controller = createListeningShortcutController(() => {
@@ -1215,7 +1232,7 @@ export function ListeningComprehensionWorkspace({
   }
 
   return (
-    <div className="w-full min-h-dvh flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
+    <div className="w-full min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans">
       <PracticeHeader
         title={quizDisplayTitle(quiz.id, quiz.title)}
         difficulty={reviewOnly ? "ÔN CÂU SAI" : levelTag}
@@ -1284,7 +1301,7 @@ export function ListeningComprehensionWorkspace({
         className={`flex-1 w-full min-h-0 ${
           isDictation
             ? "grid grid-cols-1 content-start gap-0 overflow-y-auto bg-slate-50/70 dark:bg-slate-950 px-4 py-6 sm:px-6 lg:px-8"
-            : "grid grid-cols-1 divide-y overflow-hidden lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]"
+            : "grid grid-cols-1 divide-y overflow-hidden lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
         }`}
       >
         {/* Left Panel — Audio & Conversation */}
@@ -1353,6 +1370,13 @@ export function ListeningComprehensionWorkspace({
               onProgress={(currentTime, duration) =>
                 setAudioProgress({ currentTime, duration })
               }
+              autoPlay={autoPlayQuestionId === currentQuestion.id}
+              previousTrackKey={lastTrackKey}
+              onTrackKey={(trackKey) => {
+                setLastTrackKey(trackKey);
+                // One request per press: going back to this question later does not replay it.
+                setAutoPlayQuestionId(null);
+              }}
             />
 
             {currentQuestion.diagnosticClips && currentQuestion.diagnosticClips.length > 0 && (
@@ -1435,14 +1459,14 @@ export function ListeningComprehensionWorkspace({
 
             {/* Contextual image is bounded to a balanced size: substantial context (+15% enlarged) without dominating the workspace. */}
             {!isDialogue && imageUrl && !imageLoadFailed && (
-              <div className="w-fit max-w-4xl xl:max-w-5xl mx-auto my-3.5 flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-2.5 sm:p-3 shadow-2xs">
+              <div className="w-fit max-w-4xl mx-auto my-3 flex items-center justify-center overflow-hidden rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 shadow-2xs">
                 <img
                   src={imageUrl}
                   alt={imageAlt || "TOEIC Listening Context"}
                   loading="eager"
                   decoding="async"
                   onError={() => setFailedImageKey(imageKey)}
-                  className="w-auto max-w-full h-auto max-h-64 sm:max-h-[330px] md:max-h-[370px] lg:max-h-[440px] xl:max-h-[485px] object-contain rounded-xl mx-auto block"
+                  className="w-auto max-w-full h-auto max-h-56 sm:max-h-64 lg:max-h-[300px] xl:max-h-[360px] object-contain rounded-xl mx-auto block"
                 />
               </div>
             )}
@@ -1618,7 +1642,7 @@ export function ListeningComprehensionWorkspace({
                 transition={{ duration: 0.18 }}
                 className="flex flex-col"
               >
-                <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 mb-6 tracking-tight leading-snug">
+                <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 mb-4 tracking-tight leading-snug">
                   {isDictation
                     ? "Nghe và chép lại chính xác câu hoặc đoạn bạn nghe được."
                     : currentQuestion.content?.text ||
@@ -1801,7 +1825,7 @@ export function ListeningComprehensionWorkspace({
                     )}
                   </div>
                 ) : (
-                <div className="space-y-3 sm:space-y-3.5">
+                <div className="grid grid-cols-1 gap-2.5 xl:grid-cols-2">
                   {options.map((opt, idx) => {
                     const key = String.fromCharCode(65 + idx);
                     const isSelected = selectedAnswer === opt;
@@ -1847,8 +1871,8 @@ export function ListeningComprehensionWorkspace({
                         data-option-card="true"
                         onClick={() => handleAnswerSelect(opt)}
                         disabled={isAnswerLocked || isChecking}
-                        aria-label={`Đáp án ${key}: ${opt}`}
-                        className={`w-full min-w-0 p-4 sm:p-4.5 md:p-5 rounded-2xl border-2 flex items-center text-left transition-all ${cardStyles} ${
+                        aria-label={`Đáp án ${key}: ${opt}${isChecked && isCorrectAnswer ? ", đáp án đúng" : ""}`}
+                        className={`w-full h-full min-w-0 min-h-11 px-4 py-3 rounded-2xl border-2 flex items-center text-left transition-all ${cardStyles} ${
                           isAnswerLocked || isChecking
                             ? "cursor-default"
                             : "cursor-pointer active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
@@ -1863,16 +1887,16 @@ export function ListeningComprehensionWorkspace({
                           )}
                         </span>
                         <span
-                          className={`ml-3.5 mr-3 text-lg md:text-xl ${keyStyles}`}
+                          className={`ml-3 mr-2.5 text-base md:text-lg ${keyStyles}`}
                         >
                           ({key})
                         </span>
-                        <span className="min-w-0 text-lg md:text-xl font-semibold leading-relaxed flex-1 break-words">
+                        <span className="min-w-0 text-base md:text-lg font-semibold leading-snug flex-1 break-words">
                           {opt}
                         </span>
 
                         {isChecked && isSelected && (
-                          <span className="shrink-0 ml-3">
+                          <span className="shrink-0 ml-2">
                             {currentCheck?.isCorrect ? (
                               <CheckCircle2
                                 size={24}
@@ -1890,8 +1914,13 @@ export function ListeningComprehensionWorkspace({
                         )}
 
                         {isChecked && !isSelected && isCorrectAnswer && (
-                          <span className="shrink-0 text-xs sm:text-sm font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 dark:bg-emerald-950/80 px-3 py-1.5 rounded-full ml-3">
-                            Đáp án đúng
+                          // A tick, not a text pill: in the two-column grid a pill squeezed the answer into one word per line.
+                          <span className="shrink-0 ml-2" title="Đáp án đúng">
+                            <CheckCircle2
+                              size={24}
+                              className="text-emerald-600 dark:text-emerald-400"
+                              aria-hidden="true"
+                            />
                           </span>
                         )}
                       </button>
@@ -1913,10 +1942,11 @@ export function ListeningComprehensionWorkspace({
                 {/* Structured Pedagogical Explanation Drawer (Post-Answer) */}
                 {isChecked && parsedExplanation && (
                   <div
+                    ref={explanationRef}
                     tabIndex={0}
                     role="region"
                     aria-label="Giải thích đáp án"
-                    className="mt-6 rounded-2xl border border-emerald-200/90 dark:border-emerald-800/60 bg-emerald-50/70 dark:bg-emerald-950/30 p-4 sm:p-5 text-emerald-950 dark:text-emerald-200 animate-in fade-in duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    className="mt-4 rounded-2xl border border-emerald-200/90 dark:border-emerald-800/60 bg-emerald-50/70 dark:bg-emerald-950/30 p-4 sm:p-5 text-emerald-950 dark:text-emerald-200 animate-in fade-in duration-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-emerald-500"
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <span className="rounded-md bg-emerald-200/80 dark:bg-emerald-900/60 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wider text-emerald-900 dark:text-emerald-200">
@@ -1927,7 +1957,7 @@ export function ListeningComprehensionWorkspace({
                     {parsedExplanation.type === "structured" ? (
                       <div className="space-y-3">
                         {/* Primary Vietnamese Explanation */}
-                        <p className="text-base sm:text-lg font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
+                        <p className="text-base font-semibold leading-relaxed text-slate-900 dark:text-slate-100">
                           {parsedExplanation.vi}
                         </p>
                         {parsedExplanation.en && (
@@ -2011,7 +2041,7 @@ export function ListeningComprehensionWorkspace({
       </main>
 
       {/* 3. Full-Width Bottom Action Dock */}
-      <footer className="w-full h-16 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
+      <footer className="sticky bottom-0 w-full h-16 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 md:px-6 flex items-center justify-between shrink-0 shadow-sm z-30 select-none">
         {/* Left Actions: Quick utilities */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           <button
@@ -2104,6 +2134,7 @@ export function ListeningComprehensionWorkspace({
             onClick={() => {
               setValidationNotice(null);
               setTranscriptOpen(false);
+              setAutoPlayQuestionId(null);
               if (currentIndex > 0) setCurrentIndex((p) => p - 1);
             }}
             disabled={currentIndex === 0}
@@ -2170,6 +2201,7 @@ export function ListeningComprehensionWorkspace({
                       onClick={() => {
                         setValidationNotice(null);
                         setTranscriptOpen(false);
+                        setAutoPlayQuestionId(null);
                         setCurrentIndex(idx);
                         setShowMatrixPopover(false);
                       }}
@@ -2225,7 +2257,7 @@ export function ListeningComprehensionWorkspace({
               type="button"
               onClick={handleFinalSubmit}
               disabled={isSubmitting || submitMutation.isPending}
-              className="px-5 sm:px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-sm transition-all active:scale-95 disabled:opacity-60 cursor-pointer inline-flex items-center gap-2 text-sm"
+              className="shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-sm transition-all active:scale-95 disabled:opacity-60 cursor-pointer inline-flex items-center gap-2 text-sm"
             >
               {reviewOnly ? (
                 <>
@@ -2254,9 +2286,12 @@ export function ListeningComprehensionWorkspace({
             <button
               type="button"
               onClick={handleNextQuestion}
-              className="px-5 sm:px-6 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-sm transition-all active:scale-95 cursor-pointer inline-flex items-center gap-2 text-sm"
+              aria-label="Câu tiếp theo"
+              className="shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold shadow-sm transition-all active:scale-95 cursor-pointer inline-flex items-center gap-2 text-sm"
             >
-              <span>Câu tiếp theo</span>
+              {/* A 390 px phone has no room for the full label beside the other dock buttons. */}
+              <span className="sm:hidden">Tiếp</span>
+              <span className="hidden sm:inline">Câu tiếp theo</span>
               <ChevronRight size={16} aria-hidden="true" />
             </button>
           )}

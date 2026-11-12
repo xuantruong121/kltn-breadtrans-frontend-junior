@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
+import { audioTrackKey, shouldAutoPlay } from "./listeningAutoPlay";
 
 interface ListeningAudioPlayerProps {
   quizId: number;
@@ -13,6 +14,12 @@ interface ListeningAudioPlayerProps {
   className?: string;
   onProgress?: (currentTime: number, duration: number) => void;
   onPlaybackChange?: (isPlaying: boolean) => void;
+  /** Start playing once the audio is ready (the learner pressed "Câu tiếp theo"). */
+  autoPlay?: boolean;
+  /** The recording heard on the previous question; the same one is not replayed by itself. */
+  previousTrackKey?: string | null;
+  /** Reports which recording this question plays. */
+  onTrackKey?: (trackKey: string) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -31,8 +38,16 @@ export function ListeningAudioPlayer({
   className,
   onProgress,
   onPlaybackChange,
+  autoPlay = false,
+  previousTrackKey = null,
+  onTrackKey,
 }: ListeningAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Read once the URL arrives, so a parent re-render does not refetch the audio.
+  const autoPlayRef = useRef({ autoPlay, previousTrackKey, onTrackKey });
+  useEffect(() => {
+    autoPlayRef.current = { autoPlay, previousTrackKey, onTrackKey };
+  });
 
   const [loadedQuestionId, setLoadedQuestionId] = useState<number | null>(null);
   const [errorQuestionId, setErrorQuestionId] = useState<number | null>(null);
@@ -61,13 +76,21 @@ export function ListeningAudioPlayer({
 
     quizService
       .getQuestionAudioUrl(quizId, questionId, controller.signal)
-      .then(({ url }) => {
+      .then(({ url, artifact }) => {
         if (!isMounted) return;
+        const trackKey = audioTrackKey(url, artifact?.id);
+        const { autoPlay: requested, previousTrackKey: previous, onTrackKey: report } =
+          autoPlayRef.current;
         if (currentAudio) {
           currentAudio.src = url;
           currentAudio.playbackRate = playbackRateRef.current;
           currentAudio.load();
+          if (shouldAutoPlay({ requested, previousTrackKey: previous, trackKey })) {
+            // A browser that blocks playback leaves the Play button as before.
+            void currentAudio.play().catch(() => setIsPlaying(false));
+          }
         }
+        report?.(trackKey);
         setLoadedQuestionId(questionId);
       })
       .catch((err) => {
