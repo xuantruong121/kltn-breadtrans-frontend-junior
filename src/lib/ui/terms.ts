@@ -37,6 +37,8 @@ export const TERMS = {
   learnerSpeech: "Lời bạn nói",
   /** The /help page, in every menu and footer. */
   help: "Trợ giúp",
+  /** The entry assessment, as the report names it. */
+  diagnostic: "Bài đánh giá đầu vào",
 } as const;
 
 export type Concept = keyof typeof TERMS;

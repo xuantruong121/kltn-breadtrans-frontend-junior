@@ -25,7 +25,7 @@ const STEP_TITLE: Record<(typeof ONBOARDING_STEPS)[number], { title: string; hin
   goal: { title: "Bạn học tiếng Anh để làm gì?", hint: "Mục tiêu giúp chọn dạng bài phù hợp." },
   track: { title: "Bạn làm việc hoặc học trong lĩnh vực nào?", hint: "Bài luyện sẽ ưu tiên chủ đề gần với công việc của bạn." },
   time: { title: "Mỗi ngày bạn dành bao nhiêu phút?", hint: "Nhiệm vụ hằng ngày sẽ vừa với thời gian này." },
-  level: { title: "Xác định mức luyện tập", hint: "Làm bài kiểm tra đầu vào hoặc tự chọn mức. Bạn có thể đổi sau." },
+  level: { title: "Xác định mức luyện tập", hint: "Làm bài đánh giá đầu vào hoặc tự chọn mức. Bạn có thể đổi sau." },
 };
 
 function OptionTile({
@@ -122,7 +122,7 @@ export default function OnboardingPage() {
     (isLast && profileQuery.isLoading) ||
     (isLast && !placed && levelPath === "SELF" && !answers.selfLevel);
   const headline = step === "level" && placed
-    ? { title: "Mức luyện tập của bạn", hint: "Đã xác định từ bài kiểm tra đầu vào." }
+    ? { title: "Mức luyện tập của bạn", hint: "Đã xác định từ bài đánh giá đầu vào." }
     : STEP_TITLE[step];
 
   return (
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
                 >
                   <ClipboardCheck size={24} className="mt-0.5 shrink-0 text-blue-700 dark:text-blue-300" aria-hidden="true" />
                   <span>
-                    <span className="block text-base font-bold text-slate-900 dark:text-slate-100">Làm bài kiểm tra đầu vào</span>
+                    <span className="block text-base font-bold text-slate-900 dark:text-slate-100">Làm bài đánh giá đầu vào</span>
                     <span className="mt-0.5 block text-sm text-slate-600 dark:text-slate-400">
                       Khoảng 30–40 phút, xếp mức riêng cho Nghe, Nói, Đọc, Viết. Nên chọn.
                     </span>

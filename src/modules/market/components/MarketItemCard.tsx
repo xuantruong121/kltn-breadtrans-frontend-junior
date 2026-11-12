@@ -206,7 +206,7 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
               : isOutOfStock
               ? "Hết hàng"
               : !canAfford
-              ? "Chưa đủ bánh"
+              ? "Chưa đủ Bánh Mì"
               : product.category === "PHYSICAL"
               ? "Đổi quà"
               : "Mua ngay"}

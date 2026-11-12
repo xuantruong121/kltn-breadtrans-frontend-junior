@@ -57,7 +57,7 @@ const WORD_RULES: WordRule[] = [
   // The u flag matters: without it \b does not see "ì" as a letter.
   {
     name: "currency",
-    wrong: /\bBánh mì(?!\p{L})(?! (que|gối|sừng))|[Ss]ố dư bánh mì|\d+\s*bánh(?!\p{L})(?! mì)|^\s*bánh\s*$/u,
+    wrong: /\bBánh mì(?!\p{L})(?! (que|gối|sừng))|[Ss]ố dư bánh mì|\d+\s*bánh(?!\p{L})(?! mì)|^\s*bánh\s*$|đủ bánh(?!\p{L})(?! [Mm]ì)/u,
     right: "Bánh Mì",
   },
   // Shown text only: a single lowercase token ("streak", "streak-freeze") is a key or a path.
@@ -80,6 +80,8 @@ const WORD_RULES: WordRule[] = [
   { name: "plan code shown", wrong: /^\s*(FREE|PLUS|PRO)\s*$/, right: "Free / Plus / Pro", jsxOnly: true },
   // Owner 2026-11-12: the report and the app say "thú ảo".
   { name: "pet", wrong: /[Tt]hú cưng/, right: "thú ảo" },
+  // The report's term (owner rule): "bài đánh giá đầu vào".
+  { name: "diagnostic", wrong: /[Kk]iểm tra đầu vào|Entry Diagnostic/, right: "bài đánh giá đầu vào" },
   { name: "help", wrong: /^\s*FAQ\s*$|Trung tâm trợ giúp/, right: "Trợ giúp" },
   { name: "English unit", wrong: /\b24h\b|\bBoost\b/, right: "24 giờ" },
   {
@@ -109,7 +111,7 @@ const ICON_OWNERS: Array<{ icon: string; ownerFiles: RegExp; why: string }> = [
 /** An icon drawn next to a word that has another icon in the glossary. */
 const NEAR_RULES: Array<{ word: RegExp; icon: RegExp; right: string }> = [
   { word: /["> ]Viết["<]|Luyện Viết/, icon: /<(PenLine|Pencil|PencilLine)\b/, right: "PenTool" },
-  { word: /Flashcard/, icon: /<(Layers3|RotateCw)\b/, right: "Layers" },
+  { word: /Flashcard/, icon: /<(Layers3|RotateCw)\b|icon: (Layers3|RotateCw)\b/, right: "Layers" },
   { word: /[Tt]hú ảo/, icon: /<Heart\b/, right: "PawPrint" },
   { word: /[Nn]hiệm vụ/, icon: /<Target\b/, right: "ListChecks" },
   { word: /^\s*Bánh M[iì]\s*$|>\s*Bánh M[iì]\s*</m, icon: /<(Gift|Coins|Croissant)\b/, right: "BreadCoinIcon" },
@@ -153,9 +155,11 @@ test("shared icons are drawn by their glossary component only", () => {
 
 test("short forms written next to a value are not used", () => {
   // "Lv.{level}" and "{streak}d" are not caught as text: the value sits inside.
-  const RAW: Array<{ wrong: RegExp; right: string }> = [
+  const RAW: Array<{ wrong: RegExp; right: string; allowIn?: RegExp }> = [
     { wrong: />\s*Lv\.?\s*\{/, right: "Cấp {level}" },
     { wrong: /\}d\s*</, right: "{n} ngày" },
+    // "{weeklyExp} EXP": the learner's points are XP; EXP is the pet's.
+    { wrong: /\}\s*EXP\b/, right: "{n} XP", allowIn: /(^|\/)(modules\/pet|app\/\(student\)\/pet)\// },
     // A plan code ("PLUS") put straight into text; the name comes from planName().
     { wrong: /(gói|với|cho|Nội dung) \$?\{\s*[\w.]*([pP]lan|requiredPlan)\s*\}/, right: "{planName(plan)}" },
     { wrong: /(gói|với) (FREE|PLUS|PRO)\b/, right: "gói Free / Plus / Pro" },
@@ -164,7 +168,7 @@ test("short forms written next to a value are not used", () => {
   for (const f of FILES)
     f.text.split("\n").forEach((line, i) => {
       for (const rule of RAW)
-        if (rule.wrong.test(line)) found.push(`${f.rel}:${i + 1} -> ${rule.right}: ${line.trim().slice(0, 80)}`);
+        if (!rule.allowIn?.test(f.rel) && rule.wrong.test(line)) found.push(`${f.rel}:${i + 1} -> ${rule.right}: ${line.trim().slice(0, 80)}`);
     });
   assert.deepEqual(found, []);
 });

@@ -161,7 +161,7 @@ export function groupQuestionsBySection(
 export function diagnosticBadgeLabel(level?: string | null): string | null {
   const trimmed = (level || "").trim();
   if (!trimmed) return null;
-  if (trimmed === "FOUR_SKILL_PROFILE") return "Đã làm kiểm tra đầu vào";
+  if (trimmed === "FOUR_SKILL_PROFILE") return "Đã làm đánh giá đầu vào";
   return `Trình độ: ${formatPlacementLevel(trimmed)}`;
 }
 

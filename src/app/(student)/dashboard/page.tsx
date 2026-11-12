@@ -818,7 +818,7 @@ export default function DashboardPage() {
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
                   <strong className="mt-1 block text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
-                    {stats?.weeklyExp ?? 0} EXP
+                    {stats?.weeklyExp ?? 0} XP
                   </strong>
                 )}
               </div>

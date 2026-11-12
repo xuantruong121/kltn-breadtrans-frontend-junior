@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { RotateCw, HelpCircle, Keyboard, Mic } from "lucide-react";
+import { Layers, HelpCircle, Keyboard, Mic } from "lucide-react";
 import { StudyMode } from "../types/study";
 
 interface StageTabIndicatorProps {
@@ -14,7 +14,7 @@ const STAGES: Array<{
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }> = [
-  { id: "FLASHCARD", label: "Flashcard", icon: RotateCw },
+  { id: "FLASHCARD", label: "Flashcard", icon: Layers },
   { id: "QUIZ", label: "Trắc nghiệm", icon: HelpCircle },
   { id: "TYPING", label: "Gõ từ", icon: Keyboard },
   { id: "SPEAKING", label: "Phát âm", icon: Mic },

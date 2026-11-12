@@ -35,7 +35,7 @@ import { motion } from "framer-motion";
 const ROADMAP_STEPS = [
   {
     step: "01",
-    title: "Làm bài kiểm tra đầu vào",
+    title: "Làm bài đánh giá đầu vào",
     desc: "Trả lời bộ câu hỏi đầu vào để thấy kỹ năng nào đang mạnh, kỹ năng nào cần luyện thêm. Kết quả là ước lượng nội bộ để gợi ý bài luyện, không phải chứng chỉ hay cấp độ CEFR.",
     badge: "Miễn phí",
     icon: Target,
@@ -66,7 +66,7 @@ const ROADMAP_STEPS = [
 const FAQ_LIST = [
   {
     q: "BreadTrans có miễn phí để bắt đầu không?",
-    a: "Có. Bạn đăng ký bằng email, không cần thẻ ngân hàng, rồi làm bài kiểm tra đầu vào và các bài luyện được đánh dấu miễn phí. Một số bài cần gói Plus hoặc Pro; các bài đó hiển thị nhãn khóa rõ ràng.",
+    a: "Có. Bạn đăng ký bằng email, không cần thẻ ngân hàng, rồi làm bài đánh giá đầu vào và các bài luyện được đánh dấu miễn phí. Một số bài cần gói Plus hoặc Pro; các bài đó hiển thị nhãn khóa rõ ràng.",
   },
   {
     q: "Bài Nói được chấm như thế nào?",
@@ -78,7 +78,7 @@ const FAQ_LIST = [
   },
   {
     q: "Bánh Mì dùng để làm gì?",
-    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài kiểm tra đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú ảo ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, khiên giữ chuỗi và một số quà tặng.",
+    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài đánh giá đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú ảo ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, khiên giữ chuỗi và một số quà tặng.",
   },
   {
     q: "Tôi có học được trên điện thoại không?",
@@ -272,7 +272,7 @@ export default function PublicLandingPage() {
                   type="button"
                 >
                   <Clock size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                  <span>Làm bài kiểm tra đầu vào</span>
+                  <span>Làm bài đánh giá đầu vào</span>
                 </button>
               </div>
 
@@ -667,7 +667,7 @@ export default function PublicLandingPage() {
             Bắt đầu với BreadTrans trong 4 bước
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-pretty max-w-2xl">
-            Bắt đầu từ bài kiểm tra đầu vào, rồi luyện theo kỹ năng bạn cần nhất.
+            Bắt đầu từ bài đánh giá đầu vào, rồi luyện theo kỹ năng bạn cần nhất.
           </p>
         </div>
 
@@ -773,7 +773,7 @@ export default function PublicLandingPage() {
               Bắt đầu luyện tiếng Anh với BreadTrans
             </h2>
             <p className="text-white text-sm sm:text-base font-semibold max-w-2xl mx-auto leading-relaxed text-pretty">
-              Đăng ký tài khoản miễn phí, làm bài kiểm tra đầu vào và nhận gợi ý bài luyện
+              Đăng ký tài khoản miễn phí, làm bài đánh giá đầu vào và nhận gợi ý bài luyện
               cho những kỹ năng bạn cần cải thiện.
             </p>
 

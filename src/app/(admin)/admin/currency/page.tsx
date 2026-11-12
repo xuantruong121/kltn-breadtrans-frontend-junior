@@ -47,7 +47,7 @@ const SOURCE_LABELS: Record<string, string> = {
   SPEAKING_SUBMISSION: "Luyện nói",
   GRAMMAR_COMPLETION: "Hoàn thành Ngữ pháp",
   CONTENT_COMPLETION: "Hoàn thành nội dung",
-  DIAGNOSTIC_COMPLETION: "Bài kiểm tra đầu vào",
+  DIAGNOSTIC_COMPLETION: "Bài đánh giá đầu vào",
   DAILY_QUEST: "Nhiệm vụ hàng ngày",
   PET_FEED: "Cho thú ảo ăn",
   MARKET_PURCHASE: "Đổi quà",
