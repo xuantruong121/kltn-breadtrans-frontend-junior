@@ -4,6 +4,7 @@
  * here.
  */
 import type { MistakeDetail, MistakeItem, MistakeSkill } from "../api/services/mistakes.service.ts";
+import { grammarDisplayTitle, quizDisplayTitle, withoutLevelTag } from "../catalog/displayTitles.ts";
 
 export const MISTAKE_SKILL_LABEL: Record<MistakeSkill, string> = {
   LISTENING: "Nghe",
@@ -70,4 +71,19 @@ export function choiceText(options: string[] | undefined, index: number | null |
 export function progressLabel(item: Pick<MistakeItem, "correctStreak" | "detail">, resolveAfter: number): string | null {
   if (!item.detail.answerable) return null;
   return `Đã trả lời đúng ${Math.min(item.correctStreak, resolveAfter)}/${resolveAfter} lần`;
+}
+
+/**
+ * The source's title as the catalog shows it (owner 2026-11-12: the notebook
+ * showed the stored English title, "Listening B2 — Inference & Intent").
+ * The server keeps the authoring title; the Vietnamese one is chosen here by id.
+ */
+export function mistakeSourceTitle(
+  skill: MistakeSkill,
+  title: string,
+  ref: { quizId?: number | null; topicId?: number | null } | undefined,
+): string {
+  if (skill === "GRAMMAR" && typeof ref?.topicId === "number") return grammarDisplayTitle(ref.topicId, title);
+  if (typeof ref?.quizId === "number") return quizDisplayTitle(ref.quizId, title);
+  return withoutLevelTag(title);
 }

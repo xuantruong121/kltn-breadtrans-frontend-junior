@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   choiceText,
   mistakeRedoLink,
+  mistakeSourceTitle,
   mistakeTagLabel,
   parseMistakeSkill,
   progressLabel,
@@ -55,4 +56,17 @@ test("only an item that can be answered again shows a count of right answers", (
   const detail = { kind: "CHOICE" as const, title: "t", answerable: true, ref: {} };
   assert.equal(progressLabel({ correctStreak: 1, detail }, 2), "Đã trả lời đúng 1/2 lần");
   assert.equal(progressLabel({ correctStreak: 0, detail: { ...detail, answerable: false } }, 2), null);
+});
+
+test("a mistake shows its source with the catalog's Vietnamese title", () => {
+  assert.equal(
+    mistakeSourceTitle("LISTENING", "Listening B2 — Inference & Intent", { quizId: 12 }),
+    "Suy luận ý định người nói",
+  );
+  // Grammar is named by its topic, not by a quiz.
+  assert.equal(mistakeSourceTitle("GRAMMAR", "Relative clauses", { topicId: 10 }), "Mệnh đề quan hệ");
+  // Without an id, the stored title loses its level tag.
+  assert.equal(mistakeSourceTitle("SPEAKING", "Custom set", undefined), "Custom set");
+  // A review question passes null for the id it does not have.
+  assert.equal(mistakeSourceTitle("READING", "Reading — x", { quizId: 999_999, topicId: null }), "Reading — x");
 });

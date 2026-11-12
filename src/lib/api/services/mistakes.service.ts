@@ -66,6 +66,9 @@ export interface MistakeReviewQuestion {
   id: number;
   skill: MistakeSkill;
   title: string;
+  /** The source's ids, for its Vietnamese title. */
+  quizId?: number | null;
+  topicId?: number | null;
   question: string | null;
   passage: string | null;
   options: string[];

@@ -9,7 +9,7 @@ import {
   type MistakeAnswerResult,
   type MistakeSkill,
 } from "@/lib/api/services/mistakes.service";
-import { MISTAKE_SKILL_LABEL, optionLetter } from "@/lib/mistakes/mistakeView";
+import { MISTAKE_SKILL_LABEL, mistakeSourceTitle, optionLetter } from "@/lib/mistakes/mistakeView";
 
 /**
  * A short review: the learner answers again the questions they got wrong,
@@ -117,7 +117,7 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
         </button>
       </div>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-        {MISTAKE_SKILL_LABEL[item.skill]} · {item.title}
+        {MISTAKE_SKILL_LABEL[item.skill]} · {mistakeSourceTitle(item.skill, item.title, item)}
       </p>
 
       {item.passage && (

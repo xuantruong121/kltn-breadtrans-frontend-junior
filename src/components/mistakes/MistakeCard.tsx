@@ -8,6 +8,7 @@ import {
   MISTAKE_SKILL_LABEL,
   choiceText,
   mistakeRedoLink,
+  mistakeSourceTitle,
   mistakeTagLabel,
   progressLabel,
 } from "@/lib/mistakes/mistakeView";
@@ -56,7 +57,9 @@ export function MistakeCard({
         </span>
       </div>
 
-      <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{detail.title}</p>
+      <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        {mistakeSourceTitle(item.skill, detail.title, detail.ref)}
+      </p>
 
       {detail.kind === "WORD" ? (
         <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">
@@ -80,7 +83,7 @@ export function MistakeCard({
           )}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-900/60 dark:bg-rose-950/20">
-              <p className="text-xs font-bold uppercase tracking-wide text-rose-800 dark:text-rose-300">
+              <p className="text-[13px] font-semibold text-rose-800 dark:text-rose-300">
                 {detail.kind === "CORRECTION" ? "Bạn đã viết" : "Bạn đã trả lời"}
               </p>
               <p className="mt-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -88,7 +91,7 @@ export function MistakeCard({
               </p>
             </div>
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/60 dark:bg-emerald-950/20">
-              <p className="text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
+              <p className="text-[13px] font-semibold text-emerald-800 dark:text-emerald-300">
                 {detail.kind === "CORRECTION" ? "Nên viết" : "Đáp án đúng"}
               </p>
               <p className="mt-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-100">
