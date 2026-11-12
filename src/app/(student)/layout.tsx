@@ -139,7 +139,7 @@ function StudentLayoutContent({
   const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
   const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard", "/arena", "/ranking"].includes(pathname);
   // Result pages use the full width like the catalogs; the page caps itself at 1440 px (owner 2026-11-12).
-  const isResultPage = /^\/(listening|reading|writing|exams)\/submissions\/[^/]+$/.test(pathname);
+  const isResultPage = /^\/(listening|reading|writing|exams)\/submissions\/[^/]+$/.test(pathname) || pathname === "/mistakes";
   const isDiagnosticRoute = pathname === "/diagnostic" || pathname.startsWith("/diagnostic/");
 
   // App Router keeps this shared learner layout mounted across page changes.

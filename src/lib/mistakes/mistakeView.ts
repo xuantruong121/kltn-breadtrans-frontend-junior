@@ -87,3 +87,32 @@ export function mistakeSourceTitle(
   if (typeof ref?.quizId === "number") return quizDisplayTitle(ref.quizId, title);
   return withoutLevelTag(title);
 }
+
+/** The one line a mistake gets in the notebook list. */
+export function mistakeRowLabel(item: Pick<MistakeItem, "detail">): string {
+  const { detail } = item;
+  if (detail.kind === "WORD" && detail.correctAnswer) return detail.correctAnswer;
+  return detail.question?.trim() || detail.correctAnswer?.trim() || detail.title;
+}
+
+export type MistakeGroup = { key: string; title: string; skill: MistakeSkill; items: MistakeItem[] };
+
+/**
+ * The page's mistakes grouped by where they came from, in the order the
+ * server sent them (owner 2026-11-12: one card per mistake meant scrolling
+ * through the same exercise title again and again).
+ */
+export function groupMistakes(items: MistakeItem[]): MistakeGroup[] {
+  const groups = new Map<string, MistakeGroup>();
+  for (const item of items) {
+    const title = mistakeSourceTitle(item.skill, item.detail.title, item.detail.ref);
+    const ref = item.detail.ref ?? {};
+    const source =
+      ref.quizId != null ? `quiz:${ref.quizId}` : ref.topicId != null ? `topic:${ref.topicId}` : `title:${title}`;
+    const key = `${item.skill}|${source}`;
+    const group = groups.get(key) ?? { key, title, skill: item.skill, items: [] };
+    group.items.push(item);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}

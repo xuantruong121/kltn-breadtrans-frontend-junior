@@ -3,7 +3,9 @@ import test from "node:test";
 
 import {
   choiceText,
+  groupMistakes,
   mistakeRedoLink,
+  mistakeRowLabel,
   mistakeSourceTitle,
   mistakeTagLabel,
   parseMistakeSkill,
@@ -69,4 +71,37 @@ test("a mistake shows its source with the catalog's Vietnamese title", () => {
   assert.equal(mistakeSourceTitle("SPEAKING", "Custom set", undefined), "Custom set");
   // A review question passes null for the id it does not have.
   assert.equal(mistakeSourceTitle("READING", "Reading — x", { quizId: 999_999, topicId: null }), "Reading — x");
+});
+
+test("the notebook list groups mistakes by exercise and gives each one line", () => {
+  const item = (id: number, skill: "LISTENING" | "GRAMMAR" | "SPEAKING", detail: Record<string, unknown>) =>
+    ({
+      id,
+      skill,
+      sourceType: "QUIZ_QUESTION",
+      tag: null,
+      wrongCount: 1,
+      correctStreak: 0,
+      firstSeenAt: "2026-11-12",
+      lastSeenAt: "2026-11-12",
+      resolvedAt: null,
+      detail: { kind: "CHOICE", answerable: false, ref: {}, title: "t", ...detail },
+    }) as never;
+  const items = [
+    item(1, "LISTENING", { title: "Listening B2 — Inference & Intent", question: "Why Tuesday?", ref: { quizId: 12 } }),
+    item(2, "GRAMMAR", { title: "Relative clauses", question: "Which?", ref: { topicId: 10 } }),
+    item(3, "LISTENING", { title: "Listening B2 — Inference & Intent", question: "What favor?", ref: { quizId: 12 } }),
+    item(4, "SPEAKING", { kind: "WORD", title: "Set", correctAnswer: "schedule", ref: { exerciseId: 5 } }),
+  ];
+  const groups = groupMistakes(items);
+  assert.deepEqual(
+    groups.map((g) => [g.title, g.items.map((i: { id: number }) => i.id)]),
+    [
+      ["Suy luận ý định người nói", [1, 3]],
+      ["Mệnh đề quan hệ", [2]],
+      ["Set", [4]],
+    ],
+  );
+  assert.equal(mistakeRowLabel(items[0]), "Why Tuesday?");
+  assert.equal(mistakeRowLabel(items[3]), "schedule");
 });
