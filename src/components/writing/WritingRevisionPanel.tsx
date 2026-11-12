@@ -117,7 +117,7 @@ export function WritingRevisionPanel({
 
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+              <tr className="text-left text-[13px] font-semibold text-slate-500 dark:text-slate-400">
                 <th scope="col" className="py-1.5 font-bold">Tiêu chí</th>
                 <th scope="col" className="py-1.5 text-right font-bold">Trước</th>
                 <th scope="col" className="py-1.5 text-right font-bold">Sau</th>
