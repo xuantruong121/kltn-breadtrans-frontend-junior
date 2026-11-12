@@ -4,20 +4,26 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { ArrowRight, Loader2, Trophy, Target, Star, RefreshCw, ListChecks } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
 import { BackButton } from "@/components/ui";
 import Confetti from "react-confetti";
-import { motion } from "framer-motion";
-import {
-  formatReadingExplanation,
-  formatReadingValue,
-  resolveReadingCorrectAnswer,
-} from "@/lib/reading/readingQuizUtils";
-import { readingSubskillLabel } from "@/components/reading/readingTrackingLogic";
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
 import { WritingRevisionPanel } from "@/components/writing/WritingRevisionPanel";
 import { practiceDetailOf } from "@/lib/api/services/writing.service";
+import { ReviewQuestionCard } from "./ReviewQuestionCard";
+import { ReviewSummaryRail } from "./ReviewSummaryRail";
+import {
+  filterRows,
+  questionAnchor,
+  resultKind,
+  resultLabels,
+  resultTitle,
+  reviewButtonLabel,
+  reviewCounts,
+  reviewRows,
+  type RowFilter,
+} from "./submissionReviewLogic";
 
 export default function SubmissionAnalyticsPage(props: {
   params: Promise<{ id: string }>;
@@ -28,6 +34,7 @@ export default function SubmissionAnalyticsPage(props: {
   const submissionId = parseInt(params.id);
 
   const [stoppedConfetti, setStoppedConfetti] = useState(false);
+  const [filter, setFilter] = useState<RowFilter>("all");
   const [windowDimension, setWindowDimension] = useState({
     width: typeof window !== "undefined" ? window.innerWidth : 800,
     height: typeof window !== "undefined" ? window.innerHeight : 600,
@@ -88,7 +95,7 @@ export default function SubmissionAnalyticsPage(props: {
           <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block" />
           <div className="min-w-0">
             <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
-              {analytics.quizTitle}
+              {resultTitle(analytics)}
             </h1>
             <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
               {exercise && exercise.total > 1
@@ -213,297 +220,123 @@ export default function SubmissionAnalyticsPage(props: {
     );
   }
 
-  const isReadingResult = analytics.quizType === "BILINGUAL_READING";
-
-  const wrongQuestionIds = (analytics.results || [])
-    .filter((result: any) => result?.isCorrect !== true)
-    .map((result: any) => Number(result.questionId))
-    .filter(
-      (id: number, index: number, ids: number[]) =>
-        Number.isInteger(id) && id > 0 && ids.indexOf(id) === index,
-    );
-  const isListeningResult = analytics.questions?.some(
-    (question: any) =>
-      question?.type === "DICTATION" ||
-      question?.content?.audioText ||
-      Array.isArray(question?.content?.transcriptSegments),
-  );
+  const kind = resultKind(analytics);
+  const labels = resultLabels(kind);
+  const rows = reviewRows(analytics);
+  const counts = reviewCounts(rows);
+  const visibleRows = filterRows(rows, filter);
+  const wrongQuestionIds = rows
+    .filter((row) => row.status !== "right" && Number.isInteger(row.questionId) && row.questionId > 0)
+    .map((row) => row.questionId);
   const wrongReviewHref =
-    isListeningResult && wrongQuestionIds.length > 0
+    kind === "listening" && wrongQuestionIds.length > 0
       ? `/listening/${analytics.quizId}?review=wrong&questionIds=${wrongQuestionIds.join(",")}`
       : null;
-  const readingMistakesHref =
-    wrongQuestionIds.length > 0 && (isReadingResult || isListeningResult)
-      ? `/mistakes?skill=${isListeningResult ? "listening" : "reading"}`
+  const mistakesHref =
+    wrongQuestionIds.length > 0 && kind !== "exam"
+      ? `/mistakes?skill=${kind === "listening" ? "listening" : "reading"}`
       : null;
-  const practiceCatalogHref = isListeningResult
-    ? "/listening"
-    : isReadingResult
-      ? "/reading"
-      : "/exams";
-  const practiceCatalogLabel = isListeningResult
-    ? "Quay lại danh sách bài luyện nghe"
-    : isReadingResult
-      ? "Quay lại danh sách bài Reading"
-      : "Quay lại danh sách bài thi";
-  const retryHref = isListeningResult
-    ? `/listening/${analytics.quizId}`
-    : isReadingResult
-      ? `/reading/${analytics.quizId}`
-      : `/exams/${analytics.quizId}`;
+  const catalogHref = kind === "listening" ? "/listening" : kind === "reading" ? "/reading" : "/exams";
+  const retryHref = `${catalogHref}/${analytics.quizId}`;
+
+  // A square in the rail jumps to its question, showing every question first if a filter hides it.
+  const jumpTo = (number: number) => {
+    setFilter("all");
+    window.requestAnimationFrame(() =>
+      document.getElementById(questionAnchor(number))?.scrollIntoView({
+        block: "start",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      }),
+    );
+  };
+
+  const filters: { id: RowFilter; label: string; count: number }[] = [
+    { id: "all", label: "Tất cả", count: counts.all },
+    { id: "wrong", label: counts.blank > 0 ? "Chưa đúng" : "Câu sai", count: counts.wrong + counts.blank },
+    { id: "right", label: "Câu đúng", count: counts.right },
+  ];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20 relative">
+    // Full width, edge to edge with the app header (owner 2026-11-12: no empty side margins).
+    <div data-result-page className="relative w-full pb-20">
       {showConfetti && (
-        <Confetti
-          width={windowDimension.width}
-          height={windowDimension.height}
-        />
+        <Confetti width={windowDimension.width} height={windowDimension.height} />
       )}
 
-      {/* TOP HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="flex items-center gap-4">
-          <BackButton
-            href={practiceCatalogHref}
-            label={practiceCatalogLabel}
-          />
-          <div className="h-6 w-0.5 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
-          <div>
-            <h1 className="text-xl font-black text-slate-800 dark:text-slate-100 line-clamp-1">
-              {analytics.quizTitle}
-            </h1>
-            <p className="text-xs font-bold text-slate-600 dark:text-slate-400">
-              Báo cáo kết quả & phân tích chi tiết đáp án
-            </p>
-          </div>
-        </div>
+      {/* Title row: the quiz's Vietnamese title, as in the catalog and the practice room. */}
+      <div className="mb-6">
+        <Link
+          href={catalogHref}
+          className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+        >
+          <ArrowLeft size={16} aria-hidden="true" /> {labels.back}
+        </Link>
+        <h1 className="mt-1 text-2xl font-bold leading-tight text-slate-900 dark:text-slate-100">
+          {resultTitle(analytics)}
+        </h1>
+        <p className="mt-1 text-[15px] text-slate-600 dark:text-slate-400">
+          {labels.skill} · Đúng {analytics.totalCorrect}/{analytics.totalQuestions} câu ({analytics.overallAccuracyPercent}%)
+        </p>
       </div>
 
-      {/* 2-COLUMN MAIN LAYOUT */}
-      <div className="grid grid-cols-12 gap-6 items-start">
-        {/* LEFT COLUMN: QUESTION BREAKDOWN */}
-        <div className="col-span-12 lg:col-span-8 space-y-4">
-          <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <ListChecks size={20} strokeWidth={1.75} aria-hidden="true" /> Chi Tiết Từng Câu Hỏi
-            </h2>
-
-            <div className="flex flex-col gap-4">
-              {analytics.questions?.map((q: any, idx: number) => {
-                const result = analytics.results?.find(
-                  (r: any) => Number(r.questionId) === Number(q.id),
-                );
-                const isCorrect = result?.isCorrect === true;
-                const correctAnswer = resolveReadingCorrectAnswer(q.content);
-                const explanation = formatReadingExplanation(q.content);
-
-                return (
-                  <motion.div
-                    key={q.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className={`p-5 rounded-2xl border-2 transition-all ${
-                      isCorrect
-                        ? "bg-emerald-50/40 dark:bg-emerald-950/25 border-emerald-200 dark:border-emerald-900/50"
-                        : "bg-rose-50/40 dark:bg-rose-950/25 border-rose-200 dark:border-rose-900/50"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
-                          isCorrect
-                            ? "bg-emerald-500 text-white"
-                            : "bg-rose-500 text-white"
-                        }`}
-                      >
-                        {idx + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-3 break-words">
-                          {q.content?.text ||
-                            "Nghe đoạn âm thanh và điền câu trả lời:"}
-                        </h3>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                          <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase block mb-1">
-                              Bạn đã trả lời:
-                            </span>
-                            <span
-                              className={`font-bold text-sm break-words block ${isCorrect ? "text-emerald-700 dark:text-emerald-300" : "text-rose-700 dark:text-rose-400 line-through"}`}
-                            >
-                              {formatReadingValue(result?.answer)}
-                            </span>
-                          </div>
-                          <div className="p-3 bg-white dark:bg-slate-850 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span className="text-xs font-black text-sky-700 dark:text-sky-400 uppercase block mb-1">
-                              Đáp án chuẩn:
-                            </span>
-                            <span className="font-bold text-sm text-sky-800 dark:text-sky-200 break-words block">
-                              {correctAnswer.available
-                                ? correctAnswer.answer
-                                : "Đáp án chuẩn chưa khả dụng"}
-                            </span>
-                            {q.content?.translation && (
-                              <span className="block mt-1.5 text-xs text-slate-600 dark:text-slate-400 italic break-words">
-                                Dịch: {q.content.translation}
-                              </span>
-                            )}
-                            {isReadingResult &&
-                              (q.content?.questionType ||
-                                q.content?.microSkill) && (
-                                <span className="mt-2 inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-black text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                  Kỹ năng:{" "}
-                                  {readingSubskillLabel(
-                                    q.content.questionType ||
-                                      q.content.microSkill,
-                                  )}
-                                </span>
-                              )}
-                            {explanation && (
-                              <span className="block mt-2 text-xs text-slate-600 dark:text-slate-300 whitespace-pre-line break-words">
-                                Giải thích: {explanation}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })}
+      {/* Questions on the left, the score and next steps in a sticky rail on the right. */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="order-2 min-w-0 lg:order-1">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Đáp án từng câu</h2>
+            <div
+              role="group"
+              aria-label="Lọc câu hỏi"
+              className="inline-flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800"
+            >
+              {filters.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={filter === item.id}
+                  onClick={() => setFilter(item.id)}
+                  className={`min-h-9 rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${
+                    filter === item.id
+                      ? "bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                  }`}
+                >
+                  {item.label}
+                  <span className="ml-1.5 tabular-nums text-slate-500 dark:text-slate-400">{item.count}</span>
+                </button>
+              ))}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-4">
+            {visibleRows.length === 0 ? (
+              <p className="rounded-xl border border-slate-200 bg-white p-6 text-base text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                {filter === "wrong" ? "Bạn trả lời đúng mọi câu trong lượt này." : "Chưa có câu đúng trong lượt này."}
+              </p>
+            ) : (
+              visibleRows.map((row) => (
+                <ReviewQuestionCard key={row.questionId} row={row} evidenceLabel={labels.evidence} />
+              ))
+            )}
           </div>
         </div>
 
-        {/* RIGHT COLUMN: SCORE OVERVIEW & ACTIONS */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          {/* Score Summary Card */}
-          <motion.div
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm text-center relative overflow-hidden space-y-4"
-          >
-            <div className="absolute -top-4 -right-4 text-amber-100 dark:text-amber-900/30 opacity-60 pointer-events-none">
-              <Trophy size={130} />
-            </div>
-
-            <div className="w-16 h-16 bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
-              <Trophy size={32} />
-            </div>
-
-            <div>
-              <h2 className="text-xl font-black text-slate-800 dark:text-slate-100">
-                Tổng Điểm Của Bạn
-              </h2>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
-                {analytics.totalQuestions > 0 &&
-                analytics.totalCorrect === analytics.totalQuestions
-                  ? "Bạn trả lời đúng tất cả các câu"
-                  : "Xem lại các câu sai ở danh sách bên cạnh"}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="p-4 bg-sky-50 dark:bg-sky-950/40 rounded-2xl border border-sky-200 dark:border-sky-900/50 flex flex-col items-center">
-                <Target
-                  className="text-sky-600 dark:text-sky-400 mb-1"
-                  size={24}
-                />
-                <span className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase">
-                  Câu đúng
-                </span>
-                <span className="text-2xl font-black text-sky-700 dark:text-sky-300">
-                  {analytics.totalCorrect}{" "}
-                  <span className="text-sm text-sky-400 dark:text-sky-500">
-                    /{analytics.totalQuestions}
-                  </span>
-                </span>
-              </div>
-
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl border border-emerald-200 dark:border-emerald-900/50 flex flex-col items-center">
-                <Star
-                  className="text-emerald-500 dark:text-emerald-400 mb-1"
-                  size={24}
-                />
-                <span className="text-xs font-black text-slate-600 dark:text-slate-400 uppercase">
-                  Chính xác
-                </span>
-                <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400">
-                  {analytics.overallAccuracyPercent}%
-                </span>
-              </div>
-            </div>
-
-            {isReadingResult && analytics.categoriesBreakdown.length > 0 && (
-              <div className="pt-3 text-left">
-                <p className="text-xs font-black uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                  Kỹ năng con
-                </p>
-                <div className="mt-2 space-y-2">
-                  {analytics.categoriesBreakdown.map((category) => (
-                    <div
-                      key={category.category}
-                      className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 px-3 py-2"
-                    >
-                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                        {readingSubskillLabel(category.category)}
-                      </span>
-                      <span className="text-xs font-black text-emerald-700 dark:text-emerald-300">
-                        {category.correct}/{category.total} ·{" "}
-                        {category.accuracyPercent}%
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="pt-2 flex flex-col gap-2">
-              {wrongReviewHref && (
-                <Link href={wrongReviewHref} className="w-full">
-                  <button className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
-                    <Target size={18} /> Ôn lại {wrongQuestionIds.length} câu
-                    sai
-                  </button>
-                </Link>
-              )}
-              {readingMistakesHref && (
-                <Link href={readingMistakesHref} className="w-full">
-                  <button className="w-full flex items-center justify-center gap-2 border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/50 font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm">
-                    <Target size={18} /> Xem trong sổ lỗi
-                  </button>
-                </Link>
-              )}
-              <button
-                onClick={() => router.push(retryHref)}
-                className="w-full flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-black py-3 px-4 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer text-sm"
-              >
-                <RefreshCw size={18} /> Làm lại bài thi này
-              </button>
-              <Link href={practiceCatalogHref} className="w-full">
-                <button className="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3 px-4 rounded-xl transition-all cursor-pointer text-xs">
-                  {isListeningResult
-                    ? "Chọn bài luyện nghe khác"
-                    : "Chọn bài tập khác"}
-                </button>
-              </Link>
-            </div>
-          </motion.div>
-
-          {isListeningResult && (
-            <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 dark:border-sky-900/50 dark:bg-sky-950/30">
-              <p className="text-sm font-black text-sky-950 dark:text-sky-100">
-                Tiến độ đã được ghi nhận
-              </p>
-              <p className="mt-1 text-xs font-semibold leading-relaxed text-sky-800 dark:text-sky-300">
-                Các chỉ số luyện nghe và kế hoạch hôm nay sẽ được làm mới theo
-                kết quả máy chủ.
-              </p>
-            </div>
-          )}
+        <div className="order-1 lg:order-2">
+          <ReviewSummaryRail
+            rows={rows}
+            correct={analytics.totalCorrect}
+            total={analytics.totalQuestions}
+            accuracyPercent={analytics.overallAccuracyPercent}
+            breakdown={kind === "reading" ? analytics.categoriesBreakdown ?? [] : []}
+            wrongReviewHref={wrongReviewHref}
+            reviewLabel={reviewButtonLabel(counts)}
+            mistakesHref={mistakesHref}
+            retryHref={retryHref}
+            otherHref={catalogHref}
+            otherLabel={labels.other}
+            savedNote={labels.savedNote}
+            onJump={jumpTo}
+          />
         </div>
       </div>
     </div>
