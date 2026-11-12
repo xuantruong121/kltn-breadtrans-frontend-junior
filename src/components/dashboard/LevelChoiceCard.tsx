@@ -52,7 +52,7 @@ export function LevelChoiceCard({ profile }: { profile: LearnerProfile | undefin
             href="/diagnostic"
             className="inline-flex min-h-11 items-center gap-1.5 text-sm font-bold text-blue-700 hover:text-blue-900 dark:text-blue-300"
           >
-            Làm bài kiểm tra để xếp mức từng kỹ năng
+            Làm bài đánh giá để xếp mức từng kỹ năng
             <ArrowRight size={16} aria-hidden="true" />
           </Link>
         )}

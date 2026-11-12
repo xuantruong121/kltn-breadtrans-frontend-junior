@@ -81,7 +81,7 @@ const WORD_RULES: WordRule[] = [
   // Owner 2026-11-12: the report and the app say "thú ảo".
   { name: "pet", wrong: /[Tt]hú cưng/, right: "thú ảo" },
   // The report's term (owner rule): "bài đánh giá đầu vào".
-  { name: "diagnostic", wrong: /[Kk]iểm tra đầu vào|Entry Diagnostic/, right: "bài đánh giá đầu vào" },
+  { name: "diagnostic", wrong: /[Kk]iểm tra đầu vào|kiểm tra để xếp mức|Entry Diagnostic/, right: "bài đánh giá đầu vào" },
   { name: "help", wrong: /^\s*FAQ\s*$|Trung tâm trợ giúp/, right: "Trợ giúp" },
   { name: "English unit", wrong: /\b24h\b|\bBoost\b/, right: "24 giờ" },
   {
