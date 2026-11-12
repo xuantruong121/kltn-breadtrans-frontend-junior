@@ -1236,7 +1236,6 @@ export function ListeningComprehensionWorkspace({
       <PracticeHeader
         title={quizDisplayTitle(quiz.id, quiz.title)}
         difficulty={reviewOnly ? "ÔN CÂU SAI" : levelTag}
-        positionText={`Câu ${currentIndex + 1} / ${questions.length}`}
         onExit={() => confirmExit(returnTo)}
         exitLabel="Thoát"
         bilingualEnabled
@@ -2150,11 +2149,13 @@ export function ListeningComprehensionWorkspace({
             onClick={() => setShowMatrixPopover((v) => !v)}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-700/60 transition cursor-pointer text-sm shadow-2xs"
             title="Danh sách câu hỏi"
+            aria-label={`Câu ${currentIndex + 1} trên ${questions.length}. Mở danh sách câu hỏi`}
             aria-expanded={showMatrixPopover}
           >
-            <LayoutGrid size={16} className="text-slate-500 dark:text-slate-400" />
-            <span className="hidden sm:inline">
-              {Object.keys(checkResults).length}/{questions.length}
+            <LayoutGrid size={16} className="hidden sm:block text-slate-500 dark:text-slate-400" aria-hidden="true" />
+            {/* The one question counter on this screen (owner 2026-11-12: the header no longer repeats it). */}
+            <span className="whitespace-nowrap tabular-nums">
+              {currentIndex + 1}/{questions.length}
             </span>
           </button>
 
@@ -2163,8 +2164,8 @@ export function ListeningComprehensionWorkspace({
             <div className="absolute right-0 sm:right-36 bottom-full mb-3 w-72 sm:w-80 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl z-50 animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-3">
                 <span className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                  Bảng câu hỏi ({Object.keys(checkResults).length}/
-                  {questions.length})
+                  Bảng câu hỏi · Đã làm {Object.keys(checkResults).length}/
+                  {questions.length}
                 </span>
                 <button
                   type="button"
@@ -2239,7 +2240,7 @@ export function ListeningComprehensionWorkspace({
                 type="button"
                 onClick={handleSkipQuestion}
                 disabled={isChecking}
-                className="min-h-11 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 disabled:opacity-50"
+                className="min-h-11 shrink-0 whitespace-nowrap rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 disabled:opacity-50"
               >
                 Bỏ qua
               </button>

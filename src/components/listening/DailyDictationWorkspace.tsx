@@ -1258,7 +1258,6 @@ export function DailyDictationWorkspace({
       <PracticeHeader
         title={quizDisplayTitle(quiz.id, quiz.title)}
         difficulty={reviewOnly ? "ÔN CÂU SAI" : vocabLevel}
-        positionText={`Câu ${currentIndex + 1} / ${questions.length}`}
         onExit={() => onExit("/listening")}
         exitLabel="Thoát"
         bilingualEnabled

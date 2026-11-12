@@ -494,6 +494,9 @@ test("Layout: the action dock with Câu tiếp theo always stays on screen", () 
   // The page is one screen tall on desktop, so each panel scrolls on its own.
   assert.ok(content.includes("min-h-dvh lg:h-dvh lg:overflow-hidden"));
   assert.ok(content.includes('<footer className="sticky bottom-0'));
+  // One question counter (owner 2026-11-12): the dock button shows the current question, the header none.
+  assert.equal(content.includes("positionText="), false);
+  assert.ok(content.includes("{currentIndex + 1}/{questions.length}"));
   // The explanation is brought into view once the answer is checked.
   assert.ok(content.includes("explanationRef.current?.scrollIntoView"));
   // On a phone the next button keeps one line and its full name for screen readers.
@@ -550,7 +553,9 @@ test("Header integration: DailyDictationWorkspace uses standardized PracticeHead
   // 2. Must wire required props
   // The header shows the Vietnamese display title of the same quiz.
   assert.ok(content.includes("title={quizDisplayTitle(quiz.id, quiz.title)}"));
-  assert.ok(content.includes("positionText={`Câu ${currentIndex + 1} / ${questions.length}`}"));
+  // One question counter per screen (owner 2026-11-12): the dictation body already shows it beside its arrows.
+  assert.equal(content.includes("positionText="), false);
+  assert.ok(content.includes("Câu {currentIndex + 1} / {questions.length}"));
   assert.ok(content.includes('onExit={() => onExit("/listening")}'));
   assert.ok(content.includes("bilingualEnabled"));
   assert.ok(content.includes("notesEnabled"));
