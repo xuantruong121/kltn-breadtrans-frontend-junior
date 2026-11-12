@@ -139,6 +139,14 @@ assertInvariant(
 );
 
 assertInvariant(
+  "FloatingCompanionPet: on a phone the pet speaks in its panel (dot on the avatar, line at the top of the panel)",
+  petCode.includes("data-pet-nudge") &&
+  petCode.includes("showNudgeDot") &&
+  petCode.includes("petLineShown("),
+  "The bubble stays hidden under 640px; a new line shows a dot on the pet and sits at the top of the panel when it is opened."
+);
+
+assertInvariant(
   "FloatingCompanionPet: Safe-area aware positioning clears bottom nav",
   petCode.includes("bottom-[calc(4.5rem+env(safe-area-inset-bottom))]"),
   "Positioned safely above mobile bottom nav with safe-area-inset-bottom support."

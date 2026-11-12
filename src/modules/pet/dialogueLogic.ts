@@ -142,6 +142,17 @@ export function pickNudge(nudges: PetNudge[], seen: readonly string[]): PetNudge
   return nudges.find((n) => !seen.includes(n.key)) ?? null;
 }
 
+/**
+ * Whether the learner can see what the pet says right now, so that it may be
+ * counted as said today. On a wide screen the line is in the speech bubble or
+ * in the open panel while the pet is on screen; on a phone the bubble is not
+ * shown, so the line is seen only in the open panel.
+ */
+export function petLineShown(input: { wideScreen: boolean; petOnScreen: boolean; panelOpen: boolean }): boolean {
+  if (!input.petOnScreen) return false;
+  return input.wideScreen || input.panelOpen;
+}
+
 /** localStorage key holding what the pet has already said today. */
 export const NUDGES_SEEN_KEY = "breadtrans.pet.nudges";
 

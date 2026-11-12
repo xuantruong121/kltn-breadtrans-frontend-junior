@@ -23,6 +23,9 @@ import { gamificationService } from "@/lib/api/services/gamification.service";
 import { TutorEntryButton, useTutorUnreadCount } from "./TutorEntryButton";
 import { useCompanionPetRuntime } from "../useCompanionPetRuntime";
 import { usePetDialogue } from "../usePetDialogue";
+import { petLineShown } from "../dialogueLogic";
+import { PetNudgeContent } from "./PetNudgeContent";
+import { useWideScreen } from "../useWideScreen";
 import { PetSpeechBubble } from "./PetSpeechBubble";
 import {
   getPetVisualState,
@@ -91,15 +94,18 @@ const FloatingCompanionPetInner: React.FC = () => {
   const feedCost = pet?.feedCost ?? 10;
 
   const { streak } = useGamificationStore();
+  const wideScreen = useWideScreen();
   const todayQuests = useMemo(() => today?.quests ?? [], [today?.quests]);
   const {
     dialogue,
     isVisible: isDialogueVisible,
+    isNew: isDialogueNew,
     dismiss: dismissDialogue,
   } = usePetDialogue({
-    // Only while the pet is on screen: a line counts as said once the learner
-    // could see it, not on a page where the pet is hidden.
-    ready: !isLoading && Boolean(pet) && Boolean(today) && !isFocusMode && !isTutorOpen && !isExpanded,
+    ready: !isLoading && Boolean(pet) && Boolean(today),
+    // A line counts as said once the learner could see it: in the bubble on a
+    // wide screen, in the open panel on a phone; never while the pet is hidden.
+    shown: petLineShown({ wideScreen, petOnScreen: !isFocusMode && !isTutorOpen, panelOpen: isExpanded }),
     userId: user?.id,
     dateKey: today?.dateKey,
     petName: petDisplayName,
@@ -111,6 +117,9 @@ const FloatingCompanionPetInner: React.FC = () => {
     activitiesCount: today?.activities?.length ?? 0,
     quests: todayQuests,
   });
+
+  // On a phone the bubble is not shown: a dot says the pet has something new.
+  const showNudgeDot = !wideScreen && isDialogueNew && !isExpanded;
 
   // The avatar bounces when tapped.
   const [isBouncing, setIsBouncing] = useState(false);
@@ -298,6 +307,21 @@ const FloatingCompanionPetInner: React.FC = () => {
               <X size={16} aria-hidden="true" />
             </button>
           </div>
+
+          {/* What the pet has to say, on every screen size (on a phone this is the only place). */}
+          {dialogue && (
+            <section
+              aria-labelledby="floating-pet-nudge-title"
+              data-pet-nudge={dialogue.kind}
+              className="mb-3.5 rounded-xl border border-amber-200 bg-amber-50/80 p-3.5 dark:border-amber-800/60 dark:bg-amber-950/30"
+            >
+              <h4 id="floating-pet-nudge-title" className="mb-1 text-sm font-bold text-amber-900 dark:text-amber-300">
+                {dialogue.header}
+              </h4>
+              {/* No onFeed: the feed button is already at the foot of this panel. */}
+              <PetNudgeContent dialogue={dialogue} onAction={() => setIsExpanded(false)} />
+            </section>
+          )}
 
           {/* Level Progress & Stats Meters */}
           <div className="space-y-3 bg-slate-50/70 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60 mb-3.5">
@@ -491,7 +515,7 @@ const FloatingCompanionPetInner: React.FC = () => {
         aria-expanded={isExpanded}
         aria-label={`Thú cưng đồng hành ${petName}, cấp ${level}.${
           unreadMessageCount > 0 ? ` ${unreadMessageCount} tin nhắn chưa đọc.` : ""
-        } Nhấn để mở bảng tình trạng thú cưng.`}
+        }${showNudgeDot ? " Có lời nhắn mới." : ""} Nhấn để mở bảng tình trạng thú cưng.`}
         className="relative size-12 sm:size-14 rounded-full bg-card dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 shadow-md hover:shadow-lg hover:border-amber-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none group"
       >
         <CompanionPet2D speciesId={speciesId} state={visualEmotion} level={level} size="sm" />
@@ -504,8 +528,9 @@ const FloatingCompanionPetInner: React.FC = () => {
           >
             {unreadMessageCount > 99 ? "99+" : unreadMessageCount}
           </span>
-        ) : recommendation && (
+        ) : (wideScreen ? recommendation : showNudgeDot) && (
           <span
+            data-pet-dot={wideScreen ? "quest" : "nudge"}
             className="absolute -top-1 -right-1 size-4 bg-amber-500 border-2 border-white dark:border-slate-900 rounded-full flex items-center justify-center animate-pulse"
             aria-hidden="true"
           />

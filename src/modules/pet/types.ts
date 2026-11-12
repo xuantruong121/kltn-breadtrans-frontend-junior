@@ -5,7 +5,6 @@ export interface PetSpecies {
   title: string;
   element: string;
   elementColor: string;
-  icon: string;
   buff: string;
   buffDetail: string;
   lore: string;
@@ -18,10 +17,10 @@ export interface PetSpecies {
     text: string;
   };
   stages: {
-    stage1: { name: string; minLevel: number; icon: string; desc: string };
-    stage2: { name: string; minLevel: number; icon: string; desc: string };
-    stage3: { name: string; minLevel: number; icon: string; desc: string };
-    stage4: { name: string; minLevel: number; icon: string; desc: string };
+    stage1: { name: string; minLevel: number; desc: string };
+    stage2: { name: string; minLevel: number; desc: string };
+    stage3: { name: string; minLevel: number; desc: string };
+    stage4: { name: string; minLevel: number; desc: string };
   };
 }
 
@@ -33,7 +32,6 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     title: "Chiến Binh Bánh Mì",
     element: "Hệ Chiến Binh",
     elementColor: "bg-amber-100 text-amber-900 border-amber-300",
-    icon: "🥖",
     buff: "Tinh thần chiến đấu",
     buffDetail: "Luôn cổ vũ bạn kiên trì trong các bài luyện tập và thử thách.",
     lore: "Chú bánh mì dũng cảm luôn mang theo thanh kiếm Baguette sắc bén, sẵn sàng cổ vũ bạn vượt qua mọi thử thách ngữ pháp và bài thi khó!",
@@ -46,10 +44,10 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
       text: "text-amber-950",
     },
     stages: {
-      stage1: { name: "Bánh Mì Con", minLevel: 1, icon: "🍞", desc: "Bánh mì gối đáng yêu" },
-      stage2: { name: "Bánh Sừng Bò Hiệp Sĩ", minLevel: 4, icon: "🥐🛡️", desc: "Bánh sừng bò mang khiên giáp" },
-      stage3: { name: "Đại Hiệp Sĩ Baguette", minLevel: 7, icon: "🥖⚔️", desc: "Bánh mì que vung kiếm dũng mãnh" },
-      stage4: { name: "Vua Bánh Mì Hoàng Kim", minLevel: 10, icon: "🍞👑", desc: "Thống soái tối thượng hoàng kim" },
+      stage1: { name: "Bánh Mì Con", minLevel: 1, desc: "Bánh mì gối đáng yêu" },
+      stage2: { name: "Bánh Sừng Bò Hiệp Sĩ", minLevel: 4, desc: "Bánh sừng bò mang khiên giáp" },
+      stage3: { name: "Đại Hiệp Sĩ Baguette", minLevel: 7, desc: "Bánh mì que vung kiếm dũng mãnh" },
+      stage4: { name: "Vua Bánh Mì Hoàng Kim", minLevel: 10, desc: "Thống soái tối thượng hoàng kim" },
     },
   },
   {
@@ -59,7 +57,6 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     title: "Học Giả Phép Thuật",
     element: "Hệ Học Thuật",
     elementColor: "bg-purple-100 text-purple-900 border-purple-300",
-    icon: "🦉",
     buff: "Tinh thần học thuật",
     buffDetail: "Khuyến khích bạn ôn lại kiến thức và hoàn thành bài kiểm tra cẩn thận.",
     lore: "Cú mèo thông thái với cuốn từ điển cổ thư ma thuật, luôn sẵn sàng nhắc nhở bạn những mẹo ghi nhớ từ vựng và cấu trúc ngữ pháp đỉnh cao.",
@@ -72,10 +69,10 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
       text: "text-purple-950",
     },
     stages: {
-      stage1: { name: "Cú Non Mộng Mơ", minLevel: 1, icon: "🐣", desc: "Cú con tập đọc từ điển" },
-      stage2: { name: "Cú Học Giả Đeo Kính", minLevel: 4, icon: "🦉👓", desc: "Cú mèo đeo kính thông thái" },
-      stage3: { name: "Cú Cử Nhân Thông Thái", minLevel: 7, icon: "🦉🎓", desc: "Cú mèo đội mũ cử nhân & ôm sách" },
-      stage4: { name: "Đại Hiền Triết Cú Mèo", minLevel: 10, icon: "🦉👑", desc: "Cú mèo tinh tú vĩnh hằng" },
+      stage1: { name: "Cú Non Mộng Mơ", minLevel: 1, desc: "Cú con tập đọc từ điển" },
+      stage2: { name: "Cú Học Giả Đeo Kính", minLevel: 4, desc: "Cú mèo đeo kính thông thái" },
+      stage3: { name: "Cú Cử Nhân Thông Thái", minLevel: 7, desc: "Cú mèo đội mũ cử nhân & ôm sách" },
+      stage4: { name: "Đại Hiền Triết Cú Mèo", minLevel: 10, desc: "Cú mèo tinh tú vĩnh hằng" },
     },
   },
   {
@@ -85,7 +82,6 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     title: "Mèo Giao Tiếp Đáng Yêu",
     element: "Hệ Giao Tiếp",
     elementColor: "bg-rose-100 text-rose-900 border-rose-300",
-    icon: "🐱",
     buff: "Người bạn đồng hành",
     buffDetail: "Nhắc bạn duy trì thói quen học tập đều đặn mỗi ngày.",
     lore: "Cô mèo bánh cá nhỏ nhắn từ Nhật Bản với chiếc nón bánh cá giòn rụm, cực kỳ yêu thích những bạn học sinh siêng năng luyện phát âm chuẩn xác!",
@@ -98,10 +94,10 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
       text: "text-rose-950",
     },
     stages: {
-      stage1: { name: "Mèo Bánh Cá Bé", minLevel: 1, icon: "🐱", desc: "Mèo con ngây thơ" },
-      stage2: { name: "Mèo Nơ Hồng Sành Điệu", minLevel: 4, icon: "😻🎀", desc: "Mèo cài nơ hồng lấp lánh" },
-      stage3: { name: "Mèo Thiên Thần Taiyaki", minLevel: 7, icon: "😽🪽", desc: "Mèo thiên sứ có cánh thiên thần" },
-      stage4: { name: "Nữ Hoàng Mèo Taiyaki", minLevel: 10, icon: "🐱👑", desc: "Mèo vương miện phước lành" },
+      stage1: { name: "Mèo Bánh Cá Bé", minLevel: 1, desc: "Mèo con ngây thơ" },
+      stage2: { name: "Mèo Nơ Hồng Sành Điệu", minLevel: 4, desc: "Mèo cài nơ hồng lấp lánh" },
+      stage3: { name: "Mèo Thiên Thần Taiyaki", minLevel: 7, desc: "Mèo thiên sứ có cánh thiên thần" },
+      stage4: { name: "Nữ Hoàng Mèo Taiyaki", minLevel: 10, desc: "Mèo vương miện phước lành" },
     },
   },
   {
@@ -111,7 +107,6 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
     title: "Ngôi Sao Âm Nhạc & Phim",
     element: "Hệ Giải Trí",
     elementColor: "bg-sky-100 text-sky-900 border-sky-300",
-    icon: "🦊",
     buff: "Cảm hứng nghe hiểu",
     buffDetail: "Khuyến khích bạn luyện nghe qua các nội dung gần gũi và giàu ngữ cảnh.",
     lore: "Cáo Foxy cực chất với chiếc tai nghe Gaming RGB, đam mê những giai điệu tiếng Anh sôi động và các bộ phim bom tấn đỉnh cao.",
@@ -124,10 +119,10 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
       text: "text-sky-950",
     },
     stages: {
-      stage1: { name: "Cáo Nhí Đeo Tai Nghe", minLevel: 1, icon: "🦊", desc: "Cáo con tinh nghịch" },
-      stage2: { name: "Cáo DJ Kính Râm", minLevel: 4, icon: "🦊🎧", desc: "Cáo đeo tai nghe nhún nhảy" },
-      stage3: { name: "Cáo Ngôi Sao Sân Khấu", minLevel: 7, icon: "🦊🎤", desc: "Cáo cầm mic vàng hào quang" },
-      stage4: { name: "Huyền Thoại Cáo Âm Nhạc", minLevel: 10, icon: "🦊🌟", desc: "Siêu sao cáo toàn cầu rực rỡ" },
+      stage1: { name: "Cáo Nhí Đeo Tai Nghe", minLevel: 1, desc: "Cáo con tinh nghịch" },
+      stage2: { name: "Cáo DJ Kính Râm", minLevel: 4, desc: "Cáo đeo tai nghe nhún nhảy" },
+      stage3: { name: "Cáo Ngôi Sao Sân Khấu", minLevel: 7, desc: "Cáo cầm mic vàng hào quang" },
+      stage4: { name: "Huyền Thoại Cáo Âm Nhạc", minLevel: 10, desc: "Siêu sao cáo toàn cầu rực rỡ" },
     },
   },
 ];

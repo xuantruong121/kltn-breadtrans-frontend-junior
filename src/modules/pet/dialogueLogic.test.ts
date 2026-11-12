@@ -10,6 +10,7 @@ import {
   STREAK_REMINDER_HOUR,
   type PetNudgeInput,
   hungerLine,
+  petLineShown,
 } from "./dialogueLogic.ts";
 
 const quest = (title: string, isCompleted: boolean) => ({
@@ -137,4 +138,14 @@ test("the pet's own card says it is hungry, and only then", () => {
   assert.equal(broke?.veryHungry, true);
   assert.equal(broke?.short, 16);
   assert.match(broke?.text ?? "", /Cậu còn thiếu 16 Bánh Mì/);
+});
+
+test("a line counts as seen only where the learner can see it", () => {
+  // Wide screen: the bubble shows it whenever the pet is on screen.
+  assert.equal(petLineShown({ wideScreen: true, petOnScreen: true, panelOpen: false }), true);
+  // Phone: no bubble, so only the open panel shows it.
+  assert.equal(petLineShown({ wideScreen: false, petOnScreen: true, panelOpen: false }), false);
+  assert.equal(petLineShown({ wideScreen: false, petOnScreen: true, panelOpen: true }), true);
+  // A hidden pet (practice room, tutor open) shows nothing.
+  assert.equal(petLineShown({ wideScreen: true, petOnScreen: false, panelOpen: true }), false);
 });
