@@ -78,7 +78,7 @@ const FAQ_LIST = [
   },
   {
     q: "Bánh Mì dùng để làm gì?",
-    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài kiểm tra đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú cưng ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, khiên giữ chuỗi và một số quà tặng.",
+    a: "Bánh Mì là điểm thưởng nhận được khi hoàn thành bài luyện và nhiệm vụ; lần đầu hoàn thành bài kiểm tra đầu vào được thưởng 50 Bánh Mì (tính trong giới hạn thưởng mỗi ngày). Bạn dùng Bánh Mì để cho thú ảo ăn hoặc đổi vật phẩm trong Cửa hàng, ví dụ khung avatar, khiên giữ chuỗi và một số quà tặng.",
   },
   {
     q: "Tôi có học được trên điện thoại không?",
@@ -424,7 +424,7 @@ export default function PublicLandingPage() {
                 >
                   <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
                   <p className="text-xs font-black text-slate-800 dark:text-slate-100">
-                    Thú cưng: <span className="text-amber-700 dark:text-amber-400 font-extrabold">Cấp 5 (No bụng)</span>
+                    Thú ảo: <span className="text-amber-700 dark:text-amber-400 font-extrabold">Cấp 5 (No bụng)</span>
                   </p>
                 </div>
               </div>
@@ -448,7 +448,7 @@ export default function PublicLandingPage() {
           </h2>
           <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 leading-relaxed max-w-2xl text-pretty">
             Luyện từng kỹ năng với phản hồi tự động, luyện đề theo cấu trúc TOEIC,
-            và giữ thói quen học bằng Bánh Mì, thú cưng và bảng xếp hạng.
+            và giữ thói quen học bằng Bánh Mì, thú ảo và bảng xếp hạng.
           </p>
         </div>
 
@@ -607,10 +607,10 @@ export default function PublicLandingPage() {
               </div>
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">
-                  Hệ Thống Gamification &amp; Thú Cưng Học Tập (Pet Companion)
+                  Hệ Thống Gamification &amp; Thú Ảo Học Tập (Pet Companion)
                 </h3>
                 <p className="text-sm sm:text-base font-semibold text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
-                  Hoàn thành bài luyện để nhận Bánh Mì, dùng Bánh Mì cho thú cưng ăn để thú cưng lên cấp,
+                  Hoàn thành bài luyện để nhận Bánh Mì, dùng Bánh Mì cho thú ảo ăn để thú ảo lên cấp,
                   hoặc đổi vật phẩm trong Cửa hàng. Điểm tích lũy được xếp hạng theo tuần.
                 </p>
               </div>

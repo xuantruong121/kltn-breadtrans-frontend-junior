@@ -1359,7 +1359,7 @@ export default function DashboardPage() {
       <TodayPlanCard enabled={enabled && Boolean(learnerProfile?.onboarded)} />
 
       {/* ========================================================================= */}
-      {/* 3. DAILY FOCUS BENTO HUB (Nhiệm Vụ 2 Cols + Thú Cưng 1 Col)              */}
+      {/* 3. DAILY FOCUS BENTO HUB (Nhiệm Vụ 2 Cols + Thú Ảo 1 Col)              */}
       {/* ========================================================================= */}
       <section className="grid gap-6 lg:grid-cols-3" aria-labelledby="today-quests-heading">
         {/* Left Column: Today's Quests List (2 Cols) */}

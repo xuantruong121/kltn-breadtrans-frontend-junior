@@ -109,11 +109,11 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               type="button"
               onClick={onChangeSpecies}
               disabled={isChangingSpecies}
-              aria-label="Đổi sang loài thú cưng khác"
+              aria-label="Đổi sang loài thú ảo khác"
               className="inline-flex min-h-[44px] items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
             >
               <RefreshCw size={14} className={isChangingSpecies ? "animate-spin" : ""} aria-hidden="true" />
-              <span>Đổi thú cưng</span>
+              <span>Đổi thú ảo</span>
             </button>
           </div>
 
@@ -160,7 +160,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               aria-valuenow={expPercentage}
               aria-valuemin={0}
               aria-valuemax={100}
-              aria-label="Tiến trình kinh nghiệm thú cưng"
+              aria-label="Tiến trình kinh nghiệm thú ảo"
             >
               <div
                 className="h-full rounded-full bg-amber-500 transition-all duration-300 motion-reduce:transition-none"
@@ -199,7 +199,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                   aria-valuenow={health}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label="Sức khỏe thú cưng"
+                  aria-label="Sức khỏe thú ảo"
                 >
                   <div
                     className="h-full rounded-full bg-rose-500 transition-all duration-300 motion-reduce:transition-none"
@@ -208,8 +208,8 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {health >= 70
-                    ? "Thú cưng tràn đầy năng lượng sẵn sàng học tập."
-                    : "Sức khỏe đang thấp; hãy duy trì việc học và theo dõi trạng thái thú cưng."}
+                    ? "Thú ảo tràn đầy năng lượng sẵn sàng học tập."
+                    : "Sức khỏe đang thấp; hãy duy trì việc học và theo dõi trạng thái thú ảo."}
                 </p>
               </div>
 
@@ -228,7 +228,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                   aria-valuenow={happiness}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label="Độ vui vẻ thú cưng"
+                  aria-label="Độ vui vẻ thú ảo"
                 >
                   <div
                     className="h-full rounded-full bg-amber-500 transition-all duration-300 motion-reduce:transition-none"
@@ -238,7 +238,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {happiness >= 70
                     ? "Tâm trạng rất phấn khởi, sẵn sàng đồng hành cùng bạn."
-                    : "Tâm trạng đang thấp; hãy quay lại tương tác cùng thú cưng sau."}
+                    : "Tâm trạng đang thấp; hãy quay lại tương tác cùng thú ảo sau."}
                 </p>
               </div>
               {/* Satiety Meter */}
@@ -256,7 +256,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                   aria-valuenow={satiety}
                   aria-valuemin={0}
                   aria-valuemax={100}
-                  aria-label="Độ no của thú cưng"
+                  aria-label="Độ no của thú ảo"
                 >
                   <div
                     className="h-full rounded-full bg-orange-500 transition-all duration-300 motion-reduce:transition-none"
@@ -265,12 +265,12 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
                 </div>
                 <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {satiety >= 80
-                    ? "Thú cưng đã no căng, chưa cần nạp thêm năng lượng."
+                    ? "Thú ảo đã no căng, chưa cần nạp thêm năng lượng."
                     : satiety >= 50
-                      ? "Thú cưng đã ăn vừa đủ, có thể ăn thêm khi đói hơn."
+                      ? "Thú ảo đã ăn vừa đủ, có thể ăn thêm khi đói hơn."
                       : satiety >= 20
-                        ? "Thú cưng đang đói bụng, hãy cho ăn để bổ sung năng lượng."
-                        : "Thú cưng đang rất đói! Cần cho ăn ngay để tránh giảm sức khỏe."}
+                        ? "Thú ảo đang đói bụng, hãy cho ăn để bổ sung năng lượng."
+                        : "Thú ảo đang rất đói! Cần cho ăn ngay để tránh giảm sức khỏe."}
                 </p>
               </div>
             </div>
@@ -279,7 +279,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
             <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/50 border border-amber-200/70 dark:border-amber-800/70">
               <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-300 mb-1">
                 <ShieldCheck size={16} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                <span>Đặc điểm thú cưng: {currentSpecies.buff}</span>
+                <span>Đặc điểm thú ảo: {currentSpecies.buff}</span>
               </div>
               <p className="text-sm text-amber-800 dark:text-amber-300/90 leading-relaxed">
                 {currentSpecies.buffDetail}
@@ -300,7 +300,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               type="button"
               onClick={onFeed}
               disabled={isFeeding || !feedEligibility.allowed}
-              aria-label={`Cho thú cưng ăn, tiêu hao ${feedCost} Bánh Mì`}
+              aria-label={`Cho thú ảo ăn, tiêu hao ${feedCost} Bánh Mì`}
               className={`w-full min-h-[48px] px-5 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${
                 feedEligibility.allowed
                   ? "bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white shadow-xs"
@@ -315,7 +315,7 @@ export const CompanionPetStage2D: React.FC<CompanionPetStage2DProps> = ({
               ) : (
                 <>
                   <Utensils size={17} aria-hidden="true" />
-                  <span>Cho Thú Cưng Ăn ({feedCost} Bánh Mì)</span>
+                  <span>Cho Thú Ảo Ăn ({feedCost} Bánh Mì)</span>
                 </>
               )}
             </button>

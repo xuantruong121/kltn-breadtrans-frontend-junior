@@ -114,7 +114,7 @@ export const MARKET_ITEMS: MarketItemData[] = [
     category: "boost",
     price: 500,
     icon: "/images/market/pet-bun.svg",
-    description: "Thú cưng Bun phiên bản đặc biệt đồng hành trong bài học.",
+    description: "Thú ảo Bun phiên bản đặc biệt đồng hành trong bài học.",
     rarity: "epic",
   },
 ];

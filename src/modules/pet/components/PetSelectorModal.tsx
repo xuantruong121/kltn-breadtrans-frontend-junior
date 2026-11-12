@@ -71,10 +71,10 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                 id="pet-selector-title"
                 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight"
               >
-                Chọn thú cưng đồng hành
+                Chọn thú ảo đồng hành
               </h2>
               <p className="text-sm text-slate-600 mt-0.5 dark:text-slate-400">
-                Mỗi loài thú cưng sở hữu cấp độ độc lập và hiệu ứng bổ trợ học tập riêng biệt
+                Mỗi loài thú ảo sở hữu cấp độ độc lập và hiệu ứng bổ trợ học tập riêng biệt
               </p>
             </div>
             <button
@@ -82,7 +82,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isUpdating}
-              aria-label="Đóng cửa sổ chọn thú cưng"
+              aria-label="Đóng cửa sổ chọn thú ảo"
               className="w-10 h-10 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none dark:text-slate-400"
             >
               <X size={18} aria-hidden="true" />
@@ -210,7 +210,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
           {/* Footer Note */}
           <div className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-center">
             <p className="text-sm font-medium text-slate-600">
-              Cấp độ và kinh nghiệm được lưu trữ độc lập cho từng loài thú cưng trên tài khoản của bạn.
+              Cấp độ và kinh nghiệm được lưu trữ độc lập cho từng loài thú ảo trên tài khoản của bạn.
             </p>
           </div>
         </motion.div>

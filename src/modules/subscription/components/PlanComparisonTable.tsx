@@ -86,7 +86,7 @@ const COMPARISON_FEATURES: ComparisonFeature[] = [
     pro: true,
   },
   {
-    name: "Đấu trường từ vựng, cửa hàng và thú cưng",
+    name: "Đấu trường từ vựng, cửa hàng và thú ảo",
     free: true,
     plus: true,
     pro: true,

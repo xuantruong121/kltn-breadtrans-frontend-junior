@@ -20,7 +20,7 @@ export const TERMS = {
   grammar: "Ngữ pháp",
   exams: "Luyện đề",
   quests: "Nhiệm vụ",
-  pet: "Thú cưng",
+  pet: "Thú ảo",
   arena: "Đấu trường",
   shop: "Cửa hàng",
   ranking: "Bảng xếp hạng",

@@ -31,7 +31,7 @@ const VISUAL_ALT: Record<string, string> = {
   "badge-star": "huy hiệu ngôi sao thành tích",
   "frame-orange": "khung avatar cam",
   "streak-freeze": "khiên giữ chuỗi",
-  "pet-bun": "thú cưng Bun đồng hành",
+  "pet-bun": "thú ảo Bun đồng hành",
   "double-bread": "thẻ nhân đôi Bánh Mì trong 24 giờ",
   "badge-master": "huy hiệu bậc thầy từ vựng",
   "frame-crown": "khung avatar vương miện quán quân",

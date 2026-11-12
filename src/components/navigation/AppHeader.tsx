@@ -781,7 +781,7 @@ export function AppHeader() {
                       className="flex items-center gap-2.5 p-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
                     >
                       <PawPrint size={16} className="text-rose-500 shrink-0" />
-                      <span>Thú cưng đồng hành</span>
+                      <span>Thú ảo đồng hành</span>
                     </Link>
 
                     {!withoutPassword && (
@@ -1115,7 +1115,7 @@ export function AppHeader() {
                           className="flex min-h-[44px] items-center gap-3 rounded-2xl px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-slate-800 hover:text-emerald-900 dark:hover:text-emerald-300 transition-colors"
                         >
                           <PawPrint size={17} className="text-emerald-600 dark:text-emerald-400" />
-                          <span>Thú cưng đồng hành</span>
+                          <span>Thú ảo đồng hành</span>
                         </Link>
 
                       </div>

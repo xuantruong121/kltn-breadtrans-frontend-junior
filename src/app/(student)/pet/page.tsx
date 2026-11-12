@@ -64,7 +64,7 @@ export default function PetPage() {
 
       if (leveledUp) {
         setIsLevelUp(true);
-        const msg = `Chúc mừng! Thú cưng đã thăng cấp lên Cấp ${updatedPet.level}!`;
+        const msg = `Chúc mừng! Thú ảo đã thăng cấp lên Cấp ${updatedPet.level}!`;
         setStatusMessage(msg);
         toast.success(msg, { duration: 5000 });
         setTimeout(() => setIsLevelUp(false), 5000);
@@ -73,8 +73,8 @@ export default function PetPage() {
         const expReward = updatedPet.feedExpReward ?? 0;
         const msg =
           expReward > 0
-            ? `Thú cưng đã được cho ăn! (+${expReward} EXP)`
-            : `Thú cưng đã được cho ăn no nê!`;
+            ? `Thú ảo đã được cho ăn! (+${expReward} EXP)`
+            : `Thú ảo đã được cho ăn no nê!`;
         setStatusMessage(msg);
         toast.success(msg);
         setTimeout(() => setIsJustFed(false), 4000);
@@ -87,17 +87,17 @@ export default function PetPage() {
     },
   });
 
-  // Mutation đổi loài thú cưng
+  // Mutation đổi loài thú ảo
   const changeSpeciesMutation = useMutation({
     mutationFn: (petName: string) => gamificationService.changePetType(petName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
       setIsModalOpen(false);
-      toast.success("Đã đổi sang thú cưng đồng hành mới!");
+      toast.success("Đã đổi sang thú ảo đồng hành mới!");
     },
     onError: (err: any) => {
       toast.error(
-        getApiErrorMessage(err, "Không thể đổi thú cưng lúc này!")
+        getApiErrorMessage(err, "Không thể đổi thú ảo lúc này!")
       );
     },
   });
@@ -141,10 +141,10 @@ export default function PetPage() {
           </Link>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
-              Thú cưng đồng hành
+              Thú ảo đồng hành
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-              Chăm sóc thú cưng mỗi ngày để kích hoạt các hiệu ứng bổ trợ học tập
+              Chăm sóc thú ảo mỗi ngày để kích hoạt các hiệu ứng bổ trợ học tập
             </p>
           </div>
         </div>
@@ -164,11 +164,11 @@ export default function PetPage() {
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            aria-label="Mở cửa sổ đổi thú cưng"
+            aria-label="Mở cửa sổ đổi thú ảo"
             className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
             <RefreshCw size={14} aria-hidden="true" />
-            <span>Đổi thú cưng</span>
+            <span>Đổi thú ảo</span>
           </button>
         </div>
       </div>
@@ -179,11 +179,11 @@ export default function PetPage() {
         <div
           className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-16 text-center shadow-xs animate-pulse"
           role="status"
-          aria-label="Đang tải dữ liệu thú cưng"
+          aria-label="Đang tải dữ liệu thú ảo"
         >
           <Loader2 size={32} className="animate-spin mx-auto text-amber-600 mb-3" aria-hidden="true" />
           <p className="text-slate-600 dark:text-slate-400 font-medium text-sm">
-            Đang tải thông tin thú cưng đồng hành...
+            Đang tải thông tin thú ảo đồng hành...
           </p>
         </div>
       ) : isPetError ? (
@@ -191,7 +191,7 @@ export default function PetPage() {
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-rose-200 dark:border-rose-900/60 p-12 text-center shadow-xs space-y-3">
           <AlertCircle size={36} className="mx-auto text-rose-500" aria-hidden="true" />
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-            Không thể tải thông tin thú cưng
+            Không thể tải thông tin thú ảo
           </h2>
           <p className="text-xs text-slate-600 dark:text-slate-400 max-w-md mx-auto">
             Đã có lỗi xảy ra khi kết nối tới máy chủ. Vui lòng kiểm tra lại đường truyền và thử lại.
@@ -213,7 +213,7 @@ export default function PetPage() {
           </div>
           <div className="max-w-md mx-auto">
             <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Bạn chưa có thú cưng đồng hành
+              Bạn chưa có thú ảo đồng hành
             </h2>
             <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
               Hãy chọn một người bạn 2D đồng hành để hỗ trợ quá trình học tập, tăng điểm kinh nghiệm và nhận các hiệu ứng bổ trợ thú vị.
@@ -224,7 +224,7 @@ export default function PetPage() {
             onClick={() => setIsModalOpen(true)}
             className="inline-flex min-h-[44px] items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
           >
-            <span>Chọn thú cưng ngay</span>
+            <span>Chọn thú ảo ngay</span>
           </button>
         </div>
       ) : (
@@ -247,7 +247,7 @@ export default function PetPage() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
               <div className="flex items-center gap-2 text-amber-800 dark:text-amber-400">
                 <Zap size={18} aria-hidden="true" />
-                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Đặc điểm thú cưng</h3>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-slate-100">Đặc điểm thú ảo</h3>
               </div>
               <div className="p-3.5 rounded-xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/70 dark:border-amber-800/60 space-y-1">
                 <span className="font-bold text-amber-900 dark:text-amber-200 text-sm block">

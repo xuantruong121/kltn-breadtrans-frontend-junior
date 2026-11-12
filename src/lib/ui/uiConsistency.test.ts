@@ -78,17 +78,19 @@ const WORD_RULES: WordRule[] = [
   },
   { name: "paid content", wrong: /\bPremium\b/, right: "gói Plus / gói Pro" },
   { name: "plan code shown", wrong: /^\s*(FREE|PLUS|PRO)\s*$/, right: "Free / Plus / Pro", jsxOnly: true },
+  // Owner 2026-11-12: the report and the app say "thú ảo".
+  { name: "pet", wrong: /[Tt]hú cưng/, right: "thú ảo" },
   { name: "help", wrong: /^\s*FAQ\s*$|Trung tâm trợ giúp/, right: "Trợ giúp" },
   { name: "English unit", wrong: /\b24h\b|\bBoost\b/, right: "24 giờ" },
   {
     name: "Title Case term",
-    wrong: /Khung Avatar|Huy Hiệu|Thú Cưng|Cửa Hàng|Đấu Trường|Bảng Xếp Hạng|Nhiệm Vụ|Sổ Lỗi|Thông Báo|Ngữ Pháp|Luyện Đề|Giữ Chuỗi|Tiến Độ|Nghe Chép|Trợ Lý/,
-    right: "sentence case: Thú cưng, Cửa hàng, Đấu trường, huy hiệu…",
+    wrong: /Khung Avatar|Huy Hiệu|Thú Cưng|Thú Ảo|Cửa Hàng|Đấu Trường|Bảng Xếp Hạng|Nhiệm Vụ|Sổ Lỗi|Thông Báo|Ngữ Pháp|Luyện Đề|Giữ Chuỗi|Tiến Độ|Nghe Chép|Trợ Lý/,
+    right: "sentence case: Thú ảo, Cửa hàng, Đấu trường, huy hiệu…",
   },
   {
     name: "English label",
     wrong: /^\s*(More|Pet|Edit|Change language|Add another language|AI Bilingual|BreadTrans AI Tutor|AI Tutor)\s*$/,
-    right: "Thêm / Thú cưng / Sửa / Đổi ngôn ngữ / Thêm ngôn ngữ / Song ngữ / Trợ lý Bánh Mì",
+    right: "Thêm / Thú ảo / Sửa / Đổi ngôn ngữ / Thêm ngôn ngữ / Song ngữ / Trợ lý Bánh Mì",
   },
   { name: "English skill name in practice", wrong: /^\s*(Reading|Listening|Speaking|Writing)\s*$/, right: "Đọc / Nghe / Nói / Viết", allowIn: /toeic|exam|admin/i, jsxOnly: true },
   { name: "English skill suffix in practice", wrong: /\((Listening|Reading|Speaking|Writing)\)/, right: "Nghe / Nói / Đọc / Viết", allowIn: /toeic|exam|admin/i },
@@ -108,7 +110,7 @@ const ICON_OWNERS: Array<{ icon: string; ownerFiles: RegExp; why: string }> = [
 const NEAR_RULES: Array<{ word: RegExp; icon: RegExp; right: string }> = [
   { word: /["> ]Viết["<]|Luyện Viết/, icon: /<(PenLine|Pencil|PencilLine)\b/, right: "PenTool" },
   { word: /Flashcard/, icon: /<(Layers3|RotateCw)\b/, right: "Layers" },
-  { word: /[Tt]hú cưng/, icon: /<Heart\b/, right: "PawPrint" },
+  { word: /[Tt]hú ảo/, icon: /<Heart\b/, right: "PawPrint" },
   { word: /[Nn]hiệm vụ/, icon: /<Target\b/, right: "ListChecks" },
   { word: /^\s*Bánh M[iì]\s*$|>\s*Bánh M[iì]\s*</m, icon: /<(Gift|Coins|Croissant)\b/, right: "BreadCoinIcon" },
 ];

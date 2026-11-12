@@ -128,7 +128,7 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
 ];
 
 /**
- * Hàm phân loại chính xác loài thú cưng từ tên pet lưu trong Database
+ * Hàm phân loại chính xác loài thú ảo từ tên pet lưu trong Database
  */
 export const getSpeciesIdFromPetName = (name?: string): string => {
   if (!name) return "bready";

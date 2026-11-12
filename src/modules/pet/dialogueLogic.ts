@@ -77,7 +77,7 @@ export function hungerLine(input: {
 
 /** Everything worth saying right now, most important first. */
 export function activeNudges(input: PetNudgeInput): PetNudge[] {
-  const name = input.petName.trim() || "Thú cưng";
+  const name = input.petName.trim() || "Thú ảo";
   const next = getPetRecommendation(input.quests);
   const nextLink: PetNudgeAction | undefined = next
     ? { type: "link", label: next.actionLabel, url: next.actionUrl }
