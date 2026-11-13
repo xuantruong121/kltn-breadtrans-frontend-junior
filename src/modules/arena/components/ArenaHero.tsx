@@ -95,14 +95,7 @@ export function ArenaHero({
         </p>
 
         <fieldset className="mt-5" disabled={isSearching}>
-          <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-            Mức cược
-            {balance !== null && !isGuest && (
-              <span className="ml-2 font-normal text-slate-500 dark:text-slate-400">
-                Bạn có <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">{balance.toLocaleString("vi-VN")}</span> Bánh Mì
-              </span>
-            )}
-          </legend>
+          <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">Mức cược</legend>
           <div className="mt-2 flex gap-3">
             {STAKES.map((s) => {
               const selected = stake === s;
@@ -181,15 +174,27 @@ export function ArenaHero({
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={onFind}
-              disabled={!affordable(stake)}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-extrabold text-white transition-colors hover:bg-amber-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
-            >
-              <Swords size={18} strokeWidth={2.25} aria-hidden="true" />
-              {isGuest ? "Đăng nhập để thách đấu" : "Tìm đối thủ"}
-            </button>
+            // Owner 2026-11-13: the balance beside "Mức cược" read as one more stake; it sits by
+            // the button, named as the balance (same as Pháo Bánh Mì).
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <button
+                type="button"
+                onClick={onFind}
+                disabled={!affordable(stake)}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-extrabold text-white transition-colors hover:bg-amber-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+              >
+                <Swords size={18} strokeWidth={2.25} aria-hidden="true" />
+                {isGuest ? "Đăng nhập để thách đấu" : "Tìm đối thủ"}
+              </button>
+              {balance !== null && !isGuest && (
+                <p className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+                  Số dư
+                  <span className="text-base font-bold tabular-nums text-slate-900 dark:text-slate-100">{balance.toLocaleString("vi-VN")}</span>
+                  <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
+                  <span className="sr-only">Bánh Mì</span>
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>
