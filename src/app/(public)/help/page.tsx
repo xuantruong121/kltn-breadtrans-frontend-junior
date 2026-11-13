@@ -61,7 +61,7 @@ export default function HelpPage() {
       <section className="mx-auto max-w-3xl">
         <header className="border-b border-slate-200 pb-7 sm:pb-8">
           <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-            Trợ giúp
+            FAQ
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
             Câu hỏi thường gặp

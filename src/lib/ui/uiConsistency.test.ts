@@ -82,7 +82,8 @@ const WORD_RULES: WordRule[] = [
   { name: "pet", wrong: /[Tt]hú cưng/, right: "thú ảo" },
   // The report's term (owner rule): "bài đánh giá đầu vào".
   { name: "diagnostic", wrong: /[Kk]iểm tra đầu vào|kiểm tra để xếp mức|Entry Diagnostic/, right: "bài đánh giá đầu vào" },
-  { name: "help", wrong: /^\s*FAQ\s*$|Trung tâm trợ giúp/, right: "Trợ giúp" },
+  // Owner 2026-11-13: the menu says More and FAQ, as it did before 2026-11-12.
+  { name: "help", wrong: /^\s*Trợ giúp\s*$|Trung tâm trợ giúp/, right: "FAQ" },
   { name: "English unit", wrong: /\b24h\b|\bBoost\b/, right: "24 giờ" },
   {
     name: "Title Case term",
@@ -91,8 +92,8 @@ const WORD_RULES: WordRule[] = [
   },
   {
     name: "English label",
-    wrong: /^\s*(More|Pet|Edit|Change language|Add another language|AI Bilingual|BreadTrans AI Tutor|AI Tutor)\s*$/,
-    right: "Thêm / Thú ảo / Sửa / Đổi ngôn ngữ / Thêm ngôn ngữ / Song ngữ / Trợ lý Bánh Mì",
+    wrong: /^\s*(Pet|Edit|Change language|Add another language|AI Bilingual|BreadTrans AI Tutor|AI Tutor)\s*$/,
+    right: "Thú ảo / Sửa / Đổi ngôn ngữ / Thêm ngôn ngữ / Song ngữ / Trợ lý Bánh Mì",
   },
   { name: "English skill name in practice", wrong: /^\s*(Reading|Listening|Speaking|Writing)\s*$/, right: "Đọc / Nghe / Nói / Viết", allowIn: /toeic|exam|admin/i, jsxOnly: true },
   { name: "English skill suffix in practice", wrong: /\((Listening|Reading|Speaking|Writing)\)/, right: "Nghe / Nói / Đọc / Viết", allowIn: /toeic|exam|admin/i },

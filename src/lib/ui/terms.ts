@@ -36,7 +36,7 @@ export const TERMS = {
   /** What the speech recogniser heard the learner say. */
   learnerSpeech: "Lời bạn nói",
   /** The /help page, in every menu and footer. */
-  help: "Trợ giúp",
+  help: "FAQ",
   /** The entry assessment, as the report names it. */
   diagnostic: "Bài đánh giá đầu vào",
 } as const;

@@ -50,7 +50,7 @@ const FAQS: FaqItem[] = [
     id: "support-channel",
     question: "Nếu gặp sự cố trong quá trình nâng cấp, tôi có thể liên hệ hỗ trợ ở đâu?",
     answer:
-      "Dùng mục Trợ giúp hoặc gửi phản hồi ngay trong ứng dụng. Nhóm hỗ trợ sẽ trả lời sớm nhất có thể.",
+      "Dùng mục FAQ hoặc gửi phản hồi ngay trong ứng dụng. Nhóm hỗ trợ sẽ trả lời sớm nhất có thể.",
   },
 ];
 
@@ -69,7 +69,7 @@ export function PlanFaqAccordion() {
       <div className="text-center max-w-2xl mx-auto space-y-2">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-0.5 text-xs font-black uppercase tracking-wider text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
           <HelpCircle size={13} aria-hidden="true" />
-          <span>Hỏi đáp</span>
+          <span>FAQ</span>
         </div>
         <h2 id="faq-heading" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
           Các thắc mắc thường gặp

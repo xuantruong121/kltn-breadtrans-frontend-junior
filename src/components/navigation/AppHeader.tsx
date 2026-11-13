@@ -358,7 +358,7 @@ export function AppHeader() {
       description: "Bảng xếp hạng tuần và huy hiệu",
     },
     {
-      label: "Trợ giúp",
+      label: "FAQ",
       href: "/help",
       icon: CircleHelp,
       active: isActivePath(pathname, "/help"),
@@ -381,7 +381,7 @@ export function AppHeader() {
     { label: "Cửa hàng", href: "/market", icon: ShoppingBag },
     { label: "Đấu trường", href: "/arena", icon: Swords },
     { label: "Bảng xếp hạng", href: "/ranking", icon: Trophy },
-    { label: "Trợ giúp", href: "/help", icon: CircleHelp },
+    { label: "FAQ", href: "/help", icon: CircleHelp },
   ];
 
   return (
@@ -447,7 +447,7 @@ export function AppHeader() {
               }`}
             >
               <MoreHorizontal size={16} className="shrink-0" aria-hidden="true" />
-              <span className="whitespace-nowrap">Thêm</span>
+              <span className="whitespace-nowrap">More</span>
               <ChevronDown
                 size={14}
                 className={`shrink-0 transition-transform duration-200 ${
