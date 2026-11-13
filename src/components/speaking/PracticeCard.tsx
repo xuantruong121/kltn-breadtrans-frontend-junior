@@ -20,7 +20,6 @@ import {
   resolvePedagogicalDescription,
   resolveSkillTags,
   speakingSetKindLabel,
-  speakingSetScoreText,
 } from "./practiceCardLogic";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
@@ -101,7 +100,6 @@ export function PracticeCard({
   // only for data that has no task type.
   const kindLabel = speakingSetKindLabel(exercise.taskTypes ?? []);
   const formatTag = kindLabel ?? resolveFormatTag(exercise);
-  const scoreText = speakingSetScoreText(exercise.averageScore);
   const pedagogicalDescription = resolvePedagogicalDescription(
     exercise,
     description,
@@ -141,19 +139,13 @@ export function PracticeCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Completed: a readable status and the score, as the Listening card. */}
+        {/* Completed: a readable status; no score on the card (owner 2026-11-13). */}
         {status === "COMPLETED" && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[13px] font-semibold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
               <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
               Đã hoàn thành
             </span>
-            {scoreText && (
-              <span className="text-sm text-slate-600 dark:text-slate-400">
-                Điểm <span className="font-bold tabular-nums text-slate-900 dark:text-slate-100">{scoreText.split("/")[0]}</span>
-                <span className="tabular-nums">/10</span>
-              </span>
-            )}
           </div>
         )}
 

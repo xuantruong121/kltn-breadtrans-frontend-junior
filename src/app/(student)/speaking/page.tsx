@@ -16,7 +16,6 @@ import {
   speakingService,
   type SpeakingExercise,
   type SpeakingPracticeSetSummary,
-  type SpeakingSubmissionSummary,
 } from "@/lib/api/services/speaking.service";
 import { Pagination } from "@/components/ui";
 import { CATALOG_PAGE_SIZES } from "@/lib/practice/catalogPage";
@@ -46,7 +45,6 @@ import { speakingSetDisplayTitle, withoutLevelPhrase } from "@/lib/catalog/displ
 
 type SpeakingPracticeSetCard = SpeakingExercise & {
   practiceSet: SpeakingPracticeSetSummary;
-  averageScore?: number;
   isSpotlight?: boolean;
 };
 
@@ -123,13 +121,6 @@ export default function SpeakingExercisesPage() {
     },
   });
 
-  const { data: mySubmissions } = useQuery<SpeakingSubmissionSummary[]>({
-    queryKey: ["speaking-submissions-summary"],
-    queryFn: speakingService.getMySubmissions,
-    enabled: Boolean(user),
-    staleTime: 1000 * 60 * 2,
-  });
-
   const { data: skillProgress } = useQuery<UserSkillsSummaryResponse>({
     queryKey: ["user-skills-summary", user?.id],
     queryFn: userService.getSkillProgress,
@@ -139,23 +130,8 @@ export default function SpeakingExercisesPage() {
 
   const speakingProgress = skillProgress?.skills.find((item) => item.skill === "SPEAKING");
 
-  // Calculate highest score per exercise
-  const scoreByExerciseId = useMemo(() => {
-    const map = new Map<number, number>();
-    if (!mySubmissions) return map;
-    for (const sub of mySubmissions) {
-      // overallScore is on a 0-10 scale; it is kept unrounded (owner
-      // 2026-11-13: a rounded mean shown as "/100" read 8/100 for 7.6/10).
-      if (sub.overallScore != null && sub.overallScore > 0) {
-        const existing = map.get(sub.exerciseId);
-        if (!existing || sub.overallScore > existing) {
-          map.set(sub.exerciseId, sub.overallScore);
-        }
-      }
-    }
-    return map;
-  }, [mySubmissions]);
-
+  // Owner 2026-11-13: the set cards show no score, so the learner's
+  // submissions are not loaded here.
   const practiceSets = useMemo<SpeakingPracticeSetCard[]>(() => {
     if (!exercises) return [];
     const byKey = new Map<string, SpeakingExercise[]>();
@@ -186,18 +162,6 @@ export default function SpeakingExercisesPage() {
         isCompleted: Boolean(first.isCompleted),
       };
 
-      // Calculate average score across exercises in set
-      let scoreSum = 0;
-      let scoreCount = 0;
-      for (const item of orderedItems) {
-        const sc = scoreByExerciseId.get(item.id);
-        if (sc !== undefined) {
-          scoreSum += sc;
-          scoreCount++;
-        }
-      }
-      const avgScore = scoreCount > 0 ? scoreSum / scoreCount : undefined;
-
       const setTitle = speakingSetDisplayTitle(summary.key, summary.title);
       return {
         ...first,
@@ -207,11 +171,10 @@ export default function SpeakingExercisesPage() {
         difficulty: summary.difficultyLabel,
         isCompleted: summary.isCompleted,
         practiceSet: { ...summary, title: setTitle },
-        averageScore: avgScore,
         taskTypes: orderedItems.map((item) => item.taskType),
       };
     });
-  }, [exercises, scoreByExerciseId]);
+  }, [exercises]);
 
   // Extract unique categories
   const categories = useMemo(() => {

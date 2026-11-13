@@ -250,19 +250,11 @@ test("Difficulty Badge: resolves semantic, expressive badge styling for pure and
   assert.ok(fallback.badgeClass.includes("emerald-50"));
 });
 
-// Owner 2026-11-13: a set of free answers looked like a read-aloud one, and a
-// 0-10 mean was shown as "8/100".
+// Owner 2026-11-13: a set of free answers looked like a read-aloud one.
 test("speakingSetKindLabel names the task from the exercises' task types", async () => {
   const { speakingSetKindLabel } = await import("./practiceCardLogic.ts");
   assert.equal(speakingSetKindLabel(Array(5).fill("RESPOND_TO_QUESTION")), "Trả lời câu hỏi (nói tự do)");
   assert.equal(speakingSetKindLabel(["READ_ALOUD", null]), "Đọc theo câu mẫu");
   assert.equal(speakingSetKindLabel(["READ_ALOUD", "EXPRESS_OPINION"]), "Tổng hợp: đọc mẫu và nói tự do");
   assert.equal(speakingSetKindLabel([]), null);
-});
-
-test("speakingSetScoreText keeps the grader's 0-10 scale with one decimal", async () => {
-  const { speakingSetScoreText } = await import("./practiceCardLogic.ts");
-  assert.equal(speakingSetScoreText((6.9 + 8.8 + 6.5 + 7.2 + 8.1) / 5), "7.5/10");
-  assert.equal(speakingSetScoreText(undefined), null);
-  assert.equal(speakingSetScoreText(0), null);
 });

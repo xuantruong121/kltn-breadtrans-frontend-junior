@@ -14,8 +14,6 @@ export type DifficultyLevel = "ALL" | "BASIC" | "INTERMEDIATE" | "ADVANCED";
 export interface PracticeExerciseItem extends SpeakingExercise {
   isCompleted?: boolean;
   practiceSet?: SpeakingPracticeSetSummary;
-  /** Mean of each exercise's best score, on the 0-10 scale the grader uses. */
-  averageScore?: number;
   /** The task types of the set's exercises, to name what the learner does. */
   taskTypes?: Array<string | null | undefined>;
   isSpotlight?: boolean;
@@ -42,12 +40,6 @@ export function speakingSetKindLabel(taskTypes: Array<string | null | undefined>
   const kinds = new Set(taskTypes.map((t) => t || "READ_ALOUD"));
   if (kinds.size === 1) return TASK_KIND_LABEL[[...kinds][0]] ?? null;
   return "Tổng hợp: đọc mẫu và nói tự do";
-}
-
-/** "7.6/10": the set's mean score, one decimal, on the grader's 0-10 scale. */
-export function speakingSetScoreText(averageScore: number | undefined): string | null {
-  if (typeof averageScore !== "number" || !Number.isFinite(averageScore) || averageScore <= 0) return null;
-  return `${(Math.round(averageScore * 10) / 10).toFixed(1)}/10`;
 }
 
 /**
