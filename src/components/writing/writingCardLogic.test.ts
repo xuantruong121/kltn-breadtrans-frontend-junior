@@ -111,3 +111,22 @@ test("Writing Difficulty Matching: accommodates various levels", () => {
   assert.equal(matchesWritingDifficulty("Nâng cao C1", "ADVANCED"), true);
   assert.equal(matchesWritingDifficulty("Nâng cao", "BASIC"), false);
 });
+
+// Owner 2026-11-13: the Writing header showed "SHORT_MESSAGE". Every task
+// type stored today, and every Writing quiz type, reads as Vietnamese.
+test("resolveWritingFormatTag never returns a stored code", () => {
+  const taskTypes = [
+    "EMAIL", "WRITTEN_REQUEST", "SHORT_MESSAGE", "PROPOSAL", "OPINION_ESSAY", "OPINION",
+    "SENTENCE", "ANALYTICAL_RESPONSE", "INVITATION", "INFORMATION_REQUEST", "REQUEST",
+    "ARGUMENT", "CUSTOMER_EMAIL", "STATUS_UPDATE", "MEETING_FOLLOWUP", "THANK_YOU",
+    "PICTURE_SENTENCE", "",
+  ];
+  const types = ["WRITING_EMAIL", "WRITING_PICTURE", "WRITING_OPINION", "WRITING_SENTENCE", ""];
+  for (const taskType of taskTypes) {
+    for (const type of types) {
+      const label = resolveWritingFormatTag({ id: 1, title: "Bài viết", taskType, type } as unknown as WritingTopicItem);
+      assert.doesNotMatch(label, /_/, `${type}/${taskType} -> ${label}`);
+      assert.notEqual(label, label.toUpperCase(), `${type}/${taskType} -> ${label}`);
+    }
+  }
+});

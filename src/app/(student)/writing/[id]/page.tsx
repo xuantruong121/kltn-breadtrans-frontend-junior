@@ -42,6 +42,7 @@ import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingWorkspace } from "@/components/writing/PictureWritingWorkspace";
 import { isPictureQuiz } from "@/lib/writing/pictureWriting";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { resolveWritingFormatTag } from "@/components/writing/writingCardLogic";
 import { AiQuotaNotice } from "@/components/subscription/AiQuotaNotice";
 import { aiQuotaExhausted, type AiQuotaExhausted } from "@/modules/subscription/aiQuota";
 
@@ -313,10 +314,14 @@ export default function WritingDetailPage(props: {
       <div className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
         <PracticeHeader
           title={topic?.title ? quizDisplayTitle(topicId, topic.title) : "Luyện viết"}
+          // The same name as the catalog card, never a stored code such as
+          // SHORT_MESSAGE (owner 2026-11-13).
           category={
             isPictureTask
               ? "Viết câu theo tranh"
-              : topic?.taskType || topic?.type || "Viết"
+              : topic
+                ? resolveWritingFormatTag(topic)
+                : "Viết"
           }
           activityLabel="Luyện viết"
           onExit={() => confirmExit(exitHref)}
