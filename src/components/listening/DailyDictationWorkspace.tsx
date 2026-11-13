@@ -425,10 +425,10 @@ export function DailyDictationWorkspace({
   const handlePerformCheck = useCallback(async () => {
     if (isChecking || isCompletedOrRevealed) return;
     const res = await onCheck();
+    // The page stores the canonical answer itself (handleCheck). Calling
+    // onChangeAnswer here read as an edit and dismissed the fresh comparison,
+    // so a second Enter hid the card (owner 2026-11-13).
     const finalAnswer = res?.canonicalizedAnswer;
-    if (finalAnswer) {
-      onChangeAnswer(finalAnswer);
-    }
     setTimeout(() => {
       const el = textareaRef.current;
       if (el) {
@@ -444,7 +444,7 @@ export function DailyDictationWorkspace({
         }
       }
     }, 50);
-  }, [isChecking, isCompletedOrRevealed, onCheck, onChangeAnswer]);
+  }, [isChecking, isCompletedOrRevealed, onCheck]);
 
   // Keep dictation textarea focused on mount, tab switch, or sentence change without overriding active typing caret
   useEffect(() => {
@@ -686,12 +686,25 @@ export function DailyDictationWorkspace({
     const generation = claimPlaybackOwner(owner);
     const questionCacheKey = `${quiz.id}:${currentQuestion.id}:${activeAudioVersion ?? 0}`;
     const cached = questionAudioCacheRef.current.get(questionCacheKey);
+    // Plays the new sentence when the learner moved on with Enter / Câu tiếp
+    // theo. Several sentences may share one recording, so it starts from this
+    // sentence's own segment, not from where the last one stopped.
+    const playIfAsked = () => {
+      if (!autoplayOnLoadRef.current) return;
+      autoplayOnLoadRef.current = false;
+      const audio = audioRef.current;
+      if (!audio) return;
+      audio.currentTime = isSegmentAudio ? segmentStartSeconds : 0;
+      setCurrentTime(0);
+      void audio.play().catch(() => setIsPlaying(false));
+    };
 
     if (cached) {
       if (ownsPlayback(owner, generation)) {
         setAudioLoading(false);
         setAudioError(false);
         applyAudioSource(owner, generation, cached.url);
+        playIfAsked();
       }
       return;
     }
@@ -723,10 +736,8 @@ export function DailyDictationWorkspace({
         if (ownsPlayback(owner, generation)) {
           setAudioLoading(false);
           setAudioError(false);
-          if (applyAudioSource(owner, generation, url) && autoplayOnLoadRef.current) {
-            autoplayOnLoadRef.current = false;
-            void audioRef.current?.play().catch(() => setIsPlaying(false));
-          }
+          applyAudioSource(owner, generation, url);
+          playIfAsked();
         }
       })
       .catch((err) => {
@@ -742,7 +753,7 @@ export function DailyDictationWorkspace({
       window.clearTimeout(resetTimer);
       controller.abort();
     };
-  }, [activeAudioVersion, applyAudioSource, claimPlaybackOwner, currentQuestion.id, currentArtifact, ownsPlayback, quiz.id, activeTab]);
+  }, [activeAudioVersion, applyAudioSource, claimPlaybackOwner, currentQuestion.id, currentArtifact, ownsPlayback, quiz.id, activeTab, isSegmentAudio, segmentStartSeconds]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -1007,6 +1018,8 @@ export function DailyDictationWorkspace({
           if (isLastQuestion) {
             onFinalSubmit();
           } else {
+            // Owner 2026-11-13: Enter to the next sentence plays it.
+            autoplayOnLoadRef.current = true;
             onNext();
           }
           return;
@@ -1621,6 +1634,8 @@ export function DailyDictationWorkspace({
                         if (isLastQuestion) {
                           onFinalSubmit();
                         } else {
+                          // Owner 2026-11-13: Enter to the next sentence plays it.
+                          autoplayOnLoadRef.current = true;
                           onNext();
                         }
                         return;
@@ -1744,7 +1759,10 @@ export function DailyDictationWorkspace({
                     ) : (
                       <button
                         type="button"
-                        onClick={onNext}
+                        onClick={() => {
+                          autoplayOnLoadRef.current = true;
+                          onNext();
+                        }}
                         className="inline-flex min-h-[46px] sm:min-h-[48px] items-center gap-2 rounded-2xl bg-emerald-700 hover:bg-emerald-800 px-7 sm:px-8 py-2.5 text-base sm:text-lg font-extrabold text-white shadow-xs transition-colors cursor-pointer"
                       >
                         <span>Câu tiếp theo</span>
@@ -1813,6 +1831,7 @@ export function DailyDictationWorkspace({
                       // Progressive feedback: verifiedPrefix + nextWordMask (active) + remainingMasks (gray)
                       let verifiedPrefix = currentCheck?.verifiedPrefix;
                       let nextWordMask = currentCheck?.nextWordMask;
+                      let nextWord = currentCheck?.nextWord;
                       let remainingMasks = currentCheck?.remainingMasks;
                       let relativeHint = currentCheck?.hint;
 
@@ -1823,6 +1842,7 @@ export function DailyDictationWorkspace({
                         );
                         verifiedPrefix = feedback.verifiedPrefix;
                         nextWordMask = feedback.nextWordMask;
+                        nextWord = feedback.nextWord;
                         remainingMasks = feedback.remainingMasks;
                         relativeHint = relativeHint || feedback.hint;
                       } else if (!remainingMasks || remainingMasks.length === 0) {
@@ -1852,13 +1872,19 @@ export function DailyDictationWorkspace({
                               </span>
                             )}
                             {verifiedPrefix && nextWordMask && " "}
+                            {/* Owner 2026-11-13: the word to fix is shown, as dailydictation.com does;
+                                the words after it stay masked. */}
                             {nextWordMask && (
                               <span
-                                className="font-mono tracking-wider font-bold text-amber-700 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-300 dark:border-amber-700/80 inline-block shadow-2xs"
-                                aria-label={`Từ tiếp theo gồm ${nextWordMask.replace(/[^A-Za-z*]/g, "").length} chữ cái`}
+                                className={`${nextWord ? "" : "font-mono tracking-wider "}font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg border border-amber-300 dark:border-amber-700/80 inline-block`}
+                                aria-label={
+                                  nextWord
+                                    ? `Từ cần sửa: ${nextWord}`
+                                    : `Từ tiếp theo gồm ${nextWordMask.replace(/[^A-Za-z*]/g, "").length} chữ cái`
+                                }
                                 data-testid="dictation-next-word-mask"
                               >
-                                {nextWordMask}
+                                {nextWord || nextWordMask}
                               </span>
                             )}
                             {remainingMasks && remainingMasks.length > 0 && (
@@ -1873,7 +1899,7 @@ export function DailyDictationWorkspace({
 
                           <div className="mt-2.5 flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400">
                             <span className="inline-block size-2 rounded-full bg-amber-500" />
-                            <span>Hãy nghe lại vị trí tiếp theo và thử lại.</span>
+                            <span>Từ đúng ở vị trí này được tô vàng. Hãy nghe lại và sửa.</span>
                           </div>
 
                           {relativeHint && (

@@ -210,6 +210,8 @@ export interface CheckPracticeQuestionResult {
   verifiedPrefix?: string;
   canonicalizedAnswer?: string;
   nextWordMask?: string;
+  /** The word to fix, shown in place of its mask (owner 2026-11-13). */
+  nextWord?: string;
   remainingMasks?: string[];
   nextErrorType?: "WRONG" | "MISSING" | "EXTRA" | null;
 }
