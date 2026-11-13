@@ -148,11 +148,17 @@ export function GrammarCatalog({
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
               {section.topics.map((topic) => {
                 const status = grammarTopicStatus(topic);
+                const done = status === "COMPLETED";
                 const title = grammarDisplayTitle(topic.id, topic.title);
                 return (
                   <article
                     key={topic.id}
-                    className="flex flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 border-t-4 border-t-blue-500 bg-white dark:bg-slate-900 p-4 shadow-sm"
+                    // Completed: emerald border, ground and pill, like the listening card (owner 2026-11-13).
+                    className={`flex flex-col justify-between rounded-xl border border-t-4 p-4 shadow-sm ${
+                      done
+                        ? "border-emerald-300 border-t-emerald-500 bg-emerald-50/50 dark:border-emerald-800/70 dark:border-t-emerald-600 dark:bg-emerald-950/20"
+                        : "border-slate-200 border-t-blue-500 bg-white dark:border-slate-800 dark:bg-slate-900"
+                    }`}
                   >
                     <div>
                       <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -166,26 +172,32 @@ export function GrammarCatalog({
                       </p>
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-                        {status === "COMPLETED" && (
-                          <CheckCircle2
-                            size={14}
-                            strokeWidth={2}
-                            className="text-emerald-700 dark:text-emerald-400"
-                            aria-hidden="true"
-                          />
-                        )}
-                        <span>{STATUS_LABEL[status]}</span>
-                        <span aria-hidden="true">·</span>
-                        <span>{topic.totalQuestions} câu hỏi</span>
-                      </span>
+                      {done ? (
+                        <span className="flex min-w-0 items-center gap-2 text-[13px] text-slate-700 dark:text-slate-300">
+                          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 font-semibold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+                            <CheckCircle2 size={14} strokeWidth={2} aria-hidden="true" />
+                            {STATUS_LABEL[status]}
+                          </span>
+                          <span className="truncate">{topic.totalQuestions} câu hỏi</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+                          <span>{STATUS_LABEL[status]}</span>
+                          <span aria-hidden="true">·</span>
+                          <span>{topic.totalQuestions} câu hỏi</span>
+                        </span>
+                      )}
                       <button
                         type="button"
                         onClick={() => onStart(topic)}
-                        aria-label={`Học ngay chủ đề ${title}`}
-                        className="inline-flex min-h-9 items-center gap-1 rounded-lg bg-blue-50 dark:bg-blue-950/40 px-3 text-sm font-semibold text-blue-700 dark:text-blue-300 transition-colors hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer"
+                        aria-label={`${done ? "Ôn lại" : "Học ngay"} chủ đề ${title}`}
+                        className={`inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg px-3 text-sm font-semibold transition-colors cursor-pointer ${
+                          done
+                            ? "border border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+                            : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                        }`}
                       >
-                        {status === "COMPLETED" ? "Ôn lại" : "Học ngay"}
+                        {done ? "Ôn lại" : "Học ngay"}
                         <ArrowRight
                           size={14}
                           strokeWidth={2}
