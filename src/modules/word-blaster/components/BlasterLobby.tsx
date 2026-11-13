@@ -134,9 +134,9 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <div className="px-3 py-2.5">
             <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thắng</dt>
             <dd className="inline-flex items-center gap-1 text-lg font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400">
-              +{Math.floor(stake / 2)} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
+              +{stake} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
             </dd>
-            <dd className="text-xs text-slate-600 dark:text-slate-400">hoàn cược + 50%</dd>
+            <dd className="text-xs text-slate-600 dark:text-slate-400">nhận {stake * 2}</dd>
           </div>
           <div className="px-3 py-2.5">
             <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thua</dt>

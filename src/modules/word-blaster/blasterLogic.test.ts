@@ -67,10 +67,10 @@ describe("aimTarget", () => {
 describe("blasterResultCopy", () => {
   const base = { forfeit: false, destroyed: 18, landed: 2, stake: 50, bonusCapped: 0 };
   test("a win, a loss and leaving", () => {
-    assert.deepEqual(blasterResultCopy({ ...base, outcome: "win", net: 25 }), {
+    assert.deepEqual(blasterResultCopy({ ...base, outcome: "win", net: 50 }), {
       title: "Bạn thắng!",
       line: "Bắn vỡ 18 khối, chỉ để lọt 2.",
-      banh: "+25",
+      banh: "+50",
       note: null,
     });
     const lose = blasterResultCopy({ ...base, outcome: "lose", destroyed: 9, landed: 3, net: -50 });
@@ -79,7 +79,7 @@ describe("blasterResultCopy", () => {
     assert.equal(blasterResultCopy({ ...base, outcome: "lose", forfeit: true, net: -50 }).title, "Đã thoát ván");
   });
   test("a win whose bonus met the daily cap says so", () => {
-    const capped = blasterResultCopy({ ...base, outcome: "win", net: 0, bonusCapped: 25 });
+    const capped = blasterResultCopy({ ...base, outcome: "win", net: 0, bonusCapped: 50 });
     assert.equal(capped.banh, "±0");
     assert.match(capped.note ?? "", /đủ 150 Bánh Mì/);
   });
