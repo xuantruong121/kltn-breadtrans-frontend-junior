@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
 import { ArrowLeft, ChevronRight, Loader2, RotateCcw } from "lucide-react";
 
 import { MistakeCard } from "@/components/mistakes/MistakeCard";
@@ -24,25 +25,27 @@ import {
  * the right (owner 2026-11-12: one large card per mistake meant scrolling for
  * ever, inside a narrow centred column). On a phone the chosen mistake opens
  * under its row.
+ *
+ * Owner 2026-11-13: no "Đã khắc phục" tab. A mistake put right (2 right
+ * answers in a row, or "Đã hiểu") leaves the page; "Đã hiểu" shows a toast
+ * with "Hoàn tác" for a slip of the hand. The rows stay in the database, so
+ * a later wrong answer reopens the mistake with its count.
  */
 export function MistakeNotebook() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const skill = parseMistakeSkill(searchParams.get("skill"));
-  const status = searchParams.get("status") === "resolved" ? "resolved" : "open";
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const [reviewing, setReviewing] = useState(false);
   // null: nothing chosen yet, the first mistake of the page is shown on wide screens.
   const [chosenId, setChosenId] = useState<number | null>(null);
   const [phoneOpenId, setPhoneOpenId] = useState<number | null>(null);
 
-  const go = (next: { skill?: MistakeSkill | null; status?: "open" | "resolved"; page?: number }) => {
+  const go = (next: { skill?: MistakeSkill | null; page?: number }) => {
     const params = new URLSearchParams();
     const nextSkill = next.skill === undefined ? skill : (next.skill ?? undefined);
-    const nextStatus = next.status ?? status;
     if (nextSkill) params.set("skill", nextSkill.toLowerCase());
-    if (nextStatus === "resolved") params.set("status", "resolved");
     if (next.page && next.page > 1) params.set("page", String(next.page));
     const query = params.toString();
     setChosenId(null);
@@ -52,12 +55,39 @@ export function MistakeNotebook() {
 
   const summary = useQuery({ queryKey: ["mistakes", "summary"], queryFn: mistakesService.getSummary });
   const list = useQuery({
-    queryKey: ["mistakes", "list", skill ?? "ALL", status, page],
-    queryFn: () => mistakesService.getList({ skill, status, page }),
+    queryKey: ["mistakes", "list", skill ?? "ALL", "open", page],
+    queryFn: () => mistakesService.getList({ skill, status: "open", page }),
   });
-  const toggle = useMutation({
-    mutationFn: (input: { id: number; resolved: boolean }) => mistakesService.setResolved(input.id, input.resolved),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["mistakes"] }),
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ["mistakes"] });
+  const undo = useMutation({
+    mutationFn: (id: number) => mistakesService.setResolved(id, false),
+    onSuccess: refresh,
+    onError: () => toast.error("Chưa hoàn tác được. Hãy thử lại."),
+  });
+  const resolve = useMutation({
+    mutationFn: (id: number) => mistakesService.setResolved(id, true),
+    onSuccess: (_data, id) => {
+      refresh();
+      toast(
+        (t) => (
+          <span className="flex items-center gap-3">
+            Đã bỏ lỗi này khỏi sổ.
+            <button
+              type="button"
+              onClick={() => {
+                toast.dismiss(t.id);
+                undo.mutate(id);
+              }}
+              className="inline-flex min-h-9 cursor-pointer items-center rounded-lg px-2.5 text-sm font-bold text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40"
+            >
+              Hoàn tác
+            </button>
+          </span>
+        ),
+        { duration: 6000 },
+      );
+    },
+    onError: () => toast.error("Chưa bỏ được lỗi này. Hãy thử lại."),
   });
 
   const open = summary.data?.open ?? 0;
@@ -82,8 +112,8 @@ export function MistakeNotebook() {
         item={item}
         positionLabel={where && where.total > 1 ? `Câu ${where.index}/${where.total}` : undefined}
         resolveAfter={resolveAfter}
-        busy={toggle.isPending}
-        onToggleResolved={(resolved) => toggle.mutate({ id: item.id, resolved })}
+        busy={resolve.isPending}
+        onResolve={() => resolve.mutate(item.id)}
       />
     );
   };
@@ -132,8 +162,8 @@ export function MistakeNotebook() {
         </div>
       )}
 
-      {/* Filters: skill on the left, status on the right */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      {/* Filter by skill */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <div role="group" aria-label="Lọc theo kỹ năng" className="inline-flex flex-wrap rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
           <button type="button" aria-pressed={!skill} onClick={() => go({ skill: null })} className={segment(!skill)}>
             Tất cả <span className="tabular-nums text-slate-500 dark:text-slate-400">{open}</span>
@@ -151,19 +181,6 @@ export function MistakeNotebook() {
             </button>
           ))}
         </div>
-        <div role="group" aria-label="Trạng thái" className="inline-flex rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
-          <button type="button" aria-pressed={status === "open"} onClick={() => go({ status: "open" })} className={segment(status === "open")}>
-            Chưa khắc phục
-          </button>
-          <button
-            type="button"
-            aria-pressed={status === "resolved"}
-            onClick={() => go({ status: "resolved" })}
-            className={segment(status === "resolved")}
-          >
-            Đã khắc phục <span className="tabular-nums text-slate-500 dark:text-slate-400">{summary.data?.resolved ?? 0}</span>
-          </button>
-        </div>
       </div>
 
       {list.isLoading ? (
@@ -177,12 +194,10 @@ export function MistakeNotebook() {
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-8 dark:border-slate-800 dark:bg-slate-900">
           <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
-            {status === "resolved" ? "Chưa có lỗi nào được khắc phục." : "Không có lỗi nào cần ôn ở đây."}
+            Không có lỗi nào cần ôn ở đây.
           </p>
           <p className="mt-1 text-[15px] text-slate-600 dark:text-slate-400">
-            {status === "resolved"
-              ? "Lỗi bạn sửa xong sẽ nằm ở đây."
-              : "Khi bạn làm sai trong bài luyện, câu đó sẽ được ghi vào sổ."}
+            Khi bạn làm sai trong bài luyện, câu đó sẽ được ghi vào sổ.
           </p>
         </div>
       ) : (

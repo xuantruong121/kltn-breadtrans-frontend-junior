@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Check, RotateCcw, Undo2 } from "lucide-react";
+import { Check, RotateCcw } from "lucide-react";
 
 import type { MistakeItem } from "@/lib/api/services/mistakes.service";
 import {
@@ -18,7 +18,7 @@ export function MistakeCard({
   item,
   resolveAfter,
   busy,
-  onToggleResolved,
+  onResolve,
   positionLabel,
 }: {
   item: MistakeItem;
@@ -26,7 +26,8 @@ export function MistakeCard({
   positionLabel?: string;
   resolveAfter: number;
   busy: boolean;
-  onToggleResolved: (resolved: boolean) => void;
+  /** "Đã hiểu": takes the mistake out of the notebook (the page offers an undo). */
+  onResolve: () => void;
 }) {
   const { detail } = item;
   const tag = mistakeTagLabel(item);
@@ -124,18 +125,10 @@ export function MistakeCard({
         <button
           type="button"
           disabled={busy}
-          onClick={() => onToggleResolved(!item.resolvedAt)}
+          onClick={onResolve}
           className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-emerald-300 px-3 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
         >
-          {item.resolvedAt ? (
-            <>
-              <Undo2 size={14} strokeWidth={2} aria-hidden="true" /> Mở lại lỗi này
-            </>
-          ) : (
-            <>
-              <Check size={14} strokeWidth={2} aria-hidden="true" /> Đã hiểu, bỏ khỏi sổ
-            </>
-          )}
+          <Check size={14} strokeWidth={2} aria-hidden="true" /> Đã hiểu, bỏ khỏi sổ
         </button>
         {progress && <span className="text-xs text-slate-600 dark:text-slate-400">{progress}</span>}
       </div>
