@@ -1,162 +1,110 @@
 "use client";
 
 import { dependsOnLevel } from "@/lib/learning-path/levelLock";
-import React, { useState, useEffect } from "react";
-import {
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Info,
-  RefreshCw,
-  XCircle,
-} from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Check, ChevronLeft, ChevronRight, LayoutGrid, Loader2, RotateCcw, X } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { grammarService } from "@/lib/api/services/grammar.service";
 import { useAuthStore } from "@/stores/authStore";
 import { GrammarAttemptResult, GrammarTopicDetail } from "../types";
 import { GrammarVideoPlayer } from "./GrammarVideoPlayer";
+import { GRAMMAR_LAYOUT_CLASSES, getNextIndex, getPrevIndex, isGrammarDirty } from "./grammarNavigationUtils";
 import {
-  getNextIndex,
-  getPrevIndex,
-  isGrammarDirty,
-} from "./grammarNavigationUtils";
+  allAnswered,
+  answersOf,
+  clearWrong,
+  grammarTally,
+  nextUnanswered,
+  optionFromKey,
+  optionState,
+  wrongQuestionIds,
+  type GrammarCheck,
+  type GrammarChecks,
+} from "./grammarPracticeLogic";
 import { levelLabel } from "@/lib/ui/displayLabels";
 import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
-
-type QuestionResult = GrammarAttemptResult["questionsResult"][number];
 
 export interface GrammarQuizProps {
   topic: GrammarTopicDetail;
   onDirtyChange?: (isDirty: boolean) => void;
 }
 
-// ─── Subcomponents ────────────────────────────────────────────────────────────
+const LETTERS = "ABCDEFGH";
 
-const PracticeGuidance: React.FC<{ hasAnswer: boolean }> = ({ hasAnswer }) => (
-  <div className="flex items-start gap-3 rounded-2xl border border-sky-200 bg-sky-50/70 p-4 dark:border-sky-900/60 dark:bg-sky-950/40">
-    <Info
-      size={18}
-      className="shrink-0 text-sky-600 dark:text-sky-400 mt-0.5"
-      aria-hidden="true"
-    />
-    <div className="space-y-1">
-      <p className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
-        {hasAnswer ? "Đã ghi nhận lựa chọn" : "Hướng dẫn thực hành"}
-      </p>
-      <p className="text-xs sm:text-sm font-medium leading-relaxed text-sky-900 dark:text-sky-200">
-        {hasAnswer
-          ? "Đã lưu đáp án cho câu hỏi này. Hoàn thành tất cả các câu và nhấn Nộp bài để xem kết quả & giải thích chi tiết."
-          : "Chọn đáp án đúng ở cột giữa. Sau khi nộp bài, hệ thống sẽ mở khóa giải thích chi tiết cho từng câu."}
-      </p>
-    </div>
-  </div>
-);
-
-const FeedbackPanel: React.FC<{ qr: QuestionResult }> = ({ qr }) => (
-  <div className="space-y-4" role="status" aria-live="polite">
-    {/* Correct / Incorrect banner */}
-    <div
-      className={`flex items-start gap-3 rounded-2xl border p-4 sm:p-5 ${
-        qr.isCorrect
-          ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40"
-          : "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/40"
-      }`}
-    >
-      {qr.isCorrect ? (
-        <CheckCircle2
-          size={22}
-          className="shrink-0 text-emerald-600 dark:text-emerald-400 mt-0.5"
-          aria-hidden="true"
-        />
-      ) : (
-        <XCircle
-          size={22}
-          className="shrink-0 text-rose-600 dark:text-rose-400 mt-0.5"
-          aria-hidden="true"
-        />
-      )}
-      <div>
-        <p
-          className={`text-base font-bold ${
-            qr.isCorrect
-              ? "text-emerald-900 dark:text-emerald-200"
-              : "text-rose-900 dark:text-rose-200"
-          }`}
-        >
-          {qr.isCorrect ? "Chính xác!" : "Chưa chính xác"}
-        </p>
-        <p
-          className={`text-xs mt-0.5 ${
-            qr.isCorrect
-              ? "text-emerald-700 dark:text-emerald-300"
-              : "text-rose-700 dark:text-rose-300"
-          }`}
-        >
-          {qr.isCorrect
-            ? "Bạn đã chọn đúng đáp án cho câu hỏi này."
-            : "Xem lại đáp án chính xác và lý thuyết bên dưới."}
+/** Right or wrong, why the picked option is wrong, and the explanation. */
+const Explanation: React.FC<{ check: GrammarCheck }> = ({ check }) => {
+  const why =
+    !check.isCorrect && check.selectedOption !== undefined
+      ? check.optionExplanations?.[check.selectedOption]
+      : null;
+  return (
+    <div className="space-y-4" role="status" aria-live="polite">
+      <div
+        className={`flex items-start gap-2.5 rounded-xl border p-3.5 ${
+          check.isCorrect
+            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30"
+            : "border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30"
+        }`}
+      >
+        {check.isCorrect ? (
+          <Check size={18} strokeWidth={2.5} className="mt-0.5 shrink-0 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
+        ) : (
+          <X size={18} strokeWidth={2.5} className="mt-0.5 shrink-0 text-rose-700 dark:text-rose-400" aria-hidden="true" />
+        )}
+        <p className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
+          {check.isCorrect
+            ? "Chính xác."
+            : `Chưa đúng. Đáp án đúng là ${LETTERS[check.correctOption]}.`}
         </p>
       </div>
-    </div>
-
-    {/* Wrong selection: show the correct answer */}
-    {!qr.isCorrect && (
-      <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800/60">
-        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-          Đáp án đúng
-        </p>
-        <p className="text-base font-bold text-slate-900 dark:text-slate-100">
-          Đáp án {String.fromCharCode(65 + qr.correctOption)}
-        </p>
-      </div>
-    )}
-
-    {/* Why the option the learner picked is wrong, when the author wrote it */}
-    {!qr.isCorrect &&
-      qr.selectedOption !== undefined &&
-      qr.optionExplanations?.[qr.selectedOption] && (
-        <div className="rounded-2xl border border-rose-200 bg-white p-4 sm:p-5 dark:border-rose-900/60 dark:bg-slate-900/40">
-          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
-            Vì sao {String.fromCharCode(65 + qr.selectedOption)} sai
+      {why && (
+        <div>
+          <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100">
+            Vì sao {LETTERS[check.selectedOption as number]} sai
           </p>
-          <p className="text-sm font-medium leading-relaxed text-slate-800 dark:text-slate-200">
-            {qr.optionExplanations[qr.selectedOption]}
+          <p className="mt-1 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">{why}</p>
+        </div>
+      )}
+      {check.explanation && (
+        <div>
+          <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết</p>
+          <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
+            {check.explanation}
           </p>
         </div>
       )}
+    </div>
+  );
+};
 
-    {/* Explanation (only when present in real data) */}
-    {qr.explanation && (
-      <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-4 sm:p-5 dark:border-sky-900/60 dark:bg-sky-950/40">
-        <p className="mb-1.5 text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
-          Giải thích chi tiết
-        </p>
-        <p className="text-sm font-medium leading-relaxed text-slate-800 dark:text-slate-200">
-          {qr.explanation}
-        </p>
-      </div>
-    )}
-  </div>
-);
-
-// ─── Main component ───────────────────────────────────────────────────────────
+/**
+ * One grammar topic, graded question by question (owner 2026-11-13): the
+ * whole workspace fits the screen, the left column lists the questions, the
+ * centre shows one question, the right column explains it as soon as an
+ * option is picked. When every question is answered the attempt is saved once,
+ * which records progress and feeds the mistake notebook as before.
+ */
 export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }) => {
   const { id: topicId, questions } = topic;
   const queryClient = useQueryClient();
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
+  const [checks, setChecks] = useState<GrammarChecks>({});
+  const [pending, setPending] = useState<{ questionId: number; option: number } | null>(null);
   const [result, setResult] = useState<GrammarAttemptResult | null>(null);
+  const [gridOpen, setGridOpen] = useState(false);
+  const submittedRef = useRef(false);
 
-  const answeredCount = Object.keys(answers).length;
+  const tally = grammarTally(questions, checks);
+  const wrongIds = wrongQuestionIds(questions, checks);
 
   useEffect(() => {
-    onDirtyChange?.(isGrammarDirty(answeredCount, Boolean(result)));
-  }, [answeredCount, result, onDirtyChange]);
+    onDirtyChange?.(isGrammarDirty(tally.answered, Boolean(result)));
+  }, [tally.answered, result, onDirtyChange]);
 
   const submitAttempt = useMutation({
-    mutationFn: () => grammarService.submitAttempt(topicId, answers),
+    mutationFn: (answers: Record<string, number>) => grammarService.submitAttempt(topicId, answers),
     onSuccess: (data) => {
       setResult(data);
       const currentUserId = useAuthStore.getState().user?.id;
@@ -165,289 +113,273 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
         queryClient.invalidateQueries({ queryKey: ["user-stats", currentUserId] }),
         queryClient.invalidateQueries({ queryKey: ["daily-quests"] }),
         queryClient.invalidateQueries({ queryKey: ["profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["mistakes"] }),
         queryClient.invalidateQueries({ predicate: (q) => dependsOnLevel(q.queryKey) }),
       ]);
-      toast.success(
-        data.rewardBanh || data.rewardXP
-          ? `Kết quả: ${data.correctCount}/${data.totalQuestions}. Bạn nhận ${data.rewardBanh} Bánh Mì và ${data.rewardXP} XP.`
-          : `Kết quả: ${data.correctCount}/${data.totalQuestions}. Hãy luyện lại để cải thiện nhé.`,
-      );
     },
-    onError: () => toast.error("Không thể nộp bài lúc này. Vui lòng thử lại."),
+    onError: () => {
+      submittedRef.current = false;
+      toast.error("Chưa lưu được kết quả bài này. Hãy đăng nhập hoặc thử lại.");
+    },
   });
 
-  const reset = () => {
-    setAnswers({});
-    setResult(null);
-    setCurrentIndex(0);
+  // Every question answered: save the attempt once.
+  useEffect(() => {
+    if (!result && !submittedRef.current && allAnswered(questions, checks)) {
+      submittedRef.current = true;
+      submitAttempt.mutate(answersOf(checks));
+    }
+  }, [checks, questions, result, submitAttempt]);
+
+  const currentQuestion = questions[currentIndex];
+  const currentCheck = currentQuestion ? checks[currentQuestion.id] : undefined;
+
+  const choose = useCallback(
+    async (optionIndex: number) => {
+      if (!currentQuestion || checks[currentQuestion.id] || pending) return;
+      setPending({ questionId: currentQuestion.id, option: optionIndex });
+      try {
+        const graded = await grammarService.checkAnswer(topicId, currentQuestion.id, optionIndex);
+        setChecks((previous) => ({ ...previous, [currentQuestion.id]: graded }));
+      } catch {
+        toast.error("Chưa chấm được câu này. Hãy thử lại.");
+      } finally {
+        setPending(null);
+      }
+    },
+    [checks, currentQuestion, pending, topicId],
+  );
+
+  const goTo = (index: number) => {
+    setCurrentIndex(index);
+    setGridOpen(false);
   };
+
+  const retryWrong = () => {
+    const firstWrong = questions.findIndex((q) => wrongIds.includes(q.id));
+    setChecks((previous) => clearWrong(previous));
+    setResult(null);
+    submittedRef.current = false;
+    if (firstWrong >= 0) goTo(firstWrong);
+  };
+
+  const retryAll = () => {
+    setChecks({});
+    setResult(null);
+    submittedRef.current = false;
+    goTo(0);
+  };
+
+  // ← → move between questions; 1-4 or A-D choose an option.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.key === "ArrowRight") {
+        setCurrentIndex((index) => getNextIndex(index, questions.length));
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        setCurrentIndex((index) => getPrevIndex(index));
+        return;
+      }
+      if (!currentQuestion) return;
+      const option = optionFromKey(event.key, currentQuestion.options.length);
+      if (option !== null) void choose(option);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [choose, currentQuestion, questions.length]);
 
   if (!questions.length) {
     return (
       <div className="flex flex-1 items-center justify-center p-8 text-center">
-        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+        <p className="text-[15px] text-slate-600 dark:text-slate-400">
           Chủ đề này chưa có câu hỏi. Hãy quay lại sau khi nội dung được bổ sung.
         </p>
       </div>
     );
   }
 
-  const currentQuestion = questions[currentIndex];
-  const currentAnswerIndex = answers[String(currentQuestion.id)];
-  const isFirstQuestion = currentIndex === 0;
-  const isLastQuestion = currentIndex === questions.length - 1;
-  const isAllAnswered = answeredCount === questions.length;
-  const hasCurrentAnswer = currentAnswerIndex !== undefined;
-
-  const currentResult = result?.questionsResult.find(
-    (r) => r.questionId === currentQuestion.id,
-  );
-
-  const selectAnswer = (optionIndex: number) => {
-    if (result) return;
-    setAnswers((prev) => ({
-      ...prev,
-      [String(currentQuestion.id)]: optionIndex,
-    }));
+  const optionClass = (optionIndex: number) => {
+    const state = optionState(
+      optionIndex,
+      currentCheck,
+      pending?.questionId === currentQuestion.id ? pending.option : null,
+    );
+    if (state === "correct")
+      return "border-emerald-500 bg-emerald-50 text-emerald-900 dark:border-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-200";
+    if (state === "wrong")
+      return "border-rose-500 bg-rose-50 text-rose-900 dark:border-rose-600 dark:bg-rose-950/40 dark:text-rose-200";
+    if (state === "faded")
+      return "border-slate-200 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400";
+    if (state === "pending")
+      return "border-blue-500 bg-blue-50 text-slate-900 dark:border-blue-500 dark:bg-blue-950/40 dark:text-slate-100";
+    return "border-slate-200 bg-white text-slate-900 hover:border-blue-400 hover:bg-blue-50/40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-blue-500/70";
   };
 
-  // Option styling
-  const optionStyle = (optIndex: number): string => {
-    const isSelected = currentAnswerIndex === optIndex;
-    const isCorrect = currentResult?.correctOption === optIndex;
-    const isWrong = isSelected && currentResult && !currentResult.isCorrect;
-
-    if (currentResult) {
-      if (isCorrect)
-        return "border-emerald-500 bg-emerald-50/80 text-emerald-900 dark:border-emerald-500 dark:bg-emerald-950/50 dark:text-emerald-200 ring-2 ring-emerald-500/40";
-      if (isWrong)
-        return "border-rose-500 bg-rose-50/80 text-rose-900 dark:border-rose-500 dark:bg-rose-950/50 dark:text-rose-200 ring-2 ring-rose-500/40";
-      return "border-slate-200/70 bg-white/50 text-slate-600 dark:border-slate-800 dark:bg-slate-900/30 dark:text-slate-400 opacity-60";
-    }
-
-    if (isSelected) {
-      return "border-amber-500 bg-amber-50/90 text-amber-950 dark:border-amber-500 dark:bg-amber-950/50 dark:text-amber-100 ring-2 ring-amber-500/50 shadow-xs";
-    }
-
-    return "border-slate-200 bg-white text-slate-800 hover:border-amber-400 hover:bg-amber-50/30 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-amber-500/60 dark:hover:bg-amber-950/20";
+  const rowMark = (questionId: number) => {
+    const check = checks[questionId];
+    if (!check) return "border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400";
+    return check.isCorrect
+      ? "border-emerald-500 bg-emerald-500 text-white dark:border-emerald-500"
+      : "border-rose-500 bg-rose-500 text-white dark:border-rose-500";
   };
 
-  const dotStyle = (qIndex: number): string => {
-    const q = questions[qIndex];
-    const qResult = result?.questionsResult.find((r) => r.questionId === q.id);
-    const isAnswered = answers[String(q.id)] !== undefined;
-
-    if (qResult?.isCorrect) return "bg-emerald-500 dark:bg-emerald-400";
-    if (qResult) return "bg-rose-500 dark:bg-rose-400";
-    if (isAnswered) return "bg-sky-500 dark:bg-sky-400";
-    return "bg-slate-200 dark:bg-slate-700";
-  };
-
-  const navDotButtonStyle = (qIndex: number): string => {
-    const q = questions[qIndex];
-    const qResult = result?.questionsResult.find((r) => r.questionId === q.id);
-    const isAnswered = answers[String(q.id)] !== undefined;
-    const isCurrent = qIndex === currentIndex;
-    const base =
-      "flex items-center gap-3 w-full rounded-xl border px-3.5 py-3 text-xs sm:text-sm font-semibold text-left transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500";
-    let color =
-      "border-slate-200 bg-slate-50/70 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-800/60 dark:text-slate-400 dark:hover:bg-slate-800";
-    if (qResult?.isCorrect)
-      color =
-        "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300";
-    else if (qResult)
-      color =
-        "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300";
-    else if (isAnswered)
-      color =
-        "border-sky-300 bg-sky-50 text-sky-800 dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-300";
-    return `${base} ${color} ${isCurrent ? "ring-2 ring-amber-500 ring-offset-1 shadow-xs" : ""}`;
-  };
+  const progress = Math.round((tally.answered / tally.total) * 100);
 
   return (
-    <div
-      className="flex flex-1 flex-col min-h-0"
-      data-testid="grammar-workspace"
-    >
-      {/* ── 3-pane body ───────────────────────────────────────────────────── */}
-      <div className="flex flex-1 min-h-0">
-
-        {/* ── LEFT PANE (desktop only: wide, readable) ────────────────── */}
+    <div className="flex min-h-0 flex-1 flex-col" data-testid="grammar-workspace">
+      <div className="flex min-h-0 flex-1">
+        {/* Left: the topic's questions */}
         <aside
-          aria-label="Điều hướng câu hỏi"
-          className="hidden lg:flex lg:w-60 xl:w-72 2xl:w-80 shrink-0 flex-col border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto"
+          aria-label="Danh sách câu hỏi"
+          className={`${GRAMMAR_LAYOUT_CLASSES.leftPane} min-h-0 border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900`}
           data-testid="grammar-left-pane"
         >
-          <div className="p-6 space-y-6">
-            {/* Topic info */}
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Chủ đề ngữ pháp
-              </p>
-              <h2 className="mt-1.5 text-base sm:text-lg font-bold leading-snug text-slate-900 dark:text-slate-100">
-                {grammarDisplayTitle(topic.id, topic.title)}
-              </h2>
-              <span className="mt-2.5 inline-block rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-                {levelLabel(topic.level)}
-              </span>
+          <div className="border-b border-slate-200 p-5 dark:border-slate-800">
+            <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{levelLabel(topic.level)}</p>
+            <h2 className="mt-0.5 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">
+              {grammarDisplayTitle(topic.id, topic.title)}
+            </h2>
+            <div
+              className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+              role="progressbar"
+              aria-label="Tiến độ"
+              aria-valuenow={tally.answered}
+              aria-valuemin={0}
+              aria-valuemax={tally.total}
+            >
+              <div className="h-full rounded-full bg-blue-600" style={{ width: `${progress}%` }} />
             </div>
-
-            {/* Progress */}
-            <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-4">
-              <div className="mb-2.5 flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                <span>Tiến độ thực hành</span>
-                <span>
-                  {result
-                    ? `${result.correctCount}/${result.totalQuestions} đúng`
-                    : `${answeredCount}/${questions.length} câu`}
-                </span>
-              </div>
-              <div
-                className="h-2 rounded-full bg-slate-200 dark:bg-slate-700"
-                role="progressbar"
-                aria-valuenow={result ? result.correctCount : answeredCount}
-                aria-valuemax={questions.length}
-              >
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${result ? "bg-emerald-500" : "bg-sky-500"}`}
-                  style={{
-                    width: `${(((result ? result.correctCount : answeredCount) / questions.length) * 100).toFixed(0)}%`,
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Question list */}
-            <div>
-              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                Danh sách câu hỏi ({questions.length})
-              </p>
-              <nav aria-label="Danh sách câu hỏi">
-                <ol className="flex flex-col gap-2">
-                  {questions.map((q, i) => (
-                    <li key={q.id}>
-                      <button
-                        type="button"
-                        onClick={() => setCurrentIndex(i)}
-                        aria-current={i === currentIndex ? "step" : undefined}
-                        aria-label={`Câu ${i + 1}${answers[String(q.id)] !== undefined ? " (đã chọn)" : ""}`}
-                        className={navDotButtonStyle(i)}
-                      >
-                        <span className="flex size-6 sm:size-7 shrink-0 items-center justify-center rounded-lg border border-current text-xs font-bold">
-                          {i + 1}
-                        </span>
-                        <span className="truncate">
-                          {q.question}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </nav>
-            </div>
+            <p className="mt-2 text-[13px] text-slate-600 dark:text-slate-400">
+              {tally.answered}/{tally.total} câu
+              <span className="ml-2 font-semibold text-emerald-700 dark:text-emerald-400">đúng {tally.correct}</span>
+              <span className="ml-2 font-semibold text-rose-700 dark:text-rose-400">sai {tally.wrong}</span>
+            </p>
           </div>
+          <nav aria-label="Các câu" className="min-h-0 flex-1 overflow-y-auto p-2">
+            <ol className="space-y-0.5">
+              {questions.map((q, i) => (
+                <li key={q.id}>
+                  <button
+                    type="button"
+                    onClick={() => goTo(i)}
+                    aria-current={i === currentIndex ? "step" : undefined}
+                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                      i === currentIndex
+                        ? "bg-blue-50 text-slate-900 dark:bg-blue-950/40 dark:text-slate-100"
+                        : "text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800/60"
+                    }`}
+                  >
+                    <span
+                      className={`flex size-7 shrink-0 items-center justify-center rounded-full border text-[13px] font-bold tabular-nums ${rowMark(q.id)}`}
+                      aria-hidden="true"
+                    >
+                      {i + 1}
+                    </span>
+                    <span className={`min-w-0 flex-1 truncate text-[15px] ${i === currentIndex ? "font-semibold" : ""}`}>
+                      {q.question}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </nav>
+          {wrongIds.length > 0 && (
+            <div className="border-t border-slate-200 p-3 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={retryWrong}
+                className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-50 text-sm font-semibold text-rose-800 transition-colors hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300 dark:hover:bg-rose-950/50"
+              >
+                <RotateCcw size={15} aria-hidden="true" />
+                Làm lại câu sai ({wrongIds.length})
+              </button>
+            </div>
+          )}
         </aside>
 
-        {/* ── CENTER PANE (Focused Question Model) ─────────────────────── */}
+        {/* Centre: one question */}
         <main
-          className="flex-1 min-h-0 overflow-y-auto bg-slate-50/70 dark:bg-slate-950/70 flex flex-col"
+          className="min-h-0 flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950"
           aria-label="Câu hỏi hiện tại"
         >
-          <div className="mx-auto w-full max-w-3xl xl:max-w-4xl 2xl:max-w-5xl px-4 sm:px-6 lg:px-8 py-8 sm:py-10 my-auto">
-
-            {/* Completion banner */}
+          <div className={`mx-auto w-full max-w-3xl py-6 ${GRAMMAR_LAYOUT_CLASSES.centerOuterPadding}`}>
             {result && (
               <div
-                className={`mb-6 flex items-start justify-between gap-4 rounded-2xl border p-5 sm:items-center ${
-                  result.correctCount === result.totalQuestions
-                    ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40"
-                    : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40"
-                }`}
+                className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
                 data-testid="grammar-completion-banner"
               >
-                <div>
-                  <p className="text-base font-bold text-slate-900 dark:text-slate-100">
-                    Kết quả: {result.correctCount}/{result.totalQuestions} câu đúng
-                    {result.rewardXP > 0 && ` · +${result.rewardXP} XP`}
-                    {result.rewardBanh > 0 && ` · +${result.rewardBanh} Bánh Mì`}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    Bạn có thể chọn từng câu ở thanh điều hướng để xem lại chi tiết lời giải.
-                  </p>
+                <p className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
+                  Đã xong: {result.correctCount}/{result.totalQuestions} câu đúng
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {wrongIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={retryWrong}
+                      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-rose-200 px-3 text-sm font-semibold text-rose-800 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-300 dark:hover:bg-rose-950/30"
+                    >
+                      <RotateCcw size={14} aria-hidden="true" />
+                      Làm lại câu sai
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={retryAll}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-slate-300 px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  >
+                    Làm lại cả bài
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={reset}
-                  className="flex shrink-0 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-                >
-                  <RefreshCw size={15} aria-hidden="true" />
-                  Làm lại
-                </button>
               </div>
             )}
 
-            {/* Counter bar */}
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span
-                  className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400"
-                  aria-label={`Câu hỏi ${currentIndex + 1} trên ${questions.length}`}
-                >
-                  Câu {currentIndex + 1} / {questions.length}
-                </span>
-                {hasCurrentAnswer && !result && (
-                  <span className="rounded-full bg-sky-100 px-3 py-0.5 text-xs font-bold text-sky-800 dark:bg-sky-950/60 dark:text-sky-300">
-                    Đã chọn đáp án
-                  </span>
-                )}
-              </div>
-              <span className="text-xs text-slate-600 dark:text-slate-400">
-                {result ? "Chế độ xem lại bài làm" : "Chọn 1 đáp án chính xác nhất"}
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="rounded-full bg-white px-3 py-1 text-[13px] font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-800">
+                Câu {currentIndex + 1}/{questions.length}
+              </span>
+              <span className="text-[13px] text-slate-600 dark:text-slate-400">
+                {currentCheck ? "Đã chấm câu này" : "Chọn một đáp án (phím 1–4)"}
               </span>
             </div>
 
-            {/* Question card */}
             <article
-              className="mb-6 rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 lg:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+              className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900"
               data-testid="grammar-question-card"
             >
-              <p className="mb-8 text-xl sm:text-2xl font-bold leading-relaxed tracking-tight text-slate-900 dark:text-slate-100">
+              <p className="text-lg font-semibold leading-relaxed text-slate-900 sm:text-xl dark:text-slate-100">
                 {currentQuestion.question}
               </p>
-
-              <div
-                className="space-y-3.5 sm:space-y-4"
-                role="radiogroup"
-                aria-label="Đáp án"
-              >
-                {currentQuestion.options.map((option, optIndex) => {
-                  const isSelected = currentAnswerIndex === optIndex;
-                  const isCorrect = currentResult?.correctOption === optIndex;
-                  const isWrong = isSelected && currentResult && !currentResult.isCorrect;
+              <div className="mt-5 space-y-2.5" role="radiogroup" aria-label="Đáp án">
+                {currentQuestion.options.map((option, optionIndex) => {
+                  const state = optionState(
+                    optionIndex,
+                    currentCheck,
+                    pending?.questionId === currentQuestion.id ? pending.option : null,
+                  );
                   return (
                     <button
-                      key={optIndex}
+                      key={optionIndex}
                       type="button"
-                      disabled={Boolean(result)}
-                      onClick={() => selectAnswer(optIndex)}
                       role="radio"
-                      aria-checked={isSelected}
-                      className={`flex w-full min-h-[64px] sm:min-h-[72px] cursor-pointer items-center justify-between rounded-xl sm:rounded-2xl border p-4 sm:p-5 text-left text-base sm:text-lg font-semibold transition-all disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${optionStyle(optIndex)}`}
+                      aria-checked={currentCheck?.selectedOption === optionIndex || state === "pending"}
+                      disabled={Boolean(currentCheck) || Boolean(pending)}
+                      onClick={() => void choose(optionIndex)}
+                      className={`flex min-h-13 w-full items-center gap-3 rounded-xl border px-4 py-3 text-left text-base transition-colors disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${optionClass(optionIndex)}`}
                     >
-                      <div className="flex items-center gap-4 sm:gap-5">
-                        <span
-                          className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl border-2 border-current text-xs sm:text-sm font-black shadow-2xs"
-                          aria-hidden="true"
-                        >
-                          {String.fromCharCode(65 + optIndex)}
-                        </span>
-                        <span className="leading-snug">{option}</span>
-                      </div>
-                      {currentResult && isCorrect && (
-                        <CheckCircle2 size={22} className="shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                      <span className="w-6 shrink-0 font-semibold" aria-hidden="true">
+                        {LETTERS[optionIndex]}.
+                      </span>
+                      <span className="min-w-0 flex-1 font-medium">{option}</span>
+                      {state === "pending" && <Loader2 size={18} className="shrink-0 animate-spin" aria-label="Đang chấm" />}
+                      {state === "correct" && (
+                        <Check size={18} strokeWidth={2.5} className="shrink-0 text-emerald-700 dark:text-emerald-400" aria-label="Đáp án đúng" />
                       )}
-                      {isWrong && (
-                        <XCircle size={22} className="shrink-0 text-rose-600 dark:text-rose-400" aria-hidden="true" />
+                      {state === "wrong" && (
+                        <X size={18} strokeWidth={2.5} className="shrink-0 text-rose-700 dark:text-rose-400" aria-label="Đáp án bạn chọn" />
                       )}
                     </button>
                   );
@@ -455,103 +387,105 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
               </div>
             </article>
 
-            {/* Mobile-only: inline theory / feedback below question */}
-            <div className="md:hidden mt-6" data-testid="grammar-mobile-support">
-              {result && currentResult ? (
-                <FeedbackPanel qr={currentResult} />
-              ) : (
-                <GrammarVideoPlayer topic={topic} />
-              )}
-            </div>
+            {/* Phone: the explanation sits under the question. */}
+            {currentCheck && (
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 md:hidden dark:border-slate-800 dark:bg-slate-900">
+                <Explanation check={currentCheck} />
+              </div>
+            )}
           </div>
         </main>
 
-        {/* ── RIGHT PANE (Theory & Contextual Feedback: Proportional & Breathable) ── */}
+        {/* Right: the explanation, then the topic's key points */}
         <aside
-          aria-label={result ? "Giải thích đáp án" : "Lý thuyết & Hướng dẫn"}
-          className="hidden md:flex md:w-80 lg:w-80 xl:w-96 2xl:w-[420px] shrink-0 flex-col border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-y-auto"
+          aria-label="Giải thích"
+          className={`${GRAMMAR_LAYOUT_CLASSES.rightPane} min-h-0 overflow-y-auto border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900`}
           data-testid="grammar-right-pane"
         >
-          <div className="p-6 sm:p-7 space-y-6">
-            {result ? (
-              // After submission: Show Feedback First, with Theory accessible below
-              <>
-                {currentResult && <FeedbackPanel qr={currentResult} />}
-                <div className="border-t border-slate-200/80 pt-6 dark:border-slate-800">
-                  <GrammarVideoPlayer topic={topic} />
-                </div>
-              </>
+          <div className="space-y-6 p-5">
+            {currentCheck ? (
+              <Explanation check={currentCheck} />
             ) : (
-              // Before submission: Clean guidance + Full Theory (No redundant scrolling)
-              <>
-                <PracticeGuidance hasAnswer={hasCurrentAnswer} />
-                <GrammarVideoPlayer topic={topic} />
-              </>
+              <p className="rounded-xl border border-dashed border-slate-300 p-4 text-[15px] text-slate-600 dark:border-slate-700 dark:text-slate-400">
+                Chọn đáp án để xem đúng sai và giải thích chi tiết.
+              </p>
             )}
+            <details className="group border-t border-slate-200 pt-4 dark:border-slate-800" open={!currentCheck}>
+              <summary className="cursor-pointer list-none text-[15px] font-bold text-slate-900 dark:text-slate-100">
+                Kiến thức trọng tâm
+              </summary>
+              <div className="mt-3">
+                <GrammarVideoPlayer topic={topic} />
+              </div>
+            </details>
           </div>
         </aside>
       </div>
 
-      {/* ── BOTTOM NAV (Tactile, Clear, Proportional) ────────────────── */}
+      {/* Footer: always in view */}
       <footer
-        className="shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-4 sm:px-8 flex items-center justify-between gap-4"
-        aria-label="Điều hướng câu hỏi"
+        className="relative flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 sm:px-6 dark:border-slate-800 dark:bg-slate-900"
+        aria-label="Chuyển câu"
       >
-        {/* Prev */}
         <button
           type="button"
-          disabled={isFirstQuestion}
-          onClick={() => setCurrentIndex((prev) => getPrevIndex(prev))}
+          disabled={currentIndex === 0}
+          onClick={() => goTo(getPrevIndex(currentIndex))}
           aria-label="Câu trước"
-          className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl border border-slate-200 bg-white px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           <ChevronLeft size={18} aria-hidden="true" />
           <span className="hidden sm:inline">Câu trước</span>
         </button>
 
-        {/* Dot indicators */}
-        <div className="flex items-center gap-2" aria-hidden="true">
-          {questions.map((q, i) => (
-            <button
-              key={q.id}
-              type="button"
-              onClick={() => setCurrentIndex(i)}
-              aria-label={`Câu ${i + 1}`}
-              className={`cursor-pointer rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
-                i === currentIndex ? "h-3 w-8" : "size-3"
-              } ${dotStyle(i)}`}
-            />
-          ))}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setGridOpen((open) => !open)}
+            aria-expanded={gridOpen}
+            aria-label={`Bảng câu hỏi, đang ở câu ${currentIndex + 1}/${questions.length}`}
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-4 text-sm font-semibold tabular-nums text-white transition-colors hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+          >
+            <LayoutGrid size={16} aria-hidden="true" />
+            {currentIndex + 1}/{questions.length}
+          </button>
+          {gridOpen && (
+            <div className="absolute bottom-full left-1/2 mb-2 w-64 -translate-x-1/2 rounded-xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+              <p className="mb-2 text-[13px] text-slate-600 dark:text-slate-400">
+                Đã làm {tally.answered}/{tally.total}
+              </p>
+              <div className="grid grid-cols-5 gap-2">
+                {questions.map((q, i) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => goTo(i)}
+                    aria-label={`Câu ${i + 1}`}
+                    className={`flex size-10 items-center justify-center rounded-lg border text-sm font-bold tabular-nums ${rowMark(q.id)} ${
+                      i === currentIndex ? "ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-slate-900" : ""
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Next / Submit */}
-        {!isLastQuestion || result ? (
-          <button
-            type="button"
-            disabled={isLastQuestion}
-            onClick={() => setCurrentIndex((prev) => getNextIndex(prev, questions.length))}
-            aria-label="Câu tiếp"
-            className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl border border-slate-200 bg-white px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-bold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
-          >
-            <span className="hidden sm:inline">Câu tiếp</span>
-            <ChevronRight size={18} aria-hidden="true" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={!isAllAnswered || submitAttempt.isPending}
-            onClick={() => submitAttempt.mutate()}
-            aria-label={
-              !isAllAnswered
-                ? `Nộp bài (cần trả lời thêm ${questions.length - answeredCount} câu)`
-                : "Nộp bài và xem kết quả"
-            }
-            className="flex cursor-pointer items-center gap-2 rounded-xl sm:rounded-2xl bg-emerald-700 px-6 py-2.5 sm:px-7 sm:py-3 text-sm sm:text-base font-bold text-white transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 shadow-xs"
-            data-testid="grammar-submit-btn"
-          >
-            {submitAttempt.isPending ? "Đang chấm…" : "Nộp bài"}
-          </button>
-        )}
+        <button
+          type="button"
+          disabled={currentIndex === questions.length - 1}
+          onClick={() => {
+            const next = currentCheck ? nextUnanswered(questions, checks, currentIndex) : null;
+            goTo(next !== null && next > currentIndex ? next : getNextIndex(currentIndex, questions.length));
+          }}
+          aria-label="Câu tiếp"
+          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <span className="hidden sm:inline">Câu tiếp</span>
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>
       </footer>
     </div>
   );

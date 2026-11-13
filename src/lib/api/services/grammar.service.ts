@@ -48,4 +48,11 @@ export const grammarService = {
   getTopic: (id: number): Promise<GrammarTopicDetail> => axiosClient.get(`/grammar/topics/${id}`),
   submitAttempt: (id: number, answers: Record<string, number>): Promise<GrammarAttemptResult> =>
     axiosClient.post(`/grammar/topics/${id}/attempt`, { answers }),
+  /** One question graded as soon as it is answered; nothing is stored. */
+  checkAnswer: (
+    topicId: number,
+    questionId: number,
+    selectedOption: number,
+  ): Promise<GrammarAttemptResult["questionsResult"][number]> =>
+    axiosClient.post(`/grammar/topics/${topicId}/questions/${questionId}/check`, { selectedOption }),
 };

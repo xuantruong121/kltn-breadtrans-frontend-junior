@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { BookOpen, Lightbulb, PlayCircle } from "lucide-react";
+import { Lightbulb, PlayCircle } from "lucide-react";
 import { GrammarTopicDetail } from "../types";
 
 interface GrammarVideoPlayerProps {
@@ -16,16 +16,10 @@ interface GrammarVideoPlayerProps {
  */
 export const GrammarVideoPlayer: React.FC<GrammarVideoPlayerProps> = ({ topic }) => (
   <div className="space-y-4">
-    <div className="flex items-center gap-2">
-      <BookOpen size={16} className="text-sky-500 dark:text-sky-400" aria-hidden="true" />
-      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-        Lý thuyết ngữ pháp
-      </h3>
-    </div>
 
     {topic.keyFormula && (
       <div className="rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/40 p-4 sm:p-5">
-        <div className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-400">
+        <div className="mb-2 flex items-center gap-1.5 text-[13px] font-semibold text-amber-800 dark:text-amber-400">
           <Lightbulb size={13} aria-hidden="true" />
           Công thức cốt lõi
         </div>

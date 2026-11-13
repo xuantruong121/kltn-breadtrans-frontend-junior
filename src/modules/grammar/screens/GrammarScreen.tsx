@@ -116,8 +116,10 @@ export const GrammarScreen: React.FC<GrammarScreenProps> = ({
   // ── Active Grammar Exercise Workspace (Focus Mode) ────────────────────────
   if (selectedTopicId !== null) {
     return (
+      // One screen (owner 2026-11-13): header and footer stay in view, the
+      // three columns scroll on their own.
       <div
-        className="w-full min-h-dvh flex flex-col bg-slate-50 dark:bg-slate-950"
+        className="w-full h-dvh overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950"
         data-testid="grammar-exercise-shell"
       >
         <PracticeHeader
