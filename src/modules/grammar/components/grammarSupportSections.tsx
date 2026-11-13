@@ -8,6 +8,7 @@ import { GrammarVideoPlayer } from "./GrammarVideoPlayer";
 import {
   DEFAULT_SECTION_PREFS,
   SECTION_PREFS_KEY,
+  explanationBlocks,
   readSectionPrefs,
   toggleSection,
   type GrammarCheck,
@@ -133,6 +134,7 @@ export function SupportSections({
     !check.isCorrect && check.selectedOption !== undefined
       ? check.optionExplanations?.[check.selectedOption]
       : null;
+  const blocks = explanationBlocks(check.explanation);
   return (
     <div className="space-y-3">
       <SupportSection
@@ -142,8 +144,9 @@ export function SupportSections({
         open={prefs.explanation}
         onToggle={() => onToggle("explanation")}
       >
-        <div className="space-y-3">
-          {why && (
+        <div className="space-y-2.5">
+          {/* A step-by-step explanation already says why each wrong option fails. */}
+          {why && !blocks.some((block) => block.kind === "step") && (
             <div className="rounded-lg bg-rose-50 p-3 dark:bg-rose-950/30">
               <p className="text-[15px] font-semibold text-rose-900 dark:text-rose-200">
                 Vì sao {LETTERS[check.selectedOption as number]} sai
@@ -151,9 +154,32 @@ export function SupportSections({
               <p className="mt-1 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">{why}</p>
             </div>
           )}
-          <p className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
-            {check.explanation || "Câu này chưa có lời giải chi tiết."}
-          </p>
+          {blocks.length === 0 ? (
+            <p className="text-[15px] leading-relaxed text-slate-600 dark:text-slate-400">Câu này chưa có lời giải chi tiết.</p>
+          ) : (
+            blocks.map((block, index) =>
+              block.kind === "step" ? (
+                <p
+                  key={index}
+                  className={`text-[15px] font-semibold text-slate-900 dark:text-slate-100 ${index > 0 ? "pt-1.5" : ""}`}
+                >
+                  {block.text}
+                </p>
+              ) : block.kind === "note" ? (
+                <p
+                  key={index}
+                  className="rounded-lg bg-amber-50 px-3 py-2.5 text-[15px] leading-relaxed text-slate-800 dark:bg-amber-950/30 dark:text-slate-200"
+                >
+                  <span className="font-semibold text-amber-900 dark:text-amber-300">Lưu ý: </span>
+                  {block.text}
+                </p>
+              ) : (
+                <p key={index} className="text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
+                  {block.text}
+                </p>
+              ),
+            )
+          )}
         </div>
       </SupportSection>
       <SupportSection

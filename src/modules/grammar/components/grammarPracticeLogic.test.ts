@@ -68,3 +68,19 @@ test("support section switches: defaults, stored values and toggling", async () 
   assert.deepEqual(readSectionPrefs('{"explanation":"yes"}'), DEFAULT_SECTION_PREFS);
   assert.deepEqual(toggleSection(DEFAULT_SECTION_PREFS, "theory"), { explanation: true, theory: true });
 });
+
+test("explanations split into steps, paragraphs and the closing note", async () => {
+  const { explanationBlocks } = await import("./grammarPracticeLogic.ts");
+  assert.deepEqual(
+    explanationBlocks("Bước 1: Xác định dạng câu hỏi\nCâu chia động từ.\n\nBước 3: Chọn đáp án\nChọn (C).\nLưu ý: Dùng will cho lời hứa."),
+    [
+      { kind: "step", text: "Bước 1: Xác định dạng câu hỏi" },
+      { kind: "text", text: "Câu chia động từ." },
+      { kind: "step", text: "Bước 3: Chọn đáp án" },
+      { kind: "text", text: "Chọn (C)." },
+      { kind: "note", text: "Dùng will cho lời hứa." },
+    ],
+  );
+  assert.deepEqual(explanationBlocks("Một dòng ngắn."), [{ kind: "text", text: "Một dòng ngắn." }]);
+  assert.deepEqual(explanationBlocks(null), []);
+});

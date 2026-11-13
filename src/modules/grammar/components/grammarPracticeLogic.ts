@@ -105,3 +105,27 @@ export function readSectionPrefs(raw: string | null | undefined): SectionPrefs {
 export function toggleSection(prefs: SectionPrefs, key: SectionKey): SectionPrefs {
   return { ...prefs, [key]: !prefs[key] };
 }
+
+export type ExplanationBlock =
+  | { kind: "step"; text: string }
+  | { kind: "note"; text: string }
+  | { kind: "text"; text: string };
+
+/**
+ * An explanation split into what the panel shows (owner 2026-11-13: full
+ * step-by-step explanations). "Bước n: ..." lines become step headings and
+ * "Lưu ý: ..." the closing note; any other line is a paragraph. A one-line
+ * explanation is a single paragraph.
+ */
+export function explanationBlocks(text: string | null | undefined): ExplanationBlock[] {
+  return String(text ?? "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line): ExplanationBlock => {
+      if (/^Bước\s+\d+\s*:/.test(line)) return { kind: "step", text: line };
+      const note = /^Lưu ý\s*:\s*(.*)$/.exec(line);
+      if (note) return { kind: "note", text: note[1] };
+      return { kind: "text", text: line };
+    });
+}
