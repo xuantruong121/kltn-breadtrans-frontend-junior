@@ -8,7 +8,8 @@ import toast from "react-hot-toast";
 import { grammarService } from "@/lib/api/services/grammar.service";
 import { useAuthStore } from "@/stores/authStore";
 import { GrammarAttemptResult, GrammarTopicDetail } from "../types";
-import { GrammarVideoPlayer } from "./GrammarVideoPlayer";
+import { SupportPlaceholder, SupportSections, useSectionPrefs } from "./grammarSupportSections";
+import { ReportIssueButton } from "@/components/issue-report";
 import { GRAMMAR_LAYOUT_CLASSES, getNextIndex, getPrevIndex, isGrammarDirty } from "./grammarNavigationUtils";
 import {
   allAnswered,
@@ -19,7 +20,6 @@ import {
   optionFromKey,
   optionState,
   wrongQuestionIds,
-  type GrammarCheck,
   type GrammarChecks,
 } from "./grammarPracticeLogic";
 import { levelLabel } from "@/lib/ui/displayLabels";
@@ -32,51 +32,6 @@ export interface GrammarQuizProps {
 
 const LETTERS = "ABCDEFGH";
 
-/** Right or wrong, why the picked option is wrong, and the explanation. */
-const Explanation: React.FC<{ check: GrammarCheck }> = ({ check }) => {
-  const why =
-    !check.isCorrect && check.selectedOption !== undefined
-      ? check.optionExplanations?.[check.selectedOption]
-      : null;
-  return (
-    <div className="space-y-4" role="status" aria-live="polite">
-      <div
-        className={`flex items-start gap-2.5 rounded-xl border p-3.5 ${
-          check.isCorrect
-            ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30"
-            : "border-rose-200 bg-rose-50 dark:border-rose-900/60 dark:bg-rose-950/30"
-        }`}
-      >
-        {check.isCorrect ? (
-          <Check size={18} strokeWidth={2.5} className="mt-0.5 shrink-0 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
-        ) : (
-          <X size={18} strokeWidth={2.5} className="mt-0.5 shrink-0 text-rose-700 dark:text-rose-400" aria-hidden="true" />
-        )}
-        <p className="text-[15px] font-semibold text-slate-900 dark:text-slate-100">
-          {check.isCorrect
-            ? "Chính xác."
-            : `Chưa đúng. Đáp án đúng là ${LETTERS[check.correctOption]}.`}
-        </p>
-      </div>
-      {why && (
-        <div>
-          <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100">
-            Vì sao {LETTERS[check.selectedOption as number]} sai
-          </p>
-          <p className="mt-1 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">{why}</p>
-        </div>
-      )}
-      {check.explanation && (
-        <div>
-          <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100">Giải thích chi tiết</p>
-          <p className="mt-1 whitespace-pre-line text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
-            {check.explanation}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
 
 /**
  * One grammar topic, graded question by question (owner 2026-11-13): the
@@ -94,6 +49,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
   const [pending, setPending] = useState<{ questionId: number; option: number } | null>(null);
   const [result, setResult] = useState<GrammarAttemptResult | null>(null);
   const [gridOpen, setGridOpen] = useState(false);
+  const [sectionPrefs, toggleSectionPref] = useSectionPrefs();
   const submittedRef = useRef(false);
 
   const tally = grammarTally(questions, checks);
@@ -387,37 +343,40 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
               </div>
             </article>
 
-            {/* Phone: the explanation sits under the question. */}
+            {/* Phone: the sections sit under the question once it is answered. */}
             {currentCheck && (
-              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4 md:hidden dark:border-slate-800 dark:bg-slate-900">
-                <Explanation check={currentCheck} />
+              <div className="mt-4 md:hidden">
+                <SupportSections
+                  check={currentCheck}
+                  topic={topic}
+                  prefs={sectionPrefs}
+                  onToggle={toggleSectionPref}
+                  idPrefix="grammar-phone"
+                />
               </div>
             )}
           </div>
         </main>
 
-        {/* Right: the explanation, then the topic's key points */}
+        {/* Right: nothing but a hint until an option is picked (owner 2026-11-13),
+            then the explanation and the key points, each behind a switch. */}
         <aside
           aria-label="Giải thích"
           className={`${GRAMMAR_LAYOUT_CLASSES.rightPane} min-h-0 overflow-y-auto border-l border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900`}
           data-testid="grammar-right-pane"
         >
-          <div className="space-y-6 p-5">
+          <div className="flex flex-1 flex-col p-5">
             {currentCheck ? (
-              <Explanation check={currentCheck} />
+              <SupportSections
+                check={currentCheck}
+                topic={topic}
+                prefs={sectionPrefs}
+                onToggle={toggleSectionPref}
+                idPrefix="grammar-side"
+              />
             ) : (
-              <p className="rounded-xl border border-dashed border-slate-300 p-4 text-[15px] text-slate-600 dark:border-slate-700 dark:text-slate-400">
-                Chọn đáp án để xem đúng sai và giải thích chi tiết.
-              </p>
+              <SupportPlaceholder />
             )}
-            <details className="group border-t border-slate-200 pt-4 dark:border-slate-800" open={!currentCheck}>
-              <summary className="cursor-pointer list-none text-[15px] font-bold text-slate-900 dark:text-slate-100">
-                Kiến thức trọng tâm
-              </summary>
-              <div className="mt-3">
-                <GrammarVideoPlayer topic={topic} />
-              </div>
-            </details>
           </div>
         </aside>
       </div>
@@ -427,6 +386,22 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
         className="relative flex shrink-0 items-center justify-between gap-3 border-t border-slate-200 bg-white px-4 py-3 sm:px-6 dark:border-slate-800 dark:bg-slate-900"
         aria-label="Chuyển câu"
       >
+        <ReportIssueButton
+          labelFromSm
+          area="GRAMMAR"
+          context={{
+            route: typeof window !== "undefined" ? window.location.pathname + window.location.search : undefined,
+            sourceType: "GRAMMAR_QUESTION",
+            sourceId: currentQuestion.id,
+            context: {
+              topicId: topic.id,
+              topicTitle: grammarDisplayTitle(topic.id, topic.title),
+              question: currentQuestion.question,
+            },
+          }}
+        />
+
+        <div className="flex items-center gap-2">
         <button
           type="button"
           disabled={currentIndex === 0}
@@ -450,7 +425,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
             {currentIndex + 1}/{questions.length}
           </button>
           {gridOpen && (
-            <div className="absolute bottom-full left-1/2 mb-2 w-64 -translate-x-1/2 rounded-xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+            <div className="absolute bottom-full right-0 mb-2 w-64 rounded-xl border border-slate-200 bg-white p-3 shadow-lg dark:border-slate-700 dark:bg-slate-900">
               <p className="mb-2 text-[13px] text-slate-600 dark:text-slate-400">
                 Đã làm {tally.answered}/{tally.total}
               </p>
@@ -486,6 +461,7 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
           <span className="hidden sm:inline">Câu tiếp</span>
           <ChevronRight size={18} aria-hidden="true" />
         </button>
+        </div>
       </footer>
     </div>
   );

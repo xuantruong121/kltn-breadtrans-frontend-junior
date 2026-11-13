@@ -59,3 +59,12 @@ test("option look: correct in green, the wrong pick in red, the rest faded", () 
   assert.equal(optionState(2, undefined, 2), "pending");
   assert.equal(optionState(0, undefined, 2), "idle");
 });
+
+test("support section switches: defaults, stored values and toggling", async () => {
+  const { readSectionPrefs, toggleSection, DEFAULT_SECTION_PREFS } = await import("./grammarPracticeLogic.ts");
+  assert.deepEqual(readSectionPrefs(null), { explanation: true, theory: false });
+  assert.deepEqual(readSectionPrefs('{"theory":true}'), { explanation: true, theory: true });
+  assert.deepEqual(readSectionPrefs("not json"), DEFAULT_SECTION_PREFS);
+  assert.deepEqual(readSectionPrefs('{"explanation":"yes"}'), DEFAULT_SECTION_PREFS);
+  assert.deepEqual(toggleSection(DEFAULT_SECTION_PREFS, "theory"), { explanation: true, theory: true });
+});

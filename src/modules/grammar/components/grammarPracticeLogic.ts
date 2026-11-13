@@ -80,3 +80,28 @@ export function optionState(
   if (optionIndex === check.selectedOption) return "wrong";
   return "faded";
 }
+
+/** Which support sections are open; kept across questions like a setting. */
+export type SectionKey = "explanation" | "theory";
+export type SectionPrefs = Record<SectionKey, boolean>;
+
+export const DEFAULT_SECTION_PREFS: SectionPrefs = { explanation: true, theory: false };
+export const SECTION_PREFS_KEY = "breadtrans:grammar-sections";
+
+/** Stored preferences, or the defaults for anything missing or malformed. */
+export function readSectionPrefs(raw: string | null | undefined): SectionPrefs {
+  try {
+    const parsed = raw ? (JSON.parse(raw) as Partial<Record<string, unknown>>) : {};
+    return {
+      explanation:
+        typeof parsed.explanation === "boolean" ? parsed.explanation : DEFAULT_SECTION_PREFS.explanation,
+      theory: typeof parsed.theory === "boolean" ? parsed.theory : DEFAULT_SECTION_PREFS.theory,
+    };
+  } catch {
+    return { ...DEFAULT_SECTION_PREFS };
+  }
+}
+
+export function toggleSection(prefs: SectionPrefs, key: SectionKey): SectionPrefs {
+  return { ...prefs, [key]: !prefs[key] };
+}
