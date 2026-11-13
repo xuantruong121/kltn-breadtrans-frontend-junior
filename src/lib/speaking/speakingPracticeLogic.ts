@@ -551,11 +551,27 @@ export function formatAudioTime(sec: number): string {
 export function getSpeakingScoreLabel(
   displayScore: number,
   isNoSpeech?: boolean,
+  freeAnswer?: { contentStatus?: "GRADED" | "UNAVAILABLE" },
 ): { title: string; subtitle: string; isStandard: boolean } {
   if (isNoSpeech) {
     return {
       title: "Chưa phát hiện giọng nói",
       subtitle: "Micro chưa thu được âm thanh rõ nét",
+      isStandard: false,
+    };
+  }
+  // A free answer graded on content too (owner 2026-11-13): the score is the
+  // whole answer, not pronunciation alone.
+  if (freeAnswer?.contentStatus === "GRADED") {
+    const subtitle = "Điểm tổng: phát âm và nội dung câu trả lời";
+    if (displayScore >= 8) return { title: "Bài nói tốt", subtitle, isStandard: true };
+    if (displayScore >= 6) return { title: "Bài nói khá", subtitle, isStandard: false };
+    return { title: "Cần luyện thêm", subtitle, isStandard: false };
+  }
+  if (freeAnswer?.contentStatus === "UNAVAILABLE") {
+    return {
+      title: displayScore >= 8 ? "Phát âm xuất sắc" : displayScore >= 6 ? "Phát âm khá tốt" : "Cần luyện tập thêm",
+      subtitle: "Chỉ tính phát âm: lần này chưa chấm được nội dung",
       isStandard: false,
     };
   }
@@ -578,6 +594,14 @@ export function getSpeakingScoreLabel(
     subtitle: "Kết quả đánh giá phát âm",
     isStandard: false,
   };
+}
+
+/** How a free answer met its task, in words a learner reads. */
+export function contentRelevanceLabel(relevance?: "ON_TASK" | "PARTIAL" | "OFF_TOPIC"): string {
+  if (relevance === "ON_TASK") return "Đúng yêu cầu";
+  if (relevance === "PARTIAL") return "Còn thiếu ý";
+  if (relevance === "OFF_TOPIC") return "Chưa đúng đề";
+  return "";
 }
 
 export interface WordDiagnosticDetails {

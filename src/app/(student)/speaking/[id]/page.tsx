@@ -2169,7 +2169,7 @@ export default function SpeakingExerciseDetailPage() {
                     <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
                       {["READ_ALOUD", "PRONUNCIATION_DRILL"].includes(String(exercise.taskType ?? "READ_ALOUD"))
                         ? "Màu sắc thể hiện mức độ chính xác của từng từ bạn đã phát âm"
-                        : "Bài được chấm trên chính câu trả lời bạn nói, không so với câu hỏi"}
+                        : "Bài nói tự do: chấm phát âm và nội dung câu trả lời của bạn"}
                     </p>
                   </div>
                   <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200/80 dark:border-slate-700 shrink-0">

@@ -19,6 +19,8 @@ import {
   resolveFormatTag,
   resolvePedagogicalDescription,
   resolveSkillTags,
+  speakingSetKindLabel,
+  speakingSetScoreText,
 } from "./practiceCardLogic";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
@@ -95,7 +97,11 @@ export function PracticeCard({
   );
   const estimatedMinutes = Math.max(1, Math.round((totalExercises * 40) / 60));
 
-  const formatTag = resolveFormatTag(exercise);
+  // The kind of task comes from the exercises themselves; the title guess is
+  // only for data that has no task type.
+  const kindLabel = speakingSetKindLabel(exercise.taskTypes ?? []);
+  const formatTag = kindLabel ?? resolveFormatTag(exercise);
+  const scoreText = speakingSetScoreText(exercise.averageScore);
   const pedagogicalDescription = resolvePedagogicalDescription(
     exercise,
     description,
@@ -121,8 +127,9 @@ export function PracticeCard({
   const containerClasses = {
     IN_PROGRESS:
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-teal-300 dark:border-teal-700/60 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xs cursor-pointer group",
+    // Completed: emerald border and faint ground, as the Listening card (owner 2026-11-12/13).
     COMPLETED:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
+      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-emerald-300 dark:border-emerald-800/70 bg-emerald-50/40 dark:bg-emerald-950/20 p-5 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-xs cursor-pointer group",
     NOT_STARTED:
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
     LOCKED:
@@ -134,19 +141,19 @@ export function PracticeCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Status header line: only when completed */}
+        {/* Completed: a readable status and the score, as the Listening card. */}
         {status === "COMPLETED" && (
-          <div className="flex items-center justify-between gap-2">
-            <span />
-
-            {status === "COMPLETED" ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                <span>
-                  Đã hoàn thành{typeof exercise.averageScore === "number" && exercise.averageScore > 0 ? ` · ${Math.round(exercise.averageScore)}/100` : ""}
-                </span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[13px] font-semibold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+              <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
+              Đã hoàn thành
+            </span>
+            {scoreText && (
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                Điểm <span className="font-bold tabular-nums text-slate-900 dark:text-slate-100">{scoreText.split("/")[0]}</span>
+                <span className="tabular-nums">/10</span>
               </span>
-            ) : null}
+            )}
           </div>
         )}
 
@@ -155,6 +162,8 @@ export function PracticeCard({
           <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors line-clamp-1 break-words">
             {practiceSet?.title || exercise.title}
           </h3>
+          {/* What the learner does: read a model sentence or answer freely (owner 2026-11-13). */}
+          <p className="mt-1 text-[13px] font-semibold text-slate-700 dark:text-slate-300">{formatTag}</p>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[38px] mt-1.5">
             {pedagogicalDescription}
           </p>
@@ -180,12 +189,10 @@ export function PracticeCard({
       </div>
 
       {/* Footer: Metadata on Left, Action on Right */}
-      <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+      <div className={`mt-4 border-t pt-3 ${status === "COMPLETED" ? "border-emerald-100 dark:border-emerald-900/50" : "border-slate-100 dark:border-slate-800/80"}`}>
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
-            <span>{formatTag}</span>
-            <span>·</span>
             <span>
               {catalogLevelLabel(exercise.cefrLevel ?? exercise.title, exercise.practiceLevel) ?? diffConfig.label}
             </span>
@@ -200,10 +207,10 @@ export function PracticeCard({
                 type="button"
                 onClick={() => onStart?.(exercise)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
+                className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 px-3.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
               >
-                <span>Luyện lại</span>
                 <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Luyện lại</span>
               </button>
             ) : status === "IN_PROGRESS" ? (
               <button

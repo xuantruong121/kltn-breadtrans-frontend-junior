@@ -108,6 +108,12 @@ export interface PronunciationAssessmentData {
   isSilentOrNoSpeech?: boolean;
   transcript?: string;
   errorCode?: string;
+  /** Free answers (owner 2026-11-13): the total is the mean of pronunciation and content. */
+  pronunciationScore?: number;
+  contentStatus?: "GRADED" | "UNAVAILABLE";
+  contentScore?: number;
+  contentRelevance?: "ON_TASK" | "PARTIAL" | "OFF_TOPIC";
+  contentComment?: string;
 }
 
 export interface SpeakingSubmissionDetail {

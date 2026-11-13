@@ -11,6 +11,7 @@ import {
   formatSpeakingTime,
   formatAudioTime,
   getAccuracyTier,
+  contentRelevanceLabel,
   getSpeakingScoreLabel,
   getWordDiagnosticDetails,
   RHYTHM_GUIDANCE_TEXT,
@@ -355,6 +356,9 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   const accuracy = feedback?.accuracyScore;
   const fluency = feedback?.fluencyScore;
   const completeness = feedback?.completenessScore;
+  // Free answers since 2026-11-13 carry a content grade next to pronunciation.
+  const contentGraded =
+    !scripted && feedback?.contentStatus === "GRADED" && Number.isFinite(feedback?.contentScore);
   const wordsList: WordAssessmentItem[] = feedback?.words || [];
 
   const accuracyTier = getAccuracyTier(accuracy);
@@ -635,7 +639,11 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             </div>
 
             {(() => {
-              const scoreMeta = getSpeakingScoreLabel(displayScore, isNoSpeech);
+              const scoreMeta = getSpeakingScoreLabel(
+                displayScore,
+                isNoSpeech,
+                scripted ? undefined : { contentStatus: feedback?.contentStatus },
+              );
               return (
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -829,7 +837,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
       {/* 4. 4-DIMENSION METRIC DASHBOARD & RHYTHM GUIDANCE */}
       <div className="space-y-3">
         {/* Row A: 3 Provider-Backed Numeric Dimension Cards */}
-        <div className={`grid grid-cols-1 gap-3 ${scripted ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        <div className={`grid grid-cols-1 gap-3 ${scripted || contentGraded ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           {/* Dimension 1: Độ chính xác (Accuracy) */}
           <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
             <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
@@ -872,6 +880,32 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
             </span>
           </div>
 
+          {/* Free answer: content of the answer (owner 2026-11-13) */}
+          {contentGraded && (
+            <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
+              <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Nội dung
+              </span>
+              <div className="my-2.5 flex size-17 flex-col items-center justify-center">
+                <span
+                  className={`text-3xl font-black tabular-nums leading-none ${
+                    feedback!.contentRelevance === "OFF_TOPIC"
+                      ? "text-rose-700 dark:text-rose-400"
+                      : feedback!.contentRelevance === "PARTIAL"
+                        ? "text-amber-700 dark:text-amber-400"
+                        : "text-emerald-700 dark:text-emerald-400"
+                  }`}
+                >
+                  {feedback!.contentScore}
+                </span>
+                <span className="mt-0.5 text-xs font-bold text-slate-600 dark:text-slate-400">/ 10</span>
+              </div>
+              <span className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300 truncate">
+                {contentRelevanceLabel(feedback!.contentRelevance)}
+              </span>
+            </div>
+          )}
+
           {/* Dimension 3: Độ hoàn thiện (Completeness) */}
           {scripted && (
           <div className="rounded-2xl bg-white dark:bg-slate-850 p-4 border border-slate-200/90 dark:border-slate-800 flex flex-col items-center justify-between text-center shadow-xs">
@@ -895,6 +929,28 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
           </div>
           )}
         </div>
+
+        {contentGraded && feedback!.contentComment && (
+          <div
+            className={`rounded-2xl border p-4 sm:p-4.5 ${
+              feedback!.contentRelevance === "OFF_TOPIC"
+                ? "border-rose-200 bg-rose-50/70 dark:border-rose-900/60 dark:bg-rose-950/30"
+                : "border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900"
+            }`}
+          >
+            <p className="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
+              Nhận xét nội dung
+              {typeof feedback!.pronunciationScore === "number" && (
+                <span className="ml-2 font-semibold text-slate-600 dark:text-slate-400">
+                  Phát âm {feedback!.pronunciationScore.toFixed(1)} · Nội dung {feedback!.contentScore}/10
+                </span>
+              )}
+            </p>
+            <p className="mt-1.5 text-sm sm:text-base font-medium leading-relaxed text-slate-800 dark:text-slate-200">
+              {feedback!.contentComment}
+            </p>
+          </div>
+        )}
 
         {/* Row B: Dedicated Rhythm Guidance Card (Full width, clear legible typography) */}
         {scripted && (
@@ -963,7 +1019,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <div>
                 <div className="flex items-center gap-2 text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">
                   <Activity size={16} className="text-amber-700 dark:text-amber-400" aria-hidden="true" />
-                  <span>Gợi ý cải thiện phát âm</span>
+                  <span>{contentGraded ? "Gợi ý cải thiện" : "Gợi ý cải thiện phát âm"}</span>
                 </div>
                 <ul className="mt-1.5 space-y-1.5 text-slate-800 dark:text-slate-200 text-sm sm:text-base font-medium pl-5 list-disc leading-relaxed">
                   {feedbackView.suggestions.map((suggestion) => (

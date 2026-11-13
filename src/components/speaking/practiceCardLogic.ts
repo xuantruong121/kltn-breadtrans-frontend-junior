@@ -14,10 +14,40 @@ export type DifficultyLevel = "ALL" | "BASIC" | "INTERMEDIATE" | "ADVANCED";
 export interface PracticeExerciseItem extends SpeakingExercise {
   isCompleted?: boolean;
   practiceSet?: SpeakingPracticeSetSummary;
+  /** Mean of each exercise's best score, on the 0-10 scale the grader uses. */
   averageScore?: number;
+  /** The task types of the set's exercises, to name what the learner does. */
+  taskTypes?: Array<string | null | undefined>;
   isSpotlight?: boolean;
   description?: string;
   tags?: string[];
+}
+
+const TASK_KIND_LABEL: Record<string, string> = {
+  READ_ALOUD: "Đọc theo câu mẫu",
+  PRONUNCIATION_DRILL: "Luyện phát âm theo mẫu",
+  RESPOND_TO_QUESTION: "Trả lời câu hỏi (nói tự do)",
+  EXPRESS_OPINION: "Nêu ý kiến (nói tự do)",
+  DESCRIBE_PICTURE: "Mô tả tranh (nói tự do)",
+  RESPOND_USING_INFORMATION: "Trả lời theo thông tin (nói tự do)",
+};
+
+/**
+ * What the learner does in a set, from its exercises' task types (owner
+ * 2026-11-13: a set of free answers looked like a read-aloud one). A legacy
+ * exercise without a task type was a read-aloud sentence.
+ */
+export function speakingSetKindLabel(taskTypes: Array<string | null | undefined>): string | null {
+  if (taskTypes.length === 0) return null;
+  const kinds = new Set(taskTypes.map((t) => t || "READ_ALOUD"));
+  if (kinds.size === 1) return TASK_KIND_LABEL[[...kinds][0]] ?? null;
+  return "Tổng hợp: đọc mẫu và nói tự do";
+}
+
+/** "7.6/10": the set's mean score, one decimal, on the grader's 0-10 scale. */
+export function speakingSetScoreText(averageScore: number | undefined): string | null {
+  if (typeof averageScore !== "number" || !Number.isFinite(averageScore) || averageScore <= 0) return null;
+  return `${(Math.round(averageScore * 10) / 10).toFixed(1)}/10`;
 }
 
 /**

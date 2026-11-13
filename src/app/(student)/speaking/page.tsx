@@ -144,10 +144,12 @@ export default function SpeakingExercisesPage() {
     const map = new Map<number, number>();
     if (!mySubmissions) return map;
     for (const sub of mySubmissions) {
+      // overallScore is on a 0-10 scale; it is kept unrounded (owner
+      // 2026-11-13: a rounded mean shown as "/100" read 8/100 for 7.6/10).
       if (sub.overallScore != null && sub.overallScore > 0) {
         const existing = map.get(sub.exerciseId);
         if (!existing || sub.overallScore > existing) {
-          map.set(sub.exerciseId, Math.round(sub.overallScore));
+          map.set(sub.exerciseId, sub.overallScore);
         }
       }
     }
@@ -194,7 +196,7 @@ export default function SpeakingExercisesPage() {
           scoreCount++;
         }
       }
-      const avgScore = scoreCount > 0 ? Math.round(scoreSum / scoreCount) : undefined;
+      const avgScore = scoreCount > 0 ? scoreSum / scoreCount : undefined;
 
       const setTitle = speakingSetDisplayTitle(summary.key, summary.title);
       return {
@@ -206,6 +208,7 @@ export default function SpeakingExercisesPage() {
         isCompleted: summary.isCompleted,
         practiceSet: { ...summary, title: setTitle },
         averageScore: avgScore,
+        taskTypes: orderedItems.map((item) => item.taskType),
       };
     });
   }, [exercises, scoreByExerciseId]);
