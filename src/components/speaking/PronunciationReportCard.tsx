@@ -7,6 +7,8 @@ import {
   speakingService,
 } from "@/lib/api/services/speaking.service";
 import type { SpeakingAttemptPhase } from "@/lib/speaking/speakingPracticeLogic";
+import { AiQuotaNotice } from "@/components/subscription/AiQuotaNotice";
+import type { AiQuotaExhausted } from "@/modules/subscription/aiQuota";
 import {
   formatSpeakingTime,
   formatAudioTime,
@@ -48,6 +50,8 @@ export interface PronunciationReportCardProps {
    * no per-word comparison against the prompt.
    */
   scripted?: boolean;
+  /** The day's AI gradings are used up: shown instead of the failure card. */
+  quotaNotice?: AiQuotaExhausted | null;
   /** The exercise's approved reference clip for the selected accent. */
   referenceAudioUrl?: string | null;
   userAudioUrl?: string | null;
@@ -128,6 +132,7 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
   submission,
   targetText,
   scripted = true,
+  quotaNotice = null,
   referenceAudioUrl,
   userAudioUrl,
   qualityWarning,
@@ -584,7 +589,9 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
         </div>
       )}
 
-      {phase === "FAILED" && (
+      {phase === "FAILED" && quotaNotice && <AiQuotaNotice quota={quotaNotice} keptWork="Bản ghi" />}
+
+      {phase === "FAILED" && !quotaNotice && (
         <div className="bg-rose-50/80 p-4 rounded-2xl border border-rose-200 flex items-center justify-between gap-3 shrink-0 shadow-2xs">
           <div className="flex items-center gap-2.5">
             <AlertTriangle className="size-6 text-rose-600 shrink-0" />

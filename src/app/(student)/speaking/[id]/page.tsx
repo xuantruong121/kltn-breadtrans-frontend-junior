@@ -72,6 +72,7 @@ import { PlanLockedScreen } from "@/components/practice/PlanLockedScreen";
 import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
 import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { speakingSetDisplayTitle, withoutLevelTag } from "@/lib/catalog/displayTitles";
+import { aiQuotaExhausted, type AiQuotaExhausted } from "@/modules/subscription/aiQuota";
 import {
   IS_WORD_REGEX,
   normalizeWordForMatching,
@@ -117,6 +118,9 @@ export default function SpeakingExerciseDetailPage() {
 
   // Explicit Attempt State Machine
   const [phase, setPhase] = useState<SpeakingAttemptPhase>("READY");
+  // Out of AI gradings for today (owner 2026-11-13): a notice, not a red error.
+  // Keyed by exercise so it goes away when the learner moves on.
+  const [quotaNotice, setQuotaNotice] = useState<{ exerciseId: number; quota: AiQuotaExhausted } | null>(null);
   const [micStatus, setMicStatus] = useState<
     "UNKNOWN" | "READY" | "DENIED" | "MISSING"
   >("UNKNOWN");
@@ -1129,6 +1133,15 @@ export default function SpeakingExerciseDetailPage() {
           return;
         }
 
+        // The day's AI gradings are used up: an expected answer, shown as a
+        // notice in place of the failure card; nothing is logged as an error.
+        const quota = aiQuotaExhausted(err);
+        if (quota) {
+          setQuotaNotice({ exerciseId, quota });
+          setPhase("FAILED");
+          setIsProlongedProcessing(false);
+          return;
+        }
         console.error("Submission error:", err);
         setPhase("FAILED");
         setIsProlongedProcessing(false);
@@ -1298,6 +1311,7 @@ export default function SpeakingExerciseDetailPage() {
    * Action 1: "Thử lại" (resets local attempt state back to READY)
    */
   const handleRetryRecord = useCallback(() => {
+    setQuotaNotice(null);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     if (pollingTimerRef.current) clearTimeout(pollingTimerRef.current);
@@ -2366,6 +2380,7 @@ export default function SpeakingExerciseDetailPage() {
                 onCancelRecording={handleCancelRecording}
                 onRetryRecord={handleRetryRecord}
                 onRetrySubmit={handleRetrySubmit}
+                quotaNotice={quotaNotice?.exerciseId === exerciseId ? quotaNotice.quota : null}
                 isPreviewReady={Boolean(audioBlob)}
                 onNextExercise={handleNextExercise}
                 onSelectWord={openDictionary}
@@ -2637,7 +2652,7 @@ export default function SpeakingExerciseDetailPage() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                {phase === "FAILED" && audioBlob && (
+                {phase === "FAILED" && audioBlob && quotaNotice?.exerciseId !== exerciseId && (
                   <button
                     type="button"
                     onClick={handleRetrySubmit}

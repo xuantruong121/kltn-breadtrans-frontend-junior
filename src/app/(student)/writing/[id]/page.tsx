@@ -42,6 +42,8 @@ import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingWorkspace } from "@/components/writing/PictureWritingWorkspace";
 import { isPictureQuiz } from "@/lib/writing/pictureWriting";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { AiQuotaNotice } from "@/components/subscription/AiQuotaNotice";
+import { aiQuotaExhausted, type AiQuotaExhausted } from "@/modules/subscription/aiQuota";
 
 export default function WritingDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -57,6 +59,8 @@ export default function WritingDetailPage(props: {
   const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
   const [isEvaluating, setIsEvaluating] = useState(false);
+  // Out of AI gradings for today (owner 2026-11-13): a notice, not a red toast.
+  const [quotaNotice, setQuotaNotice] = useState<AiQuotaExhausted | null>(null);
   // Blocks a second submit fired before the disabled button re-renders.
   const submittingRef = useRef(false);
   const [feedback, setFeedback] = useState<WritingEvaluation | null>(null);
@@ -216,6 +220,7 @@ export default function WritingDetailPage(props: {
     submittingRef.current = true;
     setIsEvaluating(true);
     setFeedback(null);
+    setQuotaNotice(null);
 
     // The same text keeps its attempt id (also across a refresh), so a retry
     // after a lost response returns the grade already stored on the server.
@@ -280,14 +285,17 @@ export default function WritingDetailPage(props: {
       );
     } catch (error) {
       setIsEvaluating(false);
-      // Out of AI gradings for today: the server says which plan ran out and what the next one gives.
-      const status = (error as { response?: { status?: number } })?.response?.status;
-      toast.error(
-        status === 429
-          ? `${getApiErrorMessage(error, "Bạn đã dùng hết lượt AI chấm của hôm nay.")} Bài viết của bạn vẫn còn.`
-          : "Chưa chấm được bài. Bài viết của bạn vẫn còn, hãy thử gửi lại.",
-        status === 429 ? { duration: 8000 } : undefined,
-      );
+      // Out of AI gradings for today: the server says which plan ran out and
+      // what the next one gives; shown as a notice, the text is kept.
+      const quota = aiQuotaExhausted(error);
+      if (quota) {
+        setQuotaNotice(quota);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        toast.error(
+          getApiErrorMessage(error, "Chưa chấm được bài. Bài viết của bạn vẫn còn, hãy thử gửi lại."),
+        );
+      }
     } finally {
       submittingRef.current = false;
     }
@@ -323,6 +331,9 @@ export default function WritingDetailPage(props: {
         />
 
         <main className="max-w-6xl mx-auto w-full space-y-6 pb-20 px-4 sm:px-6 pt-6 flex-1">
+          {quotaNotice && (
+            <AiQuotaNotice quota={quotaNotice} keptWork="Bài viết" onDismiss={() => setQuotaNotice(null)} />
+          )}
           {/* 2. 2-COLUMN MAIN LAYOUT */}
           {isPictureTask && exercise && currentTask ? (
             <PictureWritingWorkspace

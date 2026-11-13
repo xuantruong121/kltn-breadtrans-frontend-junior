@@ -20,7 +20,8 @@ export function AppFooter() {
             <h4 className="mb-3.5 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Khám phá</h4>
             <ul className="space-y-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400">
               <li>
-                <Link href="/" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                {/* Owner 2026-11-13: for a signed-in learner, home is the dashboard. */}
+                <Link href="/dashboard" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Trang chủ
                 </Link>
               </li>

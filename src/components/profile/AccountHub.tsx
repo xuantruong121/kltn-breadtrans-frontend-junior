@@ -59,6 +59,7 @@ import {
   resolveUserBadge,
 } from "@/lib/avatar/avatarCustomizationLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { remainingText, usedPercent, type DailyAllowance } from "@/modules/subscription/aiQuota";
 
 export type AccountTabKey =
   | "account-profile"
@@ -317,6 +318,14 @@ export function AccountHub() {
     queryKey: PLAN_QUERY_KEYS.effectivePlan,
     queryFn: planService.getEffectivePlan,
     enabled: !!user,
+  });
+
+  // Today's AI gradings and tutor questions (owner 2026-11-13: show what is left).
+  const { data: dailyUsage } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.dailyUsage,
+    queryFn: planService.getUsage,
+    enabled: !!user,
+    staleTime: 30_000,
   });
 
   const {
@@ -591,6 +600,51 @@ export function AccountHub() {
                     </span>
                   </div>
                 </div>
+
+                {dailyUsage && (
+                  <div className="rounded-2xl border border-slate-100 p-4 dark:border-slate-800">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Lượt dùng hôm nay</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Làm mới lúc 00:00 (giờ Việt Nam)</p>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {(
+                        [
+                          ["AI chấm bài Nói và Viết", dailyUsage.aiGrading],
+                          ["Hỏi Trợ lý Bánh Mì", dailyUsage.tutor],
+                        ] as Array<[string, DailyAllowance]>
+                      ).map(([label, allowance]) => (
+                        <div key={label}>
+                          <div className="flex items-baseline justify-between gap-2 text-sm">
+                            <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
+                            <span
+                              className={`font-bold tabular-nums ${
+                                allowance.remaining === 0
+                                  ? "text-amber-700 dark:text-amber-400"
+                                  : "text-slate-900 dark:text-slate-100"
+                              }`}
+                            >
+                              {remainingText(allowance)}
+                            </span>
+                          </div>
+                          <div
+                            className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                            role="progressbar"
+                            aria-label={`${label}: đã dùng ${allowance.used}/${allowance.limit}`}
+                            aria-valuenow={allowance.used}
+                            aria-valuemin={0}
+                            aria-valuemax={allowance.limit}
+                          >
+                            <div
+                              className={`h-full rounded-full ${allowance.remaining === 0 ? "bg-amber-500" : "bg-blue-600"}`}
+                              style={{ width: `${usedPercent(allowance)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <Link
