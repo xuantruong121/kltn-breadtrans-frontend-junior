@@ -8,6 +8,9 @@ import {
   publishChecklist,
   trackNames,
   writingCardLabel,
+  writingFormType,
+  parseHintLines,
+  hintLines,
   writingUsesPictures, TRACK_FIELD_COPY } from "./skillCmsStatus.ts";
 
 test("latestAudioBadge: no recording reads as none", () => {
@@ -173,6 +176,21 @@ test("a sentence exercise stored as a picture type does not ask for an image", (
     "Viết theo tranh",
   );
   assert.equal(writingCardLabel({ type: "WRITING_EMAIL" }), "Viết email");
+  assert.equal(writingCardLabel({ type: "WRITING_PICTURE", writingKind: "TRANSLATION" }), "Dịch câu");
+});
+
+test("a Dịch câu exercise reads as its own form type, and hints round-trip as lines", () => {
+  const sentences = [{ content: { taskType: "SENTENCE_TRANSLATION" } }];
+  assert.equal(writingFormType("WRITING_PICTURE", sentences), "TRANSLATION");
+  assert.equal(writingFormType("WRITING_PICTURE", [{ content: { taskType: "SENTENCE" } }]), "WRITING_PICTURE");
+  assert.equal(writingFormType("WRITING_EMAIL", sentences), "WRITING_EMAIL");
+  const hints = parseHintLines("giáo viên = teacher\nkhông có dấu bằng\n = trống\nbệnh viện= hospital ");
+  assert.deepEqual(hints, [
+    { vi: "giáo viên", en: "teacher" },
+    { vi: "bệnh viện", en: "hospital" },
+  ]);
+  assert.equal(hintLines(hints), "giáo viên = teacher\nbệnh viện = hospital");
+  assert.equal(hintLines(null), "");
 });
 
 test("admin track copy says lĩnh vực, as the learner onboarding does", () => {

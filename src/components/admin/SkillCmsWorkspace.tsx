@@ -47,6 +47,9 @@ import {
   trackNames,
   CONTENT_TRACKS,
   writingCardLabel,
+  writingFormType,
+  parseHintLines,
+  hintLines,
   writingUsesPictures,
   type ListFilters,
 } from "./skillCmsStatus";
@@ -89,6 +92,11 @@ type QuestionDraft = {
   wordMin: string;
   wordMax: string;
   sampleSentences: string;
+  /** "Dịch câu": accepted English answers, one per line. */
+  acceptedAnswers: string;
+  /** "Dịch câu": "từ = word" lines. */
+  hints: string;
+  grammarTip: string;
 };
 type CmsFullDraft = {
   domain: "listening" | "reading";
@@ -161,10 +169,12 @@ const publicationStatusLabel = (status?: string) =>
   status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp";
 
 const writingTypeLabel = (type: string) =>
-  type === "WRITING_PICTURE" ? "Viết theo tranh" : "Viết email";
+  type === "TRANSLATION" ? "Dịch câu" : type === "WRITING_PICTURE" ? "Viết theo tranh" : "Viết email";
 
 const writingTaskOptions = (quizType: string) =>
-  quizType === "WRITING_PICTURE"
+  quizType === "TRANSLATION"
+    ? [{ value: "SENTENCE_TRANSLATION", label: "Dịch câu Việt → Anh" }]
+    : quizType === "WRITING_PICTURE"
     ? [
         { value: "SENTENCE", label: "Viết câu theo tranh" },
         { value: "PICTURE_SENTENCE", label: "Mô tả tranh theo từ khóa" },
@@ -225,6 +235,9 @@ const emptyQuestion = (domain: Domain): QuestionDraft => ({
   wordMin: "",
   wordMax: "",
   sampleSentences: "",
+  acceptedAnswers: "",
+  hints: "",
+  grammarTip: "",
 });
 
 function unwrap<T>(value: any): T {
@@ -283,6 +296,11 @@ function questionToDraft(question: any): QuestionDraft {
     sampleSentences: Array.isArray(content.sampleSentences)
       ? content.sampleSentences.join("\n")
       : "",
+    acceptedAnswers: Array.isArray(content.acceptedAnswers)
+      ? content.acceptedAnswers.join("\n")
+      : "",
+    hints: hintLines(content.hints),
+    grammarTip: String(content.grammarTip ?? ""),
   };
 }
 
@@ -962,7 +980,7 @@ export default function SkillCmsWorkspace({
         level: data.level || levelFromTitle(data.title) || "A2",
         timeLimit: String(data.timeLimit ?? 15),
         passage: data.passage || data.theoryContent || "",
-        type: data.type || meta[domain].type,
+        type: writingFormType(data.type || meta[domain].type, data.questions),
       });
       setPendingFullDraftQuestions([]);
     } catch (error: any) {
@@ -986,7 +1004,17 @@ export default function SkillCmsWorkspace({
       const payload = {
         ...form,
         timeLimit: Number(form.timeLimit) || undefined,
-        type: domain === "writing" ? form.type : undefined,
+        // "Dịch câu" is stored as WRITING_PICTURE in its own topic.
+        type:
+          domain === "writing"
+            ? form.type === "TRANSLATION"
+              ? "WRITING_PICTURE"
+              : form.type
+            : undefined,
+        writingKind:
+          domain === "writing" && form.type === "TRANSLATION"
+            ? "TRANSLATION"
+            : undefined,
         ...(domain === "listening"
           ? {
               bilingualContent: {
@@ -1044,6 +1072,7 @@ export default function SkillCmsWorkspace({
       if (domain === "writing") {
         const taskType = question.taskType.trim().toUpperCase();
         const pictureTask = form.type === "WRITING_PICTURE";
+        const translationTask = taskType === "SENTENCE_TRANSLATION";
         const essayTask = [
           "PROPOSAL",
           "OPINION",
@@ -1067,6 +1096,7 @@ export default function SkillCmsWorkspace({
                 .filter(Boolean)
             : undefined,
           wordRange:
+            !translationTask &&
             (!pictureTask || taskType === "SENTENCE") &&
             question.wordMin &&
             question.wordMax
@@ -1081,6 +1111,16 @@ export default function SkillCmsWorkspace({
                 .filter(Boolean)
             : undefined,
           explanation: question.explanation.trim() || undefined,
+          ...(translationTask
+            ? {
+                acceptedAnswers: question.acceptedAnswers
+                  .split("\n")
+                  .map((value) => value.trim())
+                  .filter(Boolean),
+                hints: parseHintLines(question.hints),
+                grammarTip: question.grammarTip.trim(),
+              }
+            : {}),
         };
         if (question.id) {
           await axiosClient.patch(
@@ -1808,6 +1848,7 @@ export default function SkillCmsWorkspace({
   const isWriting = domain === "writing";
   const isListening = domain === "listening";
   const writingTaskType = question.taskType.trim().toUpperCase();
+  const isTranslationWriting = isWriting && writingTaskType === "SENTENCE_TRANSLATION";
   const isPictureWriting = isWriting && form.type === "WRITING_PICTURE";
   const needsPicture =
     isPictureWriting && writingUsesPictures(form.type, questions);
@@ -1931,13 +1972,15 @@ export default function SkillCmsWorkspace({
           <div className="text-sm font-medium">
             <span className="flex items-center justify-between gap-3">
               <span>
-                {isWriting
+                {isTranslationWriting
+                  ? "Câu tiếng Việt (học viên dịch câu này sang tiếng Anh)"
+                  : isWriting
                   ? "Đề bài / instruction"
                   : isListening && question.type === "DICTATION"
                     ? "Câu cần chép (học viên nghe rồi chép câu này)"
                     : "Nội dung / đề bài"}
               </span>
-              {isWriting && (
+              {isWriting && !isTranslationWriting && (
                 <button
                   type="button"
                   onClick={() => {
@@ -2037,14 +2080,54 @@ export default function SkillCmsWorkspace({
                   </label>
                 </>
               )}
-              {!isPictureWriting && (
+              {isTranslationWriting && (
+                <>
+                  <label className="text-sm font-medium md:col-span-2">
+                    Đáp án tiếng Anh được chấp nhận *
+                    <textarea
+                      value={question.acceptedAnswers}
+                      onChange={(event) =>
+                        setQuestion({ ...question, acceptedAnswers: event.target.value })
+                      }
+                      placeholder={"Mỗi đáp án một dòng, ít nhất 2 câu\nMy mother is a teacher.\nMy mom is a teacher."}
+                      className={`${inputClassName()} min-h-24`}
+                    />
+                    <span className="mt-1 block text-xs font-normal text-slate-600">
+                      Không cần ghi các biến thể hoa/thường, dấu câu hay dạng rút gọn (I'm = I am): hệ thống tự coi là một.
+                    </span>
+                  </label>
+                  <label className="text-sm font-medium">
+                    Gợi ý từ vựng *
+                    <textarea
+                      value={question.hints}
+                      onChange={(event) =>
+                        setQuestion({ ...question, hints: event.target.value })
+                      }
+                      placeholder={"Mỗi dòng: từ tiếng Việt = English\ngiáo viên = teacher"}
+                      className={`${inputClassName()} min-h-24`}
+                    />
+                  </label>
+                  <label className="text-sm font-medium">
+                    Lưu ý ngữ pháp *
+                    <textarea
+                      value={question.grammarTip}
+                      onChange={(event) =>
+                        setQuestion({ ...question, grammarTip: event.target.value })
+                      }
+                      placeholder="Một câu tiếng Việt, ví dụ: Nói nghề nghiệp cần a/an trước tên nghề."
+                      className={`${inputClassName()} min-h-24`}
+                    />
+                  </label>
+                </>
+              )}
+              {!isPictureWriting && !isTranslationWriting && (
                 <div className="md:col-span-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
                   {isEssayWriting
                     ? "Essay / opinion constraints"
                     : "Email / message constraints"}
                 </div>
               )}
-              {(!isPictureWriting || writingTaskType === "SENTENCE") && (
+              {!isTranslationWriting && (!isPictureWriting || writingTaskType === "SENTENCE") && (
                 <div className="grid grid-cols-2 gap-3">
                   <label className="text-sm font-medium">
                     Từ tối thiểu
@@ -2517,7 +2600,12 @@ export default function SkillCmsWorkspace({
                     setForm({ ...form, type });
                     setQuestion((current) => ({
                       ...current,
-                      taskType: type === "WRITING_PICTURE" ? "SENTENCE" : "EMAIL",
+                      taskType:
+                        type === "TRANSLATION"
+                          ? "SENTENCE_TRANSLATION"
+                          : type === "WRITING_PICTURE"
+                            ? "SENTENCE"
+                            : "EMAIL",
                     }));
                   }}
                   className={inputClassName()}
@@ -2528,6 +2616,7 @@ export default function SkillCmsWorkspace({
                   <option value="WRITING_EMAIL">
                     {writingTypeLabel("WRITING_EMAIL")}
                   </option>
+                  <option value="TRANSLATION">{writingTypeLabel("TRANSLATION")}</option>
                 </select>
               </label>
             )}
