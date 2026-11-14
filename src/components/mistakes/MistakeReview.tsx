@@ -8,13 +8,18 @@ import {
   mistakesService,
   type MistakeAnswerResult,
   type MistakeSkill,
+  type MistakeTranslationResult,
 } from "@/lib/api/services/mistakes.service";
+import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { VERDICT_LABEL } from "@/components/writing/sentenceTranslationLogic";
 import { MISTAKE_SKILL_LABEL, mistakeSourceTitle, optionLetter } from "@/lib/mistakes/mistakeView";
 
 /**
  * A short review: the learner answers again the questions they got wrong,
  * one at a time. The server checks each answer; two right answers in a row
- * close a mistake. No AI is involved.
+ * close a mistake. A choice is checked by its key; a "Dịch câu" sentence is
+ * typed and graded like the exercise (accepted answers first, the AI only
+ * when none matches).
  */
 export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClose: () => void }) {
   const queryClient = useQueryClient();
@@ -29,8 +34,10 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [result, setResult] = useState<MistakeAnswerResult | null>(null);
+  const [typed, setTyped] = useState("");
+  const [tResult, setTResult] = useState<MistakeTranslationResult | null>(null);
   const [sending, setSending] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const [score, setScore] = useState({ right: 0, closed: 0 });
 
   const finish = () => {
@@ -57,8 +64,8 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
     return (
       <Panel>
         <p className="text-sm text-slate-800 dark:text-slate-200">
-          Chưa có câu nào để trả lời lại ở đây. Lỗi nghe, nói và viết được ôn bằng cách làm lại bài; nút ở từng thẻ sẽ
-          đưa bạn tới đó.
+          Chưa có câu nào để trả lời lại ở đây. Lỗi nghe, nói và bài viết được ôn bằng cách làm lại bài; nút ở từng thẻ
+          sẽ đưa bạn tới đó.
         </p>
         <CloseButton onClick={onClose} />
       </Panel>
@@ -76,19 +83,24 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
     );
 
   const item = items[index];
+  const isTranslation = item.kind === "TRANSLATION";
+  const outcome = isTranslation ? tResult : result;
   const send = async () => {
-    if (picked === null || sending) return;
+    if (sending || (isTranslation ? !typed.trim() : picked === null)) return;
     setSending(true);
-    setFailed(false);
+    setFailed(null);
     try {
-      const answer = await mistakesService.answer(item.id, picked);
-      setResult(answer);
+      const answer = isTranslation
+        ? await mistakesService.reviewTranslation(item.id, typed.trim())
+        : await mistakesService.answer(item.id, picked as number);
+      if (isTranslation) setTResult(answer as MistakeTranslationResult);
+      else setResult(answer as MistakeAnswerResult);
       setScore((s) => ({
         right: s.right + (answer.correct ? 1 : 0),
         closed: s.closed + (answer.resolved ? 1 : 0),
       }));
-    } catch {
-      setFailed(true);
+    } catch (error) {
+      setFailed(getApiErrorMessage(error, "Chưa gửi được câu trả lời. Hãy thử lại."));
     } finally {
       setSending(false);
     }
@@ -97,6 +109,8 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
     setIndex((i) => i + 1);
     setPicked(null);
     setResult(null);
+    setTyped("");
+    setTResult(null);
   };
 
   return (
@@ -125,10 +139,40 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
           {item.passage}
         </div>
       )}
+      {isTranslation && (
+        <p className="mt-3 text-[13px] font-semibold text-slate-600 dark:text-slate-400">Dịch sang tiếng Anh</p>
+      )}
       {item.question && (
-        <p className="mt-3 text-base font-bold text-slate-900 dark:text-slate-100">{item.question}</p>
+        <p className={`${isTranslation ? "mt-1 text-lg" : "mt-3 text-base"} font-bold text-slate-900 dark:text-slate-100`}>
+          {item.question}
+        </p>
       )}
 
+      {isTranslation ? (
+        <div className="mt-3">
+          <label htmlFor={`mistake-translation-${item.id}`} className="sr-only">
+            Câu tiếng Anh của bạn
+          </label>
+          <textarea
+            id={`mistake-translation-${item.id}`}
+            rows={2}
+            lang="en"
+            spellCheck={false}
+            maxLength={400}
+            value={typed}
+            readOnly={!!tResult || sending}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" || e.shiftKey) return;
+              e.preventDefault();
+              if (tResult) next();
+              else void send();
+            }}
+            placeholder="Gõ câu tiếng Anh, Enter để kiểm tra"
+            className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 p-3 text-base leading-relaxed text-slate-900 outline-none focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900 placeholder:text-slate-500 dark:placeholder:text-slate-400"
+          />
+        </div>
+      ) : (
       <fieldset className="mt-3 space-y-2" disabled={!!result || sending}>
         <legend className="sr-only">Chọn một đáp án</legend>
         {item.options.map((option, i) => {
@@ -162,35 +206,56 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
           );
         })}
       </fieldset>
+      )}
 
       {failed && (
         <p role="alert" className="mt-3 rounded-lg bg-rose-50 p-3 text-sm text-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
-          Chưa gửi được câu trả lời. Hãy thử lại.
+          {failed}
         </p>
       )}
 
-      {result && (
+      {outcome && (
         <div
           role="status"
           className={`mt-3 rounded-xl p-3 text-sm ${
-            result.correct
+            outcome.correct
               ? "bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
               : "bg-rose-50 text-rose-950 dark:bg-rose-950/40 dark:text-rose-100"
           }`}
         >
           <p className="font-bold">
-            {result.correct
-              ? result.resolved
-                ? "Đúng. Lỗi này đã được khắc phục."
-                : `Đúng. Đúng thêm ${Math.max(1, result.resolveAfterCorrect - result.correctStreak)} lần nữa thì lỗi này được khắc phục.`
-              : "Chưa đúng. Câu này ở lại trong sổ."}
+            {tResult
+              ? `${VERDICT_LABEL[tResult.check.verdict]}. `
+              : outcome.correct
+                ? "Đúng. "
+                : "Chưa đúng. "}
+            {outcome.correct
+              ? outcome.resolved
+                ? "Lỗi này đã được khắc phục."
+                : `Đúng thêm ${Math.max(1, outcome.resolveAfterCorrect - outcome.correctStreak)} lần nữa thì lỗi này được khắc phục.`
+              : "Câu này ở lại trong sổ."}
           </p>
-          {result.explanation && <p className="mt-1 leading-6">{result.explanation}</p>}
+          {tResult ? (
+            <div className="mt-2 space-y-1.5 leading-6">
+              <p>
+                <span className="font-semibold">Đáp án đúng: </span>
+                <span lang="en">{tResult.check.closest}</span>
+              </p>
+              {tResult.check.explanation && <p>{tResult.check.explanation}</p>}
+              {tResult.check.quotaExhausted && (
+                <p className="text-amber-900 dark:text-amber-200">
+                  Hôm nay đã hết lượt AI chấm, câu này chỉ được so với đáp án mẫu.
+                </p>
+              )}
+            </div>
+          ) : (
+            result?.explanation && <p className="mt-1 leading-6">{result.explanation}</p>
+          )}
         </div>
       )}
 
       <div className="mt-4">
-        {result ? (
+        {outcome ? (
           <button
             type="button"
             onClick={next}
@@ -202,12 +267,12 @@ export function MistakeReview({ skill, onClose }: { skill?: MistakeSkill; onClos
         ) : (
           <button
             type="button"
-            onClick={send}
-            disabled={picked === null || sending}
+            onClick={() => void send()}
+            disabled={(isTranslation ? !typed.trim() : picked === null) || sending}
             className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
           >
             {sending && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
-            Trả lời
+            {isTranslation ? "Kiểm tra" : "Trả lời"}
           </button>
         )}
       </div>

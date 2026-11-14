@@ -83,13 +83,20 @@ export function MistakeCard({
               {detail.passage}
             </div>
           )}
+          {detail.kind === "TRANSLATION" && (
+            <p className="mt-3 text-[13px] font-semibold text-slate-600 dark:text-slate-400">Dịch sang tiếng Anh</p>
+          )}
           {detail.question && (
-            <h2 className="mt-3 text-[17px] font-bold leading-snug text-slate-900 dark:text-slate-100">{detail.question}</h2>
+            <h2
+              className={`${detail.kind === "TRANSLATION" ? "mt-1" : "mt-3"} text-[17px] font-bold leading-snug text-slate-900 dark:text-slate-100`}
+            >
+              {detail.question}
+            </h2>
           )}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-900/60 dark:bg-rose-950/20">
               <p className="text-[13px] font-semibold text-rose-800 dark:text-rose-300">
-                {detail.kind === "CORRECTION" ? "Bạn đã viết" : "Bạn đã trả lời"}
+                {detail.kind === "CORRECTION" ? "Bạn đã viết" : detail.kind === "TRANSLATION" ? "Bạn đã dịch" : "Bạn đã trả lời"}
               </p>
               <p className="mt-1 break-words text-base font-semibold text-slate-900 dark:text-slate-100">
                 {yours || "Bỏ trống"}

@@ -1,4 +1,5 @@
 import axiosClient from "../axiosClient";
+import type { TranslationCheck } from "./writing.service";
 
 export const MISTAKE_SKILLS = ["LISTENING", "SPEAKING", "READING", "WRITING", "GRAMMAR"] as const;
 export type MistakeSkill = (typeof MISTAKE_SKILLS)[number];
@@ -7,10 +8,11 @@ export type MistakeSource =
   | "QUIZ_QUESTION"
   | "GRAMMAR_QUESTION"
   | "WRITING_CORRECTION"
-  | "SPEAKING_WORD";
+  | "SPEAKING_WORD"
+  | "TRANSLATION_SENTENCE";
 
 export interface MistakeDetail {
-  kind: "CHOICE" | "DICTATION" | "CORRECTION" | "WORD";
+  kind: "CHOICE" | "DICTATION" | "CORRECTION" | "WORD" | "TRANSLATION";
   title: string;
   question?: string;
   passage?: string;
@@ -72,6 +74,18 @@ export interface MistakeReviewQuestion {
   question: string | null;
   passage: string | null;
   options: string[];
+  /** TRANSLATION: `question` is the Vietnamese sentence, answered by typing. */
+  kind?: "CHOICE" | "TRANSLATION";
+}
+
+/** A "Dịch câu" mistake typed again: the grade and where the mistake stands. */
+export interface MistakeTranslationResult {
+  id: number;
+  correct: boolean;
+  correctStreak: number;
+  resolved: boolean;
+  resolveAfterCorrect: number;
+  check: Omit<TranslationCheck, "submissionId" | "exercise">;
 }
 
 export interface MistakeAnswerResult {
@@ -99,6 +113,10 @@ export const mistakesService = {
 
   answer: async (id: number, selectedIndex: number): Promise<MistakeAnswerResult> =>
     axiosClient.post(`/mistakes/${id}/answer`, { selectedIndex }),
+
+  /** Graded like the "Dịch câu" exercise; an accepted answer costs no AI grading. */
+  reviewTranslation: async (id: number, answer: string): Promise<MistakeTranslationResult> =>
+    axiosClient.post(`/writing/mistakes/${id}/translate`, { answer }),
 
   setResolved: async (id: number, resolved: boolean): Promise<{ id: number; resolved: boolean }> =>
     axiosClient.post(`/mistakes/${id}/resolve`, { resolved }),

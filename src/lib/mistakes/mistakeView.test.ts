@@ -47,6 +47,11 @@ test("each kind of mistake links to where it can be done again", () => {
     "/speaking/8",
   );
   assert.equal(mistakeRedoLink({ skill: "READING", sourceType: "QUIZ_QUESTION", detail: { ref: {} } }), null);
+  // A "Dịch câu" sentence opens on its own sentence.
+  assert.deepEqual(
+    mistakeRedoLink({ skill: "WRITING", sourceType: "TRANSLATION_SENTENCE", detail: { ref: { quizId: 91, questionId: 501 } } }),
+    { href: "/writing/91?q=501", label: "Làm lại câu" },
+  );
 });
 
 test("a choice is written with its letter, a blank one is null", () => {

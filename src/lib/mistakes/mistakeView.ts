@@ -53,6 +53,10 @@ export function mistakeRedoLink(
       return ref.submissionId ? { href: `/writing/submissions/${ref.submissionId}`, label: "Xem bài viết" } : null;
     case "SPEAKING_WORD":
       return ref.exerciseId ? { href: `/speaking/${ref.exerciseId}`, label: "Luyện nói lại" } : null;
+    case "TRANSLATION_SENTENCE":
+      return ref.quizId
+        ? { href: `/writing/${ref.quizId}${ref.questionId ? `?q=${ref.questionId}` : ""}`, label: "Làm lại câu" }
+        : null;
     default:
       return null;
   }

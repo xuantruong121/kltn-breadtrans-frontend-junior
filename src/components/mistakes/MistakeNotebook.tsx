@@ -131,7 +131,7 @@ export function MistakeNotebook() {
           </Link>
           <h1 className="mt-1 text-2xl font-bold leading-tight text-slate-900 dark:text-slate-100">Sổ lỗi</h1>
           <p className="mt-1 max-w-[72ch] text-[15px] text-slate-600 dark:text-slate-400">
-            Những câu bạn làm sai trong bài luyện. Câu trắc nghiệm trả lời đúng {resolveAfter} lần liên tiếp thì ra khỏi sổ.
+            Những câu bạn làm sai trong bài luyện. Câu trắc nghiệm và câu dịch trả lời đúng {resolveAfter} lần liên tiếp thì ra khỏi sổ.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-4">
