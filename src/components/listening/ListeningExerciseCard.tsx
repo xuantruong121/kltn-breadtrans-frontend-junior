@@ -3,7 +3,6 @@
 import React from "react";
 import {
   ArrowRight,
-  Check,
   Lock,
   RotateCcw,
   Users,
@@ -20,6 +19,7 @@ import {
 } from "./listeningCardLogic";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 import { LevelLockButton } from "@/components/practice/LevelLockDialog";
+import { COMPLETED_CARD_CLASS, CompletedPill, COMPLETED_RETRY_CLASS, COMPLETED_FOOTER_BORDER } from "@/components/practice/completedCard";
 
 export interface ListeningExerciseCardProps {
   quiz: ListeningPracticeCatalogItem;
@@ -94,7 +94,7 @@ export function ListeningExerciseCard({
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-teal-300 dark:border-teal-700/60 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xs cursor-pointer group",
     // Completed: the border and a faint ground take the pill's emerald (owner 2026-11-12).
     COMPLETED:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-emerald-300 dark:border-emerald-800/70 bg-emerald-50/40 dark:bg-emerald-950/20 p-5 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-xs cursor-pointer group",
+      COMPLETED_CARD_CLASS,
     NOT_STARTED:
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-[border-color,box-shadow] duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
     LOCKED:
@@ -108,10 +108,7 @@ export function ListeningExerciseCard({
             the 12 px green note alone in the corner was hard to read). */}
         {status === "COMPLETED" && (
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[13px] font-semibold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
-              <Check className="h-3.5 w-3.5" strokeWidth={2.5} aria-hidden="true" />
-              Đã hoàn thành
-            </span>
+            <CompletedPill />
             {quiz.score != null && (
               <span className="text-sm text-slate-600 dark:text-slate-400">
                 Điểm <span className="font-bold tabular-nums text-slate-900 dark:text-slate-100">{quiz.score}</span>
@@ -150,7 +147,7 @@ export function ListeningExerciseCard({
       </div>
 
       {/* Footer: Clean inline metadata on Left, Clear CTA on Right */}
-      <div className={`mt-4 border-t pt-3 ${status === "COMPLETED" ? "border-emerald-100 dark:border-emerald-900/50" : "border-slate-100 dark:border-slate-800/80"}`}>
+      <div className={`mt-4 border-t pt-3 ${status === "COMPLETED" ? COMPLETED_FOOTER_BORDER : "border-slate-100 dark:border-slate-800/80"}`}>
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Tertiary inline metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-[13px] text-slate-600 dark:text-slate-400 font-medium">
@@ -180,7 +177,7 @@ export function ListeningExerciseCard({
                 type="button"
                 onClick={() => onStart?.(quiz)}
                 disabled={isLaunching}
-                className="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-slate-900 px-3.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
+                className={COMPLETED_RETRY_CLASS}
               >
                 <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
                 <span>Luyện lại</span>

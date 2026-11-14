@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, CheckCircle2, Lock } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
@@ -16,6 +16,7 @@ import {
   type StatusFilter,
 } from "@/lib/practice/catalogFilters";
 import { LevelLockButton } from "@/components/practice/LevelLockDialog";
+import { CompletedPill } from "@/components/practice/completedCard";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { cueWordPairs, pictureCards } from "@/lib/writing/pictureWriting";
 import type { WritingTopicItem } from "@/components/writing/WritingTopicCard";
@@ -120,7 +121,12 @@ export function PictureWritingCatalog({
             return (
               <article
                 key={key}
-                className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900"
+                className={`flex flex-col overflow-hidden rounded-2xl border shadow-sm ${
+                  // Graded: the shared emerald completed look (owner 2026-11-14).
+                  task.isGraded
+                    ? "border-emerald-300 bg-emerald-50/40 dark:border-emerald-800/70 dark:bg-emerald-950/20"
+                    : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                }`}
               >
                 {task.imageUrl && (
                   <img
@@ -142,12 +148,9 @@ export function PictureWritingCatalog({
                     ))}
                   </div>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
-                      {task.isGraded && (
-                        <CheckCircle2 size={14} strokeWidth={2} className="text-emerald-600" aria-hidden="true" />
-                      )}
+                    <span className="flex min-w-0 flex-wrap items-center gap-2 text-[13px] text-slate-600 dark:text-slate-400">
+                      {task.isGraded && <CompletedPill label="Đã chấm" />}
                       {level}
-                      {task.isGraded ? " · Đã chấm" : ""}
                     </span>
                     {levelLocked ? (
                       <LevelLockButton
