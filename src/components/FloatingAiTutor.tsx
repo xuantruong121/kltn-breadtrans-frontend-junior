@@ -995,7 +995,9 @@ function FloatingAiTutorInner() {
                   )}
                 </div>
 
-                {/* Khung Tin Nhắn */}
+                {/* Khung Tin Nhắn: the "Tin mới nhất" pill is anchored to this
+                    box, so it stays above the Gợi ý row and the composer. */}
+                <div className="relative flex-1 min-h-0 flex flex-col">
                 <div
                   ref={messageListRef}
                   onScroll={handleScroll}
@@ -1133,6 +1135,24 @@ function FloatingAiTutorInner() {
                   <div ref={messagesEndRef} className="h-1" />
                 </div>
 
+                {/* Floating "Tin mới nhất" Pill */}
+                {!isNearBottom && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      scrollToBottom("smooth");
+                      setNewMessagesCount(0);
+                      setIsNearBottom(true);
+                      isNearBottomRef.current = true;
+                    }}
+                    className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer animate-fade-in"
+                  >
+                    <ArrowDown size={13} strokeWidth={2.5} aria-hidden="true" />
+                    <span>{jumpButtonLabel(newMessagesCount)}</span>
+                  </button>
+                )}
+                </div>
+
                 {/* Quick Chips (Dành cho học sinh) */}
                 {!isAdmin && currentThread.messages.length <= 2 && (
                   <div className="px-4 py-2 bg-slate-100/70 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-1.5 overflow-x-auto text-xs shrink-0 no-scrollbar">
@@ -1156,23 +1176,6 @@ function FloatingAiTutorInner() {
                       Since vs For
                     </button>
                   </div>
-                )}
-
-                {/* Floating "Tin mới nhất" Pill */}
-                {!isNearBottom && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      scrollToBottom("smooth");
-                      setNewMessagesCount(0);
-                      setIsNearBottom(true);
-                      isNearBottomRef.current = true;
-                    }}
-                    className="absolute bottom-18 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900/90 hover:bg-slate-900 text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-xs transition-all cursor-pointer animate-fade-in"
-                  >
-                    <ArrowDown size={13} strokeWidth={2.5} aria-hidden="true" />
-                    <span>{jumpButtonLabel(newMessagesCount)}</span>
-                  </button>
                 )}
 
                 {/* Input Area */}
