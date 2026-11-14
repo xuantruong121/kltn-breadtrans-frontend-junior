@@ -9,6 +9,7 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
 interface QuickRegisterModalProps {
   isOpen: boolean;
@@ -59,8 +60,9 @@ export function QuickRegisterModal({
       return;
     }
 
-    if (password.length < 6) {
-      setErrorMsg("Mật khẩu phải chứa ít nhất 6 ký tự.");
+    const problem = newPasswordProblem(password);
+    if (problem) {
+      setErrorMsg(problem);
       return;
     }
 

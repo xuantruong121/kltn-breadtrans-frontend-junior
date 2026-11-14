@@ -20,6 +20,7 @@ import { AuthShell } from "./AuthShell";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { PASSWORD_HINT, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
 type RegisterStep = "details" | "success";
 type FieldName = "fullName" | "email" | "password" | "confirmPassword";
@@ -101,8 +102,9 @@ export default function RegisterFlow() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
       next.email = "Hãy nhập một địa chỉ email hợp lệ.";
     }
-    if (form.password.length < 6) {
-      next.password = "Mật khẩu cần có ít nhất 6 ký tự.";
+    const passwordProblem = newPasswordProblem(form.password);
+    if (passwordProblem) {
+      next.password = passwordProblem;
     }
     if (form.password !== form.confirmPassword) {
       next.confirmPassword = "Mật khẩu nhập lại chưa trùng khớp.";
@@ -297,7 +299,7 @@ export default function RegisterFlow() {
                   </p>
                 ) : field === "password" ? (
                   <p className="text-xs text-slate-600 dark:text-slate-400">
-                    Mật khẩu gồm ít nhất 6 ký tự.
+                    {PASSWORD_HINT}
                   </p>
                 ) : null}
               </div>

@@ -60,6 +60,7 @@ import {
 } from "@/lib/avatar/avatarCustomizationLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { remainingText, usedPercent, type DailyAllowance } from "@/modules/subscription/aiQuota";
+import { PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
 export type AccountTabKey =
   | "account-profile"
@@ -394,7 +395,7 @@ export function AccountHub() {
     const fieldErrors: Partial<Record<keyof typeof passwordForm, string>> = {};
     if (!passwordForm.currentPassword) fieldErrors.currentPassword = "Vui lòng nhập mật khẩu hiện tại.";
     if (!passwordForm.newPassword) fieldErrors.newPassword = "Vui lòng nhập mật khẩu mới.";
-    else if (passwordForm.newPassword.length < 8) fieldErrors.newPassword = "Mật khẩu mới cần có ít nhất 8 ký tự.";
+    else if (newPasswordProblem(passwordForm.newPassword)) fieldErrors.newPassword = newPasswordProblem(passwordForm.newPassword) ?? undefined;
     if (!passwordForm.confirmPassword) fieldErrors.confirmPassword = "Vui lòng nhập lại mật khẩu mới.";
     else if (passwordForm.newPassword !== passwordForm.confirmPassword) fieldErrors.confirmPassword = "Xác nhận mật khẩu mới chưa khớp.";
     setPasswordFieldErrors(fieldErrors);
@@ -1095,7 +1096,7 @@ export function AccountHub() {
                       <input
                         type={showNewPassword ? "text" : "password"}
                         required
-                        minLength={8}
+                        minLength={PASSWORD_MIN_LENGTH}
                         value={passwordForm.newPassword}
                         onChange={(e) => updatePasswordField("newPassword", e.target.value)}
                         id="account-newPassword"

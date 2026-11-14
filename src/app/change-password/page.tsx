@@ -7,6 +7,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
 type PasswordFieldProps = {
   id: string;
@@ -56,8 +57,9 @@ export default function ChangePasswordPage() {
       setError("Vui lòng nhập đầy đủ mật khẩu hiện tại, mật khẩu mới và xác nhận.");
       return;
     }
-    if (form.newPassword.length < 8) {
-      setError("Mật khẩu mới cần có ít nhất 8 ký tự.");
+    const problem = newPasswordProblem(form.newPassword);
+    if (problem) {
+      setError(problem);
       return;
     }
     if (form.newPassword !== form.confirmPassword) {
