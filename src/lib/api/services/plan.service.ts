@@ -85,6 +85,7 @@ export interface PublicPlanCatalogResponse {
 }
 
 export { PLAN_QUERY_KEYS } from "@/modules/subscription/planLogic";
+import type { DailyUsage } from "@/modules/subscription/aiQuota";
 
 export const planService = {
   /**
@@ -102,6 +103,14 @@ export const planService = {
    */
   getEffectivePlan: async (): Promise<EffectivePlan> => {
     return await axiosClient.get("/subscriptions/me");
+  },
+
+  /**
+   * GET /subscriptions/me/usage
+   * Today's AI gradings and tutor questions, read without spending any.
+   */
+  getUsage: async (): Promise<DailyUsage> => {
+    return await axiosClient.get("/subscriptions/me/usage");
   },
 
   /**

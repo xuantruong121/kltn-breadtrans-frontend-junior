@@ -4,6 +4,7 @@
  * here.
  */
 import type { MistakeDetail, MistakeItem, MistakeSkill } from "../api/services/mistakes.service.ts";
+import { grammarDisplayTitle, quizDisplayTitle, withoutLevelTag } from "../catalog/displayTitles.ts";
 
 export const MISTAKE_SKILL_LABEL: Record<MistakeSkill, string> = {
   LISTENING: "Nghe",
@@ -52,6 +53,10 @@ export function mistakeRedoLink(
       return ref.submissionId ? { href: `/writing/submissions/${ref.submissionId}`, label: "Xem bài viết" } : null;
     case "SPEAKING_WORD":
       return ref.exerciseId ? { href: `/speaking/${ref.exerciseId}`, label: "Luyện nói lại" } : null;
+    case "TRANSLATION_SENTENCE":
+      return ref.quizId
+        ? { href: `/writing/${ref.quizId}${ref.questionId ? `?q=${ref.questionId}` : ""}`, label: "Làm lại câu" }
+        : null;
     default:
       return null;
   }
@@ -70,4 +75,60 @@ export function choiceText(options: string[] | undefined, index: number | null |
 export function progressLabel(item: Pick<MistakeItem, "correctStreak" | "detail">, resolveAfter: number): string | null {
   if (!item.detail.answerable) return null;
   return `Đã trả lời đúng ${Math.min(item.correctStreak, resolveAfter)}/${resolveAfter} lần`;
+}
+
+/**
+ * The source's title as the catalog shows it (owner 2026-11-12: the notebook
+ * showed the stored English title, "Listening B2 — Inference & Intent").
+ * The server keeps the authoring title; the Vietnamese one is chosen here by id.
+ */
+export function mistakeSourceTitle(
+  skill: MistakeSkill,
+  title: string,
+  ref: { quizId?: number | null; topicId?: number | null } | undefined,
+): string {
+  if (skill === "GRAMMAR" && typeof ref?.topicId === "number") return grammarDisplayTitle(ref.topicId, title);
+  if (typeof ref?.quizId === "number") return quizDisplayTitle(ref.quizId, title);
+  return withoutLevelTag(title);
+}
+
+/** The one line a mistake gets in the notebook list. */
+export function mistakeRowLabel(item: Pick<MistakeItem, "detail">): string {
+  const { detail } = item;
+  if (detail.kind === "WORD" && detail.correctAnswer) return detail.correctAnswer;
+  return detail.question?.trim() || detail.correctAnswer?.trim() || detail.title;
+}
+
+export type MistakeGroup = { key: string; title: string; skill: MistakeSkill; items: MistakeItem[] };
+
+/**
+ * The page's mistakes grouped by where they came from, in the order the
+ * server sent them (owner 2026-11-12: one card per mistake meant scrolling
+ * through the same exercise title again and again).
+ */
+export function groupMistakes(items: MistakeItem[]): MistakeGroup[] {
+  const groups = new Map<string, MistakeGroup>();
+  for (const item of items) {
+    const title = mistakeSourceTitle(item.skill, item.detail.title, item.detail.ref);
+    const ref = item.detail.ref ?? {};
+    const source =
+      ref.quizId != null ? `quiz:${ref.quizId}` : ref.topicId != null ? `topic:${ref.topicId}` : `title:${title}`;
+    const key = `${item.skill}|${source}`;
+    const group = groups.get(key) ?? { key, title, skill: item.skill, items: [] };
+    group.items.push(item);
+    groups.set(key, group);
+  }
+  return [...groups.values()];
+}
+
+/** Where a mistake sits in its exercise's group, for "Câu 1/2" in the detail pane. */
+export function mistakeGroupPosition(
+  groups: MistakeGroup[],
+  id: number,
+): { group: MistakeGroup; index: number; total: number } | null {
+  for (const group of groups) {
+    const at = group.items.findIndex((item) => item.id === id);
+    if (at >= 0) return { group, index: at + 1, total: group.items.length };
+  }
+  return null;
 }

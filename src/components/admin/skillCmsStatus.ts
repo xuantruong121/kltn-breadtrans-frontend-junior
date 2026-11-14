@@ -262,7 +262,42 @@ export const writingUsesPictures = (
 export const writingCardLabel = (item: {
   type?: string;
   thumbnailUrl?: string | null;
+  writingKind?: string | null;
 }) => {
+  if (item.writingKind === "TRANSLATION") return "Dịch câu";
   if (item.type !== "WRITING_PICTURE") return "Viết email";
   return item.thumbnailUrl ? "Viết theo tranh" : "Viết câu";
 };
+
+/**
+ * The form's "Dạng bài viết": a "Dịch câu" exercise is stored as WRITING_PICTURE,
+ * so the form reads it from its sentences (owner 2026-11-14).
+ */
+export const writingFormType = (
+  type: string,
+  questions: Array<{ content?: { taskType?: unknown } | null }> = [],
+) =>
+  type === "WRITING_PICTURE" &&
+  questions.some((q) => String(q.content?.taskType ?? "").toUpperCase() === "SENTENCE_TRANSLATION")
+    ? "TRANSLATION"
+    : type;
+
+/** "giáo viên = teacher" lines into hints; a line without both sides is dropped. */
+export function parseHintLines(text: string): Array<{ vi: string; en: string }> {
+  return text
+    .split("\n")
+    .map((line) => {
+      const at = line.indexOf("=");
+      return at < 0 ? null : { vi: line.slice(0, at).trim(), en: line.slice(at + 1).trim() };
+    })
+    .filter((h): h is { vi: string; en: string } => Boolean(h && h.vi && h.en));
+}
+
+/** Stored hints back into the editor's lines. */
+export const hintLines = (hints: unknown) =>
+  Array.isArray(hints)
+    ? hints
+        .filter((h) => h && typeof h.vi === "string" && typeof h.en === "string")
+        .map((h) => `${h.vi} = ${h.en}`)
+        .join("\n")
+    : "";

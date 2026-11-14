@@ -113,7 +113,8 @@ test("STANDARD word diff ignores punctuation and capitalization", () => {
       { kind: "same", text: "it" },
       { kind: "same", text: "is" },
       { kind: "same", text: "about" },
-      { kind: "same", text: "ten" },
+      // Numbers compare as digits (owner 2026-11-13: "ten" and "10" are the same word).
+      { kind: "same", text: "10" },
       { kind: "same", text: "minutes" },
     ],
   );

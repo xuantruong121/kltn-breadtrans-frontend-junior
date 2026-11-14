@@ -67,6 +67,35 @@ export interface WritingExerciseTask {
   wordRange: [number, number] | null;
   maxScore: number | null;
   latest: { submissionId: number; score: number; maxScore: number } | null;
+  /** "Dịch câu" sentences: word help and one grammar tip (never the answers). */
+  hints?: TranslationHint[];
+  grammarTip?: string;
+}
+
+export type TranslationHint = { vi: string; en: string };
+export type TranslationDiffWord = { text: string; ok: boolean };
+export type TranslationVerdict = "CORRECT" | "MINOR" | "WRONG" | "UNMATCHED";
+
+/** One checked "Dịch câu" sentence (POST /writing/quizzes/:id/questions/:qid/translate). */
+export interface TranslationCheck {
+  verdict: TranslationVerdict;
+  /** MATCH: an accepted answer; AI: graded by AI; NO_AI: no AI grading left today. */
+  source: "MATCH" | "AI" | "NO_AI";
+  score: number;
+  maxScore: number;
+  answer: string;
+  typo: { typed: string; expected: string } | null;
+  closest: string;
+  otherAnswers: string[];
+  diff: { answer: TranslationDiffWord[]; reference: TranslationDiffWord[] } | null;
+  correctedSentence: string | null;
+  explanation: string | null;
+  errorTags: string[];
+  grammarTip: string;
+  hints: TranslationHint[];
+  quotaExhausted: boolean;
+  submissionId: number;
+  exercise: WritingExerciseSummary & { questionId: number; position: number };
 }
 
 export interface WritingQuizDetails extends WritingTopic {
@@ -186,6 +215,19 @@ export const writingService = {
       answer,
       clientAttemptId,
       ...(questionId ? { questionId } : {}),
+    });
+  },
+
+  /** "Dịch câu": checks one sentence; the AI is used only when no accepted answer matches. */
+  translateSentence: async (
+    quizId: number,
+    questionId: number,
+    answer: string,
+    clientAttemptId: string,
+  ): Promise<TranslationCheck> => {
+    return await axiosClient.post(`/writing/quizzes/${quizId}/questions/${questionId}/translate`, {
+      answer,
+      clientAttemptId,
     });
   },
 

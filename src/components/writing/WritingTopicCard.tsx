@@ -3,7 +3,6 @@
 import React from "react";
 import {
   ArrowRight,
-  Check,
   Lock,
   RotateCcw,
 } from "lucide-react";
@@ -17,6 +16,12 @@ import {
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { catalogLevelLabel } from "@/lib/practice/catalogFilters";
 import { LevelLockButton } from "@/components/practice/LevelLockDialog";
+import {
+  COMPLETED_CARD_CLASS,
+  COMPLETED_FOOTER_BORDER,
+  COMPLETED_RETRY_CLASS,
+  CompletedPill,
+} from "@/components/practice/completedCard";
 import { planName } from "@/lib/ui/glossary";
 
 export interface WritingTopicItem extends WritingTopic {
@@ -90,8 +95,9 @@ export function WritingTopicCard({
   const containerClasses = {
     IN_PROGRESS:
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-teal-300 dark:border-teal-700/60 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-teal-400 dark:hover:border-teal-600 hover:shadow-xs cursor-pointer group",
+    // Completed: the shared emerald look of every practice card (owner 2026-11-14).
     COMPLETED:
-      "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
+      COMPLETED_CARD_CLASS,
     NOT_STARTED:
       "relative flex min-h-[220px] flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-2xs transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs cursor-pointer group",
     LOCKED:
@@ -103,23 +109,20 @@ export function WritingTopicCard({
   return (
     <article className={containerClasses}>
       <div className="space-y-2.5">
-        {/* Status header line: only when completed */}
+        {/* Completed: a readable status on the first line (owner 2026-11-14). */}
         {status === "COMPLETED" && (
-          <div className="flex items-center justify-between gap-2">
-            <span />
-
-            {status === "COMPLETED" ? (
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                <span>Đã hoàn thành</span>
-              </span>
-            ) : null}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <CompletedPill />
           </div>
         )}
 
         {/* Title & Pedagogical Description */}
         <div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors line-clamp-1 break-words">
+          <h3
+            className={`text-base font-semibold text-slate-900 dark:text-slate-100 transition-colors line-clamp-1 break-words ${
+              status === "COMPLETED" ? "" : "group-hover:text-teal-600 dark:group-hover:text-teal-400"
+            }`}
+          >
             {topic.title || topic.topicName || "Chủ đề luyện viết"}
           </h3>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed line-clamp-2 min-h-[38px] mt-1.5">
@@ -144,7 +147,7 @@ export function WritingTopicCard({
       </div>
 
       {/* Footer: Metadata on Left, Action CTA on Right */}
-      <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+      <div className={`mt-4 border-t pt-3 ${status === "COMPLETED" ? COMPLETED_FOOTER_BORDER : "border-slate-100 dark:border-slate-800/80"}`}>
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
@@ -166,10 +169,10 @@ export function WritingTopicCard({
                 type="button"
                 onClick={() => onStart?.(topic)}
                 disabled={isLaunching}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer disabled:opacity-60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal-500"
-              >
-                <span>Luyện lại</span>
-                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                className={COMPLETED_RETRY_CLASS}
+                >
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                  <span>Luyện lại</span>
               </button>
             ) : status === "IN_PROGRESS" ? (
               <button

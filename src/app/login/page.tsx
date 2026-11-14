@@ -16,16 +16,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import {
-  setAuthPersistenceMode,
-  useAuthStore,
-} from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { AuthShell } from "@/components/auth/AuthShell";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
-import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -97,13 +93,12 @@ function LoginForm() {
     setErrorMsg("");
 
     try {
-      const deviceId = getDeviceId();
-
       const res = normalizeAuthResponse(
         await axiosClient.post("/auth/login", {
           email: email.trim().toLowerCase(),
           password,
-          deviceId,
+          // Kept 30 days in an HttpOnly cookie, or until the browser closes.
+          rememberMe,
         }),
       );
 
@@ -112,9 +107,7 @@ function LoginForm() {
       useGamificationStore.getState().reset();
 
       // Set user session in authStore
-      setAuthPersistenceMode(rememberMe);
-      setAuth(res.access_token, res.refresh_token, res.user);
-      persistDeviceId(res.deviceId || deviceId);
+      setAuth(res.access_token, res.user);
       await hydrateSession(queryClient);
 
       if (res.user.role === "ADMIN") {

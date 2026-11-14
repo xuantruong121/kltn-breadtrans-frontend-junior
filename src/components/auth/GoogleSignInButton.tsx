@@ -4,14 +4,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import {
-  setAuthPersistenceMode,
-  useAuthStore,
-} from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
 
@@ -124,12 +120,9 @@ export default function GoogleSignInButton({
 
       setIsProcessing(true);
       try {
-        const deviceId = getDeviceId();
-
         const res = normalizeAuthResponse(
           await axiosClient.post("/auth/google", {
             credential: response.credential,
-            deviceId,
           }),
         );
 
@@ -137,9 +130,7 @@ export default function GoogleSignInButton({
         queryClient.clear();
         useGamificationStore.getState().reset();
 
-        setAuthPersistenceMode(true);
-        setAuth(res.access_token, res.refresh_token, res.user);
-        persistDeviceId(res.deviceId || deviceId);
+        setAuth(res.access_token, res.user);
         await hydrateSession(queryClient);
         toast.success("Đăng nhập bằng Google thành công!");
 

@@ -86,6 +86,18 @@ test("Writing Format Tag: resolves topic format accurately", () => {
   );
 });
 
+// Owner 2026-11-14: sentence translation sits on WRITING_PICTURE but is its own format.
+test("a sentence translation exercise reads as Dịch câu, not a picture task", () => {
+  const item: WritingTopicItem = {
+    id: 91,
+    title: "Dịch câu: Gia đình (A1)",
+    type: "WRITING_PICTURE",
+    taskType: "SENTENCE_TRANSLATION",
+  };
+  assert.equal(resolveWritingFormatTag(item), "Dịch câu");
+  assert.match(resolveWritingPedagogicalDescription(item), /tiếng Việt sang tiếng Anh/);
+});
+
 test("Writing Pedagogical Description: prevents prompt leakage", () => {
   const secretPrompt = "Write a 150-word email apologizing to Mr. Henderson for late delivery.";
   const item: WritingTopicItem = {
@@ -110,4 +122,23 @@ test("Writing Difficulty Matching: accommodates various levels", () => {
   assert.equal(matchesWritingDifficulty("Trung cấp B1", "INTERMEDIATE"), true);
   assert.equal(matchesWritingDifficulty("Nâng cao C1", "ADVANCED"), true);
   assert.equal(matchesWritingDifficulty("Nâng cao", "BASIC"), false);
+});
+
+// Owner 2026-11-13: the Writing header showed "SHORT_MESSAGE". Every task
+// type stored today, and every Writing quiz type, reads as Vietnamese.
+test("resolveWritingFormatTag never returns a stored code", () => {
+  const taskTypes = [
+    "EMAIL", "WRITTEN_REQUEST", "SHORT_MESSAGE", "PROPOSAL", "OPINION_ESSAY", "OPINION",
+    "SENTENCE", "ANALYTICAL_RESPONSE", "INVITATION", "INFORMATION_REQUEST", "REQUEST",
+    "ARGUMENT", "CUSTOMER_EMAIL", "STATUS_UPDATE", "MEETING_FOLLOWUP", "THANK_YOU",
+    "PICTURE_SENTENCE", "SENTENCE_TRANSLATION", "",
+  ];
+  const types = ["WRITING_EMAIL", "WRITING_PICTURE", "WRITING_OPINION", "WRITING_SENTENCE", ""];
+  for (const taskType of taskTypes) {
+    for (const type of types) {
+      const label = resolveWritingFormatTag({ id: 1, title: "Bài viết", taskType, type } as unknown as WritingTopicItem);
+      assert.doesNotMatch(label, /_/, `${type}/${taskType} -> ${label}`);
+      assert.notEqual(label, label.toUpperCase(), `${type}/${taskType} -> ${label}`);
+    }
+  }
 });

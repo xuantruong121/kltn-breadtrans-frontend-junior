@@ -102,14 +102,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
         </fieldset>
 
         <fieldset className="mt-5" disabled={starting}>
-          <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-            Mức cược
-            {balance !== null && !isGuest && (
-              <span className="ml-2 font-normal text-slate-600 dark:text-slate-400">
-                Bạn có <span className="font-semibold tabular-nums text-slate-800 dark:text-slate-200">{balance.toLocaleString("vi-VN")}</span> Bánh Mì
-              </span>
-            )}
-          </legend>
+          <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">Mức cược</legend>
           <div className="mt-2 flex gap-3">
             {STAKES.map((s) => (
               <button
@@ -134,9 +127,9 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <div className="px-3 py-2.5">
             <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thắng</dt>
             <dd className="inline-flex items-center gap-1 text-lg font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400">
-              +{Math.floor(stake / 2)} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
+              +{stake} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
             </dd>
-            <dd className="text-xs text-slate-600 dark:text-slate-400">hoàn cược + 50%</dd>
+            <dd className="text-xs text-slate-600 dark:text-slate-400">nhận {stake * 2}</dd>
           </div>
           <div className="px-3 py-2.5">
             <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thua</dt>
@@ -146,9 +139,14 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
             <dd className="text-xs text-slate-600 dark:text-slate-400">mất cược</dd>
           </div>
         </dl>
+        <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+          Thưởng thắng từ Đấu trường tối đa 300 Bánh Mì mỗi ngày; thắng thì luôn được hoàn cược.
+        </p>
         {error && <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-400">{error}</p>}
 
-        <div className="mt-auto pt-6">
+        {/* Owner 2026-11-13: the balance beside "Mức cược" read as one more stake; it sits by
+            the start button, named as the balance. */}
+        <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-6">
           <button
             type="button"
             onClick={() => void begin()}
@@ -158,6 +156,14 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
             <Crosshair size={18} strokeWidth={2.25} aria-hidden="true" />
             {isGuest ? "Đăng nhập để chơi" : starting ? "Đang mở ván…" : "Bắt đầu"}
           </button>
+          {balance !== null && !isGuest && (
+            <p className="inline-flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+              Số dư
+              <span className="text-base font-bold tabular-nums text-slate-900 dark:text-slate-100">{balance.toLocaleString("vi-VN")}</span>
+              <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
+              <span className="sr-only">Bánh Mì</span>
+            </p>
+          )}
         </div>
       </div>
 

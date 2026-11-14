@@ -40,7 +40,8 @@ test("Reading micro-skill telemetry remains internal and is not rendered in Acco
   assert.match(mistakesPage, /router\.replace\("\/mistakes\?skill=reading"\)/);
   assert.doesNotMatch(notebook, /readingService\.getTracking/);
   assert.doesNotMatch(nextConfig, /practice\/reading\/mistakes/);
-  assert.doesNotMatch(nextConfig, /rewrites\(\)/);
+  // The only rewrite is the /api proxy to the backend (owner 2026-11-14), never a page alias.
+  assert.doesNotMatch(nextConfig, /source: ["'`]\/(?!api\/)[^"'`]*["'`],\s*destination: [`"'][^`"']*(?:reading|practice)/);
   assert.doesNotMatch(readingHome, /Theo dõi tiến bộ theo kỹ năng con/);
 });
 

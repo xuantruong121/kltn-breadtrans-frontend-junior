@@ -11,7 +11,6 @@ import {
   Crown,
   KeyRound,
   Smartphone,
-  Laptop,
   ShoppingBag,
   LogOut,
   Settings,
@@ -59,6 +58,9 @@ import {
   resolveUserBadge,
 } from "@/lib/avatar/avatarCustomizationLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { DeviceSessions } from "@/components/profile/DeviceSessions";
+import { remainingText, usedPercent, type DailyAllowance } from "@/modules/subscription/aiQuota";
+import { PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
 export type AccountTabKey =
   | "account-profile"
@@ -319,6 +321,14 @@ export function AccountHub() {
     enabled: !!user,
   });
 
+  // Today's AI gradings and tutor questions (owner 2026-11-13: show what is left).
+  const { data: dailyUsage } = useQuery({
+    queryKey: PLAN_QUERY_KEYS.dailyUsage,
+    queryFn: planService.getUsage,
+    enabled: !!user,
+    staleTime: 30_000,
+  });
+
   const {
     data: purchases,
     isLoading: isLoadingPurchases,
@@ -385,7 +395,7 @@ export function AccountHub() {
     const fieldErrors: Partial<Record<keyof typeof passwordForm, string>> = {};
     if (!passwordForm.currentPassword) fieldErrors.currentPassword = "Vui lòng nhập mật khẩu hiện tại.";
     if (!passwordForm.newPassword) fieldErrors.newPassword = "Vui lòng nhập mật khẩu mới.";
-    else if (passwordForm.newPassword.length < 8) fieldErrors.newPassword = "Mật khẩu mới cần có ít nhất 8 ký tự.";
+    else if (newPasswordProblem(passwordForm.newPassword)) fieldErrors.newPassword = newPasswordProblem(passwordForm.newPassword) ?? undefined;
     if (!passwordForm.confirmPassword) fieldErrors.confirmPassword = "Vui lòng nhập lại mật khẩu mới.";
     else if (passwordForm.newPassword !== passwordForm.confirmPassword) fieldErrors.confirmPassword = "Xác nhận mật khẩu mới chưa khớp.";
     setPasswordFieldErrors(fieldErrors);
@@ -591,6 +601,51 @@ export function AccountHub() {
                     </span>
                   </div>
                 </div>
+
+                {dailyUsage && (
+                  <div className="rounded-2xl border border-slate-100 p-4 dark:border-slate-800">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Lượt dùng hôm nay</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Làm mới lúc 00:00 (giờ Việt Nam)</p>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {(
+                        [
+                          ["AI chấm bài Nói và Viết", dailyUsage.aiGrading],
+                          ["Hỏi Trợ lý Bánh Mì", dailyUsage.tutor],
+                        ] as Array<[string, DailyAllowance]>
+                      ).map(([label, allowance]) => (
+                        <div key={label}>
+                          <div className="flex items-baseline justify-between gap-2 text-sm">
+                            <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
+                            <span
+                              className={`font-bold tabular-nums ${
+                                allowance.remaining === 0
+                                  ? "text-amber-700 dark:text-amber-400"
+                                  : "text-slate-900 dark:text-slate-100"
+                              }`}
+                            >
+                              {remainingText(allowance)}
+                            </span>
+                          </div>
+                          <div
+                            className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                            role="progressbar"
+                            aria-label={`${label}: đã dùng ${allowance.used}/${allowance.limit}`}
+                            aria-valuenow={allowance.used}
+                            aria-valuemin={0}
+                            aria-valuemax={allowance.limit}
+                          >
+                            <div
+                              className={`h-full rounded-full ${allowance.remaining === 0 ? "bg-amber-500" : "bg-blue-600"}`}
+                              style={{ width: `${usedPercent(allowance)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <Link
@@ -1041,7 +1096,7 @@ export function AccountHub() {
                       <input
                         type={showNewPassword ? "text" : "password"}
                         required
-                        minLength={8}
+                        minLength={PASSWORD_MIN_LENGTH}
                         value={passwordForm.newPassword}
                         onChange={(e) => updatePasswordField("newPassword", e.target.value)}
                         id="account-newPassword"
@@ -1128,26 +1183,7 @@ export function AccountHub() {
               </div>
 
               <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs space-y-4">
-                <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-850/60 border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3.5">
-                    <div className="size-11 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                      <Laptop size={22} aria-hidden="true" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                          Trình duyệt Web hiện tại
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                          Đang hoạt động
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-                        Phiên duyệt web · Truy cập lần cuối: Vừa xong
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <DeviceSessions />
 
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Nếu bạn nhận thấy bất kỳ hoạt động đăng nhập bất thường nào, hãy đổi mật khẩu hoặc đăng xuất ngay lập tức để bảo vệ tài khoản.

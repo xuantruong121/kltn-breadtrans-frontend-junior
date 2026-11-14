@@ -94,6 +94,10 @@ export function resolveWritingFormatTag(topic: WritingTopicItem): string {
   if (taskType === "SHORT_MESSAGE" || taskType === "MESSAGE") {
     return "Tin nhắn ngắn";
   }
+  // Stored on WRITING_PICTURE like the sentence tasks, so before the picture rule.
+  if (taskType === "SENTENCE_TRANSLATION") {
+    return "Dịch câu";
+  }
   if (type === "WRITING_PICTURE" || title.includes("tranh") || title.includes("picture")) {
     return "Viết theo tranh";
   }
@@ -118,6 +122,8 @@ export function resolveWritingPedagogicalDescription(
       return "Thực hành sử dụng liên từ chỉ nguyên nhân - kết quả và văn phong trang trọng để viết email giải quyết phàn nàn.";
     case "Tin nhắn ngắn":
       return "Luyện viết tin nhắn thực tế, ngắn gọn và phù hợp với người nhận.";
+    case "Dịch câu":
+      return "Dịch từng câu tiếng Việt sang tiếng Anh, có gợi ý từ vựng và chấm ngay từng câu.";
     case "Viết luận quan điểm":
       return "Phát triển lập luận mạch lạc, tổ chức ý tưởng và cung cấp dẫn chứng cụ thể hỗ trợ quan điểm cá nhân.";
     default:
@@ -141,6 +147,8 @@ export function resolveWritingSkillTags(topic: WritingTopicItem): string[] {
       return ["Văn phong trang trọng", "Cấu trúc email phản hồi"];
     case "Tin nhắn ngắn":
       return ["Mục đích rõ ràng", "Ngữ cảnh giao tiếp"];
+    case "Dịch câu":
+      return ["Trật tự từ", "Thì và mạo từ"];
     case "Viết luận quan điểm":
       return ["Tổ chức luận điểm", "Liên từ nối mạch lạc"];
     default:

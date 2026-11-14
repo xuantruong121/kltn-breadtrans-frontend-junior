@@ -519,3 +519,14 @@ test("Truthful Presentation Helpers: ensures labels and tiers avoid unsupported 
   }
 });
 
+
+test("a free answer graded on content is labelled as the whole answer", async () => {
+  const { getSpeakingScoreLabel, contentRelevanceLabel } = await import("./speakingPracticeLogic.ts");
+  const graded = getSpeakingScoreLabel(3, false, { contentStatus: "GRADED" });
+  assert.equal(graded.title, "Cần luyện thêm");
+  assert.match(graded.subtitle, /phát âm và nội dung/);
+  assert.match(getSpeakingScoreLabel(6.9, false, { contentStatus: "UNAVAILABLE" }).subtitle, /chưa chấm được nội dung/);
+  assert.equal(getSpeakingScoreLabel(6.9, false).title, "Phát âm khá tốt");
+  assert.equal(contentRelevanceLabel("OFF_TOPIC"), "Chưa đúng đề");
+  assert.equal(contentRelevanceLabel(undefined), "");
+});

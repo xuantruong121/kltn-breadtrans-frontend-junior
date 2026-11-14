@@ -93,7 +93,7 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
         <ul className="mt-4 space-y-1.5 text-sm text-slate-800 dark:text-slate-200">
           <li className="flex items-center gap-2"><Crown size={15} strokeWidth={2.25} aria-hidden="true" /> Mỗi 5 tầng có boss: gõ từ tiếng Anh theo nghĩa để hạ.</li>
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 100 máu; từ trả lời sai sẽ quay lại vài câu sau.</li>
-          <li className="flex items-center gap-2"><BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" /> Vé {TICKET} Bánh Mì. Hạ boss tầng 5 thì hoàn vé, mỗi boss thêm 10.</li>
+          <li className="flex items-center gap-2"><BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" /> Vé {TICKET} Bánh Mì. Hạ boss tầng 5 thì hoàn vé, mỗi boss thêm 10 (thưởng Đấu trường tối đa 300 mỗi ngày).</li>
         </ul>
         <button
           type="button"

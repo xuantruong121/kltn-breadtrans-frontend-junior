@@ -10,6 +10,8 @@ import toast from "react-hot-toast";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 import { currencyToastKind } from "./currencyToastLogic";
+import { socketBaseUrl } from "@/lib/realtime/socketUrl";
+import { refreshAccessToken } from "@/lib/auth/refreshSession";
 
 interface SocketContextType {
   socket: Socket | null;
@@ -27,6 +29,9 @@ export default function SocketProvider({ children }: { children: React.ReactNode
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { user, accessToken } = useAuthStore();
+  // The socket follows the session, not each 15-minute token: a refreshed
+  // token must not drop the connection (Song Đấu keeps a match on it).
+  const hasToken = !!accessToken;
   const queryClient = useQueryClient();
 
   // A logout caused by an expired session must reach other open tabs too;
@@ -38,10 +43,11 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       try {
         const persisted = event.newValue ? JSON.parse(event.newValue) : null;
         const nextState = persisted?.state;
-        if (nextState?.accessToken && nextState?.user) return;
+        // Only the user is stored now: its removal is a sign-out elsewhere.
+        if (nextState?.user) return;
 
         const current = useAuthStore.getState();
-        if (!current.accessToken && !current.refreshToken && !current.user) return;
+        if (!current.accessToken && !current.user) return;
 
         queryClient.clear();
         current.logout();
@@ -57,18 +63,15 @@ export default function SocketProvider({ children }: { children: React.ReactNode
   }, [queryClient]);
 
   useEffect(() => {
-    if (!accessToken) {
+    if (!hasToken) {
       return;
     }
 
     // Kết nối tới Backend WebSocket kèm JWT token
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || "http://localhost:3001";
-    
-    const socketInstance = io(backendUrl, {
+    const socketInstance = io(socketBaseUrl(), {
       transports: ["websocket"],
-      auth: {
-        token: accessToken,
-      },
+      // Read on every (re)connect, so a reconnect uses the latest token.
+      auth: (cb) => cb({ token: useAuthStore.getState().accessToken }),
       autoConnect: true,
     });
 
@@ -78,11 +81,18 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       socketInstance.io.opts.reconnection = false;
       socketInstance.disconnect();
 
-      const current = useAuthStore.getState();
-      if (current.accessToken !== accessToken) return;
-      queryClient.clear();
-      current.logout();
-      window.dispatchEvent(new Event("breadtrans:logout"));
+      // An expired token: renew it from the cookie and connect again; only a
+      // refused renewal ends the session.
+      refreshAccessToken(useAuthStore.getState().accessToken)
+        .then(() => {
+          socketInstance.io.opts.reconnection = true;
+          socketInstance.connect();
+        })
+        .catch(() => {
+          queryClient.clear();
+          useAuthStore.getState().logout();
+          window.dispatchEvent(new Event("breadtrans:logout"));
+        });
     };
 
     socketInstance.on("auth:error", handleAuthError);
@@ -209,7 +219,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       setSocket(null);
       setIsConnected(false);
     };
-  }, [accessToken, user?.id, user?.role, user?.email, user?.profile, queryClient]);
+  }, [hasToken, user?.id, user?.role, user?.email, user?.profile, queryClient]);
 
   return (
     <SocketContext.Provider value={{ socket, isConnected }}>

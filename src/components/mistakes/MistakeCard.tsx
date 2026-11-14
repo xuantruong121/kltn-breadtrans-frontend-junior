@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Check, RotateCcw, Undo2 } from "lucide-react";
+import { Check, RotateCcw } from "lucide-react";
 
 import type { MistakeItem } from "@/lib/api/services/mistakes.service";
 import {
   MISTAKE_SKILL_LABEL,
   choiceText,
   mistakeRedoLink,
+  mistakeSourceTitle,
   mistakeTagLabel,
   progressLabel,
 } from "@/lib/mistakes/mistakeView";
@@ -17,12 +18,16 @@ export function MistakeCard({
   item,
   resolveAfter,
   busy,
-  onToggleResolved,
+  onResolve,
+  positionLabel,
 }: {
   item: MistakeItem;
+  /** Where the mistake sits in its exercise, "Câu 1/2"; matches the list beside it. */
+  positionLabel?: string;
   resolveAfter: number;
   busy: boolean;
-  onToggleResolved: (resolved: boolean) => void;
+  /** "Đã hiểu": takes the mistake out of the notebook (the page offers an undo). */
+  onResolve: () => void;
 }) {
   const { detail } = item;
   const tag = mistakeTagLabel(item);
@@ -36,7 +41,7 @@ export function MistakeCard({
     detail.kind === "CHOICE" ? choiceText(detail.options, detail.correctIndex) : (detail.correctAnswer ?? null);
 
   return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+    <article className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-800 dark:bg-slate-800 dark:text-slate-200">
           {MISTAKE_SKILL_LABEL[item.skill]}
@@ -56,7 +61,10 @@ export function MistakeCard({
         </span>
       </div>
 
-      <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">{detail.title}</p>
+      <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+        {mistakeSourceTitle(item.skill, detail.title, detail.ref)}
+        {positionLabel && <span className="font-normal text-slate-500 dark:text-slate-400"> · {positionLabel}</span>}
+      </p>
 
       {detail.kind === "WORD" ? (
         <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">
@@ -70,34 +78,41 @@ export function MistakeCard({
       ) : (
         <>
           {detail.passage && (
-            <div className="mt-2 max-h-40 overflow-y-auto whitespace-pre-line rounded-xl bg-slate-50 p-3 text-sm leading-6 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+            <div className="mt-2 max-h-48 overflow-y-auto whitespace-pre-line rounded-lg bg-slate-50 p-3 text-[15px] leading-relaxed text-slate-800 dark:bg-slate-800/60 dark:text-slate-200">
               <span className="font-bold">{detail.passageKind === "TRANSCRIPT" ? "Lời thoại: " : "Đoạn văn: "}</span>
               {detail.passage}
             </div>
           )}
+          {detail.kind === "TRANSLATION" && (
+            <p className="mt-3 text-[13px] font-semibold text-slate-600 dark:text-slate-400">Dịch sang tiếng Anh</p>
+          )}
           {detail.question && (
-            <h2 className="mt-2 text-base font-bold text-slate-900 dark:text-slate-100">{detail.question}</h2>
+            <h2
+              className={`${detail.kind === "TRANSLATION" ? "mt-1" : "mt-3"} text-[17px] font-bold leading-snug text-slate-900 dark:text-slate-100`}
+            >
+              {detail.question}
+            </h2>
           )}
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3 dark:border-rose-900/60 dark:bg-rose-950/20">
-              <p className="text-xs font-bold uppercase tracking-wide text-rose-800 dark:text-rose-300">
-                {detail.kind === "CORRECTION" ? "Bạn đã viết" : "Bạn đã trả lời"}
+              <p className="text-[13px] font-semibold text-rose-800 dark:text-rose-300">
+                {detail.kind === "CORRECTION" ? "Bạn đã viết" : detail.kind === "TRANSLATION" ? "Bạn đã dịch" : "Bạn đã trả lời"}
               </p>
-              <p className="mt-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <p className="mt-1 break-words text-base font-semibold text-slate-900 dark:text-slate-100">
                 {yours || "Bỏ trống"}
               </p>
             </div>
             <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/60 dark:bg-emerald-950/20">
-              <p className="text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">
+              <p className="text-[13px] font-semibold text-emerald-800 dark:text-emerald-300">
                 {detail.kind === "CORRECTION" ? "Nên viết" : "Đáp án đúng"}
               </p>
-              <p className="mt-1 break-words text-sm font-semibold text-slate-900 dark:text-slate-100">
+              <p className="mt-1 break-words text-base font-semibold text-slate-900 dark:text-slate-100">
                 {right || "Chưa có đáp án để hiển thị"}
               </p>
             </div>
           </div>
           {detail.explanation && (
-            <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
+            <p className="mt-3 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
               <span className="font-bold">Giải thích:</span> {detail.explanation}
             </p>
           )}
@@ -117,18 +132,10 @@ export function MistakeCard({
         <button
           type="button"
           disabled={busy}
-          onClick={() => onToggleResolved(!item.resolvedAt)}
+          onClick={onResolve}
           className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-emerald-300 px-3 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
         >
-          {item.resolvedAt ? (
-            <>
-              <Undo2 size={14} strokeWidth={2} aria-hidden="true" /> Mở lại lỗi này
-            </>
-          ) : (
-            <>
-              <Check size={14} strokeWidth={2} aria-hidden="true" /> Đã hiểu, bỏ khỏi sổ
-            </>
-          )}
+          <Check size={14} strokeWidth={2} aria-hidden="true" /> Đã hiểu, bỏ khỏi sổ
         </button>
         {progress && <span className="text-xs text-slate-600 dark:text-slate-400">{progress}</span>}
       </div>

@@ -93,7 +93,7 @@ export function RunResult({ result, onAgain, onExit }: { result: DungeonResult; 
           </div>
           <p className="mt-2 text-center text-xs text-slate-600 dark:text-slate-400">
             {result.bossesDown > 0 ? "Đã hoàn vé vì hạ được boss tầng 5" : "Hạ boss tầng 5 để được hoàn vé"}
-            {result.bonusCapped > 0 ? ". Hôm nay đã đủ 150 Bánh Mì thưởng." : "."}
+            {result.bonusCapped > 0 ? ". Hôm nay đã đủ 300 Bánh Mì thưởng từ Đấu trường." : "."}
           </p>
           <div className="mt-6 flex flex-col gap-2">
             <button

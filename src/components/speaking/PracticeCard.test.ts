@@ -249,3 +249,12 @@ test("Difficulty Badge: resolves semantic, expressive badge styling for pure and
   assert.equal(fallback.label, "Cơ bản");
   assert.ok(fallback.badgeClass.includes("emerald-50"));
 });
+
+// Owner 2026-11-13: a set of free answers looked like a read-aloud one.
+test("speakingSetKindLabel names the task from the exercises' task types", async () => {
+  const { speakingSetKindLabel } = await import("./practiceCardLogic.ts");
+  assert.equal(speakingSetKindLabel(Array(5).fill("RESPOND_TO_QUESTION")), "Trả lời câu hỏi (nói tự do)");
+  assert.equal(speakingSetKindLabel(["READ_ALOUD", null]), "Đọc theo câu mẫu");
+  assert.equal(speakingSetKindLabel(["READ_ALOUD", "EXPRESS_OPINION"]), "Tổng hợp: đọc mẫu và nói tự do");
+  assert.equal(speakingSetKindLabel([]), null);
+});

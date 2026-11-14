@@ -20,7 +20,8 @@ export function AppFooter() {
             <h4 className="mb-3.5 text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">Khám phá</h4>
             <ul className="space-y-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400">
               <li>
-                <Link href="/" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
+                {/* Owner 2026-11-13: for a signed-in learner, home is the dashboard. */}
+                <Link href="/dashboard" className="transition-colors hover:text-amber-700 dark:hover:text-amber-400">
                   Trang chủ
                 </Link>
               </li>
@@ -106,7 +107,7 @@ export function AppFooter() {
           <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link href="/terms" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Điều khoản dịch vụ</Link>
             <Link href="/privacy" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Chính sách bảo mật</Link>
-            <Link href="/help" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Trợ giúp</Link>
+            <Link href="/help" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">FAQ</Link>
           </div>
           <p>© {new Date().getFullYear()} BreadTrans — Nền tảng tự học tiếng Anh tương tác. Thiết kế lấy người học làm trung tâm.</p>
         </div>

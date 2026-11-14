@@ -20,7 +20,7 @@ export function blasterResultCopy(r: BlasterResultInput) {
   const banh = r.net > 0 ? `+${r.net}` : r.net < 0 ? `−${-r.net}` : "±0";
   const note =
     r.outcome === "win" && r.bonusCapped > 0
-      ? `Hôm nay đã đủ 150 Bánh Mì thưởng, nên chỉ hoàn cược${r.net > 0 ? ` và thưởng ${r.net}` : ""}.`
+      ? `Hôm nay đã đủ 300 Bánh Mì thưởng từ Đấu trường, nên chỉ hoàn cược${r.net > 0 ? ` và thưởng ${r.net}` : ""}.`
       : null;
   return { title, line, banh, note };
 }

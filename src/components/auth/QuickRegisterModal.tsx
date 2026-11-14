@@ -9,6 +9,7 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
 interface QuickRegisterModalProps {
   isOpen: boolean;
@@ -59,8 +60,9 @@ export function QuickRegisterModal({
       return;
     }
 
-    if (password.length < 6) {
-      setErrorMsg("Mật khẩu phải chứa ít nhất 6 ký tự.");
+    const problem = newPasswordProblem(password);
+    if (problem) {
+      setErrorMsg(problem);
       return;
     }
 
@@ -73,22 +75,17 @@ export function QuickRegisterModal({
     setErrorMsg("");
 
     try {
-      let deviceId = typeof window !== "undefined" ? localStorage.getItem("deviceId") : null;
-      if (!deviceId && typeof window !== "undefined") {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem("deviceId", deviceId);
-      }
-
-      const res: any = await axiosClient.post("/auth/register", {
-        name,
+      // Registration returns no session: sign in right after it.
+      await axiosClient.post("/auth/register", {
+        fullName: name,
         email,
         password,
-        deviceId,
       });
+      const res: any = await axiosClient.post("/auth/login", { email, password, rememberMe: true });
 
       queryClient.clear();
       useGamificationStore.getState().reset();
-      setAuth(res.access_token, res.refresh_token, res.user);
+      setAuth(res.access_token, res.user);
 
       onClose();
 

@@ -1,3 +1,10 @@
+import {
+  bareWord,
+  joinThousandsSeparators,
+  normalizeNumberTokens,
+  startsNumberGroup,
+} from "./dictationNumberWords.ts";
+
 export type DictationDiffKind = "same" | "missing" | "extra" | "changed";
 
 export interface DictationDiffToken {
@@ -111,15 +118,20 @@ function tokenize(value?: string | null): string[] {
   // STANDARD feedback compares lexical words, not punctuation/capitalization.
   // Keep this aligned with the backend comparator so the UI does not mark a
   // punctuation-only difference as missing/extra content.
-  const rawTokens = normalizeDictationText(value)
+  const rawTokens = normalizeDictationText(
+    typeof value === "string" ? joinThousandsSeparators(value) : value,
+  )
     .replace(/[’‘ʼ`]/g, "'")
     .replace(/[^\p{L}\p{N}']+/gu, " ")
     .replace(/(?<![\p{L}\p{N}])'+|'+(?![\p{L}\p{N}])/gu, " ")
     .split(/\s+/)
     .map((word) => normalizeDictationToken(word))
     .filter(Boolean);
-  return rawTokens.flatMap((word, index) =>
-    expandStandardToken(word, rawTokens[index + 1]),
+  // Numbers last, as on the server: "nine" and "9" are the same word.
+  return normalizeNumberTokens(
+    rawTokens.flatMap((word, index) =>
+      expandStandardToken(word, rawTokens[index + 1]),
+    ),
   );
 }
 
@@ -354,6 +366,8 @@ export interface ProgressiveDictationFeedback {
   isCorrect: boolean;
   verifiedPrefix: string;
   nextWordMask: string;
+  /** The word expected where the answer first goes wrong (shown, as dailydictation.com does). */
+  nextWord: string;
   remainingMasks: string[];
   nextErrorType: "WRONG" | "MISSING" | "EXTRA" | null;
   hint: string | null;
@@ -487,6 +501,7 @@ export function calculateProgressiveDictationFeedback(
       isCorrect: true,
       verifiedPrefix: trimmedExpected,
       nextWordMask: "",
+      nextWord: "",
       remainingMasks: [],
       nextErrorType: null,
       hint: null,
@@ -497,32 +512,49 @@ export function calculateProgressiveDictationFeedback(
   let subIndex = 0;
   let matchedCanonicalCount = 0;
 
-  for (let idx = 0; idx < canonicalTokens.length; idx += 1) {
-    const canonicalToken = canonicalTokens[idx];
-    const expNorm = tokenize(canonicalToken);
+  const matchesAt = (norm: string[]) =>
+    norm.length > 0 &&
+    subIndex + norm.length <= normSubmittedTokens.length &&
+    norm.every((token, k) => normSubmittedTokens[subIndex + k] === token);
 
-    if (
-      expNorm.length > 0 &&
-      subIndex + expNorm.length <= normSubmittedTokens.length &&
-      expNorm.every((token, k) => normSubmittedTokens[subIndex + k] === token)
-    ) {
+  for (let idx = 0; idx < canonicalTokens.length; idx += 1) {
+    const expNorm = tokenize(canonicalTokens[idx]);
+    if (matchesAt(expNorm)) {
       matchedCanonicalCount += 1;
       subIndex += expNorm.length;
-    } else {
-      break;
+      continue;
     }
+    // A number spread over several words ("twenty five") reads as one ("25").
+    let span = 0;
+    let groupNorm: string[] = [];
+    if (startsNumberGroup(expNorm[0])) {
+      for (let extra = 1; extra <= 5 && idx + extra < canonicalTokens.length; extra += 1) {
+        const norm = tokenize(canonicalTokens.slice(idx, idx + extra + 1).join(" "));
+        if (matchesAt(norm)) {
+          span = extra + 1;
+          groupNorm = norm;
+          break;
+        }
+      }
+    }
+    if (span === 0) break;
+    matchedCanonicalCount += span;
+    subIndex += groupNorm.length;
+    idx += span - 1;
   }
 
   const verifiedTokens = canonicalTokens.slice(0, matchedCanonicalCount);
   const verifiedPrefix = verifiedTokens.join(" ");
 
   let nextWordMask = "";
+  let nextWord = "";
   let remainingMasks: string[] = [];
   let nextErrorType: "WRONG" | "MISSING" | "EXTRA" = "WRONG";
 
   if (matchedCanonicalCount < canonicalTokens.length) {
     const nextCanonicalToken = canonicalTokens[matchedCanonicalCount];
     nextWordMask = maskExpectedWord(nextCanonicalToken);
+    nextWord = bareWord(nextCanonicalToken);
 
     const remainingTokens = canonicalTokens.slice(matchedCanonicalCount + 1);
     remainingMasks = remainingTokens.map((t) => maskExpectedWord(t));
@@ -552,6 +584,7 @@ export function calculateProgressiveDictationFeedback(
     isCorrect: false,
     verifiedPrefix,
     nextWordMask,
+    nextWord,
     remainingMasks,
     nextErrorType,
     hint,

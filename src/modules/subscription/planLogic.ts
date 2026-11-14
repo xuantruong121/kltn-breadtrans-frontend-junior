@@ -138,6 +138,7 @@ export const PLAN_QUERY_KEYS = {
   purchaseDetail: (id: number) => ["plan-purchase-detail", id] as const,
   renewalPreview: (planVersionId: number) => ["plan-renewal-preview", planVersionId] as const,
   expirySummary: ["plan-expiry-summary"] as const,
+  dailyUsage: ["plan-daily-usage"] as const,
   promoPreview: (planVersionId: number, code: string) => ["plan-promo-preview", planVersionId, code] as const,
   vocabTopics: ["vocab-topics"] as const,
   readingExercises: ["reading-exercises"] as const,

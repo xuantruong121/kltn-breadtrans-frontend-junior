@@ -210,6 +210,8 @@ export interface CheckPracticeQuestionResult {
   verifiedPrefix?: string;
   canonicalizedAnswer?: string;
   nextWordMask?: string;
+  /** The word to fix, shown in place of its mask (owner 2026-11-13). */
+  nextWord?: string;
   remainingMasks?: string[];
   nextErrorType?: "WRONG" | "MISSING" | "EXTRA" | null;
 }
@@ -263,7 +265,7 @@ export const quizService = {
     questionId: number,
     signal?: AbortSignal,
     artifact?: ListeningAudioArtifactIdentity | null,
-  ): Promise<{ url: string }> => {
+  ): Promise<{ url: string; artifact?: { id: number } | null }> => {
     return await axiosClient.get(
       buildQuestionAudioUrlRequestPath(quizId, questionId, artifact),
       { signal },
