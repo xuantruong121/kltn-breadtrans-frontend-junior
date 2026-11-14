@@ -139,6 +139,9 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
             <dd className="text-xs text-slate-600 dark:text-slate-400">mất cược</dd>
           </div>
         </dl>
+        <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+          Thưởng thắng từ Đấu trường tối đa 300 Bánh Mì mỗi ngày; thắng thì luôn được hoàn cược.
+        </p>
         {error && <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-400">{error}</p>}
 
         {/* Owner 2026-11-13: the balance beside "Mức cược" read as one more stake; it sits by

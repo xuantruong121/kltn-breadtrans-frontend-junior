@@ -81,7 +81,7 @@ describe("blasterResultCopy", () => {
   test("a win whose bonus met the daily cap says so", () => {
     const capped = blasterResultCopy({ ...base, outcome: "win", net: 0, bonusCapped: 50 });
     assert.equal(capped.banh, "±0");
-    assert.match(capped.note ?? "", /đủ 150 Bánh Mì/);
+    assert.match(capped.note ?? "", /đủ 300 Bánh Mì thưởng từ Đấu trường/);
   });
 });
 
