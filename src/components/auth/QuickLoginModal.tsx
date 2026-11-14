@@ -4,10 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
-import {
-  setAuthPersistenceMode,
-  useAuthStore,
-} from "@/stores/authStore";
+import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
@@ -64,17 +61,10 @@ export function QuickLoginModal({
     setErrorMsg("");
 
     try {
-      let deviceId = typeof window !== "undefined" ? localStorage.getItem("deviceId") : null;
-      if (!deviceId && typeof window !== "undefined") {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem("deviceId", deviceId);
-      }
-
-      const res: any = await axiosClient.post("/auth/login", { email, password, deviceId });
+      const res: any = await axiosClient.post("/auth/login", { email, password, rememberMe: true });
       queryClient.clear();
       useGamificationStore.getState().reset();
-      setAuthPersistenceMode(true);
-      setAuth(res.access_token, res.refresh_token, res.user);
+      setAuth(res.access_token, res.user);
 
       onClose();
 

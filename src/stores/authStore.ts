@@ -9,77 +9,44 @@ interface User {
 }
 
 interface AuthState {
+  /** In memory only (owner 2026-11-14): page scripts can read storage, so no token is kept there. */
   accessToken: string | null;
-  refreshToken: string | null;
+  /** Who is signed in, kept for the first paint; the refresh cookie decides whether it is still valid. */
   user: User | null;
-  setAuth: (accessToken: string, refreshToken: string, user: User) => void;
+  setAuth: (accessToken: string, user: User) => void;
+  setAccessToken: (accessToken: string) => void;
   setProfile: (profile: any) => void;
   logout: () => void;
 }
 
 import { useGamificationStore } from "./gamificationStore";
 
-const AUTH_STORAGE_KEY = "auth-storage-junior";
-const AUTH_PERSISTENCE_MODE_KEY = "breadtrans:auth-persistence-mode";
+export const AUTH_STORAGE_KEY = "auth-storage-junior";
 
-const authStorage = {
-  getItem: (name: string) => {
-    if (typeof window === "undefined") return null;
-
-    const useSessionStorage =
-      window.sessionStorage.getItem(AUTH_PERSISTENCE_MODE_KEY) === "session";
-    return (
-      useSessionStorage ? window.sessionStorage : window.localStorage
-    ).getItem(name);
-  },
-  setItem: (name: string, value: string) => {
-    if (typeof window === "undefined") return;
-
-    const useSessionStorage =
-      window.sessionStorage.getItem(AUTH_PERSISTENCE_MODE_KEY) === "session";
-    if (useSessionStorage) {
-      window.sessionStorage.setItem(name, value);
-      window.localStorage.removeItem(name);
-    } else {
-      window.localStorage.setItem(name, value);
-      window.sessionStorage.removeItem(name);
-    }
-  },
-  removeItem: (name: string) => {
-    if (typeof window === "undefined") return;
-    window.localStorage.removeItem(name);
-    window.sessionStorage.removeItem(name);
-  },
-};
-
-/** Where this tab keeps its session: "session" (this tab) or "local" (remembered). */
-export function getAuthPersistenceMode(): "session" | "local" {
-  if (typeof window === "undefined") return "local";
-  return window.sessionStorage.getItem(AUTH_PERSISTENCE_MODE_KEY) === "session" ? "session" : "local";
-}
-
-/** Select where the current login session survives: tab refresh or browser restart. */
-export function setAuthPersistenceMode(rememberMe: boolean) {
+/**
+ * Leftovers of the old token storage: tokens in localStorage or
+ * sessionStorage, the per-browser device id and the persistence mode. Removed
+ * once; the refresh token now lives in an HttpOnly cookie.
+ */
+function forgetStoredTokens() {
   if (typeof window === "undefined") return;
-  window.sessionStorage.setItem(
-    AUTH_PERSISTENCE_MODE_KEY,
-    rememberMe ? "local" : "session",
-  );
-  if (rememberMe) {
+  try {
     window.sessionStorage.removeItem(AUTH_STORAGE_KEY);
-  } else {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    window.sessionStorage.removeItem("breadtrans:auth-persistence-mode");
+    window.localStorage.removeItem("deviceId");
+  } catch {
+    // storage blocked: nothing was stored there either
   }
 }
+forgetStoredTokens();
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       accessToken: null,
-      refreshToken: null,
       user: null,
-      setAuth: (accessToken, refreshToken, user) =>
-        set({ accessToken, refreshToken, user }),
+      setAuth: (accessToken, user) => set({ accessToken, user }),
+      setAccessToken: (accessToken) => set({ accessToken }),
       setProfile: (profile) =>
         set((state) => ({
           user: state.user ? { ...state.user, profile } : null,
@@ -88,12 +55,16 @@ export const useAuthStore = create<AuthState>()(
         try {
           useGamificationStore.getState().reset();
         } catch {}
-        set({ accessToken: null, refreshToken: null, user: null });
+        set({ accessToken: null, user: null });
       },
     }),
     {
       name: AUTH_STORAGE_KEY,
-      storage: createJSONStorage(() => authStorage),
+      // v2: only the user is stored; an older entry with tokens is reduced to its user.
+      version: 2,
+      storage: createJSONStorage(() => window.localStorage),
+      partialize: (state) => ({ user: state.user }),
+      migrate: (persisted) => ({ user: (persisted as { user?: User | null } | null)?.user ?? null }),
     },
   ),
 );

@@ -11,7 +11,6 @@ import {
   Crown,
   KeyRound,
   Smartphone,
-  Laptop,
   ShoppingBag,
   LogOut,
   Settings,
@@ -59,6 +58,7 @@ import {
   resolveUserBadge,
 } from "@/lib/avatar/avatarCustomizationLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { DeviceSessions } from "@/components/profile/DeviceSessions";
 import { remainingText, usedPercent, type DailyAllowance } from "@/modules/subscription/aiQuota";
 import { PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
@@ -1183,26 +1183,7 @@ export function AccountHub() {
               </div>
 
               <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs space-y-4">
-                <div className="flex items-start justify-between gap-4 p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-850/60 border border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3.5">
-                    <div className="size-11 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                      <Laptop size={22} aria-hidden="true" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
-                          Trình duyệt Web hiện tại
-                        </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-black bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                          Đang hoạt động
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-                        Phiên duyệt web · Truy cập lần cuối: Vừa xong
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <DeviceSessions />
 
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Nếu bạn nhận thấy bất kỳ hoạt động đăng nhập bất thường nào, hãy đổi mật khẩu hoặc đăng xuất ngay lập tức để bảo vệ tài khoản.

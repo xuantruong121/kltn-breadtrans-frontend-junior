@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
 import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
+import { socketBaseUrl } from "@/lib/realtime/socketUrl";
 
 export type ArenaQuestionKind = "fill_blank" | "meaning_to_word" | "word_to_meaning";
 
@@ -82,6 +83,8 @@ export interface AbortedMatchNotice {
 
 export function useArenaSocket() {
   const { user, accessToken } = useAuthStore();
+  // Reconnect when the session starts or ends, not on every token refresh.
+  const hasToken = !!accessToken;
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();
 
@@ -115,10 +118,9 @@ export function useArenaSocket() {
   const abortedSeenRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-    const socket = io(`${wsUrl}/arena`, {
+    const socket = io(`${socketBaseUrl()}/arena`, {
       transports: ["websocket", "polling"],
-      auth: { token: accessToken },
+      auth: (cb) => cb({ token: useAuthStore.getState().accessToken }),
       autoConnect: true,
     });
 
@@ -270,7 +272,7 @@ export function useArenaSocket() {
     return () => {
       socket.disconnect();
     };
-  }, [accessToken, queryClient]);
+  }, [hasToken, queryClient]);
 
   const joinQueue = useCallback(
     (stake: number = 20) => {

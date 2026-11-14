@@ -8,7 +8,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
-import { getDeviceId, persistDeviceId } from "@/lib/auth/deviceId";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
 
 function GoogleCallbackHandler() {
@@ -34,8 +33,7 @@ function GoogleCallbackHandler() {
         const response = normalizeAuthResponse(rawResponse);
         queryClient.clear();
         useGamificationStore.getState().reset();
-        setAuth(response.access_token, response.refresh_token, response.user);
-        persistDeviceId(response.deviceId || getDeviceId());
+        setAuth(response.access_token, response.user);
         await hydrateSession(queryClient);
         if (!active) return;
         router.replace(

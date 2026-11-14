@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAuthSyncStore } from "@/stores/authSyncStore";
+import axiosClient from "@/lib/api/axiosClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -126,7 +127,10 @@ export default function AdminLayout({
     setCollapsedGroups((prev) => ({ ...prev, [groupId]: !prev[groupId] }));
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Ends the server session and clears the refresh cookie; a failed call
+    // still signs this tab out.
+    await axiosClient.post("/auth/logout").catch(() => undefined);
     queryClient.clear();
     logout();
     router.push("/");

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Quicksand } from "next/font/google";
 import Script from "next/script";
+import { headers } from "next/headers";
 import "./globals.css";
 import QueryProvider from "@/lib/providers/QueryProvider";
 import SocketProvider from "@/lib/providers/SocketProvider";
@@ -31,11 +32,13 @@ export const viewport: Viewport = {
   userScalable: true,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // The CSP nonce of this request (src/proxy.ts) for the inline scripts below.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="vi" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
@@ -43,12 +46,14 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         {/* Anti-FOUC Early Theme Script: Runs before First Paint */}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var p=window.location.pathname;var a=p==='/admin'||p.indexOf('/admin/')===0;var t=localStorage.getItem('breadtrans-theme');var d=!a&&t==='dark';if(d)document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`,
           }}
         />
         {/* Remove the legacy unfinished PWA registration without touching unrelated caches. */}
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var w=r.active||r.waiting||r.installing;if(w&&w.scriptURL.endsWith('/sw.js'))r.unregister();});});}if('caches' in window){caches.keys().then(function(keys){keys.filter(function(k){return k.indexOf('breadtrans-cache-')===0;}).forEach(function(k){caches.delete(k);});});}}catch(e){}})();`,
           }}
@@ -67,6 +72,7 @@ export default function RootLayout({
         <Script
           src="https://accounts.google.com/gsi/client"
           strategy="afterInteractive"
+          nonce={nonce}
         />
         <QueryProvider>
           <ThemeProvider>

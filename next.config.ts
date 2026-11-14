@@ -30,6 +30,13 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
   },
+  // Production: the browser calls /api on this domain and Next.js forwards it
+  // to the API (API_ORIGIN), so the refresh cookie is first-party and works
+  // in Safari too (owner 2026-11-14). Set NEXT_PUBLIC_API_URL=/api with it.
+  async rewrites() {
+    const api = process.env.API_ORIGIN?.replace(/\/$/, '');
+    return api ? [{ source: '/api/:path*', destination: `${api}/:path*` }] : [];
+  },
   async redirects() {
     return [
       {

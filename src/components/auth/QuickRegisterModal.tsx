@@ -75,22 +75,17 @@ export function QuickRegisterModal({
     setErrorMsg("");
 
     try {
-      let deviceId = typeof window !== "undefined" ? localStorage.getItem("deviceId") : null;
-      if (!deviceId && typeof window !== "undefined") {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem("deviceId", deviceId);
-      }
-
-      const res: any = await axiosClient.post("/auth/register", {
-        name,
+      // Registration returns no session: sign in right after it.
+      await axiosClient.post("/auth/register", {
+        fullName: name,
         email,
         password,
-        deviceId,
       });
+      const res: any = await axiosClient.post("/auth/login", { email, password, rememberMe: true });
 
       queryClient.clear();
       useGamificationStore.getState().reset();
-      setAuth(res.access_token, res.refresh_token, res.user);
+      setAuth(res.access_token, res.user);
 
       onClose();
 
