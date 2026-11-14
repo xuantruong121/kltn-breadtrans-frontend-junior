@@ -40,3 +40,6 @@ function withLock<T>(task: () => Promise<T>): Promise<T> {
   const locks = typeof navigator !== "undefined" ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
   return locks?.request ? (locks.request("breadtrans-auth-refresh", task) as Promise<T>) : task();
 }
+
+
+export { RENEW_BEFORE_SECONDS, secondsLeft } from "./tokenExpiry";

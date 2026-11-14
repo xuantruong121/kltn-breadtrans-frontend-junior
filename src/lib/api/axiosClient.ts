@@ -1,6 +1,6 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/stores/authStore";
-import { API_BASE_URL, refreshAccessToken } from "@/lib/auth/refreshSession";
+import { API_BASE_URL, RENEW_BEFORE_SECONDS, refreshAccessToken, secondsLeft } from "@/lib/auth/refreshSession";
 
 const axiosClient = axios.create({
   baseURL: API_BASE_URL,
@@ -12,9 +12,20 @@ const axiosClient = axios.create({
 });
 
 // Intercept request to inject token
+const AUTH_ROUTE = /\/auth\/(refresh|login|register|google|forgot-password|reset-password|otp)/;
 axiosClient.interceptors.request.use(
-  (config) => {
-    const token = useAuthStore.getState().accessToken;
+  async (config) => {
+    const state = useAuthStore.getState();
+    let token = state.accessToken;
+    // A known user whose token is not loaded yet (a reload) or about to
+    // expire: renew first instead of sending a request that will be refused.
+    if (state.user && !AUTH_ROUTE.test(config.url ?? "") && secondsLeft(token) < RENEW_BEFORE_SECONDS) {
+      try {
+        token = await refreshAccessToken(token);
+      } catch {
+        // Sent as it is; the 401 handler below ends the session.
+      }
+    }
     if (token) {
       if (config.headers && typeof config.headers.set === "function") {
         config.headers.set("Authorization", `Bearer ${token}`);
