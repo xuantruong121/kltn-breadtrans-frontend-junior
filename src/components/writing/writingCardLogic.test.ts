@@ -86,6 +86,18 @@ test("Writing Format Tag: resolves topic format accurately", () => {
   );
 });
 
+// Owner 2026-11-14: sentence translation sits on WRITING_PICTURE but is its own format.
+test("a sentence translation exercise reads as Dịch câu, not a picture task", () => {
+  const item: WritingTopicItem = {
+    id: 91,
+    title: "Dịch câu: Gia đình (A1)",
+    type: "WRITING_PICTURE",
+    taskType: "SENTENCE_TRANSLATION",
+  };
+  assert.equal(resolveWritingFormatTag(item), "Dịch câu");
+  assert.match(resolveWritingPedagogicalDescription(item), /tiếng Việt sang tiếng Anh/);
+});
+
 test("Writing Pedagogical Description: prevents prompt leakage", () => {
   const secretPrompt = "Write a 150-word email apologizing to Mr. Henderson for late delivery.";
   const item: WritingTopicItem = {
@@ -119,7 +131,7 @@ test("resolveWritingFormatTag never returns a stored code", () => {
     "EMAIL", "WRITTEN_REQUEST", "SHORT_MESSAGE", "PROPOSAL", "OPINION_ESSAY", "OPINION",
     "SENTENCE", "ANALYTICAL_RESPONSE", "INVITATION", "INFORMATION_REQUEST", "REQUEST",
     "ARGUMENT", "CUSTOMER_EMAIL", "STATUS_UPDATE", "MEETING_FOLLOWUP", "THANK_YOU",
-    "PICTURE_SENTENCE", "",
+    "PICTURE_SENTENCE", "SENTENCE_TRANSLATION", "",
   ];
   const types = ["WRITING_EMAIL", "WRITING_PICTURE", "WRITING_OPINION", "WRITING_SENTENCE", ""];
   for (const taskType of taskTypes) {

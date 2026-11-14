@@ -28,6 +28,7 @@ import { LevelLockedScreen } from "@/components/practice/LevelLockDialog";
 import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingWorkspace } from "@/components/writing/PictureWritingWorkspace";
+import { SentenceTranslationWorkspace } from "@/components/writing/SentenceTranslationWorkspace";
 import { isPictureQuiz } from "@/lib/writing/pictureWriting";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { resolveWritingFormatTag } from "@/components/writing/writingCardLogic";
@@ -127,6 +128,9 @@ export default function WritingDetailPage(props: {
 
   const isPictureTask =
     Boolean(exercise && currentTask) && isPictureQuiz(topic ?? {});
+  // "Dịch câu" (owner 2026-11-14): checked sentence by sentence on its own workspace.
+  const isTranslationTask =
+    Boolean(exercise) && currentTask?.taskType === "SENTENCE_TRANSLATION";
 
   const wordCount = countWritingWords(content);
   const charCount = content.length;
@@ -317,7 +321,7 @@ export default function WritingDetailPage(props: {
           onExit={() => confirmExit(exitHref)}
           exitLabel="Thoát"
           statusContent={
-            <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">
+            isTranslationTask ? undefined : <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">
               <span>{wordCount} từ</span>
               <span className="text-slate-600 dark:text-slate-400">·</span>
               <span>{charCount} ký tự</span>
@@ -331,7 +335,14 @@ export default function WritingDetailPage(props: {
           </div>
         )}
 
-        {isPictureTask && exercise && currentTask ? (
+        {isTranslationTask && exercise ? (
+          <SentenceTranslationWorkspace
+            quizId={topicId}
+            title={topic?.title ? quizDisplayTitle(topicId, topic.title) : "Dịch câu"}
+            tasks={exercise.questions}
+            initialTaskId={currentTask?.id ?? null}
+          />
+        ) : isPictureTask && exercise && currentTask ? (
           <PictureWritingWorkspace
             quizId={topicId}
             task={currentTask}
