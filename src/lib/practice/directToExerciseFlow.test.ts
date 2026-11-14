@@ -24,7 +24,8 @@ test("normal Writing opens the editor directly and keeps guidance in the workspa
   const source = read("src/app/(student)/writing/[id]/page.tsx");
   assert.match(source, /writingMode\.guidance/);
   assert.match(source, /<textarea/);
-  assert.match(source, /stage=\{feedback \? "FEEDBACK" : "PRACTICE"\}/);
+  // The grade opens on its own page (or beside a picture), so the editor is always the practice stage.
+  assert.match(source, /stage="PRACTICE"/);
   assert.doesNotMatch(source, /Bắt đầu viết/);
 });
 
