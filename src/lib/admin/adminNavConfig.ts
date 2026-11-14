@@ -96,6 +96,12 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         iconName: "PenTool",
       },
       {
+        id: "translation-answers",
+        href: "/admin/translation-answers",
+        label: "Duyệt câu dịch",
+        iconName: "ListChecks",
+      },
+      {
         id: "vocab",
         href: "/admin/vocab",
         label: "Từ vựng & Flashcard",

@@ -29,6 +29,7 @@ import {
   Inbox,
   TrendingUp,
   TicketPercent,
+  ListChecks,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAuthSyncStore } from "@/stores/authSyncStore";
@@ -73,6 +74,7 @@ const NAV_ICONS: Record<string, NavItem["icon"]> = {
   Headphones,
   Inbox,
   Layers,
+  ListChecks,
   MessageSquare,
   Mic,
   PenTool,
