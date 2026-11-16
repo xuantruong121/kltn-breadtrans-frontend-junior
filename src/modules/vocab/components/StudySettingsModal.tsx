@@ -207,7 +207,7 @@ export const StudySettingsModal: React.FC<StudySettingsModalProps> = ({
               </div>
               <div className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">Enter / 1</kbd>
-                <span>Chưa nhớ / Kiểm tra</span>
+                <span>Chưa nhớ / Kiểm tra / Bỏ qua phát âm</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <kbd className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 font-mono">1, 2, 3, 4</kbd>
