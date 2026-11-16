@@ -3,8 +3,13 @@
  * and what to hand the tutor. Pure; the server sends ids, addresses are built
  * here.
  */
-import type { MistakeDetail, MistakeItem, MistakeSkill } from "../api/services/mistakes.service.ts";
-import { grammarDisplayTitle, quizDisplayTitle, withoutLevelTag } from "../catalog/displayTitles.ts";
+import type { MistakeDetail, MistakeItem, MistakeSkill, SentenceWord } from "../api/services/mistakes.service.ts";
+import {
+  grammarDisplayTitle,
+  quizDisplayTitle,
+  speakingSetDisplayTitle,
+  withoutLevelTag,
+} from "../catalog/displayTitles.ts";
 
 export const MISTAKE_SKILL_LABEL: Record<MistakeSkill, string> = {
   LISTENING: "Nghe",
@@ -53,6 +58,13 @@ export function mistakeRedoLink(
       return ref.submissionId ? { href: `/writing/submissions/${ref.submissionId}`, label: "Xem bài viết" } : null;
     case "SPEAKING_WORD":
       return ref.exerciseId ? { href: `/speaking/${ref.exerciseId}`, label: "Luyện nói lại" } : null;
+    case "SPEAKING_SENTENCE":
+      return ref.exerciseId
+        ? {
+            href: `/speaking/${ref.exerciseId}${ref.setKey ? `?set=${encodeURIComponent(ref.setKey)}` : ""}`,
+            label: "Luyện nói lại",
+          }
+        : null;
     case "TRANSLATION_SENTENCE":
       return ref.quizId
         ? { href: `/writing/${ref.quizId}${ref.questionId ? `?q=${ref.questionId}` : ""}`, label: "Làm lại câu" }
@@ -85,10 +97,11 @@ export function progressLabel(item: Pick<MistakeItem, "correctStreak" | "detail"
 export function mistakeSourceTitle(
   skill: MistakeSkill,
   title: string,
-  ref: { quizId?: number | null; topicId?: number | null } | undefined,
+  ref: { quizId?: number | null; topicId?: number | null; setKey?: string | null } | undefined,
 ): string {
   if (skill === "GRAMMAR" && typeof ref?.topicId === "number") return grammarDisplayTitle(ref.topicId, title);
   if (typeof ref?.quizId === "number") return quizDisplayTitle(ref.quizId, title);
+  if (skill === "SPEAKING" && ref?.setKey) return speakingSetDisplayTitle(ref.setKey, title);
   return withoutLevelTag(title);
 }
 
@@ -97,6 +110,21 @@ export function mistakeRowLabel(item: Pick<MistakeItem, "detail">): string {
   const { detail } = item;
   if (detail.kind === "WORD" && detail.correctAnswer) return detail.correctAnswer;
   return detail.question?.trim() || detail.correctAnswer?.trim() || detail.title;
+}
+
+const bare = (word: string) => word.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+
+/**
+ * What a read-aloud sentence got wrong, for the lines under it (owner
+ * 2026-11-16: one row per sentence that says what was wrong in it).
+ */
+export function sentenceMistakeSummary(words: SentenceWord[] | undefined): {
+  weak: Array<{ word: string; score: number }>;
+  omitted: string[];
+} {
+  const weak = (words ?? []).filter((w) => w.status === "WEAK").map((w) => ({ word: bare(w.word), score: w.score }));
+  const omitted = (words ?? []).filter((w) => w.status === "OMITTED").map((w) => bare(w.word));
+  return { weak, omitted };
 }
 
 export type MistakeGroup = { key: string; title: string; skill: MistakeSkill; items: MistakeItem[] };
@@ -112,7 +140,13 @@ export function groupMistakes(items: MistakeItem[]): MistakeGroup[] {
     const title = mistakeSourceTitle(item.skill, item.detail.title, item.detail.ref);
     const ref = item.detail.ref ?? {};
     const source =
-      ref.quizId != null ? `quiz:${ref.quizId}` : ref.topicId != null ? `topic:${ref.topicId}` : `title:${title}`;
+      ref.quizId != null
+        ? `quiz:${ref.quizId}`
+        : ref.topicId != null
+          ? `topic:${ref.topicId}`
+          : ref.setKey
+            ? `set:${ref.setKey}`
+            : `title:${title}`;
     const key = `${item.skill}|${source}`;
     const group = groups.get(key) ?? { key, title, skill: item.skill, items: [] };
     group.items.push(item);

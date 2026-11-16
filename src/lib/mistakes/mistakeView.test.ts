@@ -11,6 +11,7 @@ import {
   mistakeTagLabel,
   parseMistakeSkill,
   progressLabel,
+  sentenceMistakeSummary,
 } from "./mistakeView.ts";
 
 test("a skill is read from the address bar, anything else means all skills", () => {
@@ -132,4 +133,54 @@ test("the detail pane names the mistake's place in its exercise", () => {
   assert.equal(where?.total, 2);
   assert.equal(where?.group.items.length, 2);
   assert.equal(mistakeGroupPosition(groups, 99), null);
+});
+
+test("a read-aloud sentence: grouped by its practice set, named in Vietnamese, redone in its set (owner 2026-11-16)", () => {
+  const set = "speaking-d611b13e-8c4d-4bca-85f7-8072b5378b49";
+  const sentence = (id: number, exerciseId: number) => ({
+    id,
+    skill: "SPEAKING" as const,
+    sourceType: "SPEAKING_SENTENCE" as const,
+    tag: null,
+    wrongCount: 1,
+    correctStreak: 0,
+    firstSeenAt: "2026-11-16T09:00:00Z",
+    lastSeenAt: "2026-11-16T09:00:00Z",
+    resolvedAt: null,
+    detail: {
+      kind: "SENTENCE" as const,
+      title: "Borrowing Books from the University Library",
+      question: `Sentence of exercise ${exerciseId}.`,
+      answerable: false,
+      ref: { exerciseId, submissionId: id, setKey: set },
+    },
+  });
+  const groups = groupMistakes([sentence(1, 137), sentence(2, 138)]);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].title, "Mượn sách ở thư viện trường");
+  assert.equal(groups[0].items.length, 2);
+  assert.equal(mistakeRowLabel(sentence(2, 138)), "Sentence of exercise 138.");
+  assert.deepEqual(mistakeRedoLink(sentence(2, 138)), {
+    href: `/speaking/138?set=${set}`,
+    label: "Luyện nói lại",
+  });
+  // Without a set the exercise is still reachable.
+  assert.equal(
+    mistakeRedoLink({ skill: "SPEAKING", sourceType: "SPEAKING_SENTENCE", detail: { ref: { exerciseId: 9 } } })?.href,
+    "/speaking/9",
+  );
+});
+
+test("a sentence's mistakes are listed without punctuation: words read wrong with their score, then omitted words", () => {
+  assert.deepEqual(
+    sentenceMistakeSummary([
+      { word: "You", score: 95, status: "OK" },
+      { word: "show", score: 51, status: "WEAK" },
+      { word: "borrow,", score: 52, status: "WEAK" },
+      { word: "front", score: 0, status: "OMITTED" },
+      { word: "desk.", score: 0, status: "OMITTED" },
+    ]),
+    { weak: [{ word: "show", score: 51 }, { word: "borrow", score: 52 }], omitted: ["front", "desk"] },
+  );
+  assert.deepEqual(sentenceMistakeSummary(undefined), { weak: [], omitted: [] });
 });
