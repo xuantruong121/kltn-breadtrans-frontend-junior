@@ -51,6 +51,26 @@ export interface VocabWord {
 
 export type SrsGrade = "AGAIN" | "HARD" | "GOOD" | "EASY";
 
+/** A word the learner saved: a dictionary snapshot taken when it was saved. */
+export interface SavedWord {
+  id: number;
+  /** As the learner saved it ("opens"). */
+  word: string;
+  /** Dictionary form ("open"); a flashcard matches its word against this. */
+  canonicalWord: string;
+  savedAt: string;
+  pos: string;
+  ipaUs?: string | null;
+  ipaUk?: string | null;
+  /** Vietnamese meaning, or the English definition when there is none. */
+  meaning: string;
+  definitionEn?: string | null;
+  audioUs?: string | null;
+  audioUk?: string | null;
+  exampleEn?: string | null;
+  exampleVi?: string | null;
+}
+
 export interface VocabTopicDetail {
   topicId: number;
   title: string;
@@ -131,7 +151,7 @@ export const vocabService = {
     });
   },
 
-  getSavedWords: async (): Promise<VocabWord[]> => {
+  getSavedWords: async (): Promise<SavedWord[]> => {
     return await axiosClient.get("/vocab/saved");
   },
 
