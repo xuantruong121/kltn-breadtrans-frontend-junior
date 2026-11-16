@@ -70,6 +70,7 @@ import {
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { enterFullscreen, exitFullscreen, useIsFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { F11_HINT, fullscreenAfterResult } from "@/lib/diagnostic/fullscreenExit";
+import { SPEAKING_MIC_CONSTRAINTS } from "@/lib/speaking/micConstraints";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -405,7 +406,7 @@ export default function DiagnosticPage() {
     setSpeakingPhase("starting");
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: SPEAKING_MIC_CONSTRAINTS });
     } catch (error) {
       setSpeakingPhase("idle");
       setSpeakingError(

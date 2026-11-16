@@ -9,6 +9,9 @@
  * too quiet to recognize. Pronunciation scoring needs the voice as spoken, so
  * both are off. Echo cancellation stays on: it keeps the sample audio out of
  * the recording if it plays through speakers.
+ *
+ * Also used by the entry diagnostic Speaking tasks (owner 2026-11-16), which
+ * asked for `{ audio: true }` and so got the same browser processing.
  */
 export const SPEAKING_MIC_CONSTRAINTS: MediaTrackConstraints = {
   channelCount: 1,

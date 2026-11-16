@@ -11,8 +11,12 @@ test("Speaking records the raw voice: no noise suppression, no auto gain", () =>
   assert.equal(SPEAKING_MIC_CONSTRAINTS.channelCount, 1);
 });
 
-test("both Speaking recorders use the shared constraints", () => {
-  for (const file of ["src/lib/speaking/useWavRecorder.ts", "src/app/(student)/speaking/[id]/page.tsx"]) {
+test("every graded recorder (practice, entry diagnostic) uses the shared constraints", () => {
+  for (const file of [
+    "src/lib/speaking/useWavRecorder.ts",
+    "src/app/(student)/speaking/[id]/page.tsx",
+    "src/app/(student)/diagnostic/page.tsx",
+  ]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /getUserMedia\(\{\s*audio: SPEAKING_MIC_CONSTRAINTS/, file);
     assert.doesNotMatch(source, /noiseSuppression: true/, file);
