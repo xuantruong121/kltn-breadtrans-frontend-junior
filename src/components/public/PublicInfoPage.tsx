@@ -5,6 +5,8 @@ type InfoSection = {
   title: string;
   body: string;
   id?: string;
+  /** Optional bullet points under the paragraph. */
+  items?: string[];
 };
 
 type PublicInfoPageProps = {
@@ -14,6 +16,8 @@ type PublicInfoPageProps = {
   icon: LucideIcon;
   sections: InfoSection[];
   cta?: { label: string; href: string };
+  /** "Cập nhật ngày …" under the description. */
+  updated?: string;
 };
 
 export function PublicInfoPage({
@@ -23,6 +27,7 @@ export function PublicInfoPage({
   icon: Icon,
   sections,
   cta,
+  updated,
 }: PublicInfoPageProps) {
   return (
     <section className="bg-amber-50/40 dark:bg-slate-950 py-12 sm:py-16">
@@ -42,6 +47,9 @@ export function PublicInfoPage({
           <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-400">{eyebrow}</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">{title}</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">{description}</p>
+          {updated ? (
+            <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Cập nhật ngày {updated}</p>
+          ) : null}
         </header>
 
         <div className="mt-6 space-y-4">
@@ -53,6 +61,13 @@ export function PublicInfoPage({
             >
               <h2 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">{section.title}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{section.body}</p>
+              {section.items?.length ? (
+                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  {section.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              ) : null}
             </article>
           ))}
         </div>

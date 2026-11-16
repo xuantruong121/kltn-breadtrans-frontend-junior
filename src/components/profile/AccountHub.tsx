@@ -28,6 +28,7 @@ import {
   Backpack,
   Activity,
   Award,
+  ShieldCheck,
 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/authStore";
@@ -46,6 +47,7 @@ import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentM
 import { UserAvatarWithFrame, AddressCombobox } from "@/components/ui";
 import { LearningProgressTab } from "@/components/profile/LearningProgressTab";
 import { DiagnosticResultTab } from "@/components/profile/DiagnosticResultTab";
+import { AccountPrivacyTab } from "@/components/profile/AccountPrivacyTab";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { resizeAvatarImage } from "@/lib/avatar/resizeAvatarImage";
@@ -69,7 +71,8 @@ export type AccountTabKey =
   | "account-device"
   | "account-inventory"
   | "learning-progress"
-  | "diagnostic-result";
+  | "diagnostic-result"
+  | "account-privacy";
 
 const TAB_ALIASES: Record<string, AccountTabKey> = {
   "account-profile": "account-profile",
@@ -80,6 +83,7 @@ const TAB_ALIASES: Record<string, AccountTabKey> = {
   "learning-progress": "learning-progress",
   "diagnostic-result": "diagnostic-result",
   "diagnostic": "diagnostic-result",
+  "account-privacy": "account-privacy",
 };
 
 function getInitials(name?: string | null): string {
@@ -478,6 +482,7 @@ export function AccountHub() {
     { id: "account-inventory", label: "Túi đồ & Ngoại trang", icon: Backpack },
     { id: "learning-progress", label: "Tiến độ học tập", icon: Activity },
     { id: "diagnostic-result", label: "Kết quả đánh giá đầu vào", icon: Award },
+    { id: "account-privacy", label: "Quyền riêng tư", icon: ShieldCheck },
   ];
 
   return (
@@ -537,6 +542,7 @@ export function AccountHub() {
         <main className="flex-1 min-w-0 w-full space-y-6">
           {activeTab === "learning-progress" && <LearningProgressTab />}
           {activeTab === "diagnostic-result" && <DiagnosticResultTab />}
+          {activeTab === "account-privacy" && <AccountPrivacyTab hasPassword={!withoutPassword} />}
           {/* TAB 1: GÓI CỦA TÔI */}
           {activeTab === "account-plan" && (
             <section className="space-y-6 animate-in fade-in duration-200" aria-labelledby="heading-plan">

@@ -6,6 +6,8 @@ interface User {
   email: string;
   role: string;
   profile?: any;
+  /** The backend asks this account to accept the current terms (owner 2026-11-16). */
+  consentRequired?: boolean;
 }
 
 interface AuthState {
@@ -16,6 +18,7 @@ interface AuthState {
   setAuth: (accessToken: string, user: User) => void;
   setAccessToken: (accessToken: string) => void;
   setProfile: (profile: any) => void;
+  markConsentAccepted: () => void;
   logout: () => void;
 }
 
@@ -50,6 +53,10 @@ export const useAuthStore = create<AuthState>()(
       setProfile: (profile) =>
         set((state) => ({
           user: state.user ? { ...state.user, profile } : null,
+        })),
+      markConsentAccepted: () =>
+        set((state) => ({
+          user: state.user ? { ...state.user, consentRequired: false } : null,
         })),
       logout: () => {
         try {

@@ -9,6 +9,8 @@ import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { Toaster } from "react-hot-toast";
 import { ReferralCapture } from "@/components/referral/ReferralCapture";
 import { AuthSyncProvider } from "@/components/auth/AuthSyncProvider";
+import { ConsentGate } from "@/components/auth/ConsentGate";
+import { Suspense } from "react";
 
 const quicksand = Quicksand({
   variable: "--font-quicksand",
@@ -80,6 +82,9 @@ export default async function RootLayout({
               {children}
               <ReferralCapture />
               <AuthSyncProvider />
+              <Suspense fallback={null}>
+                <ConsentGate />
+              </Suspense>
               <Toaster
                 position="top-center"
                 toastOptions={{

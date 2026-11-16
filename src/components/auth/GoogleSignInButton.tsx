@@ -10,6 +10,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
+import {
+  CONSENT_REQUIRED,
+  apiErrorCode,
+  pendingDeletionOf,
+  type PendingDeletion,
+} from "@/lib/auth/accountPrivacy";
+import { ConsentDialog } from "@/components/auth/ConsentDialog";
+import { PendingDeletionDialog } from "@/components/auth/PendingDeletionDialog";
 
 type GoogleCredentialResponse = { credential?: string };
 type GoogleCredentialHandler = (response: GoogleCredentialResponse) => void;
@@ -108,23 +116,27 @@ export default function GoogleSignInButton({
   const buttonRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  // A first Google sign-in waits for consent (owner 2026-11-16); the same
+  // credential is sent again once the learner agrees.
+  const [consentCredential, setConsentCredential] = useState<string | null>(null);
+  const [pendingDeletion, setPendingDeletion] = useState<{
+    offer: PendingDeletion;
+    credential: string;
+  } | null>(null);
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-  const handleCredentialResponse = useCallback(
-    async (response: { credential?: string }) => {
-      if (!response.credential) {
-        toast.error("Không nhận được token từ Google.");
-        return;
-      }
-
+  const signInWithCredential = useCallback(
+    async (credential: string, acceptTerms = false) => {
       setIsProcessing(true);
       try {
         const res = normalizeAuthResponse(
           await axiosClient.post("/auth/google", {
-            credential: response.credential,
+            credential,
+            ...(acceptTerms ? { acceptTerms: true } : {}),
           }),
         );
+        setConsentCredential(null);
 
         // Clear previous cache & store
         queryClient.clear();
@@ -141,6 +153,17 @@ export default function GoogleSignInButton({
           router.replace(returnUrl);
         }
       } catch (err: any) {
+        if (apiErrorCode(err) === CONSENT_REQUIRED) {
+          setConsentCredential(credential);
+          return;
+        }
+        const offer = pendingDeletionOf(err);
+        if (offer) {
+          setConsentCredential(null);
+          setPendingDeletion({ offer, credential });
+          return;
+        }
+        if (acceptTerms) setConsentCredential(null);
         const data = err.response?.data;
         const messagePayload = data?.message;
         const errorCode =
@@ -150,7 +173,7 @@ export default function GoogleSignInButton({
         if (errorCode === "ACCOUNT_LINK_REQUIRED") {
           if (onAccountLinkRequired) {
             onAccountLinkRequired({
-              credential: response.credential,
+              credential,
               message:
                 (typeof messagePayload === "object"
                   ? messagePayload?.message
@@ -172,6 +195,17 @@ export default function GoogleSignInButton({
       }
     },
     [onAccountLinkRequired, onError, queryClient, redirectUrl, router, setAuth],
+  );
+
+  const handleCredentialResponse = useCallback(
+    async (response: { credential?: string }) => {
+      if (!response.credential) {
+        toast.error("Không nhận được token từ Google.");
+        return;
+      }
+      await signInWithCredential(response.credential);
+    },
+    [signInWithCredential],
   );
 
   useEffect(() => {
@@ -317,6 +351,35 @@ export default function GoogleSignInButton({
           }`}
         />
       </div>
+      <ConsentDialog
+        open={consentCredential !== null}
+        title="Tạo tài khoản bằng Google"
+        description="Đây là lần đầu bạn đăng nhập BreadTrans bằng tài khoản Google này. Hãy đọc và đồng ý với điều khoản để tạo tài khoản."
+        confirmLabel="Đồng ý và tạo tài khoản"
+        isPending={isProcessing}
+        onConfirm={() => {
+          if (consentCredential) void signInWithCredential(consentCredential, true);
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setConsentCredential(null)}
+          disabled={isProcessing}
+          className="min-h-11 rounded-xl px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          Không tạo tài khoản
+        </button>
+      </ConsentDialog>
+      <PendingDeletionDialog
+        pending={pendingDeletion?.offer ?? null}
+        onClose={() => setPendingDeletion(null)}
+        onCancelled={() => {
+          const credential = pendingDeletion?.credential;
+          setPendingDeletion(null);
+          toast.success("Đã huỷ yêu cầu xoá tài khoản.");
+          if (credential) void signInWithCredential(credential);
+        }}
+      />
     </div>
   );
 }
