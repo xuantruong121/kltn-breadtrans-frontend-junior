@@ -44,6 +44,7 @@ import {
 import { getSpeakingFailureMessage } from "@/lib/speaking/speakingRecoveryLogic";
 import { speakingPollStep } from "@/lib/speaking/speakingPollLogic";
 import { resampleTo16kHz } from "@/lib/speaking/resampleAudio";
+import { SPEAKING_MIC_CONSTRAINTS } from "@/lib/speaking/micConstraints";
 import {
   createWorkletFlushController,
   isAudioWorkletSupported,
@@ -529,12 +530,7 @@ export default function SpeakingExerciseDetailPage() {
       submissionInFlightRef.current = false;
 
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: SPEAKING_MIC_CONSTRAINTS,
       });
       setMicStatus("READY");
       mediaStreamRef.current = stream;
