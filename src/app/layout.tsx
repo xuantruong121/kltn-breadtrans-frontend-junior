@@ -46,15 +46,21 @@ export default async function RootLayout({
       <head>
         <link rel="icon" href="/icons/logo-mark.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        {/* Anti-FOUC Early Theme Script: Runs before First Paint */}
-        <script
+        {/* Anti-FOUC Early Theme Script: Runs before First Paint. next/script
+            with beforeInteractive: a raw <script> in a React tree makes React 19
+            warn "Encountered a script tag" on the client (2026-11-17). */}
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
           nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var p=window.location.pathname;var a=p==='/admin'||p.indexOf('/admin/')===0;var t=localStorage.getItem('breadtrans-theme');var d=!a&&t==='dark';if(d)document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');}catch(e){}})();`,
           }}
         />
         {/* Remove the legacy unfinished PWA registration without touching unrelated caches. */}
-        <script
+        <Script
+          id="legacy-sw-cleanup"
+          strategy="beforeInteractive"
           nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){var w=r.active||r.waiting||r.installing;if(w&&w.scriptURL.endsWith('/sw.js'))r.unregister();});});}if('caches' in window){caches.keys().then(function(keys){keys.filter(function(k){return k.indexOf('breadtrans-cache-')===0;}).forEach(function(k){caches.delete(k);});});}}catch(e){}})();`,
