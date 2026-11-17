@@ -586,7 +586,7 @@ export function AppHeader() {
 
                       <div className="flex items-center gap-1.5" title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}>
                         <StreakShieldIcon className="h-[17px] w-[15px] shrink-0" />
-                        <span className="font-extrabold text-amber-700 dark:text-amber-300">{streakFreezes ?? 0}</span>
+                        <span className="font-extrabold text-blue-700 dark:text-blue-300">{streakFreezes ?? 0}</span>
                         <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">khiên</span>
                       </div>
 
@@ -1009,7 +1009,7 @@ export function AppHeader() {
                         <span>{streak ?? 0} ngày</span>
                       </div>
                       <div
-                        className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-amber-800 dark:text-amber-300 shadow-2xs"
+                        className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-blue-200 dark:border-blue-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-blue-800 dark:text-blue-300 shadow-2xs"
                         title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}
                       >
                         <StreakShieldIcon className="h-4 w-[14px] shrink-0" />

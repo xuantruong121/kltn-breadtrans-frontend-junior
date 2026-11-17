@@ -810,10 +810,23 @@ export default function DashboardPage() {
 
           {/* Quick Metrics & 7-Day Habit Tracker */}
           <div className="flex flex-col gap-3 sm:items-end">
-            {/* 3 Core Stats Badges */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto">
+            {/* Streak shield (outside, left of the streak tile) + 3 Core Stats Badges */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            {shieldCount > 0 && !isStatsLoading && !isStatsError && (
+              <div
+                className="flex shrink-0 flex-col items-center gap-0.5"
+                title={`${shieldCount} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}
+              >
+                <StreakShieldIcon count={shieldCount} className="h-9 w-8 sm:h-14 sm:w-[50px]" />
+                <span className="text-xs font-bold text-blue-800 dark:text-blue-300" aria-hidden="true">
+                  khiên
+                </span>
+                <span className="sr-only">{`${shieldCount} khiên giữ chuỗi`}</span>
+              </div>
+            )}
+            <div className="grid flex-1 grid-cols-3 gap-2 sm:flex-none sm:gap-3">
               {/* Streak */}
-              <div className="rounded-2xl border border-orange-200/90 dark:border-orange-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-orange-300 dark:hover:border-orange-700">
+              <div className="rounded-2xl border border-orange-200/90 dark:border-orange-900/50 bg-white/90 dark:bg-slate-900 px-2 py-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-orange-300 dark:hover:border-orange-700">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
                   <Flame size={14} className="text-orange-500 fill-orange-500" />
                   Chuỗi học
@@ -823,23 +836,14 @@ export default function DashboardPage() {
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 sm:gap-x-1.5 text-lg sm:text-xl font-black text-orange-700 dark:text-orange-400">
-                    {shieldCount > 0 && (
-                      <span
-                        className="inline-flex shrink-0"
-                        title={`${shieldCount} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}
-                      >
-                        <StreakShieldIcon count={shieldCount} className="h-7 w-[25px] sm:h-8 sm:w-[28px]" />
-                        <span className="sr-only">{`${shieldCount} khiên giữ chuỗi,`}</span>
-                      </span>
-                    )}
-                    <span className="whitespace-nowrap">{stats?.streakCount ?? 0} ngày</span>
+                  <strong className="mt-1 block text-base sm:text-xl font-black text-orange-700 dark:text-orange-400">
+                    {stats?.streakCount ?? 0} ngày
                   </strong>
                 )}
               </div>
 
               {/* Weekly EXP */}
-              <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
+              <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/50 bg-white/90 dark:bg-slate-900 px-2 py-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
                   <TrendingUp size={14} className="text-emerald-600 dark:text-emerald-400" />
                   Điểm tuần
@@ -849,7 +853,7 @@ export default function DashboardPage() {
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
+                  <strong className="mt-1 block text-base sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
                     {stats?.weeklyExp ?? 0} XP
                   </strong>
                 )}
@@ -858,7 +862,7 @@ export default function DashboardPage() {
               {/* Bánh Mì */}
               <Link
               href="/hub?tab=account-plan"
-                className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 dark:hover:border-amber-700 block group"
+                className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900 px-2 py-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 dark:hover:border-amber-700 block group"
                 title="Xem lịch sử và đổi quà Bánh Mì"
               >
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
@@ -870,11 +874,12 @@ export default function DashboardPage() {
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-amber-700 dark:text-amber-400">
+                  <strong className="mt-1 block text-base sm:text-xl font-black text-amber-700 dark:text-amber-400">
                     {stats?.totalBanhRan ?? 0}
                   </strong>
                 )}
               </Link>
+            </div>
             </div>
 
             {/* Error retry notice if stats failed */}
