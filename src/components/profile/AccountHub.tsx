@@ -50,7 +50,9 @@ import { DiagnosticResultTab } from "@/components/profile/DiagnosticResultTab";
 import { AccountPrivacyTab } from "@/components/profile/AccountPrivacyTab";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import { useApiQuery } from "@/hooks/useApiQuery";
-import { resizeAvatarImage } from "@/lib/avatar/resizeAvatarImage";
+import { loadImageFile, resizeAvatarImage } from "@/lib/avatar/resizeAvatarImage";
+import { needsCrop, type Photo } from "@/lib/avatar/avatarCrop";
+import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
 import { isValidVietnamPhone } from "@/lib/utils/vietnamPhone";
 import axiosClient from "@/lib/api/axiosClient";
 import { userService } from "@/lib/api/services/user.service";
@@ -301,19 +303,44 @@ export function AccountHub() {
     }
   };
 
+  // Owner 2026-11-17: a picked photo is saved at once, no "Lưu thay đổi"; a
+  // photo that is not a small square opens a crop frame first.
+  const [avatarCrop, setAvatarCrop] = useState<{ file: File; photo: Photo } | null>(null);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+
+  const saveAvatar = async (dataUrl: string) => {
+    const previous = formData.avatar;
+    setIsSavingAvatar(true);
+    setFormData((prev) => ({ ...prev, avatar: dataUrl }));
+    try {
+      const updatedProfile = await axiosClient.patch("/users/profile", { avatar: dataUrl });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      if (updatedProfile) setProfile(updatedProfile as any);
+      setAvatarCrop(null);
+      toast.success("Đã cập nhật ảnh đại diện.");
+    } catch (err: any) {
+      setFormData((prev) => ({ ...prev, avatar: previous }));
+      toast.error(getApiErrorMessage(err, "Chưa lưu được ảnh đại diện. Vui lòng thử lại."));
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
+
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Let the same file be picked again after a cancel.
+    e.target.value = "";
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      toast.error("Vui lòng chọn ảnh dung lượng dưới 3MB");
+    // The stored avatar is a 256px JPEG made in the browser, so a large photo is fine.
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Vui lòng chọn ảnh dung lượng dưới 10MB");
       return;
     }
-    // The avatar is saved as a data URL inside the JSON body, so shrink it to a small
-    // square first; a full-size photo exceeds the server's request size limit.
-    resizeAvatarImage(file)
-      .then((dataUrl) => {
-        setFormData((prev) => ({ ...prev, avatar: dataUrl }));
-        toast.success("Đã chọn ảnh đại diện mới. Bấm 'Lưu thay đổi' để lưu lại!");
+    loadImageFile(file)
+      .then(async (image) => {
+        const photo = { width: image.naturalWidth, height: image.naturalHeight };
+        if (needsCrop(photo)) setAvatarCrop({ file, photo });
+        else await saveAvatar(await resizeAvatarImage(file));
       })
       .catch(() => toast.error("Không đọc được ảnh này. Vui lòng chọn ảnh JPG, PNG hoặc WebP khác."));
   };
@@ -856,6 +883,11 @@ export function AccountHub() {
                       size="xl"
                       showBadge
                     />
+                    {isSavingAvatar && !avatarCrop ? (
+                      <span className="absolute inset-0 grid place-items-center rounded-full bg-white/60 dark:bg-slate-900/60" aria-label="Đang lưu ảnh đại diện">
+                        <Loader2 size={20} className="animate-spin text-slate-600 dark:text-slate-300" aria-hidden="true" />
+                      </span>
+                    ) : null}
                   </div>
 
                   <label className="inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer">
@@ -865,10 +897,20 @@ export function AccountHub() {
                       type="file"
                       accept="image/*"
                       onChange={handleAvatarFileChange}
+                      disabled={isSavingAvatar}
                       className="hidden"
                     />
                   </label>
                 </div>
+                {avatarCrop ? (
+                  <AvatarCropDialog
+                    file={avatarCrop.file}
+                    photo={avatarCrop.photo}
+                    isSaving={isSavingAvatar}
+                    onCancel={() => setAvatarCrop(null)}
+                    onConfirm={(dataUrl) => void saveAvatar(dataUrl)}
+                  />
+                ) : null}
 
                 <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-xl">
                   <div>
