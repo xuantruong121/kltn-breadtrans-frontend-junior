@@ -63,9 +63,32 @@ import {
   resolveQuestAction,
   SKILL_DETAIL_CONFIGS,
   type SkillKey,
+  weekDayState,
+  type WeekDayState,
 } from "./dashboardUtils";
 
 const emptySubscribe = () => () => {};
+
+/** "Tuần này" cells: a studied day is lit in the same amber as today done. */
+const WEEK_DAY_CLASS: Record<WeekDayState, string> = {
+  "today-done": "bg-amber-500 text-white font-black shadow-xs",
+  "today-pending":
+    "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-black",
+  studied:
+    "bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-black",
+  missed:
+    "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold",
+  future:
+    "bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-800 font-medium",
+};
+
+const WEEK_DAY_TEXT: Record<WeekDayState, (day: string) => string> = {
+  "today-done": () => "Hôm nay: đã học",
+  "today-pending": () => "Hôm nay: chưa học",
+  studied: (day) => `${day}: đã học`,
+  missed: (day) => `${day}: chưa học`,
+  future: (day) => `${day}: chưa tới`,
+};
 
 function getQuestProgressText(item: TodayQuestItem): string {
   const target = item.targetValue ?? item.quest?.targetValue ?? 1;
@@ -447,9 +470,8 @@ export default function DashboardPage() {
     return `${stats?.masteredVocabCount ?? 0} từ`;
   }, [filterPeriod, quests, stats?.masteredVocabCount, customDays]);
 
-  // Longest Streak
+  // The backend keeps no longest streak, so only the current one is shown.
   const streakDays = stats?.streakCount ?? 0;
-  const longestStreak = Math.max(streakDays, 4);
 
   // XP Earned Metric
   const xpEarnedText = useMemo(() => {
@@ -867,23 +889,22 @@ export default function DashboardPage() {
               <span className="text-xs text-slate-600 dark:text-slate-400 font-bold hidden sm:inline">Tuần này:</span>
               <div className="flex items-center gap-1.5">
                 {DAY_LABELS.map((day, idx) => {
-                  const isPastOrToday = idx <= currentDayOfWeek;
-                  const isToday = idx === currentDayOfWeek;
+                  const state = weekDayState(
+                    idx,
+                    currentDayOfWeek,
+                    stats?.studiedDaysThisWeek,
+                    safeCompleted > 0,
+                  );
+                  const dayName = idx < 6 ? `Thứ ${idx + 2}` : "Chủ nhật";
+                  const label = WEEK_DAY_TEXT[state](dayName);
                   return (
                     <div
                       key={day}
-                      className={`flex flex-col items-center justify-center size-6 sm:size-7 rounded-lg text-xs font-black transition-all ${
-                        isToday
-                          ? safeCompleted > 0
-                            ? "bg-amber-500 text-white font-black shadow-xs"
-                            : "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-black"
-                          : isPastOrToday
-                            ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold"
-                            : "bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-800 font-medium"
-                      }`}
-                      title={isToday ? "Hôm nay (Giờ Việt Nam)" : `Thứ ${day}`}
+                      className={`flex flex-col items-center justify-center size-6 sm:size-7 rounded-lg text-xs font-black transition-all ${WEEK_DAY_CLASS[state]}`}
+                      title={label}
                     >
-                      {day}
+                      <span aria-hidden="true">{day}</span>
+                      <span className="sr-only">{label}</span>
                     </div>
                   );
                 })}
@@ -1039,7 +1060,7 @@ export default function DashboardPage() {
                   {streakDays} ngày
                 </div>
                 <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
-                  Chuỗi · dài nhất {longestStreak}
+                  Chuỗi hiện tại
                 </div>
               </div>
             </div>

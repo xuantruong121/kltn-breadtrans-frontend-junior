@@ -575,9 +575,9 @@ export function AppHeader() {
 
                     {/* Gamification Stats Strip (Streak, Breads, Level) */}
                     <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 rounded-xl p-2.5 flex items-center justify-around my-2 text-xs">
-                      <div className="flex items-center gap-1.5" title={`Chuỗi: ${streak || 1} ngày học liên tục`}>
+                      <div className="flex items-center gap-1.5" title={`Chuỗi: ${streak ?? 0} ngày học liên tục`}>
                         <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
-                        <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak || 1}</span>
+                        <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak ?? 0}</span>
                         <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
                       </div>
 
@@ -997,7 +997,7 @@ export function AppHeader() {
                       </Link>
                       <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-orange-200 dark:border-orange-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-orange-700 dark:text-orange-300 shadow-2xs">
                         <Flame size={14} className="fill-orange-500 text-orange-500" />
-                        <span>{streak || 1} ngày</span>
+                        <span>{streak ?? 0} ngày</span>
                       </div>
                     </div>
                   </div>
