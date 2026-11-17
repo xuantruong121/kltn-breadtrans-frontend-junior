@@ -1262,7 +1262,7 @@ export function AccountHub() {
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
                     <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                      Trang bị đang đeo sẽ hiển thị đồng bộ trong lớp học và bài thi.
+                      Khung và huy hiệu đang đeo hiện ở ảnh đại diện của bạn trên thanh đầu trang và trong trang tài khoản.
                     </p>
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
                       {activeFrameConfig ? (

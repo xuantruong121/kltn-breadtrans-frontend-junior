@@ -40,6 +40,7 @@ import {
   Zap,
   NotebookPen,
   PawPrint,
+  ShieldCheck,
 } from "lucide-react";
 import { NotificationIcon } from "@/components/notifications/NotificationIcon";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
@@ -115,7 +116,7 @@ export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { breads, streak, level, exp } = useGamificationStore();
+  const { breads, streak, streakFreezes, level, exp } = useGamificationStore();
   const { resolvedTheme, toggleTheme } = useTheme();
 
   const queryClient = useQueryClient();
@@ -583,6 +584,14 @@ export function AppHeader() {
 
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
 
+                      <div className="flex items-center gap-1.5" title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}>
+                        <ShieldCheck size={15} strokeWidth={2} className="text-amber-600 dark:text-amber-400 shrink-0" aria-hidden="true" />
+                        <span className="font-extrabold text-amber-700 dark:text-amber-300">{streakFreezes ?? 0}</span>
+                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">khiên</span>
+                      </div>
+
+                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
                       <Link
                         href="/market"
                         onClick={closeMenus}
@@ -998,6 +1007,14 @@ export function AppHeader() {
                       <div className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-orange-200 dark:border-orange-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-orange-700 dark:text-orange-300 shadow-2xs">
                         <Flame size={14} className="fill-orange-500 text-orange-500" />
                         <span>{streak ?? 0} ngày</span>
+                      </div>
+                      <div
+                        className="flex items-center gap-1 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800 px-2.5 py-1.5 rounded-xl text-xs font-black text-amber-800 dark:text-amber-300 shadow-2xs"
+                        title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}
+                      >
+                        <ShieldCheck size={14} strokeWidth={2.25} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
+                        <span>{streakFreezes ?? 0}</span>
+                        <span className="sr-only">khiên giữ chuỗi</span>
                       </div>
                     </div>
                   </div>
