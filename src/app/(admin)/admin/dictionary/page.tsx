@@ -124,7 +124,7 @@ export default function AdminDictionaryPage() {
       : axiosClient.patch(`/admin/dictionary/${id}`, payload);
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Kho từ điển</h1>
@@ -435,6 +435,6 @@ export default function AdminDictionaryPage() {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

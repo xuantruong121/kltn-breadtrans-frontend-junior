@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useVocabStudyEngine } from "../hooks/useVocabStudyEngine";
+import { useSavedWords } from "../hooks/useSavedWords";
 import { StudyTopHeader } from "./StudyTopHeader";
 import { StageTabIndicator } from "./StageTabIndicator";
 import { FlashcardStage } from "./FlashcardStage";
@@ -102,6 +103,24 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     handleRestart,
   } = engine;
 
+  // "Từ đã lưu" from the card (owner 2026-11-16), shared with the saved page.
+  const savedWords = useSavedWords();
+  const savedRow = currentWord ? savedWords.savedFor(currentWord.word) : undefined;
+  const handleToggleSave = async () => {
+    if (!currentWord) return;
+    try {
+      if (savedRow) {
+        await savedWords.remove(savedRow.id);
+        toast.success("Đã bỏ lưu");
+      } else {
+        await savedWords.save(currentWord.word);
+        toast.success("Đã lưu vào Từ đã lưu");
+      }
+    } catch {
+      toast.error("Không cập nhật được Từ đã lưu. Hãy thử lại.");
+    }
+  };
+
   // Ambience (owner 2026-11-08): lofi music and rain while studying, silent while
   // recording; the rainy forest behind the cards when the scene is on.
   const ambience = useAmbiencePrefs();
@@ -196,6 +215,9 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                     onPlayAudio={handlePlayAudio}
                     onMarkMastered={handleMarkMastered}
                     onEscalate={handleEscalateMode}
+                    isSaved={Boolean(savedRow)}
+                    saveBusy={savedWords.busy}
+                    onToggleSave={() => void handleToggleSave()}
                   />
                 )}
 

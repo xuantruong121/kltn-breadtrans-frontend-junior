@@ -151,7 +151,6 @@ function deriveHasMore(res?: {
 }
 
 function FloatingAiTutorInner() {
-  const pathname = usePathname();
   const { user } = useAuthStore();
   const { isFocusMode } = useLearningFocusMode();
   const { 

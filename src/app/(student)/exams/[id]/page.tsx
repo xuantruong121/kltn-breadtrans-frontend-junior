@@ -12,7 +12,6 @@
  */
 import { use } from "react";
 import { Loader2 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { examService } from "@/lib/api/services/exam.service";
 import { resolveExamRuntimeBinding } from "@/lib/toeic/canonicalExamRoute";
@@ -26,7 +25,6 @@ export default function CanonicalExamDetailPage({
 }) {
   const { id: rawId } = use(params);
   const examId = Number(rawId);
-  const searchParams = useSearchParams();
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["exam-product", examId],

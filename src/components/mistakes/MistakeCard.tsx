@@ -11,6 +11,7 @@ import {
   mistakeSourceTitle,
   mistakeTagLabel,
   progressLabel,
+  sentenceMistakeSummary,
 } from "@/lib/mistakes/mistakeView";
 
 /** One mistake of the notebook: what was asked, what the learner gave, the right answer, and what to do next. */
@@ -66,7 +67,9 @@ export function MistakeCard({
         {positionLabel && <span className="font-normal text-slate-500 dark:text-slate-400"> · {positionLabel}</span>}
       </p>
 
-      {detail.kind === "WORD" ? (
+      {detail.kind === "SENTENCE" ? (
+        <SentenceMistake item={item} resolveAfter={resolveAfter} />
+      ) : detail.kind === "WORD" ? (
         <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">
           {detail.correctAnswer}
           {typeof detail.score === "number" && (
@@ -140,5 +143,67 @@ export function MistakeCard({
         {progress && <span className="text-xs text-slate-600 dark:text-slate-400">{progress}</span>}
       </div>
     </article>
+  );
+}
+
+/**
+ * A read-aloud sentence: the whole sentence with the words read wrong (red,
+ * with their score) and the words omitted (struck through), then a one-line
+ * summary, as the Speaking result screen shows them (owner 2026-11-16).
+ */
+function SentenceMistake({ item, resolveAfter }: { item: MistakeItem; resolveAfter: number }) {
+  const words = item.detail.words ?? [];
+  const summary = sentenceMistakeSummary(words);
+  const done = Math.min(item.correctStreak, resolveAfter);
+  return (
+    <>
+      <p className="mt-3 text-[19px] font-semibold leading-[2.1rem] text-slate-900 dark:text-slate-100">
+        {words.length > 0
+          ? words.map((w, i) => (
+              <span key={i}>
+                {i > 0 && " "}
+                {w.status === "WEAK" ? (
+                  <span className="rounded-md bg-rose-50 px-1 text-rose-800 underline decoration-rose-400 decoration-wavy underline-offset-4 dark:bg-rose-950/40 dark:text-rose-300">
+                    {w.word}
+                    <sup className="ml-0.5 text-[11px] font-bold">{w.score}</sup>
+                    <span className="sr-only"> (đọc sai, {w.score} điểm)</span>
+                  </span>
+                ) : w.status === "OMITTED" ? (
+                  <span className="text-slate-500 line-through decoration-2 dark:text-slate-400">
+                    {w.word}
+                    <span className="sr-only"> (bỏ sót)</span>
+                  </span>
+                ) : (
+                  w.word
+                )}
+              </span>
+            ))
+          : item.detail.question}
+      </p>
+
+      <div className="mt-3 space-y-1 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">
+        {summary.weak.length > 0 && (
+          <p>
+            <span className="font-bold text-rose-700 dark:text-rose-300">Đọc sai:</span>{" "}
+            {summary.weak.map((w) => `${w.word} (${w.score}/100)`).join(", ")}
+          </p>
+        )}
+        {summary.omitted.length > 0 && (
+          <p>
+            <span className="font-bold text-slate-700 dark:text-slate-300">Bỏ sót:</span> {summary.omitted.join(", ")}
+          </p>
+        )}
+        {typeof item.detail.score === "number" && (
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Lần ghi âm gần nhất đạt {item.detail.score.toLocaleString("vi-VN", { maximumFractionDigits: 1 })}/10.
+          </p>
+        )}
+      </div>
+
+      <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
+        Ghi âm lại {resolveAfter} lần liền không còn từ đọc sai hay bỏ sót thì câu ra khỏi sổ
+        {item.resolvedAt ? "." : ` (đã đạt ${done}/${resolveAfter}).`}
+      </p>
+    </>
   );
 }

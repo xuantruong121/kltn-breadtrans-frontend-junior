@@ -40,7 +40,7 @@ export default function RetentionPage() {
   const streak = data ? formatRate(data.streak) : null;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 pb-12">
+    <div className="mx-auto max-w-7xl space-y-6 pb-12">
       <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-950">
@@ -199,6 +199,6 @@ export default function RetentionPage() {
           </section>
         </>
       )}
-    </main>
+    </div>
   );
 }

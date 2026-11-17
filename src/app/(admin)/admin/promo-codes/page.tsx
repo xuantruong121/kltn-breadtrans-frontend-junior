@@ -69,7 +69,7 @@ export default function PromoCodesPage() {
     setDraft((d) => ({ ...d, [field]: value }));
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 pb-12">
+    <div className="mx-auto max-w-7xl space-y-6 pb-12">
       <header className="border-b border-slate-200 pb-5">
         <h1 className="text-2xl font-bold tracking-tight text-slate-950">Mã giảm giá</h1>
         <p className="mt-1 text-sm text-slate-600">
@@ -240,6 +240,6 @@ export default function PromoCodesPage() {
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }

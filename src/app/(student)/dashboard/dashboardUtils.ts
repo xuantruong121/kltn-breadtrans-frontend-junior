@@ -177,6 +177,25 @@ export function deriveDailyProgress(completedCount: number, totalCount: number):
   return { safeCompleted, safeTotal, derivedPercent };
 }
 
+export type WeekDayState = "today-done" | "today-pending" | "studied" | "missed" | "future";
+
+/**
+ * One cell of the dashboard's "Tuần này" row (0 = T2 … 6 = CN). `studied`
+ * comes from /users/stats (days of this Vietnam week with XP, the events that
+ * keep the streak); today also counts as done once a task is completed here.
+ */
+export function weekDayState(
+  day: number,
+  today: number,
+  studied: number[] | undefined,
+  doneToday: boolean,
+): WeekDayState {
+  const learned = studied?.includes(day) ?? false;
+  if (day === today) return learned || doneToday ? "today-done" : "today-pending";
+  if (day > today) return "future";
+  return learned ? "studied" : "missed";
+}
+
 export function getVietnamDayOfWeek(dateKey?: string): number {
   if (dateKey && /^\d{4}-\d{2}-\d{2}$/.test(dateKey)) {
     const [y, m, d] = dateKey.split("-").map(Number);

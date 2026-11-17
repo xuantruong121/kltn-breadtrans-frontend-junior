@@ -142,6 +142,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
           >
             <FastForward size={13} />
             <span>Bỏ qua phần phát âm</span>
+            <kbd className="text-xs font-mono opacity-80 border border-current/30 px-1 rounded">Enter</kbd>
           </button>
         )}
       </div>

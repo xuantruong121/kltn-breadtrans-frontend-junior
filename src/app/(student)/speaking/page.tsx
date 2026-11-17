@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Flame,
   Loader2,
   Mic,
   RotateCcw,
@@ -22,7 +21,6 @@ import { CATALOG_PAGE_SIZES } from "@/lib/practice/catalogPage";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { userService, type UserSkillsSummaryResponse } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
-import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { LevelLockDialog } from "@/components/practice/LevelLockDialog";
@@ -60,7 +58,6 @@ function speakingSetStatus(set: SpeakingPracticeSetCard): LearningStatus {
 export default function SpeakingExercisesPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { streak } = useGamificationStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -313,15 +310,6 @@ export default function SpeakingExercisesPage() {
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm max-w-3xl line-clamp-1 xl:line-clamp-none">
               Hệ thống đánh giá phát âm phân tích từng âm vị (Phonemes), đo lường độ chính xác (Accuracy), độ lưu loát (Fluency) và tính trọn vẹn của câu nói theo thời gian thực.
             </p>
-
-            {/* Gamified Stats Pill Row */}
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 text-xs font-black text-amber-800 dark:text-amber-300">
-                <Flame size={14} className="text-amber-500 fill-amber-500" aria-hidden="true" />
-                <span>Chuỗi học: {streak ?? 0} ngày liên tiếp</span>
-              </div>
-
-            </div>
           </div>
 
           {/* Global Completion Progress Card */}

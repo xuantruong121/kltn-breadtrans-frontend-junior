@@ -273,6 +273,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     if (!count) return;
     aiStarted.current = true;
     window.history.replaceState(null, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the AI panel once when the page is reached with ?ai=
     setAiCount(count);
     setPanel("ai");
     void askAi(count);
@@ -382,7 +383,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   };
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <Link
         href="/admin/vocab"
         className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
@@ -919,6 +920,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

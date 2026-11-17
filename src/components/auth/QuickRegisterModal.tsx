@@ -9,7 +9,8 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { ConsentCheckbox } from "@/components/auth/ConsentCheckbox";
 
 interface QuickRegisterModalProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ export function QuickRegisterModal({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  // Explicit consent, never ticked in advance (owner 2026-11-16).
+  const [acceptTerms, setAcceptTerms] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -71,6 +74,11 @@ export function QuickRegisterModal({
       return;
     }
 
+    if (!acceptTerms) {
+      setErrorMsg("Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật để tạo tài khoản.");
+      return;
+    }
+
     setIsLoading(true);
     setErrorMsg("");
 
@@ -80,6 +88,7 @@ export function QuickRegisterModal({
         fullName: name,
         email,
         password,
+        acceptTerms: true,
       });
       const res: any = await axiosClient.post("/auth/login", { email, password, rememberMe: true });
 
@@ -210,7 +219,7 @@ export function QuickRegisterModal({
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Tối thiểu 6 ký tự"
+                placeholder={`Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`}
                 className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-slate-50/50 dark:bg-slate-800/60"
               />
               <button
@@ -242,9 +251,11 @@ export function QuickRegisterModal({
             </div>
           </div>
 
+          <ConsentCheckbox id="quick-register-accept" checked={acceptTerms} onChange={setAcceptTerms} />
+
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || !acceptTerms}
             className="btn-tactile-primary w-full mt-3 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
             {isLoading ? (

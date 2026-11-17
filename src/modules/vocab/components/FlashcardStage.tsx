@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Volume2, RotateCw, Check } from "lucide-react";
+import { Volume2, RotateCw, Check, Bookmark, BookmarkCheck } from "lucide-react";
 import { VocabWord } from "@/lib/api/services/vocab.service";
 import { ReportIssueButton } from "@/components/issue-report";
 
@@ -13,6 +13,10 @@ interface FlashcardStageProps {
   onPlayAudio: (accent?: "us" | "uk", text?: string) => void;
   onMarkMastered: () => void;
   onEscalate: () => void;
+  /** "Từ đã lưu" (owner 2026-11-16); the button is hidden without a handler (admin preview). */
+  isSaved?: boolean;
+  saveBusy?: boolean;
+  onToggleSave?: () => void;
 }
 
 export const FlashcardStage: React.FC<FlashcardStageProps> = ({
@@ -22,6 +26,9 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
   onPlayAudio,
   onMarkMastered,
   onEscalate,
+  isSaved = false,
+  saveBusy = false,
+  onToggleSave,
 }) => {
   // Format phonetics
   const ipaUsText = word.ipaUs
@@ -57,6 +64,24 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                 className="flex items-center gap-2 text-slate-600 dark:text-slate-400"
                 onClick={(e) => e.stopPropagation()}
               >
+                {onToggleSave && (
+                  <button
+                    type="button"
+                    onClick={onToggleSave}
+                    disabled={saveBusy}
+                    aria-pressed={isSaved}
+                    aria-label={isSaved ? `Bỏ lưu ${word.word}` : `Lưu ${word.word} vào Từ đã lưu`}
+                    title={isSaved ? "Bỏ lưu từ" : "Lưu vào Từ đã lưu"}
+                    className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                      isSaved
+                        ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300"
+                        : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    {isSaved ? <BookmarkCheck size={15} aria-hidden="true" /> : <Bookmark size={15} aria-hidden="true" />}
+                    {isSaved ? "Đã lưu" : "Lưu từ"}
+                  </button>
+                )}
                 <ReportIssueButton
                   area="VOCABULARY"
                   compact

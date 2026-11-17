@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useSyncExternalStore, Suspense } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore, Suspense } from "react";
+import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -25,6 +26,8 @@ import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { pendingDeletionOf, type PendingDeletion } from "@/lib/auth/accountPrivacy";
+import { PendingDeletionDialog } from "@/components/auth/PendingDeletionDialog";
 
 const emptySubscribe = () => () => {};
 
@@ -56,6 +59,9 @@ function LoginForm() {
   const [showEmailLogin, setShowEmailLogin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  // Sign-in to an account waiting for deletion: offer to cancel (owner 2026-11-16).
+  const [pendingDeletion, setPendingDeletion] = useState<PendingDeletion | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [showReturnBanner, setShowReturnBanner] = useState(
     Boolean(safeRedirect),
   );
@@ -116,6 +122,11 @@ function LoginForm() {
         router.push(safeRedirect || "/dashboard");
       }
     } catch (error: any) {
+      const offer = pendingDeletionOf(error);
+      if (offer) {
+        setPendingDeletion(offer);
+        return;
+      }
       console.error("Login failed:", error);
       setErrorMsg(getApiErrorMessage(error, "Email hoặc mật khẩu không chính xác. Vui lòng thử lại."));
     } finally {
@@ -229,7 +240,7 @@ function LoginForm() {
 
         {showEmailLogin && (
           <div id="email-login-panel" className="mt-4">
-            <form className="space-y-4" onSubmit={handleLogin}>
+            <form ref={formRef} className="space-y-4" onSubmit={handleLogin}>
           {/* Email Input Field */}
           <div className="space-y-1.5">
             <label
@@ -353,6 +364,15 @@ function LoginForm() {
         </div>
       </div>
 
+      <PendingDeletionDialog
+        pending={pendingDeletion}
+        onClose={() => setPendingDeletion(null)}
+        onCancelled={() => {
+          setPendingDeletion(null);
+          toast.success("Đã huỷ yêu cầu xoá tài khoản.");
+          formRef.current?.requestSubmit();
+        }}
+      />
       <GoogleAccountLinkModal
         isOpen={linkModalData.isOpen}
         credential={linkModalData.credential}

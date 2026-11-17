@@ -20,7 +20,8 @@ import { AuthShell } from "./AuthShell";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { PASSWORD_HINT, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_MIN_LENGTH, PASSWORD_HINT, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { ConsentCheckbox } from "@/components/auth/ConsentCheckbox";
 
 type RegisterStep = "details" | "success";
 type FieldName = "fullName" | "email" | "password" | "confirmPassword";
@@ -77,6 +78,8 @@ export default function RegisterFlow() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Explicit consent, never ticked in advance (owner 2026-11-16).
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<
     Partial<Record<FieldName, string>>
@@ -120,6 +123,10 @@ export default function RegisterFlow() {
     event.preventDefault();
     setError("");
     if (!validateDetails()) return;
+    if (!acceptTerms) {
+      setError("Bạn cần đồng ý với Điều khoản sử dụng và Chính sách bảo mật để tạo tài khoản.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -127,6 +134,7 @@ export default function RegisterFlow() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
         fullName: form.fullName.trim(),
+        acceptTerms: true,
       });
       setStep("success");
     } catch (requestError: unknown) {
@@ -269,7 +277,7 @@ export default function RegisterFlow() {
                     onChange={(event) => updateField(field, event.target.value)}
                     placeholder={
                       field === "password"
-                        ? "Tối thiểu 6 ký tự"
+                        ? `Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`
                         : "Nhập lại mật khẩu"
                     }
                     aria-invalid={Boolean(
@@ -305,9 +313,11 @@ export default function RegisterFlow() {
               </div>
             ))}
 
+            <ConsentCheckbox checked={acceptTerms} onChange={setAcceptTerms} />
+
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !acceptTerms}
               className="btn-tactile-primary mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-150 hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
             >
               {isSubmitting ? (

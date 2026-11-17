@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 interface GamificationState {
   breads: number; // Số dư "bánh mì"
   streak: number; // Chuỗi ngày học
+  streakFreezes: number; // Khiên giữ chuỗi đang có
   exp: number; // Điểm kinh nghiệm
   level: number;
   unlockedItems: string[]; // ID các vật phẩm đã mua
@@ -12,7 +13,7 @@ interface GamificationState {
   
   // Actions
   setBreads: (amount: number) => void;
-  setStats: (stats: { breads?: number; streak?: number; exp?: number; level?: number }) => void;
+  setStats: (stats: { breads?: number; streak?: number; streakFreezes?: number; exp?: number; level?: number }) => void;
   addBreads: (amount: number) => void;
   spendBreads: (amount: number) => boolean;
   addExp: (amount: number) => void;
@@ -27,7 +28,9 @@ export const useGamificationStore = create<GamificationState>()(
   persist(
     (set, get) => ({
       breads: 0, // Giá trị khởi tạo mặc định cho học sinh mới là 0
-      streak: 1,
+      // 0 until /users/stats arrives: a new or broken streak is never shown as 1.
+      streak: 0,
+      streakFreezes: 0,
       exp: 0,
       level: 1,
       unlockedItems: [],
@@ -37,7 +40,8 @@ export const useGamificationStore = create<GamificationState>()(
       reset: () =>
         set({
           breads: 0,
-          streak: 1,
+          streak: 0,
+          streakFreezes: 0,
           exp: 0,
           level: 1,
           unlockedItems: [],
@@ -51,6 +55,7 @@ export const useGamificationStore = create<GamificationState>()(
         set((state) => ({
           breads: stats.breads !== undefined ? stats.breads : state.breads,
           streak: stats.streak !== undefined ? stats.streak : state.streak,
+          streakFreezes: stats.streakFreezes !== undefined ? stats.streakFreezes : state.streakFreezes,
           exp: stats.exp !== undefined ? stats.exp : state.exp,
           level: stats.level !== undefined ? stats.level : state.level,
         })),

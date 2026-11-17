@@ -98,7 +98,7 @@ export default function IssueReportsPage() {
   const items = query.data?.data ?? [];
 
   return (
-    <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8">
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 md:px-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
@@ -407,6 +407,6 @@ export default function IssueReportsPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

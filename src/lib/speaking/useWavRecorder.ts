@@ -10,6 +10,7 @@ import {
 } from "@/lib/speaking/speakingAudioWorkletLogic";
 import { encodeWAV, validateWavBinary } from "@/lib/speaking/speakingPracticeLogic";
 import { resampleTo16kHz } from "@/lib/speaking/resampleAudio";
+import { SPEAKING_MIC_CONSTRAINTS } from "@/lib/speaking/micConstraints";
 
 /**
  * Records one microphone answer as the 16 kHz mono WAV the Speaking API takes.
@@ -41,7 +42,7 @@ export function useWavRecorder() {
     chunksRef.current = [];
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        audio: SPEAKING_MIC_CONSTRAINTS,
       });
       streamRef.current = stream;
       const AudioCtx = window.AudioContext;

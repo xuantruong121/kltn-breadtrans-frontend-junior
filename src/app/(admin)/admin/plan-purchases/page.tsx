@@ -289,7 +289,7 @@ export default function AdminPlanPurchasesPage() {
     purchasesQuery.data?.total ?? purchaseRows.length;
 
   return (
-    <main className="mx-auto max-w-7xl space-y-6 pb-12">
+    <div className="mx-auto max-w-7xl space-y-6 pb-12">
       {/* Top Header */}
       <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -951,6 +951,6 @@ export default function AdminPlanPurchasesPage() {
         isOpen={!!historyTarget}
         onClose={() => setHistoryTarget(null)}
       />
-    </main>
+    </div>
   );
 }

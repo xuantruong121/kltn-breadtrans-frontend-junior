@@ -10,7 +10,26 @@ import {
   matchPartActivity,
   getVietnamFormattedDate,
   resolveQuestAction,
+  weekDayState,
 } from "./dashboardUtils.ts";
+
+test("weekDayState: the Tuần này row shows the days studied this week", () => {
+  // Thursday (3); studied Monday and Wednesday.
+  const studied = [0, 2];
+  assert.equal(weekDayState(0, 3, studied, false), "studied");
+  assert.equal(weekDayState(1, 3, studied, false), "missed");
+  assert.equal(weekDayState(2, 3, studied, false), "studied");
+  assert.equal(weekDayState(3, 3, studied, false), "today-pending");
+  assert.equal(weekDayState(4, 3, studied, false), "future");
+  assert.equal(weekDayState(6, 3, studied, false), "future");
+});
+
+test("weekDayState: today is done when the server lists it or a task is completed", () => {
+  assert.equal(weekDayState(3, 3, [3], false), "today-done");
+  assert.equal(weekDayState(3, 3, [], true), "today-done");
+  // An older server without the field: past days read as not studied.
+  assert.equal(weekDayState(1, 3, undefined, false), "missed");
+});
 
 test("getVietnamDayOfWeek deterministically parses backend dateKey", () => {
   // 2026-09-14 is Monday -> index 0 (T2)

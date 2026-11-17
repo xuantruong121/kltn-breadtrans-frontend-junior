@@ -99,6 +99,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
     setStats({
       breads: learningStats.totalBanhRan,
       streak: learningStats.streakCount,
+      streakFreezes: learningStats.streakFreezes,
       exp: learningStats.weeklyExp,
     });
   }, [learningStats, setStats]);

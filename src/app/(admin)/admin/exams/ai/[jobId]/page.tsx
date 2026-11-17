@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { use, useMemo, useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -88,6 +90,9 @@ export default function ExamAiCandidateWorkspacePage({
     queryKey: ["exam-ai-candidate", jobId],
     queryFn: () => examAiService.getCandidate(jobId),
     enabled: !!statusQuery.data,
+    // 404 means the job has no draft any more (applied or cancelled): no retries.
+    retry: (count, error) =>
+      (error as { response?: { status?: number } })?.response?.status !== 404 && count < 3,
   });
 
   // A retry rewrites the draft in the background; show it when the job ends.
@@ -395,6 +400,28 @@ export default function ExamAiCandidateWorkspacePage({
         </section>
       )}
 
+      {/* A job with no draft left (applied, cancelled or gone) used to show an
+          empty page (admin review 2026-11-17). */}
+      {!candidate && !isProcessing && !isFailed && (
+        <div className="mt-6 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+          {status?.status === "APPROVED" || status?.status === "PUBLISHED" || status?.status === "PUBLISHING"
+            ? "Bản nháp này đã được áp dụng vào đề thi nên không còn để duyệt."
+            : status?.status === "CANCELLED"
+              ? "Bản nháp này đã bị huỷ."
+              : "Không tải được bản nháp của lần tạo đề này."}
+          {status?.examId ? (
+            <>
+              {" "}
+              <Link
+                href={`/admin/exams/${status.examId}`}
+                className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400"
+              >
+                Mở đề thi
+              </Link>
+            </>
+          ) : null}
+        </div>
+      )}
       {candidate && !isProcessing && (
         <>
           {/* Summary banner */}

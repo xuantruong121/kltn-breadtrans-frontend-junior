@@ -258,14 +258,11 @@ console.log(`Testing connection to local dev server (${DEV_URL})...`);
 try {
   const response = await fetch(DEV_URL, { method: "HEAD", signal: AbortSignal.timeout(3000) });
   if (response.ok || response.status === 200 || response.status === 304 || response.status === 307) {
-    console.log(`[LIVE QA] Server is responding at ${DEV_URL} (Status ${response.status}).`);
-    console.log("[LIVE QA] Viewports validated via Playwright headless captures:");
-    console.log("          - 320 x 568 (iPhone 5/SE): PASS (scrollWidth <= 320px, zero overflow)");
-    console.log("          - 360 x 740 (Samsung S8+): PASS (scrollWidth <= 360px, zero overflow)");
-    console.log("          - 390 x 844 (iPhone 12/13/14): PASS (scrollWidth <= 390px, zero overflow)");
-    console.log("          - 768 x 1024 (iPad Portrait): PASS (Drawer active, BottomNav hidden)");
-    console.log("          - 1024 x 768 (iPad Landscape): PASS (CMS/TOEIC Desktop Sidebar active; Header drawer active)");
-    console.log("          - 1280 x 800 (Desktop/Laptop): PASS (Full horizontal center navigation active)");
+    console.log(`[LIVE] Server is responding at ${DEV_URL} (Status ${response.status}).`);
+    // This script opens no browser. It used to print a PASS per viewport here
+    // without measuring anything; overflow at each width is checked by the
+    // Playwright suites in the backend's scripts/qa, not by this script.
+    console.log("[LIVE] Viewport overflow: NOT_VERIFIED by this script (no browser is opened).");
   }
 } catch (e) {
   console.log(`[NOTICE] Dev server not reachable at ${DEV_URL} (${e.message}). Static invariants verification completed.`);

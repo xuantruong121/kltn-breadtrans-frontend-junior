@@ -53,6 +53,7 @@ export function AddressCombobox({
   // Sync display text with selected option when not actively typing/focused
   useEffect(() => {
     if (!isFocused) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- shows the chosen option's name while the field is not being edited
       setInputText(selectedOption ? selectedOption.name : "");
     }
   }, [selectedOption, isFocused]);

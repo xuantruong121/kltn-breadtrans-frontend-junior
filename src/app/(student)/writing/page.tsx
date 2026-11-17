@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Flame,
   History,
   Loader2,
   PenTool,
@@ -18,7 +17,6 @@ import { writingService } from "@/lib/api/services/writing.service";
 import { userService, type UserSkillsSummaryResponse } from "@/lib/api/services/user.service";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { useAuthStore } from "@/stores/authStore";
-import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
@@ -49,7 +47,6 @@ const writingLevelOf = (t: WritingTopicItem) => t.cefrLevel ?? t.title;
 export default function WritingTopicsPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { streak } = useGamificationStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,6 +60,7 @@ export default function WritingTopicsPage() {
   const [writingTab, setWritingTab] = useState<"PRACTICE" | "PICTURE">("PRACTICE");
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tab") === "picture") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the URL is read after mount so server and client render the same
       setWritingTab("PICTURE");
     }
   }, []);
@@ -228,15 +226,6 @@ export default function WritingTopicsPage() {
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm max-w-3xl line-clamp-1 xl:line-clamp-none">
               Hệ thống AI phân tích mức độ hoàn thành yêu cầu, ngữ pháp, từ vựng và tính mạch lạc để giúp bạn cải thiện từng lần viết.
             </p>
-
-            {/* Gamified Stats Pill Row */}
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 text-xs font-black text-amber-800 dark:text-amber-300">
-                <Flame size={14} className="text-amber-500 fill-amber-500" aria-hidden="true" />
-                <span>Chuỗi học: {streak ?? 0} ngày liên tiếp</span>
-              </div>
-
-            </div>
           </div>
 
           {/* Global Completion Progress Card */}

@@ -70,6 +70,7 @@ import {
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { enterFullscreen, exitFullscreen, useIsFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { F11_HINT, fullscreenAfterResult } from "@/lib/diagnostic/fullscreenExit";
+import { SPEAKING_MIC_CONSTRAINTS } from "@/lib/speaking/micConstraints";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -153,6 +154,7 @@ export default function DiagnosticPage() {
   useEffect(() => {
     const inProgress = assessment?.inProgressAttempt;
     if (!inProgress) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resumes the attempt the server returned
     setAttemptId(inProgress.id);
     const persisted = { ...(inProgress.answers as Record<string, number | string>) };
     for (const response of inProgress.speakingResponses) {
@@ -196,6 +198,7 @@ export default function DiagnosticPage() {
       discardTakeRef.current = true;
       recorder.stop();
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- stops the recorder and clears the take when the step changes
     setSpeakingPhase("idle");
     setSpeakingError(null);
     setSpeakingNotice(null);
@@ -405,7 +408,7 @@ export default function DiagnosticPage() {
     setSpeakingPhase("starting");
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: SPEAKING_MIC_CONSTRAINTS });
     } catch (error) {
       setSpeakingPhase("idle");
       setSpeakingError(

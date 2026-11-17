@@ -28,6 +28,7 @@ import {
   Backpack,
   Activity,
   Award,
+  ShieldCheck,
 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/authStore";
@@ -46,9 +47,12 @@ import { PlanPaymentModal } from "@/modules/subscription/components/PlanPaymentM
 import { UserAvatarWithFrame, AddressCombobox } from "@/components/ui";
 import { LearningProgressTab } from "@/components/profile/LearningProgressTab";
 import { DiagnosticResultTab } from "@/components/profile/DiagnosticResultTab";
+import { AccountPrivacyTab } from "@/components/profile/AccountPrivacyTab";
 import { MARKET_ITEMS } from "@/modules/market/services/marketData";
 import { useApiQuery } from "@/hooks/useApiQuery";
-import { resizeAvatarImage } from "@/lib/avatar/resizeAvatarImage";
+import { loadImageFile, resizeAvatarImage } from "@/lib/avatar/resizeAvatarImage";
+import { needsCrop, type Photo } from "@/lib/avatar/avatarCrop";
+import { AvatarCropDialog } from "@/components/profile/AvatarCropDialog";
 import { isValidVietnamPhone } from "@/lib/utils/vietnamPhone";
 import axiosClient from "@/lib/api/axiosClient";
 import { userService } from "@/lib/api/services/user.service";
@@ -69,7 +73,8 @@ export type AccountTabKey =
   | "account-device"
   | "account-inventory"
   | "learning-progress"
-  | "diagnostic-result";
+  | "diagnostic-result"
+  | "account-privacy";
 
 const TAB_ALIASES: Record<string, AccountTabKey> = {
   "account-profile": "account-profile",
@@ -80,14 +85,8 @@ const TAB_ALIASES: Record<string, AccountTabKey> = {
   "learning-progress": "learning-progress",
   "diagnostic-result": "diagnostic-result",
   "diagnostic": "diagnostic-result",
+  "account-privacy": "account-privacy",
 };
-
-function getInitials(name?: string | null): string {
-  if (!name) return "BT";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 export function AccountHub() {
   const router = useRouter();
@@ -185,6 +184,7 @@ export function AccountHub() {
 
   useEffect(() => {
     if (profileData || user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fills the form once the saved profile arrives
       setFormData({
         fullName: profileData?.fullName || user?.profile?.fullName || "",
         avatar: profileData?.avatar || user?.profile?.avatar || "",
@@ -297,19 +297,44 @@ export function AccountHub() {
     }
   };
 
+  // Owner 2026-11-17: a picked photo is saved at once, no "Lưu thay đổi"; a
+  // photo that is not a small square opens a crop frame first.
+  const [avatarCrop, setAvatarCrop] = useState<{ file: File; photo: Photo } | null>(null);
+  const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+
+  const saveAvatar = async (dataUrl: string) => {
+    const previous = formData.avatar;
+    setIsSavingAvatar(true);
+    setFormData((prev) => ({ ...prev, avatar: dataUrl }));
+    try {
+      const updatedProfile = await axiosClient.patch("/users/profile", { avatar: dataUrl });
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      if (updatedProfile) setProfile(updatedProfile as any);
+      setAvatarCrop(null);
+      toast.success("Đã cập nhật ảnh đại diện.");
+    } catch (err: any) {
+      setFormData((prev) => ({ ...prev, avatar: previous }));
+      toast.error(getApiErrorMessage(err, "Chưa lưu được ảnh đại diện. Vui lòng thử lại."));
+    } finally {
+      setIsSavingAvatar(false);
+    }
+  };
+
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    // Let the same file be picked again after a cancel.
+    e.target.value = "";
     if (!file) return;
-    if (file.size > 3 * 1024 * 1024) {
-      toast.error("Vui lòng chọn ảnh dung lượng dưới 3MB");
+    // The stored avatar is a 256px JPEG made in the browser, so a large photo is fine.
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Vui lòng chọn ảnh dung lượng dưới 10MB");
       return;
     }
-    // The avatar is saved as a data URL inside the JSON body, so shrink it to a small
-    // square first; a full-size photo exceeds the server's request size limit.
-    resizeAvatarImage(file)
-      .then((dataUrl) => {
-        setFormData((prev) => ({ ...prev, avatar: dataUrl }));
-        toast.success("Đã chọn ảnh đại diện mới. Bấm 'Lưu thay đổi' để lưu lại!");
+    loadImageFile(file)
+      .then(async (image) => {
+        const photo = { width: image.naturalWidth, height: image.naturalHeight };
+        if (needsCrop(photo)) setAvatarCrop({ file, photo });
+        else await saveAvatar(await resizeAvatarImage(file));
       })
       .catch(() => toast.error("Không đọc được ảnh này. Vui lòng chọn ảnh JPG, PNG hoặc WebP khác."));
   };
@@ -478,6 +503,7 @@ export function AccountHub() {
     { id: "account-inventory", label: "Túi đồ & Ngoại trang", icon: Backpack },
     { id: "learning-progress", label: "Tiến độ học tập", icon: Activity },
     { id: "diagnostic-result", label: "Kết quả đánh giá đầu vào", icon: Award },
+    { id: "account-privacy", label: "Quyền riêng tư", icon: ShieldCheck },
   ];
 
   return (
@@ -534,9 +560,10 @@ export function AccountHub() {
         </aside>
 
         {/* ── Right Content Area ────────────────────────────────── */}
-        <main className="flex-1 min-w-0 w-full space-y-6">
+        <div className="flex-1 min-w-0 w-full space-y-6">
           {activeTab === "learning-progress" && <LearningProgressTab />}
           {activeTab === "diagnostic-result" && <DiagnosticResultTab />}
+          {activeTab === "account-privacy" && <AccountPrivacyTab hasPassword={!withoutPassword} />}
           {/* TAB 1: GÓI CỦA TÔI */}
           {activeTab === "account-plan" && (
             <section className="space-y-6 animate-in fade-in duration-200" aria-labelledby="heading-plan">
@@ -850,6 +877,11 @@ export function AccountHub() {
                       size="xl"
                       showBadge
                     />
+                    {isSavingAvatar && !avatarCrop ? (
+                      <span className="absolute inset-0 grid place-items-center rounded-full bg-white/60 dark:bg-slate-900/60" aria-label="Đang lưu ảnh đại diện">
+                        <Loader2 size={20} className="animate-spin text-slate-600 dark:text-slate-300" aria-hidden="true" />
+                      </span>
+                    ) : null}
                   </div>
 
                   <label className="inline-flex min-h-10 items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-750 transition-colors cursor-pointer">
@@ -859,10 +891,20 @@ export function AccountHub() {
                       type="file"
                       accept="image/*"
                       onChange={handleAvatarFileChange}
+                      disabled={isSavingAvatar}
                       className="hidden"
                     />
                   </label>
                 </div>
+                {avatarCrop ? (
+                  <AvatarCropDialog
+                    file={avatarCrop.file}
+                    photo={avatarCrop.photo}
+                    isSaving={isSavingAvatar}
+                    onCancel={() => setAvatarCrop(null)}
+                    onConfirm={(dataUrl) => void saveAvatar(dataUrl)}
+                  />
+                ) : null}
 
                 <form onSubmit={handleProfileSubmit} className="space-y-4 max-w-xl">
                   <div>
@@ -1220,7 +1262,7 @@ export function AccountHub() {
                       {formData.fullName || "Học viên BreadTrans"}
                     </h2>
                     <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">
-                      Trang bị đang đeo sẽ hiển thị đồng bộ trong lớp học và bài thi.
+                      Khung và huy hiệu đang đeo hiện ở ảnh đại diện của bạn trên thanh đầu trang và trong trang tài khoản.
                     </p>
                     <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
                       {activeFrameConfig ? (
@@ -1413,7 +1455,7 @@ export function AccountHub() {
               )}
             </section>
           )}
-        </main>
+        </div>
       </div>
 
       {/* Payment Details Modal */}

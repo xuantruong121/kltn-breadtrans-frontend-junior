@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { X, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
@@ -9,6 +10,8 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { pendingDeletionOf, type PendingDeletion } from "@/lib/auth/accountPrivacy";
+import { PendingDeletionDialog } from "@/components/auth/PendingDeletionDialog";
 
 interface QuickLoginModalProps {
   isOpen: boolean;
@@ -34,6 +37,9 @@ export function QuickLoginModal({
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  // Sign-in to an account waiting for deletion: offer to cancel (owner 2026-11-16).
+  const [pendingDeletion, setPendingDeletion] = useState<PendingDeletion | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -77,6 +83,11 @@ export function QuickLoginModal({
       }
       router.push(destination);
     } catch (err: any) {
+      const offer = pendingDeletionOf(err);
+      if (offer) {
+        setPendingDeletion(offer);
+        return;
+      }
       setErrorMsg(getApiErrorMessage(err, "Email hoặc mật khẩu không chính xác."));
     } finally {
       setIsLoading(false);
@@ -138,7 +149,7 @@ export function QuickLoginModal({
           </span>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-3">
+        <form ref={formRef} onSubmit={handleLogin} className="space-y-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
               Email học viên <span className="text-rose-700 dark:text-rose-400">*</span>
@@ -226,6 +237,15 @@ export function QuickLoginModal({
           </button>
         </div>
       </div>
+      <PendingDeletionDialog
+        pending={pendingDeletion}
+        onClose={() => setPendingDeletion(null)}
+        onCancelled={() => {
+          setPendingDeletion(null);
+          toast.success("Đã huỷ yêu cầu xoá tài khoản.");
+          formRef.current?.requestSubmit();
+        }}
+      />
     </div>
   );
 }

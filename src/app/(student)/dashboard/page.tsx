@@ -20,13 +20,13 @@ import {
   Mic,
   PenTool,
   RefreshCw,
-  ShieldCheck,
   Target,
   TrendingUp,
   X,
   Zap,
 } from "lucide-react";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
+import { StreakShieldIcon } from "@/components/ui/StreakShieldIcon";
 import { useAuthStore } from "@/stores/authStore";
 import {
   gamificationService,
@@ -63,9 +63,32 @@ import {
   resolveQuestAction,
   SKILL_DETAIL_CONFIGS,
   type SkillKey,
+  weekDayState,
+  type WeekDayState,
 } from "./dashboardUtils";
 
 const emptySubscribe = () => () => {};
+
+/** "Tuần này" cells: a studied day is lit in the same amber as today done. */
+const WEEK_DAY_CLASS: Record<WeekDayState, string> = {
+  "today-done": "bg-amber-500 text-white font-black shadow-xs",
+  "today-pending":
+    "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-black",
+  studied:
+    "bg-amber-100 dark:bg-amber-900/50 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-black",
+  missed:
+    "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold",
+  future:
+    "bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-800 font-medium",
+};
+
+const WEEK_DAY_TEXT: Record<WeekDayState, (day: string) => string> = {
+  "today-done": () => "Hôm nay: đã học",
+  "today-pending": () => "Hôm nay: chưa học",
+  studied: (day) => `${day}: đã học`,
+  missed: (day) => `${day}: chưa học`,
+  future: (day) => `${day}: chưa tới`,
+};
 
 function getQuestProgressText(item: TodayQuestItem): string {
   const target = item.targetValue ?? item.quest?.targetValue ?? 1;
@@ -447,9 +470,9 @@ export default function DashboardPage() {
     return `${stats?.masteredVocabCount ?? 0} từ`;
   }, [filterPeriod, quests, stats?.masteredVocabCount, customDays]);
 
-  // Longest Streak
+  // The backend keeps no longest streak, so only the current one is shown.
   const streakDays = stats?.streakCount ?? 0;
-  const longestStreak = Math.max(streakDays, 4);
+  const shieldCount = stats?.streakFreezes ?? 0;
 
   // XP Earned Metric
   const xpEarnedText = useMemo(() => {
@@ -787,10 +810,23 @@ export default function DashboardPage() {
 
           {/* Quick Metrics & 7-Day Habit Tracker */}
           <div className="flex flex-col gap-3 sm:items-end">
-            {/* 3 Core Stats Badges */}
-            <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto">
+            {/* Streak shield (outside, left of the streak tile) + 3 Core Stats Badges */}
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            {shieldCount > 0 && !isStatsLoading && !isStatsError && (
+              <div
+                className="flex shrink-0 flex-col items-center gap-0.5"
+                title={`${shieldCount} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}
+              >
+                <StreakShieldIcon count={shieldCount} className="h-9 w-8 sm:h-14 sm:w-[50px]" />
+                <span className="text-xs font-bold text-blue-800 dark:text-blue-300" aria-hidden="true">
+                  khiên
+                </span>
+                <span className="sr-only">{`${shieldCount} khiên giữ chuỗi`}</span>
+              </div>
+            )}
+            <div className="grid flex-1 grid-cols-3 gap-2 sm:flex-none sm:gap-3">
               {/* Streak */}
-              <div className="rounded-2xl border border-orange-200/90 dark:border-orange-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-orange-300 dark:hover:border-orange-700">
+              <div className="rounded-2xl border border-orange-200/90 dark:border-orange-900/50 bg-white/90 dark:bg-slate-900 px-2 py-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-orange-300 dark:hover:border-orange-700">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
                   <Flame size={14} className="text-orange-500 fill-orange-500" />
                   Chuỗi học
@@ -800,14 +836,14 @@ export default function DashboardPage() {
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-orange-700 dark:text-orange-400">
+                  <strong className="mt-1 block text-base sm:text-xl font-black text-orange-700 dark:text-orange-400">
                     {stats?.streakCount ?? 0} ngày
                   </strong>
                 )}
               </div>
 
               {/* Weekly EXP */}
-              <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
+              <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/50 bg-white/90 dark:bg-slate-900 px-2 py-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-emerald-300 dark:hover:border-emerald-700">
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1">
                   <TrendingUp size={14} className="text-emerald-600 dark:text-emerald-400" />
                   Điểm tuần
@@ -817,7 +853,7 @@ export default function DashboardPage() {
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
+                  <strong className="mt-1 block text-base sm:text-xl font-black text-emerald-700 dark:text-emerald-400">
                     {stats?.weeklyExp ?? 0} XP
                   </strong>
                 )}
@@ -826,7 +862,7 @@ export default function DashboardPage() {
               {/* Bánh Mì */}
               <Link
               href="/hub?tab=account-plan"
-                className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900 p-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 dark:hover:border-amber-700 block group"
+                className="rounded-2xl border border-amber-200/90 dark:border-amber-900/50 bg-white/90 dark:bg-slate-900 px-2 py-3 sm:p-3.5 text-center shadow-2xs transition-all hover:border-amber-300 dark:hover:border-amber-700 block group"
                 title="Xem lịch sử và đổi quà Bánh Mì"
               >
                 <span className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1 group-hover:text-amber-800 dark:group-hover:text-amber-300 transition-colors">
@@ -838,11 +874,12 @@ export default function DashboardPage() {
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-amber-700 dark:text-amber-400">
+                  <strong className="mt-1 block text-base sm:text-xl font-black text-amber-700 dark:text-amber-400">
                     {stats?.totalBanhRan ?? 0}
                   </strong>
                 )}
               </Link>
+            </div>
             </div>
 
             {/* Error retry notice if stats failed */}
@@ -867,37 +904,26 @@ export default function DashboardPage() {
               <span className="text-xs text-slate-600 dark:text-slate-400 font-bold hidden sm:inline">Tuần này:</span>
               <div className="flex items-center gap-1.5">
                 {DAY_LABELS.map((day, idx) => {
-                  const isPastOrToday = idx <= currentDayOfWeek;
-                  const isToday = idx === currentDayOfWeek;
+                  const state = weekDayState(
+                    idx,
+                    currentDayOfWeek,
+                    stats?.studiedDaysThisWeek,
+                    safeCompleted > 0,
+                  );
+                  const dayName = idx < 6 ? `Thứ ${idx + 2}` : "Chủ nhật";
+                  const label = WEEK_DAY_TEXT[state](dayName);
                   return (
                     <div
                       key={day}
-                      className={`flex flex-col items-center justify-center size-6 sm:size-7 rounded-lg text-xs font-black transition-all ${
-                        isToday
-                          ? safeCompleted > 0
-                            ? "bg-amber-500 text-white font-black shadow-xs"
-                            : "ring-2 ring-amber-400 bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 font-black"
-                          : isPastOrToday
-                            ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 font-bold"
-                            : "bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-800 font-medium"
-                      }`}
-                      title={isToday ? "Hôm nay (Giờ Việt Nam)" : `Thứ ${day}`}
+                      className={`flex flex-col items-center justify-center size-6 sm:size-7 rounded-lg text-xs font-black transition-all ${WEEK_DAY_CLASS[state]}`}
+                      title={label}
                     >
-                      {day}
+                      <span aria-hidden="true">{day}</span>
+                      <span className="sr-only">{label}</span>
                     </div>
                   );
                 })}
               </div>
-              {stats?.streakFreezes ? (
-                <span
-                  className="inline-flex items-center gap-1 text-xs text-amber-800 dark:text-amber-300 font-bold ml-1 pl-2.5 border-l border-slate-200 dark:border-slate-700"
-                  title={`Bạn có ${stats.streakFreezes} khiên giữ chuỗi. Lỡ một ngày học, 1 khiên tự được dùng để chuỗi không bị mất.`}
-                  aria-label={`${stats.streakFreezes} khiên giữ chuỗi, tự dùng khi bạn lỡ một ngày học`}
-                >
-                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                  <span aria-hidden="true">{stats.streakFreezes} khiên</span>
-                </span>
-              ) : null}
             </div>
           </div>
         </div>
@@ -1039,7 +1065,7 @@ export default function DashboardPage() {
                   {streakDays} ngày
                 </div>
                 <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
-                  Chuỗi · dài nhất {longestStreak}
+                  Chuỗi hiện tại
                 </div>
               </div>
             </div>

@@ -185,7 +185,6 @@ export default function ToeicWritingExamComposer({
                 {TASK_LABELS[item.taskKind]}
               </span>
               {item.imageUrl && (
-                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={item.imageUrl}
                   alt=""

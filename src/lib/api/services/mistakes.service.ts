@@ -9,10 +9,18 @@ export type MistakeSource =
   | "GRAMMAR_QUESTION"
   | "WRITING_CORRECTION"
   | "SPEAKING_WORD"
+  | "SPEAKING_SENTENCE"
   | "TRANSLATION_SENTENCE";
 
+/** One word of a read-aloud sentence as the recording scored it. */
+export interface SentenceWord {
+  word: string;
+  score: number;
+  status: "OK" | "WEAK" | "OMITTED";
+}
+
 export interface MistakeDetail {
-  kind: "CHOICE" | "DICTATION" | "CORRECTION" | "WORD" | "TRANSLATION";
+  kind: "CHOICE" | "DICTATION" | "CORRECTION" | "WORD" | "SENTENCE" | "TRANSLATION";
   title: string;
   question?: string;
   passage?: string;
@@ -23,7 +31,10 @@ export interface MistakeDetail {
   explanation?: string;
   yourAnswer?: string;
   correctAnswer?: string;
+  /** Word accuracy (0-100); for a SENTENCE, the recording's overall score (0-10). */
   score?: number;
+  /** SENTENCE: every word of the sentence, in reading order. */
+  words?: SentenceWord[];
   answerable: boolean;
   ref: {
     quizId?: number;
@@ -32,6 +43,8 @@ export interface MistakeDetail {
     attemptId?: number;
     topicId?: number;
     exerciseId?: number;
+    /** Speaking practice set. */
+    setKey?: string;
   };
 }
 

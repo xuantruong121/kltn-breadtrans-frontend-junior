@@ -26,6 +26,8 @@ export interface UserProfile {
 export interface UserLearningStats {
   streakCount: number;
   streakFreezes: number;
+  /** Weekdays of this Vietnam week with XP (0 = T2 … 6 = CN). */
+  studiedDaysThisWeek?: number[];
   totalBanhRan: number;
   quizAccuracy: number;
   speakingAccuracy: number;

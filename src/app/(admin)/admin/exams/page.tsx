@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Award,
   Plus,
   Loader2,
   Search,
@@ -15,12 +14,9 @@ import {
   AlertTriangle,
   Image as ImageIcon,
   Clock,
-  ArrowUp,
-  ArrowDown,
   X,
   Eye,
   Check,
-  ShieldAlert,
   FileStack,
   Upload,
   ArrowRight,
@@ -396,7 +392,7 @@ export default function AdminExamsPage() {
   const totalExams = examList.facets?.total ?? 0;
 
   // 2. Query single exam detail
-  const { data: examDetail, isLoading: isDetailLoading } = useQuery<ExamDetail>(
+  const { data: examDetail } = useQuery<ExamDetail>(
     {
       queryKey: ["admin-exam-detail", selectedExamId],
       queryFn: async () => {
@@ -951,7 +947,7 @@ export default function AdminExamsPage() {
       }`;
 
     return (
-      <main className="mx-auto max-w-6xl space-y-6 p-6">
+      <div className="mx-auto max-w-6xl space-y-6 p-6">
         {/* TOP BAR */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-5">
           <div className="flex items-center gap-3">
@@ -2424,7 +2420,7 @@ export default function AdminExamsPage() {
           }}
           onCancel={() => setPendingDeleteQuestion(null)}
         />
-      </main>
+      </div>
     );
   }
 
@@ -2432,7 +2428,7 @@ export default function AdminExamsPage() {
   // RENDER: Exam Sets Catalog / List Page
   // -------------------------------------------------------------
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       {/* HEADER */}
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -2962,6 +2958,6 @@ export default function AdminExamsPage() {
         }}
         onCancel={() => setPendingDeleteExam(null)}
       />
-    </main>
+    </div>
   );
 }

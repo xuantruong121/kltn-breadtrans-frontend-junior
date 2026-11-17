@@ -53,6 +53,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
 
   useEffect(() => {
     if (profile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fills the form once the saved shipping profile arrives
       setShippingData({
         recipientName: profile.recipientName || "",
         phone: profile.phoneDisplay || profile.phone || "",

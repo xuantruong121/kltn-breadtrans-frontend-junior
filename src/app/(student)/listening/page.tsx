@@ -5,17 +5,14 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  Flame,
   Headphones,
   Loader2,
   RotateCcw,
   Search,
-  Target,
   X,
 } from "lucide-react";
 import { quizService, type ListeningPracticeCatalogItem } from "@/lib/api/services/quiz.service";
 import { useAuthStore } from "@/stores/authStore";
-import { useGamificationStore } from "@/stores/gamificationStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
 import { PremiumContentPaywallModal } from "@/components/subscription/PremiumContentPaywallModal";
 import { ListeningExerciseCard } from "@/components/listening/ListeningExerciseCard";
@@ -52,7 +49,6 @@ function ListeningCatalogContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
-  const { streak } = useGamificationStore();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -237,23 +233,6 @@ function ListeningCatalogContent() {
             <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm max-w-3xl line-clamp-1 xl:line-clamp-none">
               Hệ thống luyện nghe đa ngữ cảnh tích hợp phân tích tốc độ phát thanh, nhận diện âm nuốt và bẫy phát âm theo chuẩn TOEIC & giao tiếp thực tế.
             </p>
-
-            {/* Gamified Stats Pill Row */}
-            <div className="flex flex-wrap items-center gap-2 pt-0.5">
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-950/40 px-3 py-1.5 text-xs font-black text-amber-800 dark:text-amber-300">
-                <Flame size={14} className="text-amber-500 fill-amber-500" aria-hidden="true" />
-                <span>Chuỗi học: {streak || 1} ngày liên tiếp</span>
-              </div>
-
-              <div className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 dark:border-blue-800/60 bg-blue-50 dark:bg-blue-950/40 px-3 py-1.5 text-xs font-black text-blue-800 dark:text-blue-300">
-                <Target size={14} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
-                <span>Mục tiêu hôm nay: {Math.min(completedCount, 3)}/3 bài</span>
-              </div>
-
-              <span className="inline-flex items-center rounded-xl border border-slate-200/80 bg-slate-50/80 px-3 py-1.5 text-xs font-bold text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                Kết quả được cập nhật sau khi hoàn thành
-              </span>
-            </div>
           </div>
 
           {/* Global Completion Progress Card */}

@@ -29,7 +29,6 @@ import {
   getLearnerMilestones,
   formatFriendlyDate,
 } from "./learningProgressLogic";
-import { levelLabel } from "@/lib/ui/displayLabels";
 
 const SKILL_THEME: Record<
   SkillProgressSummary["skill"],

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import {
   AlertCircle,
@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import clsx from "clsx";
+import { useQueryClient } from "@tanstack/react-query";
+import { SAVED_WORDS_KEY } from "@/modules/vocab/hooks/useSavedWords";
 import {
   DictionaryEntry,
   VocabLookupResponse,
@@ -32,6 +34,8 @@ interface WordDictionaryPopupProps {
   onPracticeWord?: (word: string) => void;
   playbackRate?: number;
 }
+
+const emptySubscribe = () => () => {};
 
 const POS_LABELS: Record<string, string> = {
   adjective: "Tính từ",
@@ -227,6 +231,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     [word],
   );
 
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(true);
   const [enriching, setEnriching] = useState(false);
   const [entries, setEntries] = useState<DictionaryEntry[]>([]);
@@ -240,15 +245,12 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     () => new Set(),
   );
   const [hasExpandedDetails, setHasExpandedDetails] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  // The portal needs document.body: false on the server, true once on the client.
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const audioCacheRef = useRef(new Map<string, HTMLAudioElement>());
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioGenerationRef = useRef(0);
   const audioAbortControllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
@@ -427,7 +429,9 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
         setSavedId(saved.id);
       }
       setIsStarred((current) => !current);
-      toast.success(isStarred ? "Đã bỏ lưu từ vựng." : "Đã lưu từ vào sổ ôn tập.");
+      toast.success(isStarred ? "Đã bỏ lưu" : "Đã lưu vào Từ đã lưu");
+      // The saved page and the flashcard button read the same list.
+      void queryClient.invalidateQueries({ queryKey: SAVED_WORDS_KEY });
     } catch {
       toast.error("Không thể cập nhật từ đã lưu");
     } finally {
@@ -601,7 +605,7 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
                     ? "border-amber-300 dark:border-amber-600/50 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 shadow-2xs"
                     : "border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                 )}
-                title={isStarred ? "Bỏ lưu từ" : "Lưu từ để ôn tập"}
+                title={isStarred ? "Bỏ lưu từ" : "Lưu vào Từ đã lưu"}
               >
                 {starLoading ? (
                   <Loader2 size={16} className="animate-spin text-amber-600 dark:text-amber-400" />

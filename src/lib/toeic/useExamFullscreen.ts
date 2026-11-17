@@ -43,6 +43,7 @@ export function useLeaveFullscreen(onLeave?: () => void) {
     const token = ++mountTokenRef.current;
     return () => {
       window.setTimeout(() => {
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- reads the newest token on purpose: a remount bumps it and cancels this exit
         if (mountTokenRef.current === token) leave();
       }, 0);
     };

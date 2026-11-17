@@ -210,6 +210,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     const resumeId = attempt.currentQuestionId ?? null;
     setActivePart(resumeId && questionMeta.has(resumeId) ? questionMeta.get(resumeId)!.part : parts[0].part);
     if (resumeId && questionMeta.has(resumeId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- restores the position the server saved
       setCurrentQuestionId(resumeId);
       pendingJumpRef.current = questionMeta.get(resumeId)!.number;
     }
@@ -483,6 +484,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
   const strictGroup = legacyStrict && section === "LISTENING" ? listeningGroups[groupCursor] : undefined;
   useEffect(() => {
     if (!strictGroup || attempt?.status !== "IN_PROGRESS") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the clip of each manifest step
     void loadGroupClip(strictGroup, true);
     // One load per manifest step.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -587,6 +589,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
     if (!overdue) return;
     const reread = () => void queryClient.invalidateQueries({ queryKey: ["toeic-attempt", attemptId] });
     void Promise.race([
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- saves and re-reads the attempt once the clock has run out
       flushSave().catch(() => undefined),
       new Promise((resolve) => window.setTimeout(resolve, 3000)),
     ]).then(reread);

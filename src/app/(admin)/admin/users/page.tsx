@@ -30,6 +30,7 @@ import toast from "react-hot-toast";
 import { Pagination } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { PASSWORD_MIN_LENGTH } from "@/lib/auth/passwordPolicy";
 
 type UserData = {
   id: number;
@@ -45,6 +46,9 @@ type UserData = {
     phone: string | null;
   } | null;
   stats?: { totalBanhRan: number; streakCount: number } | null;
+  /** Self-service deletion (owner 2026-11-16). */
+  deletionScheduledAt?: string | null;
+  anonymizedAt?: string | null;
 };
 
 const ROLE_FILTER_OPTIONS = [
@@ -156,13 +160,18 @@ export default function AdminUsersPage() {
 
   // Delete User Mutation
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await axiosClient.delete(`/admin/users/${id}`);
-    },
-    onSuccess: () => {
+    mutationFn: async (id: number) =>
+      (await axiosClient.delete(`/admin/users/${id}`)) as {
+        outcome?: "DELETED" | "ANONYMIZED";
+      },
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
       setDeleteTarget(null);
-      toast.success("Đã xóa tài khoản thành công.");
+      toast.success(
+        result?.outcome === "ANONYMIZED"
+          ? "Đã xóa tài khoản. Đơn hàng và thanh toán được giữ ở dạng ẩn danh."
+          : "Đã xóa tài khoản thành công.",
+      );
     },
     onError: (err: any) =>
       toast.error(getApiErrorMessage(err, "Không thể xóa tài khoản.")),
@@ -418,7 +427,18 @@ export default function AdminUsersPage() {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      {getActivityBadge(user.lastActivityAt)}
+                      {user.anonymizedAt ? (
+                        <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                          Đã ẩn danh
+                        </span>
+                      ) : user.deletionScheduledAt ? (
+                        <span className="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/60">
+                          Chờ xoá ngày{" "}
+                          {new Date(user.deletionScheduledAt).toLocaleDateString("vi-VN")}
+                        </span>
+                      ) : (
+                        getActivityBadge(user.lastActivityAt)
+                      )}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <div className="flex items-center justify-end gap-1.5">
@@ -432,6 +452,8 @@ export default function AdminUsersPage() {
                             <ArrowUpRight size={16} />
                           </Link>
                         ) : null}
+                        {user.anonymizedAt ? null : (
+                        <>
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(user)}
@@ -448,6 +470,8 @@ export default function AdminUsersPage() {
                         >
                           <Trash2 size={16} />
                         </button>
+                        </>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -542,7 +566,7 @@ export default function AdminUsersPage() {
                   <div className="relative">
                     <input
                       type={showCreatePassword ? "text" : "password"}
-                      placeholder="Ít nhất 6 ký tự"
+                      placeholder={`Ít nhất ${PASSWORD_MIN_LENGTH} ký tự`}
                       value={createForm.password}
                       onChange={(e) =>
                         setCreateForm({
@@ -806,8 +830,9 @@ export default function AdminUsersPage() {
                   <span className="text-rose-700 font-black dark:text-rose-400">
                     "{deleteTarget.profile?.fullName || deleteTarget.email}"
                   </span>{" "}
-                  ({deleteTarget.email})? Toàn bộ tiến trình và dữ liệu sẽ bị
-                  xóa hoàn toàn.
+                  ({deleteTarget.email})? Hồ sơ và dữ liệu học tập sẽ bị xóa
+                  hoàn toàn. Đơn hàng, thanh toán và lịch sử Bánh Mì (nếu có)
+                  được giữ ở dạng ẩn danh.
                 </p>
               </div>
 

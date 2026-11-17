@@ -552,6 +552,14 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
           handleEscalateMode();
         } else if (currentMode === "TYPING") {
           handleCheckTyping();
+        } else if (
+          currentMode === "SPEAKING" &&
+          speechScore === null &&
+          speechFeedback === null &&
+          !isSpeakingSkipped
+        ) {
+          // "Bỏ qua phần phát âm" (owner 2026-11-16); only while it is shown.
+          handleSkipSpeaking();
         }
       } else if (["1", "2", "3", "4"].includes(e.key)) {
         if (currentMode === "QUIZ" && !quizAnswered) {
@@ -596,6 +604,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     handleSelectQuizOption,
     handleToggleRecordSpeech,
     handleSrsRate,
+    handleSkipSpeaking,
   ]);
 
   // Derived metrics for UI

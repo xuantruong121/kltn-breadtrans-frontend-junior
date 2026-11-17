@@ -369,6 +369,8 @@ export default function SkillCmsWorkspace({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  // Whole-item delete (owner 2026-11-17): drafts that no learner worked on.
+  const [pendingDeleteItem, setPendingDeleteItem] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "DRAFT" | "PUBLISHED"
@@ -991,7 +993,9 @@ export default function SkillCmsWorkspace({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the item the route names
     if (mode !== "list") void loadItem();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadItem is rebuilt each render; reload only when the route changes
   }, [domain, mode, id]);
 
   const saveContent = async () => {
@@ -1191,6 +1195,22 @@ export default function SkillCmsWorkspace({
       await loadItem();
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, "Lưu câu hỏi thất bại"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeItem = async () => {
+    if (!id) return;
+    setBusy(true);
+    try {
+      await axiosClient.delete(`/admin/skill-content/${domain}/${id}`);
+      toast.success("Đã xóa bài");
+      setPendingDeleteItem(false);
+      router.push(`/admin/${domain}`);
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "Không thể xóa bài"));
+      setPendingDeleteItem(false);
     } finally {
       setBusy(false);
     }
@@ -1463,7 +1483,7 @@ export default function SkillCmsWorkspace({
     // columns as fit (1 on a phone, 2 on a tablet, 3 at 1440, 4 at 1920),
     // with one 16px gutter both ways: n x card + (n - 1) x 16 = canvas.
     return (
-      <main className="space-y-6 p-6">
+      <div className="space-y-6 p-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
@@ -1840,7 +1860,7 @@ export default function SkillCmsWorkspace({
         />
         </>
         )}
-      </main>
+      </div>
     );
   }
 
@@ -2402,7 +2422,7 @@ export default function SkillCmsWorkspace({
   );
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <button
         onClick={() => router.push(`/admin/${domain}`)}
         className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400"
@@ -2448,6 +2468,18 @@ export default function SkillCmsWorkspace({
               ? "Chuyển về bản nháp"
               : "Kiểm tra & xuất bản"}
           </button>
+          {/* Only a draft nobody has worked on can go; the API checks again. */}
+          {id &&
+            item?.publicationStatus !== "PUBLISHED" &&
+            !(Number(item?._count?.submissions) > 0) && (
+              <button
+                onClick={() => setPendingDeleteItem(true)}
+                disabled={busy}
+                className={BTN_DANGER}
+              >
+                <Trash2 size={16} /> Xóa bài
+              </button>
+            )}
         </div>
       </header>
 
@@ -4560,6 +4592,16 @@ export default function SkillCmsWorkspace({
       )}
 
       <ConfirmDialog
+        open={pendingDeleteItem}
+        title="Xóa bài này?"
+        description="Bài bản nháp và toàn bộ câu hỏi của nó sẽ bị xóa vĩnh viễn. Bài đã có học viên làm thì không xóa được."
+        confirmLabel="Xóa bài"
+        isPending={busy}
+        onConfirm={() => void removeItem()}
+        onCancel={() => setPendingDeleteItem(false)}
+      />
+
+      <ConfirmDialog
         open={pendingPublicationStatus !== null}
         title={
           pendingPublicationStatus === "PUBLISHED"
@@ -4621,6 +4663,6 @@ export default function SkillCmsWorkspace({
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }

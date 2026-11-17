@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, BookOpen, Target, User } from "lucide-react";
+import { Home, Compass, Target, User } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { isExamRoute, isSkillsRoute } from "./navUtils";
 
