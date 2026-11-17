@@ -20,7 +20,7 @@ import {
   Mic,
   PenTool,
   RefreshCw,
-  ShieldCheck,
+  Shield,
   Target,
   TrendingUp,
   X,
@@ -472,6 +472,7 @@ export default function DashboardPage() {
 
   // The backend keeps no longest streak, so only the current one is shown.
   const streakDays = stats?.streakCount ?? 0;
+  const shieldCount = stats?.streakFreezes ?? 0;
 
   // XP Earned Metric
   const xpEarnedText = useMemo(() => {
@@ -822,8 +823,27 @@ export default function DashboardPage() {
                 ) : isStatsError ? (
                   <span className="text-xs font-bold text-slate-600 mt-1 block dark:text-slate-400">Không khả dụng</span>
                 ) : (
-                  <strong className="mt-1 block text-lg sm:text-xl font-black text-orange-700 dark:text-orange-400">
-                    {stats?.streakCount ?? 0} ngày
+                  <strong className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 sm:gap-x-1.5 text-lg sm:text-xl font-black text-orange-700 dark:text-orange-400">
+                    {shieldCount > 0 && (
+                      <span
+                        className="relative inline-flex size-6 sm:size-7 shrink-0 items-center justify-center"
+                        title={`${shieldCount} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}
+                      >
+                        <Shield
+                          className="absolute inset-0 size-full fill-amber-100 text-amber-500 dark:fill-amber-950 dark:text-amber-500"
+                          strokeWidth={2}
+                          aria-hidden="true"
+                        />
+                        <span
+                          className="relative -mt-0.5 text-[11px] sm:text-xs font-black leading-none tabular-nums text-amber-800 dark:text-amber-200"
+                          aria-hidden="true"
+                        >
+                          {shieldCount}
+                        </span>
+                        <span className="sr-only">{`${shieldCount} khiên giữ chuỗi,`}</span>
+                      </span>
+                    )}
+                    <span className="whitespace-nowrap">{stats?.streakCount ?? 0} ngày</span>
                   </strong>
                 )}
               </div>
@@ -909,16 +929,6 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
-              {stats?.streakFreezes ? (
-                <span
-                  className="inline-flex items-center gap-1 text-xs text-amber-800 dark:text-amber-300 font-bold ml-1 pl-2.5 border-l border-slate-200 dark:border-slate-700"
-                  title={`Bạn có ${stats.streakFreezes} khiên giữ chuỗi. Lỡ một ngày học, 1 khiên tự được dùng để chuỗi không bị mất.`}
-                  aria-label={`${stats.streakFreezes} khiên giữ chuỗi, tự dùng khi bạn lỡ một ngày học`}
-                >
-                  <ShieldCheck size={13} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
-                  <span aria-hidden="true">{stats.streakFreezes} khiên</span>
-                </span>
-              ) : null}
             </div>
           </div>
         </div>
