@@ -90,7 +90,7 @@ export function PendingDeletionDialog({
             type="button"
             onClick={onClose}
             disabled={isPending}
-            className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="cursor-pointer transition-colors min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 disabled:cursor-not-allowed"
           >
             Giữ yêu cầu xoá
           </button>
@@ -98,7 +98,7 @@ export function PendingDeletionDialog({
             type="button"
             onClick={cancelDeletion}
             disabled={isPending}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-60"
+            className="cursor-pointer transition-colors inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-bold text-white hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isPending ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
             Huỷ yêu cầu xoá

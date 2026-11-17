@@ -1,15 +1,12 @@
-import { ShieldCheck } from "lucide-react";
 import { PublicInfoPage } from "@/components/public/PublicInfoPage";
 import { LEGAL_UPDATED_LABEL } from "@/lib/auth/accountPrivacy";
 
 export default function PrivacyPage() {
   return (
     <PublicInfoPage
-      eyebrow="Chính sách bảo mật"
-      title="Dữ liệu nào BreadTrans dùng, để làm gì, và cách xoá"
+      title="Chính sách bảo mật"
       description="Chính sách này mô tả đúng những gì hệ thống BreadTrans đang làm với dữ liệu của bạn. Khi tạo tài khoản, bạn đồng ý với chính sách này; lần đồng ý được ghi lại cùng thời điểm và phiên bản."
       updated={LEGAL_UPDATED_LABEL}
-      icon={ShieldCheck}
       sections={[
         {
           title: "Dữ liệu được thu thập",
@@ -57,12 +54,12 @@ export default function PrivacyPage() {
             "Dữ liệu đã xoá có thể còn trong bản sao lưu tối đa 14 ngày, sau đó bản sao lưu tự xoá.",
           ],
         },
-        {
-          title: "Liên hệ về dữ liệu",
-          body: "Mọi câu hỏi về dữ liệu cá nhân, hãy gửi email cho đội ngũ BreadTrans.",
-        },
       ]}
-      cta={{ label: "Liên hệ hỗ trợ", href: "mailto:support@breadtrans.edu.vn" }}
+      contact={{
+        label: "Câu hỏi về dữ liệu cá nhân, hãy gửi email tới",
+        linkText: "support@breadtrans.edu.vn",
+        href: "mailto:support@breadtrans.edu.vn",
+      }}
     />
   );
 }

@@ -1,87 +1,99 @@
-import Link from "next/link";
-import { ArrowLeft, ChevronRight, type LucideIcon } from "lucide-react";
-
 type InfoSection = {
   title: string;
   body: string;
+  /** Anchor for links such as /privacy#xoa-tai-khoan; defaults to muc-<n>. */
   id?: string;
   /** Optional bullet points under the paragraph. */
   items?: string[];
 };
 
 type PublicInfoPageProps = {
-  eyebrow: string;
+  /** The document's own name, e.g. "Điều khoản sử dụng". */
   title: string;
   description: string;
-  icon: LucideIcon;
-  sections: InfoSection[];
-  cta?: { label: string; href: string };
   /** "Cập nhật ngày …" under the description. */
   updated?: string;
+  sections: InfoSection[];
+  /** A closing line with a link, e.g. the support address. */
+  contact?: { label: string; linkText: string; href: string };
 };
 
-export function PublicInfoPage({
-  eyebrow,
-  title,
-  description,
-  icon: Icon,
-  sections,
-  cta,
-  updated,
-}: PublicInfoPageProps) {
-  return (
-    <section className="bg-amber-50/40 dark:bg-slate-950 py-12 sm:py-16">
-      <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="mb-8 inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 text-sm font-bold text-slate-700 dark:text-slate-200 shadow-sm transition-colors hover:border-amber-300 dark:hover:border-amber-700 hover:bg-amber-50 dark:hover:bg-slate-800 hover:text-amber-900 dark:hover:text-amber-300"
-        >
-          <ArrowLeft size={17} aria-hidden="true" />
-          Về trang chủ
-        </Link>
+/**
+ * A plain text page for the terms and the privacy policy, in the style of
+ * /help (owner 2026-11-17: no icon tile, eyebrow, slogan or card stack).
+ */
+export function PublicInfoPage({ title, description, updated, sections, contact }: PublicInfoPageProps) {
+  const items = sections.map((section, index) => ({
+    ...section,
+    number: index + 1,
+    anchor: section.id ?? `muc-${index + 1}`,
+  }));
 
-        <header className="rounded-[2rem] border border-amber-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 shadow-card sm:p-10">
-          <div className="mb-5 flex size-12 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
-            <Icon size={25} aria-hidden="true" />
-          </div>
-          <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-700 dark:text-amber-400">{eyebrow}</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">{title}</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">{description}</p>
+  return (
+    <div className="min-h-[calc(100dvh-5rem)] bg-slate-50 px-4 py-10 dark:bg-slate-950 sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-5xl">
+        <header className="max-w-3xl border-b border-slate-200 pb-7 dark:border-slate-800 sm:pb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-slate-100 sm:text-4xl">{title}</h1>
+          <p className="mt-3 text-base leading-7 text-slate-600 dark:text-slate-400">{description}</p>
           {updated ? (
-            <p className="mt-3 text-sm font-semibold text-slate-700 dark:text-slate-300">Cập nhật ngày {updated}</p>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">Cập nhật ngày {updated}</p>
           ) : null}
         </header>
 
-        <div className="mt-6 space-y-4">
-          {sections.map((section) => (
-            <article
-              id={section.id}
-              key={section.title}
-              className="scroll-mt-24 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-soft sm:p-7"
-            >
-              <h2 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">{section.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{section.body}</p>
-              {section.items?.length ? (
-                <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                  {section.items.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
-            </article>
-          ))}
-        </div>
+        <div className="mt-8 lg:grid lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-12">
+          <nav aria-label="Mục lục" className="mb-8 lg:mb-0">
+            <div className="border-y border-slate-200 py-4 dark:border-slate-800 lg:sticky lg:top-24 lg:border-0 lg:py-0">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Mục lục</p>
+              <ol className="mt-2 space-y-1.5 text-sm">
+                {items.map((section) => (
+                  <li key={section.anchor}>
+                    <a
+                      href={`#${section.anchor}`}
+                      className="text-slate-600 hover:text-slate-950 hover:underline dark:text-slate-400 dark:hover:text-slate-100"
+                    >
+                      {section.number}. {section.title}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </nav>
 
-        {cta && (
-          <Link
-            href={cta.href}
-            className="mt-8 inline-flex min-h-12 items-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-amber-700"
-          >
-            {cta.label}
-            <ChevronRight size={18} aria-hidden="true" />
-          </Link>
-        )}
+          <article className="max-w-3xl">
+            {items.map((section) => (
+              <section
+                key={section.anchor}
+                id={section.anchor}
+                className="scroll-mt-24 border-b border-slate-200 py-7 first:pt-0 last:border-0 dark:border-slate-800"
+              >
+                <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-100">
+                  {section.number}. {section.title}
+                </h2>
+                <p className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300">{section.body}</p>
+                {section.items?.length ? (
+                  <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-7 text-slate-700 dark:text-slate-300">
+                    {section.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            ))}
+
+            {contact ? (
+              <p className="pt-7 text-base text-slate-700 dark:text-slate-300">
+                {contact.label}{" "}
+                <a
+                  href={contact.href}
+                  className="font-semibold text-amber-700 underline underline-offset-2 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-300"
+                >
+                  {contact.linkText}
+                </a>
+              </p>
+            ) : null}
+          </article>
+        </div>
       </div>
-    </section>
+    </div>
   );
 }

@@ -193,7 +193,7 @@ export function AccountPrivacyTab({ hasPassword }: { hasPassword: boolean }) {
               <button
                 type="button"
                 onClick={() => setFormOpen(true)}
-                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-xl border border-rose-300 px-4 text-sm font-bold text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                className="mt-5 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-rose-300 px-4 text-sm font-bold text-rose-700 transition-colors hover:border-rose-400 hover:bg-rose-100 hover:text-rose-800 dark:border-rose-800 dark:text-rose-400 dark:hover:border-rose-700 dark:hover:bg-rose-950/60 dark:hover:text-rose-300"
               >
                 Tôi muốn xoá tài khoản
               </button>
@@ -261,14 +261,14 @@ export function AccountPrivacyTab({ hasPassword }: { hasPassword: boolean }) {
                       setError("");
                     }}
                     disabled={isPending}
-                    className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                    className="cursor-pointer transition-colors min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                   >
                     Thôi, giữ tài khoản
                   </button>
                   <button
                     type="submit"
                     disabled={isPending || !canRequestDeletion(confirm)}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="cursor-pointer transition-colors inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isPending ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
                     Xoá tài khoản sau {DELETION_GRACE_DAYS} ngày

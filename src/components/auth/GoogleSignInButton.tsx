@@ -365,7 +365,7 @@ export default function GoogleSignInButton({
           type="button"
           onClick={() => setConsentCredential(null)}
           disabled={isProcessing}
-          className="min-h-11 rounded-xl px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="cursor-pointer transition-colors min-h-11 rounded-xl px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           Không tạo tài khoản
         </button>
