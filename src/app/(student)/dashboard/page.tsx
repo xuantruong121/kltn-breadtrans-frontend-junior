@@ -20,13 +20,13 @@ import {
   Mic,
   PenTool,
   RefreshCw,
-  Shield,
   Target,
   TrendingUp,
   X,
   Zap,
 } from "lucide-react";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
+import { StreakShieldIcon } from "@/components/ui/StreakShieldIcon";
 import { useAuthStore } from "@/stores/authStore";
 import {
   gamificationService,
@@ -826,20 +826,10 @@ export default function DashboardPage() {
                   <strong className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5 sm:gap-x-1.5 text-lg sm:text-xl font-black text-orange-700 dark:text-orange-400">
                     {shieldCount > 0 && (
                       <span
-                        className="relative inline-flex size-6 sm:size-7 shrink-0 items-center justify-center"
+                        className="inline-flex shrink-0"
                         title={`${shieldCount} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}
                       >
-                        <Shield
-                          className="absolute inset-0 size-full fill-amber-100 text-amber-500 dark:fill-amber-950 dark:text-amber-500"
-                          strokeWidth={2}
-                          aria-hidden="true"
-                        />
-                        <span
-                          className="relative -mt-0.5 text-[11px] sm:text-xs font-black leading-none tabular-nums text-amber-800 dark:text-amber-200"
-                          aria-hidden="true"
-                        >
-                          {shieldCount}
-                        </span>
+                        <StreakShieldIcon count={shieldCount} className="h-7 w-[25px] sm:h-8 sm:w-[28px]" />
                         <span className="sr-only">{`${shieldCount} khiên giữ chuỗi,`}</span>
                       </span>
                     )}
