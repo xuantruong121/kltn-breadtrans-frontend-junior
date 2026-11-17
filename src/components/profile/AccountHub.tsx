@@ -539,7 +539,7 @@ export function AccountHub() {
         </aside>
 
         {/* ── Right Content Area ────────────────────────────────── */}
-        <main className="flex-1 min-w-0 w-full space-y-6">
+        <div className="flex-1 min-w-0 w-full space-y-6">
           {activeTab === "learning-progress" && <LearningProgressTab />}
           {activeTab === "diagnostic-result" && <DiagnosticResultTab />}
           {activeTab === "account-privacy" && <AccountPrivacyTab hasPassword={!withoutPassword} />}
@@ -1419,7 +1419,7 @@ export function AccountHub() {
               )}
             </section>
           )}
-        </main>
+        </div>
       </div>
 
       {/* Payment Details Modal */}
