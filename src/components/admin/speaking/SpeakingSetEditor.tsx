@@ -71,14 +71,32 @@ const taskTypeLabel = (value?: string | null) =>
 
 /** Loads the set, then renders the editor once (keyed by id) so its form starts from the saved values. */
 export default function SpeakingSetEditor({ id }: { id?: string }) {
-  const { data: set, isLoading } = useQuery<SpeakingPracticeSet>({
+  const { data: set, isLoading, isError, error } = useQuery<SpeakingPracticeSet>({
     queryKey: ["admin-speaking-set", id],
     enabled: Boolean(id),
+    retry: false,
     queryFn: async () =>
       unwrap<SpeakingPracticeSet>(
         await axiosClient.get(`/admin/skill-content/speaking/${id}`),
       ),
   });
+  // A wrong or deleted id used to spin forever (admin review 2026-11-17).
+  if (id && isError)
+    return (
+      <div className="max-w-xl py-10">
+        <h1 className="text-xl font-semibold text-slate-900">Không mở được bộ luyện nói</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          {getApiErrorMessage(error, "Không tải được bộ luyện này.")} Bộ luyện có thể đã bị xoá,
+          hoặc đường dẫn không đúng.
+        </p>
+        <Link
+          href="/admin/speaking"
+          className="mt-4 inline-block text-sm font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-800"
+        >
+          Về danh sách bộ luyện nói
+        </Link>
+      </div>
+    );
   if (id && (isLoading || !set))
     return (
       <div className="flex min-h-64 items-center justify-center">
