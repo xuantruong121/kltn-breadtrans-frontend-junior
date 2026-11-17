@@ -198,7 +198,7 @@ export default function AdminCostsPage() {
     (services?.cloudflareR2?.withinFreeTier ?? true);
 
   return (
-    <main className="mx-auto w-full max-w-[1500px] space-y-6 pb-12">
+    <div className="mx-auto w-full max-w-[1500px] space-y-6 pb-12">
       {/* Header */}
       <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -762,6 +762,6 @@ export default function AdminCostsPage() {
           </table>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

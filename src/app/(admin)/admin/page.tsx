@@ -201,7 +201,7 @@ export default function AdminDashboardPage() {
   const attentionTotal = attentionItems.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <main className="mx-auto w-full max-w-[1500px] space-y-6 pb-12">
+    <div className="mx-auto w-full max-w-[1500px] space-y-6 pb-12">
       {/* 1. HEADER & CONTROLS */}
       <header className="flex flex-col gap-4 border-b border-slate-200 dark:border-slate-800 pb-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -563,6 +563,6 @@ export default function AdminDashboardPage() {
           </div>
         </>
       )}
-    </main>
+    </div>
   );
 }

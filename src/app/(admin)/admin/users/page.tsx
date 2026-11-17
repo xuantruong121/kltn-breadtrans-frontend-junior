@@ -30,6 +30,7 @@ import toast from "react-hot-toast";
 import { Pagination } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { PASSWORD_MIN_LENGTH } from "@/lib/auth/passwordPolicy";
 
 type UserData = {
   id: number;
@@ -565,7 +566,7 @@ export default function AdminUsersPage() {
                   <div className="relative">
                     <input
                       type={showCreatePassword ? "text" : "password"}
-                      placeholder="Ít nhất 6 ký tự"
+                      placeholder={`Ít nhất ${PASSWORD_MIN_LENGTH} ký tự`}
                       value={createForm.password}
                       onChange={(e) =>
                         setCreateForm({

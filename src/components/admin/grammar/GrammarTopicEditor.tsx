@@ -347,7 +347,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       : null;
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <Link
         href="/admin/grammar"
         className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900"
@@ -988,6 +988,6 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

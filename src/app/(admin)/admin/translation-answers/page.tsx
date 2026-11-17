@@ -67,7 +67,7 @@ export default function AdminTranslationAnswersPage() {
   const rows = data?.data ?? [];
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <header>
         <h1 className="text-2xl font-semibold text-slate-950">Duyệt câu dịch</h1>
         <p className="mt-1 max-w-3xl text-sm text-slate-600">
@@ -179,6 +179,6 @@ export default function AdminTranslationAnswersPage() {
           onCancel={() => setPendingDismiss(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

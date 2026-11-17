@@ -20,7 +20,7 @@ import { AuthShell } from "./AuthShell";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import GoogleAccountLinkModal from "@/components/auth/GoogleAccountLinkModal";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { PASSWORD_HINT, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_MIN_LENGTH, PASSWORD_HINT, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 import { ConsentCheckbox } from "@/components/auth/ConsentCheckbox";
 
 type RegisterStep = "details" | "success";
@@ -277,7 +277,7 @@ export default function RegisterFlow() {
                     onChange={(event) => updateField(field, event.target.value)}
                     placeholder={
                       field === "password"
-                        ? "Tối thiểu 6 ký tự"
+                        ? `Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`
                         : "Nhập lại mật khẩu"
                     }
                     aria-invalid={Boolean(

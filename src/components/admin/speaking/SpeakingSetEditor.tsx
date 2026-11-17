@@ -430,7 +430,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const busy = saveMutation.isPending || publishMutation.isPending;
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <Link
         href="/admin/speaking"
         className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
@@ -1164,6 +1164,6 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

@@ -74,7 +74,7 @@ export default function AdminVocabPage() {
     queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-slate-950">Từ vựng & Flashcard</h1>
@@ -356,6 +356,6 @@ export default function AdminVocabPage() {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

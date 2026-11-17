@@ -156,7 +156,7 @@ export default function NewExamPage() {
     "mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 font-medium outline-none focus:border-slate-500";
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 p-6">
+    <div className="mx-auto max-w-3xl space-y-6 p-6">
       <button
         onClick={() => router.push("/admin/exams")}
         className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-950"
@@ -291,6 +291,6 @@ export default function NewExamPage() {
           </div>
         </form>
       </section>
-    </main>
+    </div>
   );
 }

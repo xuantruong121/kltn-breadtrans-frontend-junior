@@ -382,7 +382,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   };
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <Link
         href="/admin/vocab"
         className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400"
@@ -919,6 +919,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           onCancel={() => setPendingDelete(null)}
         />
       )}
-    </main>
+    </div>
   );
 }

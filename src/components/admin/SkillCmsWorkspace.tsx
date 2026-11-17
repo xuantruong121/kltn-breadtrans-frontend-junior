@@ -1463,7 +1463,7 @@ export default function SkillCmsWorkspace({
     // columns as fit (1 on a phone, 2 on a tablet, 3 at 1440, 4 at 1920),
     // with one 16px gutter both ways: n x card + (n - 1) x 16 = canvas.
     return (
-      <main className="space-y-6 p-6">
+      <div className="space-y-6 p-6">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
@@ -1840,7 +1840,7 @@ export default function SkillCmsWorkspace({
         />
         </>
         )}
-      </main>
+      </div>
     );
   }
 
@@ -2402,7 +2402,7 @@ export default function SkillCmsWorkspace({
   );
 
   return (
-    <main className="space-y-6 p-6">
+    <div className="space-y-6 p-6">
       <button
         onClick={() => router.push(`/admin/${domain}`)}
         className="inline-flex min-h-10 items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-400"
@@ -4621,6 +4621,6 @@ export default function SkillCmsWorkspace({
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
