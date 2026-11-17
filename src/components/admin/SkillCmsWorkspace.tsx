@@ -369,6 +369,8 @@ export default function SkillCmsWorkspace({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  // Whole-item delete (owner 2026-11-17): drafts that no learner worked on.
+  const [pendingDeleteItem, setPendingDeleteItem] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "DRAFT" | "PUBLISHED"
@@ -1191,6 +1193,22 @@ export default function SkillCmsWorkspace({
       await loadItem();
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, "Lưu câu hỏi thất bại"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeItem = async () => {
+    if (!id) return;
+    setBusy(true);
+    try {
+      await axiosClient.delete(`/admin/skill-content/${domain}/${id}`);
+      toast.success("Đã xóa bài");
+      setPendingDeleteItem(false);
+      router.push(`/admin/${domain}`);
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "Không thể xóa bài"));
+      setPendingDeleteItem(false);
     } finally {
       setBusy(false);
     }
@@ -2448,6 +2466,18 @@ export default function SkillCmsWorkspace({
               ? "Chuyển về bản nháp"
               : "Kiểm tra & xuất bản"}
           </button>
+          {/* Only a draft nobody has worked on can go; the API checks again. */}
+          {id &&
+            item?.publicationStatus !== "PUBLISHED" &&
+            !(Number(item?._count?.submissions) > 0) && (
+              <button
+                onClick={() => setPendingDeleteItem(true)}
+                disabled={busy}
+                className={BTN_DANGER}
+              >
+                <Trash2 size={16} /> Xóa bài
+              </button>
+            )}
         </div>
       </header>
 
@@ -4558,6 +4588,16 @@ export default function SkillCmsWorkspace({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={pendingDeleteItem}
+        title="Xóa bài này?"
+        description="Bài bản nháp và toàn bộ câu hỏi của nó sẽ bị xóa vĩnh viễn. Bài đã có học viên làm thì không xóa được."
+        confirmLabel="Xóa bài"
+        isPending={busy}
+        onConfirm={() => void removeItem()}
+        onCancel={() => setPendingDeleteItem(false)}
+      />
 
       <ConfirmDialog
         open={pendingPublicationStatus !== null}
