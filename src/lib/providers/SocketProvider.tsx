@@ -11,6 +11,7 @@ import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 import { currencyToastKind } from "./currencyToastLogic";
 import { socketBaseUrl } from "@/lib/realtime/socketUrl";
+import { PROGRESS_QUERY_KEYS } from "@/lib/realtime/progressRefresh";
 import { refreshAccessToken } from "@/lib/auth/refreshSession";
 
 interface SocketContextType {
@@ -148,6 +149,15 @@ export default function SocketProvider({ children }: { children: React.ReactNode
             icon: <BreadCoinIcon size={18} className="text-slate-500" aria-hidden="true" />,
           });
         }
+      }
+    });
+
+    // Thưởng của bài vừa nộp (XP, chuỗi, Bánh Mì, nhiệm vụ) được tính xong ở máy chủ:
+    // làm mới các số đang hiện, không cần tải lại trang.
+    socketInstance.on("user:progress_updated", (data: { userId?: number }) => {
+      if (!user?.id || data?.userId !== user.id) return;
+      for (const queryKey of PROGRESS_QUERY_KEYS) {
+        void queryClient.invalidateQueries({ queryKey: [...queryKey] });
       }
     });
 
