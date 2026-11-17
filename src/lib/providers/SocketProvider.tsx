@@ -11,7 +11,7 @@ import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 import { currencyToastKind } from "./currencyToastLogic";
 import { socketBaseUrl } from "@/lib/realtime/socketUrl";
-import { PROGRESS_QUERY_KEYS } from "@/lib/realtime/progressRefresh";
+import { PLAN_UPDATE_QUERY_KEYS, PROGRESS_QUERY_KEYS } from "@/lib/realtime/progressRefresh";
 import { refreshAccessToken } from "@/lib/auth/refreshSession";
 
 interface SocketContextType {
@@ -157,6 +157,15 @@ export default function SocketProvider({ children }: { children: React.ReactNode
     socketInstance.on("user:progress_updated", (data: { userId?: number }) => {
       if (!user?.id || data?.userId !== user.id) return;
       for (const queryKey of PROGRESS_QUERY_KEYS) {
+        void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+      }
+    });
+
+    // Gói vừa được tặng, xác nhận, gia hạn hoặc thu hồi (thường do admin hay PayOS):
+    // làm mới gói, khiên và nội dung theo gói ngay trên trang đang mở.
+    socketInstance.on("user:plan_updated", (data: { userId?: number }) => {
+      if (!user?.id || data?.userId !== user.id) return;
+      for (const queryKey of PLAN_UPDATE_QUERY_KEYS) {
         void queryClient.invalidateQueries({ queryKey: [...queryKey] });
       }
     });
