@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarClock, Loader2 } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+import { Loader2 } from "lucide-react";
 
 import axiosClient from "@/lib/api/axiosClient";
 import { formatVnDate, type PendingDeletion } from "@/lib/auth/accountPrivacy";
@@ -26,8 +27,13 @@ export function PendingDeletionDialog({
 }: PendingDeletionDialogProps) {
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState("");
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
-  if (!pending) return null;
+  if (!pending || !mounted) return null;
   const day = formatVnDate(pending.scheduledAt);
 
   const cancelDeletion = async () => {
@@ -47,7 +53,9 @@ export function PendingDeletionDialog({
     }
   };
 
-  return (
+  // Portal to <body>: a parent with backdrop-filter (the login card) would
+  // otherwise confine `fixed inset-0` to its own box (owner 2026-11-17).
+  return createPortal(
     <div
       className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4"
       role="presentation"
@@ -59,10 +67,7 @@ export function PendingDeletionDialog({
         aria-describedby="pending-deletion-description"
         className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
       >
-        <div className="flex gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
-            <CalendarClock size={20} strokeWidth={2} aria-hidden="true" />
-          </span>
+        <div>
           <div>
             <h2 id="pending-deletion-title" className="text-lg font-bold text-slate-900 dark:text-slate-100">
               Tài khoản đang chờ xoá
@@ -105,6 +110,7 @@ export function PendingDeletionDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

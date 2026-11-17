@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { FileText, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { Loader2 } from "lucide-react";
 
 import { ConsentCheckbox } from "@/components/auth/ConsentCheckbox";
 
@@ -33,14 +34,21 @@ export function ConsentDialog({
 }: ConsentDialogProps) {
   const [checked, setChecked] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   useEffect(() => {
     if (!open) return;
     dialogRef.current?.querySelector<HTMLInputElement>("input")?.focus();
   }, [open]);
 
-  if (!open) return null;
-  return (
+  if (!open || !mounted) return null;
+  // Portal to <body>: a parent with backdrop-filter (the login card) would
+  // otherwise confine `fixed inset-0` to its own box (owner 2026-11-17).
+  return createPortal(
     <div
       className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/50 p-4"
       role="presentation"
@@ -53,10 +61,7 @@ export function ConsentDialog({
         aria-describedby="consent-dialog-description"
         className="max-h-[min(90dvh,calc(100dvh-2rem))] w-full max-w-md overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900"
       >
-        <div className="flex gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400">
-            <FileText size={20} strokeWidth={2} aria-hidden="true" />
-          </span>
+        <div>
           <div>
             <h2
               id="consent-dialog-title"
@@ -101,6 +106,7 @@ export function ConsentDialog({
           <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:justify-center">{children}</div>
         ) : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
