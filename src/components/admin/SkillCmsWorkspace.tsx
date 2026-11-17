@@ -993,7 +993,9 @@ export default function SkillCmsWorkspace({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads the item the route names
     if (mode !== "list") void loadItem();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadItem is rebuilt each render; reload only when the route changes
   }, [domain, mode, id]);
 
   const saveContent = async () => {

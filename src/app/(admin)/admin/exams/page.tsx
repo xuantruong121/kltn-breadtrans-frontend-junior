@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Award,
   Plus,
   Loader2,
   Search,
@@ -15,12 +14,9 @@ import {
   AlertTriangle,
   Image as ImageIcon,
   Clock,
-  ArrowUp,
-  ArrowDown,
   X,
   Eye,
   Check,
-  ShieldAlert,
   FileStack,
   Upload,
   ArrowRight,
@@ -396,7 +392,7 @@ export default function AdminExamsPage() {
   const totalExams = examList.facets?.total ?? 0;
 
   // 2. Query single exam detail
-  const { data: examDetail, isLoading: isDetailLoading } = useQuery<ExamDetail>(
+  const { data: examDetail } = useQuery<ExamDetail>(
     {
       queryKey: ["admin-exam-detail", selectedExamId],
       queryFn: async () => {

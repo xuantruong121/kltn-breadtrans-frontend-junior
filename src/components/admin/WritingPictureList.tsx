@@ -31,7 +31,7 @@ export function WritingPictureList() {
     queryFn: async () =>
       (await axiosClient.get("/admin/skill-content/writing/pictures")) as unknown as WritingPictureCard[],
   });
-  const cards = data ?? [];
+  const cards = useMemo(() => data ?? [], [data]);
   const shown = useMemo(() => {
     const needle = search.trim().toLowerCase();
     if (!needle) return cards;

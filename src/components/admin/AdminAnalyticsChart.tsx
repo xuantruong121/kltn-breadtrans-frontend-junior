@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, Activity, UserPlus, DollarSign } from "lucide-react";
+import { BarChart3, Activity, DollarSign } from "lucide-react";
 import {
   getBarHeightPercent,
   getRangeLabel,

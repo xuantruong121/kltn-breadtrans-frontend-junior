@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import {
   AlertCircle,
@@ -34,6 +34,8 @@ interface WordDictionaryPopupProps {
   onPracticeWord?: (word: string) => void;
   playbackRate?: number;
 }
+
+const emptySubscribe = () => () => {};
 
 const POS_LABELS: Record<string, string> = {
   adjective: "Tính từ",
@@ -243,15 +245,12 @@ export const WordDictionaryPopup: React.FC<WordDictionaryPopupProps> = ({
     () => new Set(),
   );
   const [hasExpandedDetails, setHasExpandedDetails] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
+  // The portal needs document.body: false on the server, true once on the client.
+  const isMounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const audioCacheRef = useRef(new Map<string, HTMLAudioElement>());
   const activeAudioRef = useRef<HTMLAudioElement | null>(null);
   const audioGenerationRef = useRef(0);
   const audioAbortControllerRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const modalRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);

@@ -261,6 +261,7 @@ export default function TakeQuizPage(props: {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hides the translation when the learner moves to another step
     setShowReadingTranslation(false);
   }, [currentStep, quizId]);
 

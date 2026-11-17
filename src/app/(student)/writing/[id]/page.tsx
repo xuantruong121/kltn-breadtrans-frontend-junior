@@ -70,6 +70,7 @@ export default function WritingDetailPage(props: {
     if (!draftKey) return;
     try {
       // Each task keeps its own draft; switching task shows that task's text.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is read after mount, never during render
       setContent(localStorage.getItem(draftKey) ?? "");
     } catch {
       // Draft recovery is best effort; the authoritative submission is server-side.

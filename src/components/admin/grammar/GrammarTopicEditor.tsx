@@ -316,6 +316,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
     if (!count) return;
     aiStarted.current = true;
     window.history.replaceState(null, "", window.location.pathname);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the AI panel once when the page is reached with ?ai=
     setAiCount(count);
     setPanel("ai");
     void askAi(count);

@@ -9,7 +9,6 @@ import {
   BookOpen,
   Brain,
   Clock3,
-  GraduationCap,
   Headphones,
   Layers3,
   Loader2,

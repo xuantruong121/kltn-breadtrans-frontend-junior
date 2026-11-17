@@ -31,8 +31,6 @@ export function getApiErrorMessage(
     message = rawMessage.message;
   }
 
-  const lowerMsg = message.toLowerCase();
-
   // If there's an explicit custom backend message
   if (message && message.trim().length > 0) {
     const technicalLeak =

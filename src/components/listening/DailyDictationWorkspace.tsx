@@ -334,6 +334,7 @@ export function DailyDictationWorkspace({
     if (fullTranscript.length === 0) {
       const cached = getCachedTranscriptResources(quiz.id, quiz.listeningAudioArtifact);
       if (cached?.transcript && cached.transcript.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- reads this quiz's transcript from the local cache
         setFullTranscript(cached.transcript);
       }
     }
@@ -683,6 +684,7 @@ export function DailyDictationWorkspace({
   useEffect(() => {
     if (activeTab !== "dictation") return;
     const owner: ListeningPlaybackOwner = "QUESTION_SEGMENT";
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- claims the player and loads the clip of the new question
     const generation = claimPlaybackOwner(owner);
     const questionCacheKey = `${quiz.id}:${currentQuestion.id}:${activeAudioVersion ?? 0}`;
     const cached = questionAudioCacheRef.current.get(questionCacheKey);
@@ -864,7 +866,7 @@ export function DailyDictationWorkspace({
       }
       audioRef.current.play().catch(() => setIsPlaying(false));
     }
-  }, [activeTab, audioError, audioLoading, isPlaying, isSegmentAudio, segmentStartSeconds, segmentEndSeconds]);
+  }, [audioError, audioLoading, isPlaying, isSegmentAudio, segmentStartSeconds, segmentEndSeconds]);
 
   const replayAudio = useCallback(() => {
     if (activeTab === "transcript") {

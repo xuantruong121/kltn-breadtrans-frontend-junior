@@ -7,9 +7,7 @@ import {
   AlertTriangle,
   ArrowRight,
   ArrowUpRight,
-  BookOpen,
   CheckCircle2,
-  Clock,
   Coins,
   CreditCard,
   FilePlus2,
@@ -25,7 +23,6 @@ import axiosClient from "@/lib/api/axiosClient";
 import AdminAnalyticsChart from "@/components/admin/AdminAnalyticsChart";
 import AdminContentBreakdown from "@/components/admin/AdminContentBreakdown";
 import { getRangeLabel } from "@/components/admin/adminDashboardChartUtils";
-import { UserAvatarWithFrame } from "@/components/ui";
 import { formatVnd } from "@/modules/subscription/planLogic";
 
 type DashboardRange = "30d" | "6m" | "12m";
@@ -120,18 +117,6 @@ const QUICK_ACTIONS: QuickActionItem[] = [
   },
 ];
 
-function timeAgo(dateStr: string) {
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  if (isNaN(diffMs) || diffMs < 0) return "vừa xong";
-  const minutes = Math.floor(diffMs / 60000);
-  if (minutes < 1) return "vừa xong";
-  if (minutes < 60) return `${minutes} phút trước`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} giờ trước`;
-  const days = Math.floor(hours / 24);
-  return `${days} ngày trước`;
-}
-
 export default function AdminDashboardPage() {
   const [range, setRange] = useState<DashboardRange>("6m");
   const { data, isLoading, isFetching, isError, refetch } = useQuery<DashboardStats>({
@@ -144,13 +129,6 @@ export default function AdminDashboardPage() {
     },
   });
 
-  const totalContentItems = data?.contentBreakdown
-    ? data.contentBreakdown.vocab +
-      data.contentBreakdown.grammar +
-      data.contentBreakdown.quizzes +
-      data.contentBreakdown.speaking +
-      data.contentBreakdown.media
-    : 0;
 
   const rawAttentionItems: AttentionItem[] = [
     {

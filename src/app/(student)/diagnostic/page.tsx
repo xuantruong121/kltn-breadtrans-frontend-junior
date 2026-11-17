@@ -154,6 +154,7 @@ export default function DiagnosticPage() {
   useEffect(() => {
     const inProgress = assessment?.inProgressAttempt;
     if (!inProgress) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resumes the attempt the server returned
     setAttemptId(inProgress.id);
     const persisted = { ...(inProgress.answers as Record<string, number | string>) };
     for (const response of inProgress.speakingResponses) {
@@ -197,6 +198,7 @@ export default function DiagnosticPage() {
       discardTakeRef.current = true;
       recorder.stop();
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- stops the recorder and clears the take when the step changes
     setSpeakingPhase("idle");
     setSpeakingError(null);
     setSpeakingNotice(null);

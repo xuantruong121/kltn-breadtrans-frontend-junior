@@ -88,13 +88,6 @@ const TAB_ALIASES: Record<string, AccountTabKey> = {
   "account-privacy": "account-privacy",
 };
 
-function getInitials(name?: string | null): string {
-  if (!name) return "BT";
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 export function AccountHub() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -191,6 +184,7 @@ export function AccountHub() {
 
   useEffect(() => {
     if (profileData || user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fills the form once the saved profile arrives
       setFormData({
         fullName: profileData?.fullName || user?.profile?.fullName || "",
         avatar: profileData?.avatar || user?.profile?.avatar || "",

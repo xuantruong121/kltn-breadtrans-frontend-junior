@@ -45,7 +45,6 @@ export function AdminImageThumb({
         aria-label={`Phóng to ảnh: ${alt}`}
         className={`block flex-none cursor-zoom-in overflow-hidden rounded-lg border border-slate-200 bg-slate-100 ${className}`}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt}
@@ -73,7 +72,6 @@ export function AdminImageThumb({
             >
               <X size={18} aria-hidden="true" />
             </button>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
               alt={alt}

@@ -63,6 +63,7 @@ export default function WritingTopicsPage() {
   const [writingTab, setWritingTab] = useState<"PRACTICE" | "PICTURE">("PRACTICE");
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tab") === "picture") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the URL is read after mount so server and client render the same
       setWritingTab("PICTURE");
     }
   }, []);
