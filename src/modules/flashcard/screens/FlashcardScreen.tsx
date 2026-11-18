@@ -10,6 +10,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { vocabService } from "@/lib/api/services/vocab.service";
+import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
 import { FlashcardDeckCard } from "../components/FlashcardDeckCard";
 import { FlashcardStudySummary } from "../components/FlashcardStudySummary";
 import { FlashcardFilterBar } from "../components/FlashcardFilterBar";
@@ -79,6 +80,12 @@ export const FlashcardScreen: React.FC = () => {
       sortOption,
     });
   }, [topics, searchQuery, selectedCategory, selectedLevel, statusFilter, sortOption]);
+  // Pages like the Listening, Reading and Writing catalogs; a new filter goes
+  // back to page 1.
+  const paging = useCatalogPage(
+    displayedTopics,
+    [searchQuery, selectedCategory, selectedLevel, statusFilter, sortOption].join("|"),
+  );
 
   const hasActiveFilters =
     searchQuery.trim().length > 0 ||
@@ -205,14 +212,17 @@ export const FlashcardScreen: React.FC = () => {
           </button>
         </div>
       ) : (
-        <section
-          className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-          aria-label="Danh sách bộ từ vựng"
-        >
-          {displayedTopics.map((topic) => (
-            <FlashcardDeckCard key={topic.id} topic={topic} />
-          ))}
-        </section>
+        <>
+          <section
+            className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            aria-label="Danh sách bộ từ vựng"
+          >
+            {paging.items.map((topic) => (
+              <FlashcardDeckCard key={topic.id} topic={topic} />
+            ))}
+          </section>
+          <CatalogPagination paging={paging} />
+        </>
       )}
     </div>
   );
