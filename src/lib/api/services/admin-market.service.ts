@@ -43,6 +43,8 @@ export interface UpdateMarketProductPayload {
   rarity?: string;
   price?: number;
   stock?: number;
+  /** The stock the edit form loaded; required with `stock` (409 if it changed). */
+  expectedStock?: number;
   imageUrl?: string;
   order?: number;
   isActive?: boolean;

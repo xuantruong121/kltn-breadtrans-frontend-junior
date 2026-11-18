@@ -15,6 +15,7 @@ import {
   adminMarketService,
 } from "@/lib/api/services/admin-market.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { marketProductUpdateBody } from "@/lib/admin/marketProductUpdate";
 
 interface AdminRewardCreateEditModalProps {
   isOpen: boolean;
@@ -145,7 +146,10 @@ function AdminRewardCreateEditModalInner({
       };
 
       if (isEditing && product) {
-        await adminMarketService.updateProduct(product.id, payload);
+        await adminMarketService.updateProduct(
+          product.id,
+          marketProductUpdateBody(payload, product.stock),
+        );
         toast.success(`Đã cập nhật quà tặng "${payload.name}"!`);
       } else {
         await adminMarketService.createProduct(payload);
