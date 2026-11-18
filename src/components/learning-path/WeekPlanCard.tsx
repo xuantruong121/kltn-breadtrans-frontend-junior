@@ -25,11 +25,27 @@ export function WeekPlanCard({ enabled }: { enabled: boolean }) {
   const loaded = Boolean(data);
 
   // The card renders only after its data arrives, too late for the browser's own
-  // jump to "#week-plan", so scroll here once it is on the page.
+  // jump to "#week-plan", so scroll here once it is on the page. Cards above it
+  // (roadmap, unlocked levels) can finish loading later and push it down, so
+  // keep it in place while the page grows, for a few seconds or until the
+  // learner scrolls by hand.
   useEffect(() => {
-    if (!loaded || window.location.hash !== `#${WEEK_PLAN_ANCHOR}`) return;
+    const card = sectionRef.current;
+    if (!loaded || !card || window.location.hash !== `#${WEEK_PLAN_ANCHOR}`) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    sectionRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+    card.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+
+    const follow = new ResizeObserver(() => card.scrollIntoView({ behavior: "auto", block: "start" }));
+    follow.observe(document.body);
+    const userEvents = ["wheel", "touchstart", "keydown", "mousedown"] as const;
+    const stop = () => {
+      follow.disconnect();
+      window.clearTimeout(timer);
+      for (const name of userEvents) window.removeEventListener(name, stop);
+    };
+    const timer = window.setTimeout(stop, 4000);
+    for (const name of userEvents) window.addEventListener(name, stop, { passive: true });
+    return stop;
   }, [loaded]);
 
   if (!data) return null;
