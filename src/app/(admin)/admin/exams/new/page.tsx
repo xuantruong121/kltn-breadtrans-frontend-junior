@@ -118,6 +118,9 @@ export default function NewExamPage() {
           difficulty,
         }, { headers: { "Idempotency-Key": generationIdempotencyKey.current } });
         rememberAiJob(result);
+        // The next click is a new exam: a new key. Kept, it returned the job
+        // just made under a "created" toast (audit A13, 2026-11-18).
+        generationIdempotencyKey.current = null;
         toast.success("Đã tạo bản nháp và đưa vào hàng đợi soạn đề");
         return;
       }

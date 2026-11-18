@@ -462,6 +462,8 @@ export default function AdminUsersPage() {
                         >
                           <Edit2 size={16} />
                         </button>
+                        {/* Not on the signed-in admin's own row: the server refuses it (audit A9). */}
+                        {currentUser?.id !== user.id && (
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(user)}
@@ -470,6 +472,7 @@ export default function AdminUsersPage() {
                         >
                           <Trash2 size={16} />
                         </button>
+                        )}
                         </>
                         )}
                       </div>
