@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarRange } from "lucide-react";
 
@@ -9,6 +10,9 @@ import { estimateText, weekPercent } from "@/lib/learning-path/recommendation";
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
 
+/** Anchor of this card: the weekly report notification opens "/dashboard#week-plan". */
+export const WEEK_PLAN_ANCHOR = "week-plan";
+
 /** "Tuần này" on the dashboard: weekly targets per skill and a rough date for the next levels. */
 export function WeekPlanCard({ enabled }: { enabled: boolean }) {
   const { data } = useQuery({
@@ -17,12 +21,25 @@ export function WeekPlanCard({ enabled }: { enabled: boolean }) {
     enabled,
     staleTime: 60_000,
   });
+  const sectionRef = useRef<HTMLElement>(null);
+  const loaded = Boolean(data);
+
+  // The card renders only after its data arrives, too late for the browser's own
+  // jump to "#week-plan", so scroll here once it is on the page.
+  useEffect(() => {
+    if (!loaded || window.location.hash !== `#${WEEK_PLAN_ANCHOR}`) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    sectionRef.current?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  }, [loaded]);
+
   if (!data) return null;
 
   return (
     <section
+      ref={sectionRef}
+      id={WEEK_PLAN_ANCHOR}
       aria-labelledby="week-plan-heading"
-      className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-7"
+      className="scroll-mt-24 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-7"
     >
       <h2 id="week-plan-heading" className="flex items-center gap-2 text-xl font-black text-slate-900 dark:text-slate-100">
         <CalendarRange size={22} className="text-blue-700 dark:text-blue-300" aria-hidden="true" />

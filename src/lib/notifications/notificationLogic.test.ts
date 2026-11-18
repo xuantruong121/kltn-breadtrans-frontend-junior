@@ -29,6 +29,19 @@ test("canonical skill routes are allowed and legacy practice routes are rejected
   assert.equal(resolveNotificationAction(item({ url: "/practice/reading/24" })), null);
 });
 
+test("a section anchor on an allowed route is kept", () => {
+  // The weekly report opens the dashboard at the "Tuần này của bạn" card.
+  assert.equal(resolveNotificationAction(item({ url: "/dashboard#week-plan" })), "/dashboard#week-plan");
+  assert.equal(getNotificationActionLabel(item({ url: "/dashboard#week-plan" })), "Xem chi tiết");
+  assert.equal(resolveNotificationAction(item({ url: "/reading/24#q3" })), "/reading/24#q3");
+});
+
+test("an anchor never makes an unknown route or an odd fragment pass", () => {
+  assert.equal(resolveNotificationAction(item({ url: "/deleted-resource/1#week-plan" })), null);
+  assert.equal(resolveNotificationAction(item({ url: "/dashboard#<img>" })), null);
+  assert.equal(resolveNotificationAction(item({ url: "/dashboard#" })), null);
+});
+
 test("external, protocol-relative and stale unknown targets fail safely", () => {
   assert.equal(resolveNotificationAction(item({ url: "https://example.com" })), null);
   assert.equal(resolveNotificationAction(item({ url: "//example.com" })), null);

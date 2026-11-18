@@ -5,8 +5,13 @@ import type { NotificationItem } from "@/lib/api/services/notification.service";
  * prevents stored/legacy URLs from becoming an arbitrary redirect primitive.
  */
 export function resolveNotificationAction(item: NotificationItem): string | null {
-  const raw = item.url?.trim();
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
+  const url = item.url?.trim();
+  if (!url) return null;
+  // An optional section anchor ("/dashboard#week-plan"): letters, digits and dashes only.
+  const hashAt = url.indexOf("#");
+  const raw = hashAt === -1 ? url : url.slice(0, hashAt);
+  if (hashAt !== -1 && !/^[a-z0-9-]+$/i.test(url.slice(hashAt + 1))) return null;
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
   if (raw.startsWith("/practice")) return null;
 
   const exactRoutes = ["/dashboard", "/hub", "/flashcard", "/plans", "/account", "/messages", "/mistakes"];
@@ -18,7 +23,7 @@ export function resolveNotificationAction(item: NotificationItem): string | null
     "/flashcard/",
     "/vocabulary/",
   ];
-  if (exactRoutes.includes(raw) || raw.startsWith("/hub?") || routePrefixes.some((prefix) => raw.startsWith(prefix))) return raw;
+  if (exactRoutes.includes(raw) || raw.startsWith("/hub?") || routePrefixes.some((prefix) => raw.startsWith(prefix))) return url;
   return null;
 }
 
