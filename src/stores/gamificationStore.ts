@@ -5,18 +5,18 @@ interface GamificationState {
   breads: number; // Số dư "bánh mì"
   streak: number; // Chuỗi ngày học
   streakFreezes: number; // Khiên giữ chuỗi đang có
-  exp: number; // Điểm kinh nghiệm
-  level: number;
+  exp: number; // XP của tuần này (bảng xếp hạng tuần)
+  /** Tổng XP từ trước tới nay; cấp độ tính từ số này (lib/gamification/xpLevel.ts). Null khi chưa tải. */
+  totalXp: number | null;
   unlockedItems: string[]; // ID các vật phẩm đã mua
   equippedAvatarFrame: string | null; // ID khung avatar đang đeo
   equippedBadge: string | null; // ID huy hiệu đang đeo
   
   // Actions
   setBreads: (amount: number) => void;
-  setStats: (stats: { breads?: number; streak?: number; streakFreezes?: number; exp?: number; level?: number }) => void;
+  setStats: (stats: { breads?: number; streak?: number; streakFreezes?: number; exp?: number; totalXp?: number }) => void;
   addBreads: (amount: number) => void;
   spendBreads: (amount: number) => boolean;
-  addExp: (amount: number) => void;
   incrementStreak: () => void;
   unlockItem: (itemId: string) => void;
   equipAvatarFrame: (frameId: string | null) => void;
@@ -32,7 +32,7 @@ export const useGamificationStore = create<GamificationState>()(
       streak: 0,
       streakFreezes: 0,
       exp: 0,
-      level: 1,
+      totalXp: null,
       unlockedItems: [],
       equippedAvatarFrame: null,
       equippedBadge: null,
@@ -43,7 +43,7 @@ export const useGamificationStore = create<GamificationState>()(
           streak: 0,
           streakFreezes: 0,
           exp: 0,
-          level: 1,
+          totalXp: null,
           unlockedItems: [],
           equippedAvatarFrame: null,
           equippedBadge: null,
@@ -57,7 +57,7 @@ export const useGamificationStore = create<GamificationState>()(
           streak: stats.streak !== undefined ? stats.streak : state.streak,
           streakFreezes: stats.streakFreezes !== undefined ? stats.streakFreezes : state.streakFreezes,
           exp: stats.exp !== undefined ? stats.exp : state.exp,
-          level: stats.level !== undefined ? stats.level : state.level,
+          totalXp: stats.totalXp !== undefined ? stats.totalXp : state.totalXp,
         })),
 
       addBreads: (amount: number) => set((state) => ({ breads: state.breads + amount })),
@@ -69,14 +69,6 @@ export const useGamificationStore = create<GamificationState>()(
           return true;
         }
         return false;
-      },
-
-      addExp: (amount: number) => {
-        set((state) => {
-          const newExp = state.exp + amount;
-          const newLevel = Math.floor(newExp / 500) + 1;
-          return { exp: newExp, level: newLevel };
-        });
       },
 
       incrementStreak: () => set((state) => ({ streak: state.streak + 1 })),

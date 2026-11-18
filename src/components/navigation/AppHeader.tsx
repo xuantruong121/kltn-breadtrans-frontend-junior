@@ -73,6 +73,7 @@ import {
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SuggestionModal } from "@/components/suggestion/SuggestionModal";
+import { xpLevel } from "@/lib/gamification/xpLevel";
 
 const emptySubscribe = () => () => {};
 
@@ -116,7 +117,9 @@ export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { breads, streak, streakFreezes, level, exp } = useGamificationStore();
+  const { breads, streak, streakFreezes, totalXp } = useGamificationStore();
+  // From total XP, as the ranking page (the store's own level was never filled).
+  const level = totalXp === null ? null : xpLevel(totalXp);
   const { resolvedTheme, toggleTheme } = useTheme();
 
   const queryClient = useQueryClient();
@@ -605,9 +608,9 @@ export function AppHeader() {
 
                       <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
 
-                      <div className="flex items-center gap-1.5" title={`Cấp ${level || 1} (${exp || 0} XP)`}>
+                      <div className="flex items-center gap-1.5" title={totalXp === null ? undefined : `Cấp ${level} (${totalXp} XP)`}>
                         <Zap size={15} strokeWidth={2} className="text-orange-500" aria-hidden="true" />
-                        <span className="font-extrabold text-sky-600 dark:text-sky-400">Cấp {level || 1}</span>
+                        <span className="font-extrabold text-sky-600 dark:text-sky-400">Cấp {level ?? "…"}</span>
                       </div>
                     </div>
 
