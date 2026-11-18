@@ -37,7 +37,6 @@ import {
   Sun,
   Moon,
   Mail,
-  Zap,
   NotebookPen,
   PawPrint,
 } from "lucide-react";
@@ -73,7 +72,7 @@ import {
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SuggestionModal } from "@/components/suggestion/SuggestionModal";
-import { xpLevel } from "@/lib/gamification/xpLevel";
+import { LevelProgress } from "@/components/navigation/LevelProgress";
 
 const emptySubscribe = () => () => {};
 
@@ -118,8 +117,6 @@ export function AppHeader() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { breads, streak, streakFreezes, totalXp } = useGamificationStore();
-  // From total XP, as the ranking page (the store's own level was never filled).
-  const level = totalXp === null ? null : xpLevel(totalXp);
   const { resolvedTheme, toggleTheme } = useTheme();
 
   const queryClient = useQueryClient();
@@ -577,41 +574,37 @@ export function AppHeader() {
                       </div>
                     </div>
 
-                    {/* Gamification Stats Strip (Streak, Breads, Level) */}
-                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 rounded-xl p-2.5 flex items-center justify-around my-2 text-xs">
-                      <div className="flex items-center gap-1.5" title={`Chuỗi: ${streak ?? 0} ngày học liên tục`}>
-                        <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
-                        <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak ?? 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
+                    {/* Gamification stats: streak, shields, Bánh Mì; the level bar below (owner 2026-11-18) */}
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 rounded-xl p-2.5 my-2">
+                      <div className="flex items-center justify-around text-xs">
+                        <div className="flex items-center gap-1.5" title={`Chuỗi: ${streak ?? 0} ngày học liên tục`}>
+                          <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
+                          <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak ?? 0}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
+                        </div>
+
+                        <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
+                        <div className="flex items-center gap-1.5" title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}>
+                          <StreakShieldIcon className="h-[17px] w-[15px] shrink-0" />
+                          <span className="font-extrabold text-blue-700 dark:text-blue-300">{streakFreezes ?? 0}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">khiên</span>
+                        </div>
+
+                        <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
+                        <Link
+                          href="/market"
+                          onClick={closeMenus}
+                          title={`Số dư Bánh Mì: ${breads || 0}`}
+                          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                        >
+                          <BreadCoinIcon size={15} strokeWidth={2} />
+                          <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Bánh Mì</span>
+                        </Link>
                       </div>
-
-                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
-
-                      <div className="flex items-center gap-1.5" title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}>
-                        <StreakShieldIcon className="h-[17px] w-[15px] shrink-0" />
-                        <span className="font-extrabold text-blue-700 dark:text-blue-300">{streakFreezes ?? 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">khiên</span>
-                      </div>
-
-                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
-
-                      <Link
-                        href="/market"
-                        onClick={closeMenus}
-                        title={`Số dư Bánh Mì: ${breads || 0}`}
-                        className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
-                      >
-                        <BreadCoinIcon size={15} strokeWidth={2} />
-                        <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Bánh Mì</span>
-                      </Link>
-
-                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
-
-                      <div className="flex items-center gap-1.5" title={totalXp === null ? undefined : `Cấp ${level} (${totalXp} XP)`}>
-                        <Zap size={15} strokeWidth={2} className="text-orange-500" aria-hidden="true" />
-                        <span className="font-extrabold text-sky-600 dark:text-sky-400">Cấp {level ?? "…"}</span>
-                      </div>
+                      <LevelProgress totalXp={totalXp} />
                     </div>
 
                     {/* Collapsible Thông báo */}
