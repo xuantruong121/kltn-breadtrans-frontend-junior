@@ -1,8 +1,8 @@
 "use client";
 
 import { useId } from "react";
-import { Zap } from "lucide-react";
 
+import { LevelMedalIcon } from "@/components/ui/LevelMedalIcon";
 import { formatXp, xpLevelProgress } from "@/lib/gamification/xpLevel";
 
 /**
@@ -25,7 +25,7 @@ export function LevelProgress({ totalXp }: { totalXp: number | null }) {
           id={labelId}
           className="flex min-w-0 items-center gap-1.5 whitespace-nowrap font-extrabold text-sky-700 dark:text-sky-300"
         >
-          <Zap size={15} strokeWidth={2} className="shrink-0 text-sky-600 dark:text-sky-400" aria-hidden="true" />
+          <LevelMedalIcon className="h-[17px] w-[17px] shrink-0" />
           Cấp {progress ? progress.level : "…"}
         </span>
         {progress && totalXp !== null && (
