@@ -126,6 +126,9 @@ function getLookupScope(): string {
   return auth.accessToken || (auth.user ? `user:${auth.user.id}` : "guest");
 }
 
+/** What a review or a mark returns; the study room reads the XP only. */
+export type WordProgressReply = { isMastered?: boolean; xpEarned?: number };
+
 export const vocabService = {
   getTopics: async (): Promise<VocabTopicsResponse> => {
     return await axiosClient.get("/vocab/topics");
@@ -139,12 +142,13 @@ export const vocabService = {
     return await axiosClient.post(`/vocab/words/${id}/star`, { isStarred });
   },
 
-  masterWord: async (id: number, isMastered: boolean): Promise<any> => {
+  /** `xpEarned`: flashcard XP for a word known for the first time (2, or 0). */
+  masterWord: async (id: number, isMastered: boolean): Promise<WordProgressReply> => {
     return await axiosClient.post(`/vocab/words/${id}/master`, { isMastered });
   },
 
   /** One self-rated review; the server keeps the word's own schedule. */
-  reviewWord: async (id: number, grade: SrsGrade): Promise<any> => {
+  reviewWord: async (id: number, grade: SrsGrade): Promise<WordProgressReply> => {
     return await axiosClient.post(`/vocab/words/${id}/review`, {
       grade,
       isCorrect: grade !== "AGAIN",

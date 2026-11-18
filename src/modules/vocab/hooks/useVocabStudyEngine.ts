@@ -8,6 +8,7 @@ import { VocabWord, vocabService } from "@/lib/api/services/vocab.service";
 import { QueueItem, StudyMode, QuizOption, SrsRating, StudySettings } from "../types/study";
 import { playWordAudio, playChime, stopCurrentAudio } from "../utils/audio";
 import { buildQuizOptions } from "../utils/quizOptions";
+import { addSessionXp } from "../utils/sessionXp";
 
 
 
@@ -34,6 +35,8 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   // Mastered in THIS study session (for live progress bar and learned count)
   const [sessionMasteredIds, setSessionMasteredIds] = useState<Set<number>>(new Set());
   const [reviewIds, setReviewIds] = useState<Set<number>>(new Set());
+  // Flashcard XP the server paid in this session (owner 2026-11-18).
+  const [sessionXp, setSessionXp] = useState(0);
 
   // Active study queue always starts with all initial words in order
   const [queue, setQueue] = useState<QueueItem[]>(() =>
@@ -101,14 +104,20 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   const toggleMasteredMut = useMutation({
     mutationFn: ({ wordId, isMastered }: { wordId: number; isMastered: boolean }) =>
       vocabService.masterWord(wordId, isMastered),
-    onSuccess: refreshProgress,
+    onSuccess: (reply) => {
+      setSessionXp((total) => addSessionXp(total, reply));
+      refreshProgress();
+    },
   });
 
   // A self-rating after the last step: the server reschedules the word by it.
   const reviewMut = useMutation({
     mutationFn: ({ wordId, grade }: { wordId: number; grade: SrsRating }) =>
       vocabService.reviewWord(wordId, grade),
-    onSuccess: refreshProgress,
+    onSuccess: (reply) => {
+      setSessionXp((total) => addSessionXp(total, reply));
+      refreshProgress();
+    },
   });
 
   // Audio Play helper
@@ -507,6 +516,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     setIsCompleted(false);
     setSessionMasteredIds(new Set());
     setReviewIds(new Set());
+    setSessionXp(0);
   }, [initialWords, resetModeInputs]);
 
   // Sync if topicId changes
@@ -634,6 +644,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     learnedCount,
     reviewCount,
     newCount,
+    sessionXp,
     completionPercentage,
     masteredIds,
     reviewIds,

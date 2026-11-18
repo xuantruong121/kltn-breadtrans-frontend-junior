@@ -73,6 +73,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     totalWordsCount,
     learnedCount,
     reviewCount,
+    sessionXp,
     newCount,
     completionPercentage,
     masteredIds,
@@ -191,6 +192,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                   totalWordsCount={totalWordsCount}
                   learnedCount={learnedCount}
                   reviewCount={reviewCount}
+                  sessionXp={sessionXp}
                   onRestart={handleRestart}
                 />
               </motion.div>
