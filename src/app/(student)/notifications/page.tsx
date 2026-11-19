@@ -11,6 +11,7 @@ import {
   Loader2,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -123,6 +124,12 @@ export default function NotificationsPage() {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">Trung tâm cá nhân</p>
           <h1 className="mt-2 text-2xl font-black text-slate-950 dark:text-slate-50 sm:text-3xl">Thông báo</h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Theo dõi nhắc nhở học tập và mở nhanh nội dung liên quan.</p>
+          <Link
+            href="/hub?tab=account-device"
+            className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-sky-300 dark:hover:text-sky-200"
+          >
+            Cài đặt thông báo trình duyệt
+          </Link>
         </div>
         <button type="button" onClick={() => markAll.mutate()} disabled={markAll.isPending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:border-amber-300 hover:text-amber-700 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-amber-700 dark:hover:text-amber-300">
           {markAll.isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCheck size={16} />} Đánh dấu tất cả đã đọc

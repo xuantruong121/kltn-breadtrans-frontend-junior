@@ -63,6 +63,8 @@ import {
 } from "@/lib/avatar/avatarCustomizationLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { DeviceSessions } from "@/components/profile/DeviceSessions";
+import { BrowserPushPanel } from "@/components/profile/BrowserPushPanel";
+import { dropBrowserPush } from "@/lib/push/useBrowserPush";
 import { remainingText, usedPercent, type DailyAllowance } from "@/modules/subscription/aiQuota";
 import { PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 
@@ -127,6 +129,8 @@ export function AccountHub() {
   };
 
   const handleLogout = async () => {
+    // While still signed in: stop browser notifications for this account here.
+    await dropBrowserPush();
     try {
       // Revoke this device session server-side before removing the browser
       // session, while retaining a safe local fallback for network failures.
@@ -1230,6 +1234,10 @@ export function AccountHub() {
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Nếu bạn nhận thấy bất kỳ hoạt động đăng nhập bất thường nào, hãy đổi mật khẩu hoặc đăng xuất ngay lập tức để bảo vệ tài khoản.
                 </p>
+              </div>
+
+              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs">
+                <BrowserPushPanel />
               </div>
             </section>
           )}

@@ -47,6 +47,7 @@ import { mistakesService } from "@/lib/api/services/mistakes.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import axiosClient from "@/lib/api/axiosClient";
+import { dropBrowserPush } from "@/lib/push/useBrowserPush";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
@@ -179,6 +180,8 @@ export function AppHeader() {
   };
 
   const handleLogout = async () => {
+    // While still signed in: stop browser notifications for this account here.
+    await dropBrowserPush();
     try {
       // The API revokes the current device refresh session and deny-lists the
       // access token. Local cleanup still runs if the network is unavailable.
