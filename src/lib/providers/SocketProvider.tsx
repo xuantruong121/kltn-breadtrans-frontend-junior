@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
 import { currencyToastKind } from "./currencyToastLogic";
-import { socketBaseUrl } from "@/lib/realtime/socketUrl";
+import { socketBaseUrl, SOCKET_TRANSPORTS } from "@/lib/realtime/socketUrl";
 import { PLAN_UPDATE_QUERY_KEYS, PROGRESS_QUERY_KEYS } from "@/lib/realtime/progressRefresh";
 import { refreshAccessToken } from "@/lib/auth/refreshSession";
 
@@ -70,7 +70,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
     // Kết nối tới Backend WebSocket kèm JWT token
     const socketInstance = io(socketBaseUrl(), {
-      transports: ["websocket"],
+      ...SOCKET_TRANSPORTS,
       // Read on every (re)connect, so a reconnect uses the latest token.
       auth: (cb) => cb({ token: useAuthStore.getState().accessToken }),
       autoConnect: true,

@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
 import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
-import { socketBaseUrl } from "@/lib/realtime/socketUrl";
+import { socketBaseUrl, SOCKET_TRANSPORTS } from "@/lib/realtime/socketUrl";
 
 export type ArenaQuestionKind = "fill_blank" | "meaning_to_word" | "word_to_meaning";
 
@@ -119,7 +119,7 @@ export function useArenaSocket() {
 
   useEffect(() => {
     const socket = io(`${socketBaseUrl()}/arena`, {
-      transports: ["websocket", "polling"],
+      ...SOCKET_TRANSPORTS,
       auth: (cb) => cb({ token: useAuthStore.getState().accessToken }),
       autoConnect: true,
     });
