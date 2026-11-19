@@ -33,11 +33,11 @@ async function currentSubscription(): Promise<PushSubscription | null> {
  */
 async function activeRegistration(): Promise<ServiceWorkerRegistration> {
   const registration = await navigator.serviceWorker.register(PUSH_WORKER, { scope: PUSH_SCOPE });
-  const worker = registration.installing ?? registration.waiting;
-  if (registration.active || !worker) return registration;
+  const worker = registration.installing ?? registration.waiting ?? registration.active;
+  if (!worker) throw new Error("push worker missing");
   await new Promise<void>((resolve, reject) => {
-    const timer = window.setTimeout(() => reject(new Error("push worker did not activate")), 15_000);
-    worker.addEventListener("statechange", () => {
+    // The worker can reach "activated" before this listener exists: check first.
+    const settle = () => {
       if (worker.state === "activated") {
         window.clearTimeout(timer);
         resolve();
@@ -45,7 +45,10 @@ async function activeRegistration(): Promise<ServiceWorkerRegistration> {
         window.clearTimeout(timer);
         reject(new Error("push worker became redundant"));
       }
-    });
+    };
+    const timer = window.setTimeout(() => reject(new Error("push worker did not activate")), 15_000);
+    worker.addEventListener("statechange", settle);
+    settle();
   });
   return registration;
 }
