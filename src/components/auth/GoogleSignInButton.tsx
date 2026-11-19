@@ -126,24 +126,30 @@ export default function GoogleSignInButton({
   const [showRedirectHint, setShowRedirectHint] = useState(false);
   const redirectHref = googleRedirectUrl(API_BASE_URL);
 
+  const hintTimer = useRef<number | undefined>(undefined);
+  // A press on the button: if Google shows nothing within 3 s, offer the
+  // full-page sign-in. A successful sign-in leaves the page before that.
+  const armRedirectHint = useCallback(() => {
+    window.clearTimeout(hintTimer.current);
+    hintTimer.current = window.setTimeout(() => setShowRedirectHint(true), 3000);
+  }, []);
+
   useEffect(() => {
-    let hintTimer: number | undefined;
+    // A click inside Google's iframe never reaches this page; it only moves
+    // focus to the iframe, which the window sees as a blur.
     const onBlur = () => {
-      // A click inside the iframe moves focus to it once the event settles.
       window.setTimeout(() => {
         const iframe = buttonRef.current?.querySelector("iframe");
-        if (iframe && document.activeElement === iframe) {
-          window.clearTimeout(hintTimer);
-          hintTimer = window.setTimeout(() => setShowRedirectHint(true), 3000);
-        }
+        if (iframe && document.activeElement === iframe) armRedirectHint();
       }, 0);
     };
+    const timer = hintTimer;
     window.addEventListener("blur", onBlur);
     return () => {
       window.removeEventListener("blur", onBlur);
-      window.clearTimeout(hintTimer);
+      window.clearTimeout(timer.current);
     };
-  }, []);
+  }, [armRedirectHint]);
   // A first Google sign-in waits for consent (owner 2026-11-16); the same
   // credential is sent again once the learner agrees.
   const [consentCredential, setConsentCredential] = useState<string | null>(null);
@@ -370,7 +376,9 @@ export default function GoogleSignInButton({
           Đang xác thực tài khoản Google...
         </div>
       )}
-      <div className="group relative h-14 w-full overflow-hidden rounded-2xl group-focus-within:outline group-focus-within:outline-2 group-focus-within:outline-amber-500 group-focus-within:outline-offset-2">
+      <div
+        onPointerDownCapture={armRedirectHint}
+        className="group relative h-14 w-full overflow-hidden rounded-2xl group-focus-within:outline group-focus-within:outline-2 group-focus-within:outline-amber-500 group-focus-within:outline-offset-2">
         {isReady ? (
           <div aria-hidden="true" className={`pointer-events-none ${GOOGLE_FACE}`}>
             {googleFace}
