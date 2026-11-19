@@ -251,7 +251,8 @@ export default function NotificationsPage() {
                           )}
                         </span>
                       </button>
-                      <div className="-mr-2 -mt-2 flex shrink-0 items-center">
+                      {/* Stacked on phones so the text keeps its width; side by side from sm. */}
+                      <div className="-mr-2 -mt-2 flex shrink-0 flex-col sm:flex-row sm:items-center">
                         {!item.isRead && (
                           <button
                             type="button"
