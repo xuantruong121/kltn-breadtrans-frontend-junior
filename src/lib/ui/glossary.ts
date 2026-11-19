@@ -25,10 +25,11 @@ import {
   Swords,
   Target,
   Trophy,
-  Wheat,
   Zap,
   type LucideIcon,
 } from "lucide-react";
+
+import { Baguette } from "@/components/ui/BreadCoinIcon";
 
 import type { Concept } from "./terms";
 
@@ -37,7 +38,7 @@ export type { Concept } from "./terms";
 
 /** The icon of each concept. Concepts without an icon of their own are left out. */
 export const CONCEPT_ICONS: Partial<Record<Concept, LucideIcon>> = {
-  currency: Wheat,
+  currency: Baguette,
   streak: Flame,
   streakShield: ShieldCheck,
   learnerPoints: Zap,
