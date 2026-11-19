@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "rea
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   BookOpen,
   CreditCard,
@@ -27,8 +28,8 @@ import {
   LogOut,
   Flame,
   Loader2,
+  Check,
   CheckCheck,
-  Clock,
   MoreHorizontal,
   Layers,
   CircleHelp,
@@ -53,7 +54,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
 import { planService, PLAN_QUERY_KEYS } from "@/lib/api/services/plan.service";
 import { resolveEffectivePlanDisplay } from "@/modules/subscription/planLogic";
-import { getNotificationActionLabel, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
+import { getNotificationActionLabel, notificationTimeText, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
 import { useTheme } from "@/lib/theme/useTheme";
 import { BrandLogo } from "@/components/brand";
 import { UserAvatarWithFrame } from "@/components/ui";
@@ -82,22 +83,6 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function formatRelativeTime(dateStr: string) {
-  try {
-    const date = new Date(dateStr);
-    const diffMs = Date.now() - date.getTime();
-    const diffMins = Math.floor(diffMs / (60 * 1000));
-    if (diffMins < 1) return "Vừa xong";
-    if (diffMins < 60) return `${diffMins} phút trước`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} giờ trước`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays} ngày trước`;
-    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
-  } catch {
-    return "";
-  }
-}
 
 function HubSuggestionParamListener({ onTrigger }: { onTrigger: () => void }) {
   const pathname = usePathname();
@@ -250,7 +235,9 @@ export function AppHeader() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "recent", "unread"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "history"] });
     },
+    onError: () => toast.error("Không thể cập nhật thông báo lúc này."),
   });
 
   const markAllReadMut = useMutation({
@@ -258,7 +245,9 @@ export function AppHeader() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "recent", "unread"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "history"] });
     },
+    onError: () => toast.error("Không thể cập nhật thông báo lúc này."),
   });
 
   const handleNotificationClick = (item: NotificationItem) => {
@@ -646,62 +635,63 @@ export function AppHeader() {
                               <Loader2 size={16} className="animate-spin text-amber-500" />
                             </div>
                           ) : recentNotifications.length === 0 ? (
-                            <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-center">
-                              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                                Chưa có thông báo mới
-                              </p>
+                            <p className="px-2 py-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                              Không có thông báo mới.{" "}
                               <Link
                                 href="/notifications"
                                 onClick={closeMenus}
-                                className="mt-1 inline-block text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                                className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-sky-300 dark:hover:text-sky-200"
                               >
                                 Xem lịch sử thông báo
                               </Link>
-                            </div>
+                            </p>
                           ) : (
                             <>
-                              {recentNotifications.slice(0, 2).map((item) => {
-                                const action = resolveNotificationAction(item);
-                                const actionLabel = getNotificationActionLabel(item);
+                              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {recentNotifications.slice(0, 2).map((item) => {
+                                  const actionLabel = getNotificationActionLabel(item);
+                                  const marking = markReadMut.isPending && markReadMut.variables === item.id;
 
-                                return (
-                                  <div
-                                    key={item.id}
-                                    onClick={() => handleNotificationClick(item)}
-                                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 hover:bg-amber-50/60 dark:hover:bg-slate-800 transition-colors cursor-pointer group/notif text-left"
-                                  >
-                                    <div className="flex items-start gap-2">
-                                      <div className="mt-0.5 text-xs shrink-0">
-                                        <NotificationIcon type={item.type} size={14} className="text-amber-600 dark:text-amber-400" />
-                                      </div>
-                                      <div className="min-w-0 flex-1">
-                                        <div className="flex items-center justify-between gap-1">
-                                          <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover/notif:text-amber-800 dark:group-hover/notif:text-amber-400 transition-colors">
+                                  return (
+                                    <li key={item.id} className="flex items-start gap-1 rounded-lg transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleNotificationClick(item)}
+                                        className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 rounded-lg px-2 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700 dark:focus-visible:ring-slate-300"
+                                      >
+                                        <NotificationIcon type={item.type} size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                        <span className="min-w-0 flex-1">
+                                          <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                             {item.title}
-                                          </p>
-                                          {!item.isRead && (
-                                            <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
-                                          )}
-                                        </div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
-                                          {item.body}
-                                        </p>
-                                        <div className="mt-1 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-                                          <span className="flex items-center gap-1">
-                                            <Clock size={10} />
-                                            {formatRelativeTime(item.createdAt)}
                                           </span>
-                                          {action && actionLabel && (
-                                            <span className="font-extrabold text-amber-700 dark:text-amber-400 group-hover/notif:underline">
-                                              {actionLabel}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                          <span className="mt-0.5 block line-clamp-2 text-sm leading-5 text-slate-600 dark:text-slate-400">
+                                            {item.body}
+                                          </span>
+                                          <span className="mt-1 flex items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
+                                            <time dateTime={item.createdAt}>{notificationTimeText(item.createdAt)}</time>
+                                            {actionLabel && (
+                                              <>
+                                                <span aria-hidden="true">·</span>
+                                                <span className="font-semibold text-amber-700 dark:text-amber-400">{actionLabel}</span>
+                                              </>
+                                            )}
+                                          </span>
+                                        </span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        aria-label={`Đánh dấu đã đọc: ${item.title}`}
+                                        title="Đánh dấu đã đọc"
+                                        disabled={marking}
+                                        onClick={() => markReadMut.mutate(item.id)}
+                                        className="mr-1 mt-2 grid size-8 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-60 dark:text-slate-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
+                                      >
+                                        {marking ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
 
                               {/* Footer Actions */}
                               <div className="flex items-center justify-between px-1 pt-1 text-xs">

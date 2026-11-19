@@ -2,8 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   getNotificationActionLabel,
+  groupNotificationsByDay,
   resolveNotificationAction,
   notificationIconKey,
+  notificationTimeText,
 } from "./notificationLogic.ts";
 
 const item = (overrides: Record<string, unknown> = {}) => ({
@@ -75,5 +77,52 @@ test("the study reminder about mistakes opens the notebook", () => {
   assert.equal(
     resolveNotificationAction({ id: 1, type: "study_reminder", title: "t", body: "b", url: "/mistakes", isRead: false, createdAt: "" } as never),
     "/mistakes",
+  );
+});
+
+// Local wall-clock times, so the expectations hold in any time zone (CI runs in UTC).
+const at = (day: number, hour: number, minute = 0, month = 10, year = 2026) =>
+  new Date(year, month, day, hour, minute).toISOString();
+const NOW = new Date(2026, 10, 19, 14, 0); // Thứ Năm 19/11/2026, 14:00
+
+test("notification time reads as minutes, hours, days, then the date", () => {
+  assert.equal(notificationTimeText(new Date(NOW.getTime() - 30_000).toISOString(), NOW), "Vừa xong");
+  assert.equal(notificationTimeText(at(19, 13, 55), NOW), "5 phút trước");
+  assert.equal(notificationTimeText(at(19, 11, 0), NOW), "3 giờ trước");
+  assert.equal(notificationTimeText(at(17, 9, 0), NOW), "2 ngày trước");
+  assert.equal(notificationTimeText(at(9, 9, 0), NOW), "09/11/2026");
+  assert.equal(notificationTimeText("not a date", NOW), "");
+});
+
+test("notifications group by day: today, yesterday, then weekday and date", () => {
+  const rows = [at(19, 10), at(19, 8), at(18, 20), at(17, 9), at(30, 9, 0, 11, 2025)].map((createdAt, id) => ({ id, createdAt }));
+  const groups = groupNotificationsByDay(rows, NOW);
+  assert.deepEqual(
+    groups.map((group) => [group.label, group.items.map((row) => row.id)]),
+    [
+      ["Hôm nay", [0, 1]],
+      ["Hôm qua", [2]],
+      ["Thứ Ba, 17/11", [3]],
+      ["Thứ Ba, 30/12/2025", [4]],
+    ],
+  );
+  assert.equal(new Set(groups.map((group) => group.key)).size, groups.length);
+});
+
+test("a day split across the list stays one group, and odd dates do not break grouping", () => {
+  const rows = [
+    { id: 1, createdAt: at(19, 9) },
+    { id: 2, createdAt: at(18, 9) },
+    { id: 3, createdAt: at(19, 7) },
+    { id: 4, createdAt: "" },
+    { id: 5, createdAt: at(19, 15) },
+  ];
+  assert.deepEqual(
+    groupNotificationsByDay(rows, NOW).map((group) => [group.label, group.items.map((row) => row.id)]),
+    [
+      ["Hôm nay", [1, 3, 5]],
+      ["Hôm qua", [2]],
+      ["Không rõ ngày", [4]],
+    ],
   );
 });
