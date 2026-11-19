@@ -547,7 +547,7 @@ export function AppHeader() {
                 </button>
 
                 {profileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                  <div className="absolute right-0 top-full mt-2 w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain [scrollbar-width:thin] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
                     {/* User Identity Header Card */}
                     <div className="flex items-center gap-3 px-2 py-2 border-b border-slate-100 dark:border-slate-800">
                       <UserAvatarWithFrame
@@ -657,15 +657,13 @@ export function AppHeader() {
                                       <button
                                         type="button"
                                         onClick={() => handleNotificationClick(item)}
-                                        className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 rounded-lg px-2 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700 dark:focus-visible:ring-slate-300"
+                                        title={item.body}
+                                        className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 rounded-lg px-2 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700 dark:focus-visible:ring-slate-300"
                                       >
                                         <NotificationIcon type={item.type} size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
                                         <span className="min-w-0 flex-1">
                                           <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                             {item.title}
-                                          </span>
-                                          <span className="mt-0.5 line-clamp-2 text-sm leading-5 text-slate-600 dark:text-slate-400">
-                                            {item.body}
                                           </span>
                                           <span className="mt-1 flex items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
                                             <time dateTime={item.createdAt}>{notificationTimeText(item.createdAt)}</time>
