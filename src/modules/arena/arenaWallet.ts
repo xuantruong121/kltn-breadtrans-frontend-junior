@@ -1,6 +1,6 @@
 /**
  * Queries that show a learner's Bánh Mì, by key prefix. The header reads
- * ["user-stats", id], GamificationBar ["profile", id] and the pet page
+ * ["user-stats", id], the profile ["profile", id] and the pet page
  * ["market-balance"]; invalidating by prefix refreshes every copy, so a stake,
  * a payout or a refund shows without reloading the page.
  */

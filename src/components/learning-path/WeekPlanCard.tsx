@@ -1,13 +1,18 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarRange } from "lucide-react";
 
+import { LearningGoalPanel } from "@/components/learning-path/LearningGoalPanel";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { PRACTICE_SKILL_LABEL } from "@/lib/learning-path/practiceLevel";
 import { estimateText, weekPercent } from "@/lib/learning-path/recommendation";
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+
+/** Anchor of this card: the weekly report notification opens "/dashboard#week-plan". */
+export const WEEK_PLAN_ANCHOR = "week-plan";
 
 /** "Tuần này" on the dashboard: weekly targets per skill and a rough date for the next levels. */
 export function WeekPlanCard({ enabled }: { enabled: boolean }) {
@@ -17,12 +22,41 @@ export function WeekPlanCard({ enabled }: { enabled: boolean }) {
     enabled,
     staleTime: 60_000,
   });
+  const sectionRef = useRef<HTMLElement>(null);
+  const loaded = Boolean(data);
+
+  // The card renders only after its data arrives, too late for the browser's own
+  // jump to "#week-plan", so scroll here once it is on the page. Cards above it
+  // (roadmap, unlocked levels) can finish loading later and push it down, so
+  // keep it in place while the page grows, for a few seconds or until the
+  // learner scrolls by hand.
+  useEffect(() => {
+    const card = sectionRef.current;
+    if (!loaded || !card || window.location.hash !== `#${WEEK_PLAN_ANCHOR}`) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    card.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+
+    const follow = new ResizeObserver(() => card.scrollIntoView({ behavior: "auto", block: "start" }));
+    follow.observe(document.body);
+    const userEvents = ["wheel", "touchstart", "keydown", "mousedown"] as const;
+    const stop = () => {
+      follow.disconnect();
+      window.clearTimeout(timer);
+      for (const name of userEvents) window.removeEventListener(name, stop);
+    };
+    const timer = window.setTimeout(stop, 4000);
+    for (const name of userEvents) window.addEventListener(name, stop, { passive: true });
+    return stop;
+  }, [loaded]);
+
   if (!data) return null;
 
   return (
     <section
+      ref={sectionRef}
+      id={WEEK_PLAN_ANCHOR}
       aria-labelledby="week-plan-heading"
-      className="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-7"
+      className="scroll-mt-24 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-7"
     >
       <h2 id="week-plan-heading" className="flex items-center gap-2 text-xl font-black text-slate-900 dark:text-slate-100">
         <CalendarRange size={22} className="text-blue-700 dark:text-blue-300" aria-hidden="true" />
@@ -31,6 +65,7 @@ export function WeekPlanCard({ enabled }: { enabled: boolean }) {
       <p className="mt-1 text-base text-slate-600 dark:text-slate-400">
         Chia theo {data.minutesPerDay} phút mỗi ngày, mục tiêu và kỹ năng cần cải thiện.
       </p>
+      <LearningGoalPanel className="mt-4" />
       <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {data.skills.map((s) => (
           <li key={s.skill}>

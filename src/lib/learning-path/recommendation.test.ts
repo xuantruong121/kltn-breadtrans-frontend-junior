@@ -60,6 +60,13 @@ test("the estimate says it is an estimate and what a late target needs", () => {
   const base = { items: 3, days: 2, date: "D", targetDate: null, onTrack: null, minutesNeeded: null };
   assert.match(estimateText(base, date), /ước tính khoảng 2 ngày/);
   assert.match(estimateText({ ...base, onTrack: true }, date), /Kịp ngày mục tiêu/);
+  // The line names the day the learner set, so they know what "kịp" refers to.
+  const withDay = { ...base, targetDate: "2026-12-20T00:00:00.000Z" };
+  assert.match(estimateText({ ...withDay, onTrack: true }, date), /Kịp ngày mục tiêu 20\/12\/2026 của bạn\./);
+  assert.match(
+    estimateText({ ...withDay, onTrack: false, minutesNeeded: 20 }, date),
+    /Để kịp ngày mục tiêu 20\/12\/2026, cần khoảng 20 phút mỗi ngày\./,
+  );
   assert.match(estimateText({ ...base, onTrack: false, minutesNeeded: 20 }, date), /khoảng 20 phút mỗi ngày/);
   assert.match(estimateText({ ...base, onTrack: false }, date), /đã qua/);
   assert.match(estimateText({ ...base, items: 0 }, date), /đủ số bài/);

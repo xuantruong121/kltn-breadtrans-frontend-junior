@@ -4,6 +4,7 @@ import { Suspense, useEffect, useRef, useState, useSyncExternalStore } from "rea
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   BookOpen,
   CreditCard,
@@ -27,8 +28,8 @@ import {
   LogOut,
   Flame,
   Loader2,
+  Check,
   CheckCheck,
-  Clock,
   MoreHorizontal,
   Layers,
   CircleHelp,
@@ -37,7 +38,6 @@ import {
   Sun,
   Moon,
   Mail,
-  Zap,
   NotebookPen,
   PawPrint,
 } from "lucide-react";
@@ -48,12 +48,13 @@ import { mistakesService } from "@/lib/api/services/mistakes.service";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import axiosClient from "@/lib/api/axiosClient";
+import { dropBrowserPush } from "@/lib/push/useBrowserPush";
 import { useApiQuery } from "@/hooks/useApiQuery";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { notificationService, NotificationItem } from "@/lib/api/services/notification.service";
 import { planService, PLAN_QUERY_KEYS } from "@/lib/api/services/plan.service";
 import { resolveEffectivePlanDisplay } from "@/modules/subscription/planLogic";
-import { getNotificationActionLabel, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
+import { getNotificationActionLabel, notificationTimeText, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
 import { useTheme } from "@/lib/theme/useTheme";
 import { BrandLogo } from "@/components/brand";
 import { UserAvatarWithFrame } from "@/components/ui";
@@ -73,6 +74,7 @@ import {
 } from "./navUtils";
 import { ThemeToggle } from "./ThemeToggle";
 import { SuggestionModal } from "@/components/suggestion/SuggestionModal";
+import { LevelProgress } from "@/components/navigation/LevelProgress";
 
 const emptySubscribe = () => () => {};
 
@@ -81,22 +83,6 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function formatRelativeTime(dateStr: string) {
-  try {
-    const date = new Date(dateStr);
-    const diffMs = Date.now() - date.getTime();
-    const diffMins = Math.floor(diffMs / (60 * 1000));
-    if (diffMins < 1) return "Vừa xong";
-    if (diffMins < 60) return `${diffMins} phút trước`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} giờ trước`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return `${diffDays} ngày trước`;
-    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
-  } catch {
-    return "";
-  }
-}
 
 function HubSuggestionParamListener({ onTrigger }: { onTrigger: () => void }) {
   const pathname = usePathname();
@@ -116,7 +102,7 @@ export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
-  const { breads, streak, streakFreezes, level, exp } = useGamificationStore();
+  const { breads, streak, streakFreezes, totalXp } = useGamificationStore();
   const { resolvedTheme, toggleTheme } = useTheme();
 
   const queryClient = useQueryClient();
@@ -129,6 +115,17 @@ export function AppHeader() {
 
   const profileRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  // Where the account menu opens: under the avatar, measured when it opens.
+  const [menuPos, setMenuPos] = useState({ top: 72, right: 12 });
+  const placeProfileMenu = () => {
+    const rect = profileRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMenuPos({
+      top: Math.round(rect.bottom + 8),
+      right: Math.max(12, Math.round(window.innerWidth - rect.right)),
+    });
+  };
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isDark = isReady ? resolvedTheme === "dark" : false;
 
@@ -142,7 +139,8 @@ export function AppHeader() {
       }
     };
     const onPointerDown = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (profileRef.current && !profileRef.current.contains(target) && !profileMenuRef.current?.contains(target)) {
         setProfileMenuOpen(false);
       }
       if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
@@ -153,6 +151,7 @@ export function AppHeader() {
       if (window.innerWidth >= 1024) {
         setMobileOpen(false);
       }
+      placeProfileMenu();
     };
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("mousedown", onPointerDown);
@@ -179,6 +178,8 @@ export function AppHeader() {
   };
 
   const handleLogout = async () => {
+    // While still signed in: stop browser notifications for this account here.
+    await dropBrowserPush();
     try {
       // The API revokes the current device refresh session and deny-lists the
       // access token. Local cleanup still runs if the network is unavailable.
@@ -247,7 +248,9 @@ export function AppHeader() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "recent", "unread"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "history"] });
     },
+    onError: () => toast.error("Không thể cập nhật thông báo lúc này."),
   });
 
   const markAllReadMut = useMutation({
@@ -255,7 +258,9 @@ export function AppHeader() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
       queryClient.invalidateQueries({ queryKey: ["notifications", "recent", "unread"] });
+      queryClient.invalidateQueries({ queryKey: ["notifications", "history"] });
     },
+    onError: () => toast.error("Không thể cập nhật thông báo lúc này."),
   });
 
   const handleNotificationClick = (item: NotificationItem) => {
@@ -386,7 +391,9 @@ export function AppHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-[70] w-full overflow-x-clip bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
+    <header className="sticky top-0 z-[70] w-full overflow-x-clip border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
+      {/* The blur sits on its own layer: on the header itself it clipped the menus in Safari. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-white/95 backdrop-blur-md dark:bg-slate-900/95" />
       <Suspense fallback={null}>
         <HubSuggestionParamListener onTrigger={() => setSuggestionOpen(true)} />
       </Suspense>
@@ -534,6 +541,7 @@ export function AppHeader() {
                   onClick={() => {
                     // Each opening starts with the notifications closed.
                     setNotificationsExpanded(false);
+                    placeProfileMenu();
                     setProfileMenuOpen((prev) => !prev);
                   }}
                   aria-expanded={profileMenuOpen}
@@ -554,8 +562,13 @@ export function AppHeader() {
                   )}
                 </button>
 
-                {profileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                {profileMenuOpen && isReady && createPortal(
+                  // Rendered on <body>, outside the sticky blurred header: iOS Safari clipped it there.
+                  <div
+                    ref={profileMenuRef}
+                    style={{ top: menuPos.top, right: menuPos.right, maxHeight: `calc(100dvh - ${menuPos.top + 12}px)` }}
+                    className="fixed z-[80] w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain [scrollbar-width:thin] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150"
+                  >
                     {/* User Identity Header Card */}
                     <div className="flex items-center gap-3 px-2 py-2 border-b border-slate-100 dark:border-slate-800">
                       <UserAvatarWithFrame
@@ -574,41 +587,37 @@ export function AppHeader() {
                       </div>
                     </div>
 
-                    {/* Gamification Stats Strip (Streak, Breads, Level) */}
-                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 rounded-xl p-2.5 flex items-center justify-around my-2 text-xs">
-                      <div className="flex items-center gap-1.5" title={`Chuỗi: ${streak ?? 0} ngày học liên tục`}>
-                        <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
-                        <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak ?? 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
+                    {/* Gamification stats: streak, shields, Bánh Mì; the level bar below (owner 2026-11-18) */}
+                    <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800/80 rounded-xl p-2.5 my-2">
+                      <div className="flex items-center justify-around text-xs">
+                        <div className="flex items-center gap-1.5" title={`Chuỗi: ${streak ?? 0} ngày học liên tục`}>
+                          <Flame size={15} className="fill-orange-500 text-orange-500 shrink-0" />
+                          <span className="font-extrabold text-orange-600 dark:text-orange-400">{streak ?? 0}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">ngày</span>
+                        </div>
+
+                        <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
+                        <div className="flex items-center gap-1.5" title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}>
+                          <StreakShieldIcon className="h-[17px] w-[15px] shrink-0" />
+                          <span className="font-extrabold text-blue-700 dark:text-blue-300">{streakFreezes ?? 0}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">khiên</span>
+                        </div>
+
+                        <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
+
+                        <Link
+                          href="/market"
+                          onClick={closeMenus}
+                          title={`Số dư Bánh Mì: ${breads || 0}`}
+                          className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                        >
+                          <BreadCoinIcon size={15} strokeWidth={2} />
+                          <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Bánh Mì</span>
+                        </Link>
                       </div>
-
-                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
-
-                      <div className="flex items-center gap-1.5" title={`${streakFreezes ?? 0} khiên giữ chuỗi: lỡ một ngày học, 1 khiên tự được dùng để chuỗi không mất`}>
-                        <StreakShieldIcon className="h-[17px] w-[15px] shrink-0" />
-                        <span className="font-extrabold text-blue-700 dark:text-blue-300">{streakFreezes ?? 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">khiên</span>
-                      </div>
-
-                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
-
-                      <Link
-                        href="/market"
-                        onClick={closeMenus}
-                        title={`Số dư Bánh Mì: ${breads || 0}`}
-                        className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
-                      >
-                        <BreadCoinIcon size={15} strokeWidth={2} />
-                        <span className="font-extrabold text-amber-600 dark:text-amber-400">{breads || 0}</span>
-                        <span className="text-slate-500 dark:text-slate-400 text-xs font-medium">Bánh Mì</span>
-                      </Link>
-
-                      <div className="w-px h-3.5 bg-slate-200 dark:bg-slate-700" />
-
-                      <div className="flex items-center gap-1.5" title={`Cấp ${level || 1} (${exp || 0} XP)`}>
-                        <Zap size={15} strokeWidth={2} className="text-orange-500" aria-hidden="true" />
-                        <span className="font-extrabold text-sky-600 dark:text-sky-400">Cấp {level || 1}</span>
-                      </div>
+                      <LevelProgress totalXp={totalXp} />
                     </div>
 
                     {/* Collapsible Thông báo */}
@@ -647,62 +656,61 @@ export function AppHeader() {
                               <Loader2 size={16} className="animate-spin text-amber-500" />
                             </div>
                           ) : recentNotifications.length === 0 ? (
-                            <div className="p-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 text-center">
-                              <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-                                Chưa có thông báo mới
-                              </p>
+                            <p className="px-2 py-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                              Không có thông báo mới.{" "}
                               <Link
                                 href="/notifications"
                                 onClick={closeMenus}
-                                className="mt-1 inline-block text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline"
+                                className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-sky-300 dark:hover:text-sky-200"
                               >
                                 Xem lịch sử thông báo
                               </Link>
-                            </div>
+                            </p>
                           ) : (
                             <>
-                              {recentNotifications.slice(0, 2).map((item) => {
-                                const action = resolveNotificationAction(item);
-                                const actionLabel = getNotificationActionLabel(item);
+                              <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {recentNotifications.slice(0, 2).map((item) => {
+                                  const actionLabel = getNotificationActionLabel(item);
+                                  const marking = markReadMut.isPending && markReadMut.variables === item.id;
 
-                                return (
-                                  <div
-                                    key={item.id}
-                                    onClick={() => handleNotificationClick(item)}
-                                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 hover:bg-amber-50/60 dark:hover:bg-slate-800 transition-colors cursor-pointer group/notif text-left"
-                                  >
-                                    <div className="flex items-start gap-2">
-                                      <div className="mt-0.5 text-xs shrink-0">
-                                        <NotificationIcon type={item.type} size={14} className="text-amber-600 dark:text-amber-400" />
-                                      </div>
-                                      <div className="min-w-0 flex-1">
-                                        <div className="flex items-center justify-between gap-1">
-                                          <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate group-hover/notif:text-amber-800 dark:group-hover/notif:text-amber-400 transition-colors">
+                                  return (
+                                    <li key={item.id} className="flex items-start gap-1 rounded-lg transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleNotificationClick(item)}
+                                        title={item.body}
+                                        className="flex min-w-0 flex-1 cursor-pointer items-start gap-2.5 rounded-lg px-2 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-700 dark:focus-visible:ring-slate-300"
+                                      >
+                                        <NotificationIcon type={item.type} size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                        <span className="min-w-0 flex-1">
+                                          <span className="block text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
                                             {item.title}
-                                          </p>
-                                          {!item.isRead && (
-                                            <span className="size-1.5 rounded-full bg-amber-500 shrink-0" />
-                                          )}
-                                        </div>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5 leading-relaxed">
-                                          {item.body}
-                                        </p>
-                                        <div className="mt-1 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
-                                          <span className="flex items-center gap-1">
-                                            <Clock size={10} />
-                                            {formatRelativeTime(item.createdAt)}
                                           </span>
-                                          {action && actionLabel && (
-                                            <span className="font-extrabold text-amber-700 dark:text-amber-400 group-hover/notif:underline">
-                                              {actionLabel}
-                                            </span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                          <span className="mt-1 flex items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
+                                            <time dateTime={item.createdAt}>{notificationTimeText(item.createdAt)}</time>
+                                            {actionLabel && (
+                                              <>
+                                                <span aria-hidden="true">·</span>
+                                                <span className="font-semibold text-amber-700 dark:text-amber-400">{actionLabel}</span>
+                                              </>
+                                            )}
+                                          </span>
+                                        </span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        aria-label={`Đánh dấu đã đọc: ${item.title}`}
+                                        title="Đánh dấu đã đọc"
+                                        disabled={marking}
+                                        onClick={() => markReadMut.mutate(item.id)}
+                                        className="mr-1 mt-2 grid size-8 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-60 dark:text-slate-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
+                                      >
+                                        {marking ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
 
                               {/* Footer Actions */}
                               <div className="flex items-center justify-between px-1 pt-1 text-xs">
@@ -865,6 +873,8 @@ export function AppHeader() {
                       <span>Đăng xuất</span>
                     </button>
                   </div>
+                  ,
+                  document.body,
                 )}
               </div>
             </>

@@ -1,6 +1,7 @@
 /** Recommendation items from /learning-path (F6). Labels only; no I/O. */
 import type { PracticeLevel, PracticeSkill } from "./practiceLevel.ts";
 import { planName } from "../ui/terms.ts";
+import { formatGoalDate } from "./goalEditor.ts";
 
 export type RecommendationStatus = "OPEN" | "LOCKED_LEVEL" | "LOCKED_PLAN";
 export type LearningContentType = "QUIZ" | "SPEAKING_SET" | "CONTENT_TOPIC";
@@ -131,11 +132,13 @@ export function weekPercent(done: number, target: number): number {
 export function estimateText(estimate: WeekPlan["estimate"], formatDate: (iso: string) => string): string {
   if (estimate.items === 0) return "Bạn đã đủ số bài để mở mức kế tiếp ở mọi kỹ năng.";
   const base = `Còn ${estimate.items} bài để mở mức kế tiếp, ước tính khoảng ${estimate.days} ngày (${formatDate(estimate.date)}).`;
+  const day = formatGoalDate(estimate.targetDate);
+  const target = day ? `ngày mục tiêu ${day}` : "ngày mục tiêu";
   if (estimate.onTrack === false && estimate.minutesNeeded !== null) {
-    return `${base} Để kịp ngày mục tiêu, cần khoảng ${estimate.minutesNeeded} phút mỗi ngày.`;
+    return `${base} Để kịp ${target}, cần khoảng ${estimate.minutesNeeded} phút mỗi ngày.`;
   }
   if (estimate.onTrack === false) return `${base} Ngày mục tiêu đã qua, bạn có thể đặt lại.`;
-  if (estimate.onTrack === true) return `${base} Kịp ngày mục tiêu của bạn.`;
+  if (estimate.onTrack === true) return `${base} Kịp ${target} của bạn.`;
   return base;
 }
 

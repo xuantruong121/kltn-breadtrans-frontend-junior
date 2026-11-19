@@ -4,11 +4,14 @@ import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Trophy, RotateCcw, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { completionXpNote } from "../utils/sessionXp";
 
 interface CompletionCelebrationProps {
   totalWordsCount: number;
   learnedCount: number;
   reviewCount: number;
+  /** Flashcard XP paid in this session. */
+  sessionXp: number;
   onRestart: () => void;
 }
 
@@ -16,6 +19,7 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
   totalWordsCount,
   learnedCount,
   reviewCount,
+  sessionXp,
   onRestart,
 }) => {
   return (
@@ -61,7 +65,8 @@ export const CompletionCelebration: React.FC<CompletionCelebrationProps> = ({
       {/* Rewarded Progress Banner */}
       <div className="flex items-center justify-center gap-2 p-3 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 rounded-2xl text-xs font-bold text-sky-800 dark:text-sky-300">
         <CheckCircle2 size={16} className="text-sky-600 dark:text-sky-400 shrink-0" />
-        <span>Tiến độ đã được đồng bộ với nhiệm vụ hàng ngày của bạn</span>
+        {/* Flashcards move no daily quest: the note says what they pay. */}
+        <span>{completionXpNote(sessionXp)}</span>
       </div>
 
       {/* Action Buttons */}

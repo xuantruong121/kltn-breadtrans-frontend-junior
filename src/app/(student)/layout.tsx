@@ -101,6 +101,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       streak: learningStats.streakCount,
       streakFreezes: learningStats.streakFreezes,
       exp: learningStats.weeklyExp,
+      totalXp: learningStats.totalPoints,
     });
   }, [learningStats, setStats]);
 
