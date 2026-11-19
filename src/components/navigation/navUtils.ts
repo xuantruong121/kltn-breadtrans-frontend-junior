@@ -138,3 +138,16 @@ export const MAIN_NAV_ORDER: NavItemConfig[] = [
 ];
 
 export const MORE_DROPDOWN_ITEMS: NavItemConfig[] = headerSplit.overflow;
+
+/**
+ * What the "Kỹ năng" tab of the phone's bottom bar offers. Every entry is a
+ * skills route, so the tab stays marked on any of them.
+ */
+export const SKILL_SHEET_ITEMS: NavItemConfig[] = [
+  { label: "Luyện Nghe", href: "/listening" },
+  { label: "Luyện Nói", href: "/speaking" },
+  { label: "Luyện Đọc", href: "/reading" },
+  { label: "Luyện Viết", href: "/writing" },
+  { label: "Flashcard", href: "/flashcard" },
+  { label: "Ngữ pháp", href: "/grammar" },
+];

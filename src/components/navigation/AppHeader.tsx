@@ -115,6 +115,17 @@ export function AppHeader() {
 
   const profileRef = useRef<HTMLDivElement>(null);
   const moreRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  // Where the account menu opens: under the avatar, measured when it opens.
+  const [menuPos, setMenuPos] = useState({ top: 72, right: 12 });
+  const placeProfileMenu = () => {
+    const rect = profileRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMenuPos({
+      top: Math.round(rect.bottom + 8),
+      right: Math.max(12, Math.round(window.innerWidth - rect.right)),
+    });
+  };
   const isReady = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const isDark = isReady ? resolvedTheme === "dark" : false;
 
@@ -128,7 +139,8 @@ export function AppHeader() {
       }
     };
     const onPointerDown = (event: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (profileRef.current && !profileRef.current.contains(target) && !profileMenuRef.current?.contains(target)) {
         setProfileMenuOpen(false);
       }
       if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
@@ -139,6 +151,7 @@ export function AppHeader() {
       if (window.innerWidth >= 1024) {
         setMobileOpen(false);
       }
+      placeProfileMenu();
     };
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("mousedown", onPointerDown);
@@ -378,7 +391,9 @@ export function AppHeader() {
   ];
 
   return (
-    <header className="sticky top-0 z-[70] w-full overflow-x-clip bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
+    <header className="sticky top-0 z-[70] w-full overflow-x-clip border-b border-slate-200/80 dark:border-slate-800/80 transition-all duration-200 shadow-xs">
+      {/* The blur sits on its own layer: on the header itself it clipped the menus in Safari. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10 bg-white/95 backdrop-blur-md dark:bg-slate-900/95" />
       <Suspense fallback={null}>
         <HubSuggestionParamListener onTrigger={() => setSuggestionOpen(true)} />
       </Suspense>
@@ -526,6 +541,7 @@ export function AppHeader() {
                   onClick={() => {
                     // Each opening starts with the notifications closed.
                     setNotificationsExpanded(false);
+                    placeProfileMenu();
                     setProfileMenuOpen((prev) => !prev);
                   }}
                   aria-expanded={profileMenuOpen}
@@ -546,8 +562,13 @@ export function AppHeader() {
                   )}
                 </button>
 
-                {profileMenuOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain [scrollbar-width:thin] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150 z-50">
+                {profileMenuOpen && isReady && createPortal(
+                  // Rendered on <body>, outside the sticky blurred header: iOS Safari clipped it there.
+                  <div
+                    ref={profileMenuRef}
+                    style={{ top: menuPos.top, right: menuPos.right, maxHeight: `calc(100dvh - ${menuPos.top + 12}px)` }}
+                    className="fixed z-[80] w-[320px] sm:w-[350px] max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain [scrollbar-width:thin] bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl shadow-2xl p-2.5 animate-in fade-in slide-in-from-top-2 duration-150"
+                  >
                     {/* User Identity Header Card */}
                     <div className="flex items-center gap-3 px-2 py-2 border-b border-slate-100 dark:border-slate-800">
                       <UserAvatarWithFrame
@@ -852,6 +873,8 @@ export function AppHeader() {
                       <span>Đăng xuất</span>
                     </button>
                   </div>
+                  ,
+                  document.body,
                 )}
               </div>
             </>

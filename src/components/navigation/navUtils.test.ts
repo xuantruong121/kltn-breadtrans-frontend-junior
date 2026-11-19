@@ -10,6 +10,7 @@ import {
   isFlashcardRoute,
   isMarketRoute,
   isMoreRoute,
+  SKILL_SHEET_ITEMS,
 } from "./navUtils.ts";
 
 describe("Navigation Route Classification", () => {
@@ -132,5 +133,15 @@ describe("Navigation Route Classification", () => {
     assert.equal(isMoreRoute("/ranking"), true);
     assert.equal(isMoreRoute("/help"), true);
     assert.equal(isMoreRoute("/dashboard"), false);
+  });
+});
+
+describe("Skills sheet of the bottom bar", () => {
+  it("offers the four skills, flashcards and grammar, each a skills route", () => {
+    assert.deepEqual(
+      SKILL_SHEET_ITEMS.map((item) => item.href),
+      ["/listening", "/speaking", "/reading", "/writing", "/flashcard", "/grammar"],
+    );
+    for (const item of SKILL_SHEET_ITEMS) assert.equal(isSkillsRoute(item.href), true, item.href);
   });
 });
