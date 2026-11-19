@@ -18,6 +18,14 @@ export interface NotificationInboxResponse {
   nextCursor: number | null;
 }
 
+/** One numbered page of the inbox; a page past the end comes back as the last page. */
+export interface NotificationPageResponse extends NotificationInboxResponse {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface UnreadCountResponse {
   count: number;
 }
@@ -30,6 +38,16 @@ export const notificationService = {
   ): Promise<NotificationInboxResponse> => {
     return await axiosClient.get("/notifications/inbox", {
       params: { limit, cursor, filter },
+    });
+  },
+
+  getInboxPage: async (
+    page: number,
+    pageSize: number,
+    filter: NotificationFilter = "all"
+  ): Promise<NotificationPageResponse> => {
+    return await axiosClient.get("/notifications/inbox", {
+      params: { page, limit: pageSize, filter },
     });
   },
 

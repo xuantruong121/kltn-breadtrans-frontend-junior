@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { NotificationIcon } from "@/components/notifications/NotificationIcon";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,6 +14,12 @@ import {
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Pagination } from "@/components/ui";
+import {
+  NOTIFICATION_DEFAULT_PAGE_SIZE,
+  NOTIFICATION_PAGE_SIZES,
+  servedPage,
+} from "@/lib/notifications/notificationPaging";
 import { notificationService, type NotificationFilter, type NotificationItem } from "@/lib/api/services/notification.service";
 import { getNotificationActionLabel, resolveNotificationAction } from "@/lib/notifications/notificationLogic";
 
@@ -38,23 +44,27 @@ export default function NotificationsPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<NotificationFilter>("all");
-  const [cursor, setCursor] = useState<number | undefined>();
-  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(NOTIFICATION_DEFAULT_PAGE_SIZE);
   const [deleteTarget, setDeleteTarget] = useState<NotificationItem | null>(null);
 
   const inboxQuery = useQuery({
-    queryKey: ["notifications", "history", filter, cursor],
-    queryFn: () => notificationService.getInbox(20, cursor, filter),
+    queryKey: ["notifications", "history", filter, page, pageSize],
+    queryFn: () => notificationService.getInboxPage(page, pageSize, filter),
     refetchOnWindowFocus: true,
+    // Keep the current page on screen while the next one loads.
+    placeholderData: (previous) => previous,
   });
 
-  const mergedItems = useMemo(() => {
-    const next = inboxQuery.data?.items || [];
-    if (!cursor) return next;
-    const byId = new Map(items.map((item) => [item.id, item]));
-    next.forEach((item) => byId.set(item.id, item));
-    return [...byId.values()];
-  }, [cursor, inboxQuery.data?.items, items]);
+  // A page past the end (its last notification deleted) is served as the last page.
+  // Adjusted during render (as useCatalogPage does), not in an effect.
+  const shownPage = servedPage(page, inboxQuery.isPlaceholderData ? undefined : inboxQuery.data);
+  if (shownPage !== page) setPage(shownPage);
+
+  const goToPage = (next: number) => {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  };
 
   const markRead = useMutation({
     mutationFn: (id: number) => notificationService.markRead(id),
@@ -94,8 +104,7 @@ export default function NotificationsPage() {
 
   const changeFilter = (next: NotificationFilter) => {
     setFilter(next);
-    setCursor(undefined);
-    setItems([]);
+    setPage(1);
   };
 
   const openItem = (item: NotificationItem) => {
@@ -104,7 +113,7 @@ export default function NotificationsPage() {
     if (target) router.push(target);
   };
 
-  const currentItems = cursor ? mergedItems : inboxQuery.data?.items || [];
+  const currentItems = inboxQuery.data?.items || [];
   const emptyLabel = filter === "unread" ? "Bạn không có thông báo mới." : filter === "read" ? "Chưa có thông báo đã đọc." : "Chưa có thông báo nào.";
 
   return (
@@ -160,8 +169,24 @@ export default function NotificationsPage() {
             })}
           </div>
         )}
-        {inboxQuery.data?.nextCursor && <div className="border-t border-slate-100 p-3 text-center dark:border-slate-800"><button type="button" onClick={() => { setItems(currentItems); setCursor(inboxQuery.data?.nextCursor ?? undefined); }} disabled={inboxQuery.isFetching} className="min-h-10 rounded-xl px-4 text-sm font-bold text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/50">{inboxQuery.isFetching ? "Đang tải..." : "Tải thêm"}</button></div>}
       </section>
+
+      {inboxQuery.data && inboxQuery.data.total > 0 && (
+        <Pagination
+          className="mt-4"
+          currentPage={inboxQuery.data.page}
+          totalPages={inboxQuery.data.totalPages}
+          totalItems={inboxQuery.data.total}
+          pageSize={pageSize}
+          onPageChange={goToPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setPage(1);
+          }}
+          pageSizeOptions={NOTIFICATION_PAGE_SIZES}
+          alwaysShow
+        />
+      )}
 
       <ConfirmDialog open={Boolean(deleteTarget)} title="Xóa thông báo?" description="Thông báo này sẽ bị xóa khỏi lịch sử của bạn và không thể khôi phục." isPending={deleteMutation.isPending} onCancel={() => setDeleteTarget(null)} onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)} />
     </main>
