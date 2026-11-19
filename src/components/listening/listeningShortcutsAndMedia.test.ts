@@ -11,6 +11,7 @@ import {
   type DictationReplayKey,
   isListeningShortcutIgnored,
   type ListeningWorkspaceShortcutActions,
+  listeningShortcutLegend,
 } from "./listeningShortcutConfig.ts";
 
 function createMockActions(overrides: Partial<ListeningWorkspaceShortcutActions> = {}): {
@@ -829,4 +830,16 @@ test("Obsolete logic removal: DailyDictationWorkspace.tsx does not contain legac
 
   // 3. Must NOT listen to external breadtrans:replay-listening-audio event (no multiple replay sources)
   assert.equal(content.includes('addEventListener("breadtrans:replay-listening-audio"'), false);
+});
+
+test("Legend: a choice question says Enter moves on, a dictation line says Enter checks", () => {
+  const choice = listeningShortcutLegend(false);
+  const dictation = listeningShortcutLegend(true);
+  const label = (list: ReturnType<typeof listeningShortcutLegend>, id: string) =>
+    list.find((s) => s.id === id)?.label;
+  assert.equal(label(choice, "CHECK_OR_NEXT"), "Câu tiếp / Nộp bài");
+  assert.equal(label(choice, "SELECT_ANSWER"), "Chọn đáp án A – D (chấm ngay)");
+  assert.equal(label(dictation, "CHECK_OR_NEXT"), "Kiểm tra / Câu tiếp");
+  assert.equal(label(dictation, "SELECT_ANSWER"), undefined);
+  for (const list of [choice, dictation]) assert.equal(label(list, "REWIND"), "Lùi 5 giây");
 });

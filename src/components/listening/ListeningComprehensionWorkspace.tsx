@@ -50,7 +50,7 @@ import {
 } from "./listeningDictationUtils";
 import { DailyDictationWorkspace } from "./DailyDictationWorkspace";
 import {
-  LISTENING_SHORTCUTS,
+  listeningShortcutLegend,
   createListeningShortcutController,
 } from "./listeningShortcutConfig";
 import {
@@ -1252,7 +1252,7 @@ export function ListeningComprehensionWorkspace({
         shortcutsEnabled
         shortcutsContent={
           <div data-shortcuts-popover="true" className="space-y-2.5 py-1 text-xs">
-            {LISTENING_SHORTCUTS.map((shortcut) => (
+            {listeningShortcutLegend(isDictation).map((shortcut) => (
               <div
                 key={shortcut.id}
                 className="flex items-center justify-between gap-3 text-slate-700 dark:text-slate-300"
