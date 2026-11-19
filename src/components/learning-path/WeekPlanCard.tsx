@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarRange } from "lucide-react";
 
+import { LearningGoalPanel } from "@/components/learning-path/LearningGoalPanel";
 import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { PRACTICE_SKILL_LABEL } from "@/lib/learning-path/practiceLevel";
 import { estimateText, weekPercent } from "@/lib/learning-path/recommendation";
@@ -64,6 +65,7 @@ export function WeekPlanCard({ enabled }: { enabled: boolean }) {
       <p className="mt-1 text-base text-slate-600 dark:text-slate-400">
         Chia theo {data.minutesPerDay} phút mỗi ngày, mục tiêu và kỹ năng cần cải thiện.
       </p>
+      <LearningGoalPanel className="mt-4" />
       <ul className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {data.skills.map((s) => (
           <li key={s.skill}>

@@ -18,6 +18,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { LearningGoalPanel } from "@/components/learning-path/LearningGoalPanel";
 import {
   userService,
   type SkillProgressSummary,
@@ -228,6 +229,14 @@ export function LearningProgressTab() {
           )}
         </div>
       </header>
+
+      {/* Learning goal: what the learner chose at onboarding, editable here. */}
+      <section aria-labelledby="learning-goal-heading" className="space-y-2">
+        <h2 id="learning-goal-heading" className="text-base font-bold text-slate-900 dark:text-slate-100">
+          Mục tiêu học tập
+        </h2>
+        <LearningGoalPanel surface="plain" />
+      </section>
 
       {/* 2. Overview Summary Strip */}
       <section aria-label="Tổng quan tiến độ" className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
@@ -466,40 +475,42 @@ export function LearningProgressTab() {
               </span>
             </div>
 
-            {/* 7-day bar strip */}
-            <div className="mt-6 flex h-28 items-end justify-between gap-2 px-1">
-              {weeklyActivity.days.map((day, idx) => (
-                <div key={idx} className="flex flex-1 flex-col items-center gap-1.5">
-                  <div
-                    className="relative w-full rounded-t-md transition-all duration-300 group"
-                    style={{
-                      height: `${day.percentage}%`,
-                    }}
+            {/* 7-day bar strip. Each column has a real height (h-full) and the bar
+                area takes what the labels leave (flex-1), so the bar's percentage
+                height has something to be a percentage of. */}
+            <ul className="mt-6 flex h-36 justify-between gap-2 px-1" aria-label="Số hoạt động mỗi ngày">
+              {weeklyActivity.days.map((day) => (
+                <li key={day.dateStr} className="flex h-full flex-1 flex-col items-center gap-1.5">
+                  <span className="sr-only">
+                    {day.dayLabel}: {day.count} hoạt động
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-400"
                   >
+                    {day.count > 0 ? day.count : " "}
+                  </span>
+                  <div aria-hidden="true" className="flex w-full flex-1 items-end">
                     <div
-                      className={`h-full w-full rounded-t-md transition ${
-                        day.isActive
-                          ? "bg-blue-600 hover:bg-blue-500 dark:bg-blue-500"
-                          : "bg-slate-200 dark:bg-slate-800"
+                      className={`w-full rounded-t-md transition-[height] duration-300 ${
+                        day.isActive ? "bg-blue-600 dark:bg-blue-500" : "bg-slate-200 dark:bg-slate-800"
                       }`}
+                      style={{ height: `${day.percentage}%` }}
                     />
-                    {/* Tooltip on hover */}
-                    <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:flex items-center justify-center rounded bg-slate-900 px-1.5 py-0.5 text-[10px] text-white pointer-events-none whitespace-nowrap shadow-xs dark:bg-slate-100 dark:text-slate-900 z-10">
-                      {day.count} hoạt động
-                    </div>
                   </div>
                   <span
-                    className={`text-xs font-semibold ${
+                    aria-hidden="true"
+                    className={`text-xs ${
                       day.isActive
-                        ? "text-slate-900 dark:text-slate-100 font-bold"
-                        : "text-slate-600 dark:text-slate-400"
+                        ? "font-bold text-slate-900 dark:text-slate-100"
+                        : "font-semibold text-slate-600 dark:text-slate-400"
                     }`}
                   >
                     {day.dayLabel}
                   </span>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           <p className="mt-4 text-xs font-medium text-slate-600 dark:text-slate-400 text-center border-t border-slate-100 pt-3 dark:border-slate-800">
