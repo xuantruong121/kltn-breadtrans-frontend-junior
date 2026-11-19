@@ -93,6 +93,9 @@ export function ReviewSummaryRail({
       {breakdown.length > 0 && (
         <div className="mt-5">
           <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400">Theo dạng câu hỏi</p>
+          <p className="mt-0.5 text-[13px] leading-5 text-slate-600 dark:text-slate-400">
+            Mỗi câu hỏi kiểm tra một kiểu đọc. Kiểu nào sai nhiều là kiểu nên luyện thêm.
+          </p>
           <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
             {breakdown.map((item) => (
               <li key={item.category} className="flex items-center justify-between gap-3 py-2 text-sm">

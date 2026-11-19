@@ -14,20 +14,20 @@ export function readingTrendLabel(direction: ReadingTrendDirection): string {
 }
 
 const READING_SUBSKILL_LABELS: Record<string, string> = {
-  MAIN_IDEA: "Ý chính",
-  DETAIL: "Chi tiết",
-  SPECIFIC_DETAIL: "Chi tiết",
+  MAIN_IDEA: "Nắm ý chính",
+  DETAIL: "Tìm thông tin chi tiết",
+  SPECIFIC_DETAIL: "Tìm thông tin chi tiết",
   INFERENCE: "Suy luận",
-  PURPOSE: "Mục đích",
-  VOCAB_IN_CONTEXT: "Từ vựng trong ngữ cảnh",
-  VOCABULARY_IN_CONTEXT: "Từ vựng trong ngữ cảnh",
-  MEANING_IN_CONTEXT: "Từ vựng trong ngữ cảnh",
+  PURPOSE: "Xác định mục đích",
+  VOCAB_IN_CONTEXT: "Hiểu từ trong ngữ cảnh",
+  VOCABULARY_IN_CONTEXT: "Hiểu từ trong ngữ cảnh",
+  MEANING_IN_CONTEXT: "Hiểu từ trong ngữ cảnh",
   PROMOTION: "Thông tin khuyến mãi",
-  READING: "Đọc hiểu",
-  UNKNOWN: "Đọc hiểu",
-  // Answer formats, not question types: say nothing more than "reading".
-  MCQ: "Đọc hiểu",
-  OPEN_TEXT: "Đọc hiểu",
+  READING: "Đọc hiểu chung",
+  UNKNOWN: "Đọc hiểu chung",
+  // Answer formats, not question types: say nothing more than "reading in general".
+  MCQ: "Đọc hiểu chung",
+  OPEN_TEXT: "Đọc hiểu chung",
 };
 
 /**
