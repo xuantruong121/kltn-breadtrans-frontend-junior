@@ -4,6 +4,7 @@
  */
 
 import { test } from "node:test";
+import { getSpeciesIdFromPetName } from "./types.ts";
 import assert from "node:assert/strict";
 import {
   getPetSatietyState,
@@ -18,6 +19,7 @@ import {
   resolveFloatingPetUIState,
   getFloatingPetBoundingBox,
   petLevelProgress,
+  lockedSpeciesIds,
 } from "./petLogic.ts";
 import { isLearningFocusRoute } from "../../lib/practice/focusMode.ts";
 
@@ -370,4 +372,16 @@ test("petLevelProgress keeps a stored level that ran ahead of its EXP", () => {
   assert.equal(demo.percent, 0);
   // A consistent pet reads the same with or without its stored level.
   assert.deepEqual(petLevelProgress(1235, 2), petLevelProgress(1235));
+});
+
+test("Bun stays locked until the shop order exists", () => {
+  assert.deepEqual(lockedSpeciesIds(undefined), ["petbun"]);
+  assert.deepEqual(lockedSpeciesIds(["streak-freeze"]), ["petbun"]);
+  assert.deepEqual(lockedSpeciesIds(["pet-bun", "double-bread"]), []);
+});
+
+test("a pet named Bun by the seed is Bready; only the bought key is Bun", () => {
+  assert.equal(getSpeciesIdFromPetName("Bun"), "bready");
+  assert.equal(getSpeciesIdFromPetName("petbun"), "petbun");
+  assert.equal(getSpeciesIdFromPetName("Pet Bun đồng hành"), "petbun");
 });

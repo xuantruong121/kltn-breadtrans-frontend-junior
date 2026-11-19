@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import { ArrowLeft, RefreshCw, Award, Heart, Zap, AlertCircle, Loader2 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
-import { canFeedPet, handleFeedFailure } from "@/modules/pet/petLogic";
+import { canFeedPet, handleFeedFailure, lockedSpeciesIds } from "@/modules/pet/petLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 export default function PetPage() {
@@ -34,6 +34,15 @@ export default function PetPage() {
     queryFn: gamificationService.getMyPet,
     enabled: !!user?.id,
   });
+
+  // Shop pets the learner owns (same cache as the shop's inventory).
+  const { data: inventory } = useQuery<{ ownedSlugs?: string[] }>({
+    queryKey: ["market-inventory"],
+    queryFn: () => axiosClient.get("/market/inventory"),
+    enabled: !!user?.id,
+    staleTime: 60_000,
+  });
+  const lockedSpecies = lockedSpeciesIds(inventory?.ownedSlugs);
 
   // 2. Authoritative Bánh Mì balance
   const { data: balanceData } = useQuery<{ totalBanh: number }>({
@@ -313,6 +322,7 @@ export default function PetPage() {
         onClose={() => setIsModalOpen(false)}
         onSelectPet={handleSelectSpecies}
         isUpdating={changeSpeciesMutation.isPending}
+        lockedSpeciesIds={lockedSpecies}
       />
     </div>
   );

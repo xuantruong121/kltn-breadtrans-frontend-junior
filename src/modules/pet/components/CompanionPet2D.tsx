@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import React from "react";
 import { PetVisualState } from "../petLogic";
 
@@ -51,6 +52,19 @@ export const CompanionPet2D: React.FC<CompanionPet2DProps> = ({
         return <MimiSvg state={state} level={level} />;
       case "foxy":
         return <FoxySvg state={state} level={level} />;
+      case "petbun":
+        // The shop artwork of Bun; it has no per-state poses yet.
+        return (
+          <Image
+            src="/images/market/pet-bun.svg"
+            alt=""
+            aria-hidden="true"
+            width={160}
+            height={160}
+            draggable={false}
+            className="h-full w-full object-contain"
+          />
+        );
       case "bready":
       default:
         return <BreadySvg state={state} level={level} />;
