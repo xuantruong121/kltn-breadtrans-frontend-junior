@@ -1228,16 +1228,16 @@ export function AccountHub() {
                 </p>
               </div>
 
+              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs">
+                <BrowserPushPanel />
+              </div>
+
               <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs space-y-4">
                 <DeviceSessions />
 
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Nếu bạn nhận thấy bất kỳ hoạt động đăng nhập bất thường nào, hãy đổi mật khẩu hoặc đăng xuất ngay lập tức để bảo vệ tài khoản.
                 </p>
-              </div>
-
-              <div className="rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-2xs">
-                <BrowserPushPanel />
               </div>
             </section>
           )}
