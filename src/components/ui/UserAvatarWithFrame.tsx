@@ -54,14 +54,14 @@ export const UserAvatarWithFrame: React.FC<UserAvatarWithFrameProps> = ({
   const initial = name ? name.trim()[0].toUpperCase() : "U";
 
   return (
-    <div className={`relative inline-flex items-center justify-center shrink-0 ${className}`}>
-      {/* 1. AUTHENTIC SVG FRAME OVERLAY */}
+    <div className={`relative isolate inline-flex items-center justify-center shrink-0 ${className}`}>
+      {/* 1. SVG FRAME, drawn behind the face: its aura fill would wash out the photo and initials */}
       {frame && (
         <img
           src={frame.svgUrl}
           alt={frame.name}
           aria-hidden="true"
-          className="absolute pointer-events-none select-none z-20 w-[165%] h-[165%] max-w-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-sm"
+          className="absolute pointer-events-none select-none z-0 w-[165%] h-[165%] max-w-none left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 drop-shadow-sm"
         />
       )}
 

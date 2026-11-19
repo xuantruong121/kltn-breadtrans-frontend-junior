@@ -49,7 +49,7 @@ export function PersonAvatar({
   const shown = resolveUserBadge(badge);
   const face = (
     <span
-      className={`relative z-10 flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200 ${worn ? worn.containerRingClass : ring}`}
+      className={`relative z-10 flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold ${worn ? `${worn.containerRingClass} ${worn.fallbackBgClass}` : `bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 ${ring}`}`}
       style={{ width: size, height: size, fontSize: Math.max(11, size / 3) }}
     >
       <AvatarImage src={url} alt="" className="h-full w-full object-cover" fallback={initials(name)} />
@@ -59,13 +59,13 @@ export function PersonAvatar({
 
   const badgeSize = Math.max(16, Math.round(size * 0.36));
   return (
-    <span className="relative inline-flex shrink-0" style={{ width: size, height: size }}>
+    <span className="relative isolate inline-flex shrink-0" style={{ width: size, height: size }}>
       {worn && (
         <img
           src={worn.svgUrl}
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[165%] w-[165%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
+          className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[165%] w-[165%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
         />
       )}
       {face}

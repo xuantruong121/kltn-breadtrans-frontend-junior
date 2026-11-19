@@ -67,17 +67,17 @@ export function PlayerScoreCard({
 
   return (
     <div className={`flex min-w-0 flex-1 items-center gap-3 ${me ? "" : "flex-row-reverse text-right"}`}>
-      <span className="relative flex h-12 w-12 shrink-0 sm:h-14 sm:w-14">
+      <span className="relative isolate flex h-12 w-12 shrink-0 sm:h-14 sm:w-14">
         {worn && (
           <img
             src={worn.svgUrl}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[165%] w-[165%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
+            className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[165%] w-[165%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
           />
         )}
         <span
-          className={`relative z-10 flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-100 text-lg font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200 ${worn ? worn.containerRingClass : `ring-2 ${ring}`}`}
+          className={`relative z-10 flex h-full w-full items-center justify-center overflow-hidden rounded-full text-lg font-bold ${worn ? `${worn.containerRingClass} ${worn.fallbackBgClass}` : `bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 ring-2 ${ring}`}`}
         >
           <AvatarImage src={avatar} alt="" className="h-full w-full object-cover" fallback={name?.[0]?.toUpperCase() || "?"} />
         </span>
