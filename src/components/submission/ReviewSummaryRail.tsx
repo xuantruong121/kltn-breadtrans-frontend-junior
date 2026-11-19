@@ -92,14 +92,14 @@ export function ReviewSummaryRail({
 
       {breakdown.length > 0 && (
         <div className="mt-5">
-          <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400">Kỹ năng con</p>
+          <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400">Theo dạng câu hỏi</p>
           <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
             {breakdown.map((item) => (
               <li key={item.category} className="flex items-center justify-between gap-3 py-2 text-sm">
                 <span className="text-slate-700 dark:text-slate-300">{readingSubskillLabel(item.category)}</span>
                 <span className="tabular-nums font-semibold text-slate-900 dark:text-slate-100">
-                  {item.correct}/{item.total}
-                  <span className="ml-1.5 font-normal text-slate-500 dark:text-slate-400">{item.accuracyPercent}%</span>
+                  {item.correct}/{item.total} đúng
+                  <span className="ml-1.5 font-normal text-slate-500 dark:text-slate-400">· {item.accuracyPercent}%</span>
                 </span>
               </li>
             ))}

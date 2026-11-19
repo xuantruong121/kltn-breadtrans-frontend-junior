@@ -30,7 +30,7 @@ export function ReviewQuestionCard({ row, evidenceLabel }: { row: ReviewRow; evi
         </h3>
         {row.skill && (
           <span className="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300 sm:inline-flex">
-            {row.skill}
+            Dạng: {row.skill}
           </span>
         )}
         <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${STATUS[row.status].className}`}>
