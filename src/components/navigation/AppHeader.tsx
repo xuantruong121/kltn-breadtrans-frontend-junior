@@ -664,7 +664,7 @@ export function AppHeader() {
                                           <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                             {item.title}
                                           </span>
-                                          <span className="mt-0.5 block line-clamp-2 text-sm leading-5 text-slate-600 dark:text-slate-400">
+                                          <span className="mt-0.5 line-clamp-2 text-sm leading-5 text-slate-600 dark:text-slate-400">
                                             {item.body}
                                           </span>
                                           <span className="mt-1 flex items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">

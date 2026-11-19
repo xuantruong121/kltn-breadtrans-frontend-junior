@@ -105,6 +105,17 @@ export function notificationTimeText(value: string, now: Date = new Date()): str
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
 }
 
+/**
+ * The time on a row that already sits under its day heading: today reads as
+ * "3 giờ trước", an older day only needs the clock time ("20:05").
+ */
+export function notificationRowTime(value: string, now: Date = new Date()): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  if (startOfDay(date).getTime() >= startOfDay(now).getTime()) return notificationTimeText(value, now);
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export interface NotificationDayGroup<T> {
   key: string;
   label: string;

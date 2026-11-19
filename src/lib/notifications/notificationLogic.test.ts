@@ -5,6 +5,7 @@ import {
   groupNotificationsByDay,
   resolveNotificationAction,
   notificationIconKey,
+  notificationRowTime,
   notificationTimeText,
 } from "./notificationLogic.ts";
 
@@ -125,4 +126,11 @@ test("a day split across the list stays one group, and odd dates do not break gr
       ["Không rõ ngày", [4]],
     ],
   );
+});
+
+test("under a day heading, today keeps 'N giờ trước' and older rows show the clock time", () => {
+  assert.equal(notificationRowTime(at(19, 11, 0), NOW), "3 giờ trước");
+  assert.equal(notificationRowTime(at(18, 20, 5), NOW), "20:05");
+  assert.equal(notificationRowTime(at(11, 7, 30), NOW), "07:30");
+  assert.equal(notificationRowTime("", NOW), "");
 });

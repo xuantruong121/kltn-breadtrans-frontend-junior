@@ -18,7 +18,7 @@ import { notificationService, type NotificationFilter, type NotificationItem } f
 import {
   getNotificationActionLabel,
   groupNotificationsByDay,
-  notificationTimeText,
+  notificationRowTime,
   resolveNotificationAction,
 } from "@/lib/notifications/notificationLogic";
 
@@ -242,7 +242,7 @@ export default function NotificationsPage() {
                               <span className="sr-only">Chưa đọc,</span>
                             </>
                           )}
-                          <time dateTime={item.createdAt}>{notificationTimeText(item.createdAt)}</time>
+                          <time dateTime={item.createdAt}>{notificationRowTime(item.createdAt)}</time>
                           {label && (
                             <>
                               <span aria-hidden="true">·</span>
