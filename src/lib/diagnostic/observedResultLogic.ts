@@ -135,7 +135,7 @@ export function explainObservedScore(result: ObservedLike): {
         task.status === "GRADED" && task.score !== null
           ? `${formatNumber(task.score)} × ${formatPercentWeight(task.weight)}`
           : task.status === "SKIPPED" || task.status === "NOT_ATTEMPTED"
-            ? "bỏ qua – không tính điểm, không tính trọng số"
+            ? "bỏ qua – không tính vào điểm tổng"
             : task.status === "GRADING_FAILED"
               ? "chấm chưa thành công – chưa tính"
               : "đang chấm – chưa tính";
@@ -146,7 +146,52 @@ export function explainObservedScore(result: ObservedLike): {
   const denominator = `35% + 35% + 7,5% × ${graded} bài đã chấm = ${formatPercentWeight(result.observed.denominator)}`;
   const outcome =
     result.observed.score !== null
-      ? `Điểm quan sát = tổng các dòng được tính ÷ ${formatPercentWeight(result.observed.denominator)} = ${formatNumber(result.observed.score)}/100`
+      ? `Điểm tổng = tổng các dòng được tính ÷ ${formatPercentWeight(result.observed.denominator)} = ${formatNumber(result.observed.score)}/100`
       : (withheldMessage(result.observed.withheldReason) ?? "");
   return { lines, denominator, outcome };
+}
+
+/** "3/10 câu đúng · chiếm 35% điểm tổng": the share is of the total score, not what was achieved. */
+export function objectiveLine(skill: { correct: number; total: number; weight: number }): string {
+  return `${skill.correct}/${skill.total} câu đúng · chiếm ${formatPercentWeight(skill.weight)} điểm tổng`;
+}
+
+const TASK_WEIGHT_FALLBACK = 0.075;
+
+/** "0/2 bài đã chấm · mỗi bài chiếm 7,5% điểm tổng". */
+export function productiveLine(skill: { graded: number; total: number; tasks: { weight: number }[] }): string {
+  const weight = skill.tasks[0]?.weight ?? TASK_WEIGHT_FALLBACK;
+  return `${skill.graded}/${skill.total} bài đã chấm · mỗi bài chiếm ${formatPercentWeight(weight)} điểm tổng`;
+}
+
+/** One sentence under "Hồ sơ bốn kỹ năng" that says what makes up the total. */
+export function weightsSummary(result: Pick<ObservedLike, "listening" | "reading" | "speaking" | "writing">): string {
+  const tasks = result.speaking.total + result.writing.total;
+  const taskWeight = result.speaking.tasks[0]?.weight ?? result.writing.tasks[0]?.weight ?? TASK_WEIGHT_FALLBACK;
+  return (
+    `Điểm tổng gồm Nghe ${formatPercentWeight(result.listening.weight)}, Đọc ${formatPercentWeight(result.reading.weight)} ` +
+    `và ${tasks} bài Nói, Viết, mỗi bài ${formatPercentWeight(taskWeight)}. ` +
+    "Phần chưa chấm không tính; các phần đã chấm được chia lại cho đủ 100%."
+  );
+}
+
+export type SkillKey = "LISTENING" | "READING" | "SPEAKING" | "WRITING";
+
+/**
+ * Card colours of the four-skill profile, the same skill colours as the
+ * navigation: Nghe blue, Đọc emerald, Nói teal, Viết rose. A skill without a
+ * score stays grey, so colour never suggests a result that is not there.
+ */
+export function skillTone(skill: SkillKey, scored: boolean): string {
+  if (!scored) return "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-850";
+  switch (skill) {
+    case "LISTENING":
+      return "border-blue-200 bg-blue-50/70 dark:border-blue-900 dark:bg-blue-950/30";
+    case "READING":
+      return "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/30";
+    case "SPEAKING":
+      return "border-teal-200 bg-teal-50/70 dark:border-teal-900 dark:bg-teal-950/30";
+    case "WRITING":
+      return "border-rose-200 bg-rose-50/70 dark:border-rose-900 dark:bg-rose-950/30";
+  }
 }

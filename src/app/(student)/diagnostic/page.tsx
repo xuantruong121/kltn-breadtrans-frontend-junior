@@ -1099,7 +1099,7 @@ function DiagnosticResultView({
         <span>Quay lại</span>
       </button>
       {/* 1. Header Card: what was administered and how it was scored */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
+      <section className="rounded-3xl border border-slate-200 border-t-4 border-t-blue-500 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-blue-500 dark:bg-slate-900 sm:p-9">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
             <CheckCircle2 size={15} />
@@ -1153,7 +1153,7 @@ function DiagnosticResultView({
             {speakingTaskIds.map((questionId, index) => {
               const item = result.speakingResponses?.find((row) => row.questionId === questionId);
               return (
-                <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
+                <article key={questionId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base dark:border-slate-700 dark:bg-slate-850">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Nói {index + 1}</h4>
                     <TaskStatusChip status={item?.status} score={item?.score ?? null} />
@@ -1172,7 +1172,7 @@ function DiagnosticResultView({
                   )}
                   {item?.status === "SKIPPED" && (
                     <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                      Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không được tính trọng số.
+                      Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không tính vào điểm tổng.
                     </p>
                   )}
                   {item?.status === "GRADING_FAILED" && (
@@ -1201,20 +1201,20 @@ function DiagnosticResultView({
                 !item && result.questionsResult.find((row) => row.questionId === questionId)?.selectedText === "";
               if (!item)
                 return (
-                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
+                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base dark:border-slate-700 dark:bg-slate-850">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                       <TaskStatusChip status={skipped ? "SKIPPED" : undefined} score={null} />
                     </div>
                     {skipped && (
                       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                        Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không được tính trọng số.
+                        Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không tính vào điểm tổng.
                       </p>
                     )}
                   </article>
                 );
               return (
-              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
+              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base dark:border-slate-700 dark:bg-slate-850">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                   <TaskStatusChip status={item.status} score={item.score} />
@@ -1289,7 +1289,7 @@ function DiagnosticResultView({
 
       {/* 2. Concrete Practice Recommendations */}
       {practiceItems.length > 0 && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
+        <section className="rounded-3xl border border-slate-200 border-t-4 border-t-teal-500 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-teal-500 dark:bg-slate-900 sm:p-9">
           <div className="flex items-center gap-2">
             <BookOpen size={20} className="text-teal-600 dark:text-teal-400" />
             <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
@@ -1305,7 +1305,7 @@ function DiagnosticResultView({
               <Link
                 key={rec.id}
                 href={rec.route}
-                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4.5 transition-all hover:border-teal-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-slate-50 p-4.5 transition-all hover:border-teal-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
               >
                 <div>
                   <span className="inline-block rounded-md bg-teal-100 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-teal-700 dark:bg-teal-950 dark:text-teal-300">
@@ -1329,7 +1329,7 @@ function DiagnosticResultView({
       )}
 
       {/* 3. Filterable Grouped Answer Review */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
+      <section className="rounded-3xl border border-slate-200 border-t-4 border-t-slate-400 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-slate-500 dark:bg-slate-900 sm:p-9">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
             Đối chiếu câu trả lời
@@ -1384,7 +1384,7 @@ function DiagnosticResultView({
                 return (
                   <div
                     key={item.questionId}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 text-sm dark:border-slate-800 dark:bg-slate-850"
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-850"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-extrabold text-slate-800 dark:text-slate-200">
@@ -1413,10 +1413,10 @@ function DiagnosticResultView({
                   key={item.questionId}
                   className={`rounded-2xl border p-4 text-sm transition-colors ${
                     item.isCorrect
-                      ? "border-emerald-200/90 bg-emerald-50/30 dark:border-emerald-950 dark:bg-emerald-950/20"
+                      ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/30"
                       : item.isCorrect === false
-                        ? "border-rose-200/90 bg-rose-50/30 dark:border-rose-950 dark:bg-rose-950/20"
-                        : "border-slate-200 bg-slate-50/40 dark:border-slate-800 dark:bg-slate-850"
+                        ? "border-rose-200 bg-rose-50/70 dark:border-rose-900 dark:bg-rose-950/30"
+                        : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-850"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">

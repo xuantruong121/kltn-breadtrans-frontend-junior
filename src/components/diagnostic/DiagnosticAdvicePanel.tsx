@@ -48,7 +48,7 @@ function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; 
       className="group flex min-h-11 items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-base transition-colors hover:border-blue-400 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-blue-500"
     >
       <span className="min-w-0">
-        <span className="block text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+        <span className="block text-sm font-semibold text-slate-600 dark:text-slate-400">
           {KIND[resource.kind]}
           {note ? ` · ${note}` : ""}
         </span>
@@ -65,21 +65,40 @@ function ResourceLink({ resource, note }: { resource: DiagnosticAdviceResource; 
   );
 }
 
-function PriorityCard({ item, label }: { item: DiagnosticAdvicePriority; label: string }) {
+const CARD_TONE = {
+  // Needs attention: amber, as everywhere in the app.
+  priority:
+    "border-amber-200 border-l-4 border-l-amber-500 bg-amber-50/60 dark:border-amber-900 dark:border-l-amber-500 dark:bg-amber-950/20",
+  supplemental: "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-850",
+} as const;
+
+function PriorityCard({
+  item,
+  label,
+  tone = "priority",
+}: {
+  item: DiagnosticAdvicePriority;
+  label: string;
+  tone?: keyof typeof CARD_TONE;
+}) {
   return (
-    <li className="rounded-2xl border border-slate-200 p-4 dark:border-slate-700 sm:p-5">
-      <p className="text-sm font-black uppercase tracking-wide text-amber-700 dark:text-amber-300">
+    <li className={`rounded-2xl border p-4 sm:p-5 ${CARD_TONE[tone]}`}>
+      <p
+        className={`text-base font-bold ${
+          tone === "priority" ? "text-amber-800 dark:text-amber-300" : "text-slate-700 dark:text-slate-300"
+        }`}
+      >
         {label} · {SKILL[item.skill]}
       </p>
-      <h3 className="mt-1 text-base font-black text-slate-900 dark:text-slate-100">{item.area}</h3>
-      <p className="mt-1 text-sm font-bold text-slate-700 dark:text-slate-300">Căn cứ: {item.evidence}</p>
+      <h3 className="mt-1 text-lg font-bold text-slate-900 dark:text-slate-100 sm:text-xl">{item.area}</h3>
+      <p className="mt-1.5 text-base font-semibold text-slate-700 dark:text-slate-300">Vì sao: {item.evidence}</p>
       <p className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300">{item.why}</p>
       <p className="mt-2 text-base leading-7 text-slate-800 dark:text-slate-200">
         <span className="font-bold">Cách luyện: </span>
         {item.action}
       </p>
       {item.graderFeedback.length > 0 && (
-        <div className="mt-3 rounded-xl bg-slate-50 p-3 dark:bg-slate-850">
+        <div className="mt-3 rounded-xl bg-white/80 p-3 dark:bg-slate-900/60">
           <p className="flex items-center gap-1.5 text-sm font-bold text-slate-700 dark:text-slate-300">
             <Quote size={13} strokeWidth={2.25} aria-hidden="true" /> Nhận xét của bộ chấm về bài của bạn
           </p>
@@ -116,7 +135,7 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
   return (
     <section
       aria-labelledby="diagnostic-advice-title"
-      className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9"
+      className="rounded-3xl border border-slate-200 border-t-4 border-t-amber-500 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-amber-500 dark:bg-slate-900 sm:p-9"
     >
       <div className="flex items-center gap-2">
         <Target size={20} strokeWidth={2.25} className="text-blue-600 dark:text-blue-400" aria-hidden="true" />
@@ -148,8 +167,8 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
 
       {advice.strengths.length > 0 && (
         <div className="mt-5">
-          <h3 className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            <TrendingUp size={14} strokeWidth={2.25} aria-hidden="true" /> Bạn làm tốt
+          <h3 className="flex items-center gap-1.5 text-lg font-bold text-emerald-800 dark:text-emerald-300">
+            <TrendingUp size={18} strokeWidth={2.25} aria-hidden="true" /> Bạn làm tốt
           </h3>
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {advice.strengths.map((s) => (
@@ -165,9 +184,12 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
       )}
 
       <div className="mt-6">
-        <h3 className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-300">Ưu tiên cải thiện</h3>
+        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100">Ưu tiên cải thiện</h3>
+        <p className="mt-1 text-base leading-7 text-slate-700 dark:text-slate-300">
+          Gợi ý của hệ thống, dựa trên các câu bạn làm sai trong bài này và xếp theo mức nên luyện trước.
+        </p>
         {advice.priorities.length > 0 ? (
-          <ol className="mt-2 space-y-3">
+          <ol className="mt-3 space-y-3">
             {advice.priorities.map((p) => (
               <PriorityCard key={p.areaKey} item={p} label={`Ưu tiên ${p.rank}`} />
             ))}
@@ -183,20 +205,18 @@ export function DiagnosticAdvicePanel({ advice }: { advice: DiagnosticAdvice }) 
 
       {advice.supplemental.length > 0 && (
         <div className="mt-6">
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            Bổ trợ (không tính vào điểm tổng)
-          </h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Bổ trợ (không tính vào điểm tổng)</h3>
           <ol className="mt-2 space-y-3">
             {advice.supplemental.map((p) => (
-              <PriorityCard key={p.areaKey} item={p} label="Bổ trợ" />
+              <PriorityCard key={p.areaKey} item={p} label="Bổ trợ" tone="supplemental" />
             ))}
           </ol>
         </div>
       )}
 
       {advice.unassessed.length > 0 && (
-        <div className="mt-6 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">Chưa đánh giá được</h3>
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-850">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Chưa đánh giá được</h3>
           <ul className="mt-2 space-y-3 text-base leading-7 text-slate-700 dark:text-slate-300">
             {advice.unassessed.map((u) => (
               <li key={u.skill}>

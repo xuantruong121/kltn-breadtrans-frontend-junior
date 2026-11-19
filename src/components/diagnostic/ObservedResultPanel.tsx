@@ -12,6 +12,10 @@ import {
   formatDifficulty,
   formatNumber,
   formatSubskill,
+  objectiveLine,
+  productiveLine,
+  skillTone,
+  weightsSummary,
   withheldMessage,
 } from "@/lib/diagnostic/observedResultLogic";
 
@@ -39,19 +43,19 @@ export function ObservedResultPanel({
   const withheld = withheldMessage(observed.observed.withheldReason);
   const explanation = explainObservedScore(observed);
   const objective = [
-    { key: "LISTENING", name: "Nghe", skill: observed.listening },
-    { key: "READING", name: "Đọc", skill: observed.reading },
+    { key: "LISTENING" as const, name: "Nghe", skill: observed.listening },
+    { key: "READING" as const, name: "Đọc", skill: observed.reading },
   ];
   const productive = [
-    { key: "SPEAKING", name: "Nói", skill: observed.speaking },
-    { key: "WRITING", name: "Viết", skill: observed.writing },
+    { key: "SPEAKING" as const, name: "Nói", skill: observed.speaking },
+    { key: "WRITING" as const, name: "Viết", skill: observed.writing },
   ];
 
   return (
     <div className="mt-4">
       <div className="grid gap-4 sm:grid-cols-[1.4fr_1fr]">
-        <div>
-          <p className="text-sm font-bold text-slate-600 dark:text-slate-400">Điểm quan sát</p>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
+          <p className="text-sm font-bold text-blue-900 dark:text-blue-200">Điểm tổng</p>
           <p className="mt-1 text-4xl font-black text-slate-900 dark:text-slate-100 sm:text-5xl">
             {score !== null ? (
               <>
@@ -63,8 +67,7 @@ export function ObservedResultPanel({
             )}
           </p>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-            {withheld ??
-              "Tính trên các phần đã thực sự được chấm trong bài này. Bài bỏ qua không bị tính 0 và cũng không được tính trọng số."}
+            {withheld ?? "Chỉ tính trên các phần đã được chấm trong bài này. Bài bỏ qua không bị tính 0."}
           </p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-850">
@@ -81,21 +84,20 @@ export function ObservedResultPanel({
         </div>
       </div>
 
-      <h2 className="mt-7 text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
-        Hồ sơ bốn kỹ năng
-      </h2>
+      <h2 className="mt-7 text-lg font-bold text-slate-900 dark:text-slate-100">Hồ sơ bốn kỹ năng</h2>
+      <p className="mt-1 text-sm leading-6 text-slate-700 dark:text-slate-300">{weightsSummary(observed)}</p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {objective.map(({ key, name, skill }) => (
-          <div key={key} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <div key={key} className={`rounded-xl border p-4 ${skillTone(key, skill.score !== null)}`}>
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-black text-slate-700 dark:text-slate-300">{name}</p>
+              <p className="text-base font-black text-slate-800 dark:text-slate-200">{name}</p>
               <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${TONE_CLASS.done}`}>Trắc nghiệm</span>
             </div>
             <p className="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100">
               {skill.score !== null ? formatNumber(skill.score) : "—"}
             </p>
             <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">
-              {skill.correct}/{skill.total} câu đúng · trọng số 35%
+              {objectiveLine(skill)}
             </p>
           </div>
         ))}
@@ -104,17 +106,18 @@ export function ObservedResultPanel({
           const tone = skill.pending > 0 || skill.failed > 0 ? "pending" : coverage.tone;
           const label =
             skill.pending > 0 ? "Đang chấm" : skill.failed > 0 ? "Chấm chưa thành công" : coverage.label;
+          const scored = skill.score !== null && skill.pending === 0 && skill.failed === 0;
           return (
-            <div key={key} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <div key={key} className={`rounded-xl border p-4 ${skillTone(key, scored)}`}>
               <div className="flex items-center justify-between gap-2">
-                <p className="text-sm font-black text-slate-700 dark:text-slate-300">{name}</p>
+                <p className="text-base font-black text-slate-800 dark:text-slate-200">{name}</p>
                 <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${TONE_CLASS[tone]}`}>{label}</span>
               </div>
               <p className="mt-2 text-3xl font-black text-slate-900 dark:text-slate-100">
-                {skill.score !== null && skill.pending === 0 && skill.failed === 0 ? formatNumber(skill.score) : "—"}
+                {scored && skill.score !== null ? formatNumber(skill.score) : "—"}
               </p>
               <p className="mt-0.5 text-sm text-slate-700 dark:text-slate-300">
-                {skill.graded}/{skill.total} bài đã chấm · 7,5% mỗi bài
+                {productiveLine(skill)}
               </p>
               {coverage.notice && skill.pending === 0 && skill.failed === 0 && (
                 <p className="mt-2 text-sm leading-6 text-slate-700 dark:text-slate-300">{coverage.notice}</p>
@@ -127,7 +130,7 @@ export function ObservedResultPanel({
       {observed.languageUse.total > 0 && (
         <p className="mt-3 text-sm leading-6 text-slate-700 dark:text-slate-300">
           Ngữ pháp & Từ vựng: {observed.languageUse.correct}/{observed.languageUse.total} câu đúng. Phần này chỉ dùng
-          để gợi ý luyện tập và không tính vào điểm (trọng số 0).
+          để gợi ý luyện tập và không tính vào điểm tổng.
         </p>
       )}
 
@@ -146,7 +149,7 @@ export function ObservedResultPanel({
         </summary>
         <div className="border-t border-slate-200 px-4 py-4 text-sm leading-6 text-slate-700 dark:border-slate-800 dark:text-slate-300">
           <p>
-            Nghe và Đọc mỗi phần chiếm 35%. Mỗi bài Nói và mỗi bài Viết chiếm 7,5% (2 bài mỗi kỹ năng). Điểm quan sát
+            Nghe và Đọc mỗi phần chiếm 35%. Mỗi bài Nói và mỗi bài Viết chiếm 7,5% (2 bài mỗi kỹ năng). Điểm tổng
             chỉ chia cho trọng số của những phần đã được chấm, nên bài bỏ qua không kéo điểm xuống 0, nhưng điểm cũng
             dựa trên ít bằng chứng hơn.
           </p>
