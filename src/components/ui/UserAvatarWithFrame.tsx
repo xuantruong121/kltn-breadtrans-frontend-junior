@@ -1,6 +1,7 @@
 import React from "react";
 import { BadgeGlyph } from "@/components/ui/BadgeGlyph";
-import { useGamificationStore } from "@/stores/gamificationStore";
+import { useAuthStore } from "@/stores/authStore";
+import { cosmeticsOf } from "@/lib/avatar/cosmetics";
 import {
   resolveAvatarFrame,
   resolveUserBadge,
@@ -25,11 +26,12 @@ export const UserAvatarWithFrame: React.FC<UserAvatarWithFrameProps> = ({
   overrideBadge,
   showBadge = false,
 }) => {
-  const storeFrame = useGamificationStore((s) => s.equippedAvatarFrame);
-  const storeBadge = useGamificationStore((s) => s.equippedBadge);
+  // The signed-in learner's own frame and badge, from the profile. Another
+  // learner's avatar must pass overrideFrame/overrideBadge (null included).
+  const mine = cosmeticsOf(useAuthStore((s) => s.user?.profile));
 
-  const activeFrameKey = overrideFrame !== undefined ? overrideFrame : storeFrame;
-  const activeBadgeKey = overrideBadge !== undefined ? overrideBadge : storeBadge;
+  const activeFrameKey = overrideFrame !== undefined ? overrideFrame : mine.avatarFrame;
+  const activeBadgeKey = overrideBadge !== undefined ? overrideBadge : mine.badgeKey;
 
   const frame = resolveAvatarFrame(activeFrameKey);
   const badge = resolveUserBadge(activeBadgeKey);

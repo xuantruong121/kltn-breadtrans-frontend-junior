@@ -24,6 +24,8 @@ export interface LeaderboardEntry {
   userId: number;
   displayName: string;
   avatarUrl: string | null;
+  avatarFrame?: string | null;
+  badgeKey?: string | null;
   weeklyExp: number;
   totalPoints: number;
   tier: string;
@@ -35,6 +37,8 @@ export interface LeaderboardCurrentUserRank {
   userId: number;
   displayName: string;
   avatarUrl: string | null;
+  avatarFrame?: string | null;
+  badgeKey?: string | null;
   tier: string;
   totalPoints: number;
   weeklyExp: number;
@@ -70,6 +74,8 @@ export interface RankingEntry {
   userId: number;
   displayName: string;
   avatarUrl: string | null;
+  avatarFrame?: string | null;
+  badgeKey?: string | null;
   level: number;
   tier: string;
   value: number;
@@ -95,7 +101,14 @@ export interface RankingResponse {
   me: { rank: number | null; value: number; level: number; tier: string; league: LeagueStanding | null } | null;
 }
 
-export type HallOfFameEntry = { userId: number; displayName: string; avatarUrl: string | null; value: number } | null;
+export type HallOfFameEntry = {
+  userId: number;
+  displayName: string;
+  avatarUrl: string | null;
+  avatarFrame?: string | null;
+  badgeKey?: string | null;
+  value: number;
+} | null;
 export interface HallOfFame {
   xp: HallOfFameEntry;
   streak: HallOfFameEntry;

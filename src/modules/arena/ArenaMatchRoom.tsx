@@ -234,6 +234,8 @@ export default function ArenaMatchRoom({
             <PlayerScoreCard
               name={me.userName}
               avatar={me.avatar}
+              frame={me.avatarFrame ?? null}
+              badge={me.badgeKey ?? null}
               score={myProgress?.score ?? 0}
               marks={marks.mine}
               side="me"
@@ -246,6 +248,8 @@ export default function ArenaMatchRoom({
             <PlayerScoreCard
               name={rival.userName}
               avatar={rival.avatar}
+              frame={rival.avatarFrame ?? null}
+              badge={rival.badgeKey ?? null}
               score={rivalProgress?.score ?? 0}
               marks={marks.theirs}
               side="rival"

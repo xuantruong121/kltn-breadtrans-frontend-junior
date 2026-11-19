@@ -58,7 +58,7 @@ export function RankingSidebar({
               </span>
               {who ? (
                 <div className="mt-3 flex items-center gap-3">
-                  <PersonAvatar name={who.displayName} url={who.avatarUrl} size={40} />
+                  <PersonAvatar name={who.displayName} url={who.avatarUrl} size={40} frame={who.avatarFrame} badge={who.badgeKey} />
                   <div className="min-w-0">
                     <p className="truncate font-bold text-slate-900 dark:text-slate-100">{who.displayName}</p>
                     <p className="font-extrabold tabular-nums text-sky-700 dark:text-sky-400">{h.unit(who.value)}</p>

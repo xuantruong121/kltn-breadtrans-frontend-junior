@@ -9,8 +9,7 @@ interface GamificationState {
   /** Tổng XP từ trước tới nay; cấp độ tính từ số này (lib/gamification/xpLevel.ts). Null khi chưa tải. */
   totalXp: number | null;
   unlockedItems: string[]; // ID các vật phẩm đã mua
-  equippedAvatarFrame: string | null; // ID khung avatar đang đeo
-  equippedBadge: string | null; // ID huy hiệu đang đeo
+  // The worn frame and badge live on the profile now (lib/avatar/useCosmetics).
   
   // Actions
   setBreads: (amount: number) => void;
@@ -19,8 +18,6 @@ interface GamificationState {
   spendBreads: (amount: number) => boolean;
   incrementStreak: () => void;
   unlockItem: (itemId: string) => void;
-  equipAvatarFrame: (frameId: string | null) => void;
-  equipBadge: (badgeId: string | null) => void;
   reset: () => void;
 }
 
@@ -34,8 +31,6 @@ export const useGamificationStore = create<GamificationState>()(
       exp: 0,
       totalXp: null,
       unlockedItems: [],
-      equippedAvatarFrame: null,
-      equippedBadge: null,
 
       reset: () =>
         set({
@@ -45,8 +40,6 @@ export const useGamificationStore = create<GamificationState>()(
           exp: 0,
           totalXp: null,
           unlockedItems: [],
-          equippedAvatarFrame: null,
-          equippedBadge: null,
         }),
 
       setBreads: (amount: number) => set({ breads: amount }),
@@ -74,31 +67,12 @@ export const useGamificationStore = create<GamificationState>()(
       incrementStreak: () => set((state) => ({ streak: state.streak + 1 })),
 
       unlockItem: (itemId: string) => {
-        set((state) => {
-          const newUnlocked = state.unlockedItems.includes(itemId)
+        set((state) => ({
+          unlockedItems: state.unlockedItems.includes(itemId)
             ? state.unlockedItems
-            : [...state.unlockedItems, itemId];
-          
-          let newFrame = state.equippedAvatarFrame;
-          let newBadge = state.equippedBadge;
-
-          if (itemId.startsWith("item_avatar_") && !newFrame) {
-            newFrame = itemId;
-          }
-          if (itemId.startsWith("item_badge_") && !newBadge) {
-            newBadge = itemId;
-          }
-
-          return {
-            unlockedItems: newUnlocked,
-            equippedAvatarFrame: newFrame,
-            equippedBadge: newBadge,
-          };
-        });
+            : [...state.unlockedItems, itemId],
+        }));
       },
-
-      equipAvatarFrame: (frameId: string | null) => set({ equippedAvatarFrame: frameId }),
-      equipBadge: (badgeId: string | null) => set({ equippedBadge: badgeId }),
     }),
     {
       name: "breadtrans_gamification_storage",

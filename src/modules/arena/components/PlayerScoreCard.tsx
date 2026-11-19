@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Check } from "lucide-react";
 import { AvatarImage } from "@/components/ui/AvatarImage";
+import { BadgeGlyph } from "@/components/ui/BadgeGlyph";
+import { resolveAvatarFrame, resolveUserBadge } from "@/lib/avatar/avatarCustomizationLogic";
 
 export type RoundMark = "correct" | "wrong" | null;
 
@@ -39,9 +41,14 @@ export function PlayerScoreCard({
   side,
   answeredNow,
   gain,
+  frame = null,
+  badge = null,
 }: {
   name: string;
   avatar?: string;
+  /** This player's own shop frame and badge from the server, never the viewer's. */
+  frame?: string | null;
+  badge?: string | null;
   score: number;
   marks: RoundMark[];
   side: "me" | "rival";
@@ -54,12 +61,34 @@ export function PlayerScoreCard({
   const shown = useCountUp(score, reduce);
   const me = side === "me";
   const ring = me ? "ring-sky-500" : "ring-rose-500";
+  const worn = resolveAvatarFrame(frame);
+  const pinned = resolveUserBadge(badge);
   const ink = me ? "text-sky-700 dark:text-sky-400" : "text-rose-700 dark:text-rose-400";
 
   return (
     <div className={`flex min-w-0 flex-1 items-center gap-3 ${me ? "" : "flex-row-reverse text-right"}`}>
-      <span className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-lg font-bold text-slate-700 ring-2 sm:h-14 sm:w-14 ${ring} dark:bg-slate-800 dark:text-slate-200`}>
-        <AvatarImage src={avatar} alt="" className="h-full w-full object-cover" fallback={name?.[0]?.toUpperCase() || "?"} />
+      <span className="relative flex h-12 w-12 shrink-0 sm:h-14 sm:w-14">
+        {worn && (
+          <img
+            src={worn.svgUrl}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[165%] w-[165%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
+          />
+        )}
+        <span
+          className={`relative z-10 flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-slate-100 text-lg font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200 ${worn ? worn.containerRingClass : `ring-2 ${ring}`}`}
+        >
+          <AvatarImage src={avatar} alt="" className="h-full w-full object-cover" fallback={name?.[0]?.toUpperCase() || "?"} />
+        </span>
+        {pinned && (
+          <span
+            title={pinned.name}
+            className="absolute -bottom-0.5 -right-0.5 z-30 flex h-5 w-5 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900 sm:h-6 sm:w-6"
+          >
+            <BadgeGlyph badge={pinned} className="size-3/4" imgClassName="h-full w-full object-contain p-px" />
+          </span>
+        )}
       </span>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">

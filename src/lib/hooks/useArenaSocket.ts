@@ -19,12 +19,21 @@ export interface ArenaQuestion {
   options: string[];
 }
 
+/** A player as the server sends it; frame and badge are that player's own shop items. */
+export interface ArenaPlayer {
+  userId: number;
+  userName: string;
+  avatar?: string;
+  avatarFrame?: string | null;
+  badgeKey?: string | null;
+}
+
 export interface MatchData {
   roomId: string;
   matchId: string;
   stake: number;
-  player1: { userId: number; userName: string; avatar?: string };
-  player2: { userId: number; userName: string; avatar?: string };
+  player1: ArenaPlayer;
+  player2: ArenaPlayer;
   /** Empty: each question arrives with its round. */
   questions: ArenaQuestion[];
   totalRounds: number;
