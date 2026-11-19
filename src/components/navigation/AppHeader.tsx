@@ -662,7 +662,7 @@ export function AppHeader() {
                                       >
                                         <NotificationIcon type={item.type} size={15} className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
                                         <span className="min-w-0 flex-1">
-                                          <span className="block truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                          <span className="block text-sm font-semibold leading-5 text-slate-900 dark:text-slate-100">
                                             {item.title}
                                           </span>
                                           <span className="mt-1 flex items-center gap-x-2 text-xs text-slate-500 dark:text-slate-400">
