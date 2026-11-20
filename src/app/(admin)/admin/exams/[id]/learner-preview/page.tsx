@@ -348,6 +348,7 @@ export default function ExamLearnerPreviewPage({
         <PreviewGroups key="SPEAKING" groups={SPEAKING_GROUPS}>
           {(group) => (
             <SpeakingPaper
+              preview
               tasks={(data.speaking ?? [])
                 .filter((task) => task.order >= group.from && task.order <= group.to)
                 .map((task) => ({ id: task.id, number: task.order, text: task.targetText, imageUrl: task.imageUrl, stimulusText: task.stimulusText }))}
