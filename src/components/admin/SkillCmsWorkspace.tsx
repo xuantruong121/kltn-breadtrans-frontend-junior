@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -57,6 +58,8 @@ import {
   type ListFilters,
 } from "./skillCmsStatus";
 import { AdminImageThumb } from "./AdminImageThumb";
+import { TranslationReviewPanel, TRANSLATION_REVIEW_KEYS } from "./TranslationReviewPanel";
+import { translationReviewService } from "@/lib/api/services/translation-review.service";
 import {
   quizDisplayTitle,
   quizIdsMatchingTitle,
@@ -409,6 +412,19 @@ export default function SkillCmsWorkspace({
     enabled: mode === "list",
   });
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  // Writing: "Duyệt câu dịch" is a tab of this page, with counts per exercise (owner 2026-11-19).
+  const writingView = domain === "writing" && searchParams.get("tab") === "review" ? "review" : "practice";
+  const reviewQuizId = Number(searchParams.get("quiz")) || undefined;
+  const { data: reviewSummary } = useQuery({
+    queryKey: TRANSLATION_REVIEW_KEYS.summary,
+    queryFn: translationReviewService.summary,
+    enabled: domain === "writing" && mode === "list",
+  });
+  const openWritingView = (view: "practice" | "review", quiz?: number) =>
+    router.replace(
+      view === "review" ? `/admin/writing?tab=review${quiz ? `&quiz=${quiz}` : ""}` : "/admin/writing",
+      { scroll: false },
+    );
   const [pendingPublicationStatus, setPendingPublicationStatus] = useState<
     "DRAFT" | "PUBLISHED" | null
   >(null);
@@ -1548,7 +1564,41 @@ export default function SkillCmsWorkspace({
           )}
         </header>
 
+        {domain === "writing" && (
+          <div role="tablist" aria-label="Trang Viết" className="flex gap-6 border-b border-slate-200">
+            {(
+              [
+                ["practice", "Bài luyện viết"],
+                ["review", "Duyệt câu dịch"],
+              ] as const
+            ).map(([view, label]) => (
+              <button
+                key={view}
+                type="button"
+                role="tab"
+                aria-selected={writingView === view}
+                onClick={() => openWritingView(view)}
+                className={`-mb-px border-b-2 pb-2.5 text-sm font-semibold transition-colors ${
+                  writingView === view
+                    ? "border-slate-950 text-slate-950"
+                    : "border-transparent text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                {label}
+                {view === "review" && (reviewSummary?.total ?? 0) > 0 && (
+                  <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-bold tabular-nums text-amber-800">
+                    {reviewSummary?.total}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
 
+        {writingView === "review" ? (
+          <TranslationReviewPanel quizId={reviewQuizId} onClearQuiz={() => openWritingView("review")} />
+        ) : (
+        <>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           {domain === "listening" && (
             <div
@@ -1731,11 +1781,14 @@ export default function SkillCmsWorkspace({
             const cardTitle = quizDisplayTitle(content.id, content.title ?? "");
             const published = content.publicationStatus === "PUBLISHED";
             const audio = audioBadgeFor(content);
+            const pendingReview = domain === "writing" ? (reviewSummary?.byQuiz[String(content.id)] ?? 0) : 0;
             return (
+              <div key={content.id} className="flex h-full flex-col">
               <Link
-                key={content.id}
                 href={`/admin/${domain}/${content.id}`}
-                className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                className={`group flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+                  pendingReview > 0 ? "rounded-b-none" : ""
+                }`}
               >
                 <div className="flex items-center gap-2">
                   {level && (
@@ -1811,6 +1864,15 @@ export default function SkillCmsWorkspace({
                   </div>
                 </div>
               </Link>
+              {pendingReview > 0 && (
+                <Link
+                  href={`/admin/writing?tab=review&quiz=${content.id}`}
+                  className="rounded-b-xl border border-t-0 border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                >
+                  {pendingReview} câu dịch chờ duyệt
+                </Link>
+              )}
+              </div>
             );
           })}
           {totalItems === 0 && (
@@ -1835,6 +1897,8 @@ export default function SkillCmsWorkspace({
           pageSizeOptions={ADMIN_PAGE_SIZES}
           alwaysShow
         />
+        </>
+        )}
       </div>
     );
   }
