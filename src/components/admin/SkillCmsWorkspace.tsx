@@ -508,9 +508,6 @@ export default function SkillCmsWorkspace({
   // Opened from "Tạo bằng AI" on the list (owner 2026-11-19): the AI drafts from the title.
   const aiStart =
     mode !== "list" && !id && (domain === "listening" || domain === "reading") && searchParams.get("ai") === "1";
-  useEffect(() => {
-    if (aiStart) document.getElementById("cms-title")?.focus();
-  }, [aiStart]);
   // Writing AI (owner 2026-11-19): the create dialog on the list, the draft panel in the editor.
   const [writingAiCreating, setWritingAiCreating] = useState(false);
   const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean } | null>(null);
@@ -2659,6 +2656,8 @@ export default function SkillCmsWorkspace({
               Tiêu đề
               <input
                 id="cms-title"
+                // The page opened from "Tạo bằng AI": the AI drafts from this title.
+                autoFocus={aiStart}
                 value={form.title}
                 aria-invalid={titleError || undefined}
                 aria-describedby={titleError ? "cms-title-error" : undefined}
