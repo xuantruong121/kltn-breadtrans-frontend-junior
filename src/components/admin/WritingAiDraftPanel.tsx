@@ -206,10 +206,16 @@ export function WritingAiDraftPanel({
           <button type="button" onClick={onClose} disabled={busy === "save"} className={BTN_SECONDARY}>
             Hủy
           </button>
-          <button type="button" onClick={() => void save()} disabled={busy !== null || !chosen.length} className={BTN_AI}>
-            {busy === "save" && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
-            Thêm {chosen.length} câu đã chọn
-          </button>
+          {/* No faded button before there is something to add (anti-slop rule). */}
+          {draft &&
+            (chosen.length ? (
+              <button type="button" onClick={() => void save()} disabled={busy !== null} className={BTN_AI}>
+                {busy === "save" && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
+                Thêm {chosen.length} câu đã chọn
+              </button>
+            ) : (
+              <span className="self-center text-sm text-slate-600">Chọn ít nhất 1 câu để thêm.</span>
+            ))}
         </div>
       </div>
     </div>
