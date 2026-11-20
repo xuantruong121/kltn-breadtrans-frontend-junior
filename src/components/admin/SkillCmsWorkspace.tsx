@@ -944,6 +944,23 @@ export default function SkillCmsWorkspace({
     [domain, id, mode],
   );
 
+  /**
+   * The form's "Dạng bài viết" for a loaded exercise: from its sentences, the
+   * backend's kind ("Dịch câu" by topic), or, while still empty, the kind it
+   * was just created as (?kind= from "Lưu và thêm câu hỏi").
+   */
+  const formTypeOf = (data: any) => {
+    const fromItem = writingFormType(data.type || meta[domain].type, data.questions, data.writingKind);
+    const created = searchParams.get("kind");
+    return domain === "writing" &&
+      !(data.questions ?? []).length &&
+      created &&
+      WRITING_FORM_KINDS.some((kind) => kind.value === created) &&
+      writingQuizType(created) === data.type
+      ? created
+      : fromItem;
+  };
+
   const loadItem = async () => {
     if (!id) {
       setLoading(false);
@@ -986,12 +1003,12 @@ export default function SkillCmsWorkspace({
         level: data.level || levelFromTitle(data.title) || "A2",
         timeLimit: String(data.timeLimit ?? 15),
         passage: data.passage || data.theoryContent || "",
-        type: writingFormType(data.type || meta[domain].type, data.questions),
+        type: formTypeOf(data),
       });
       setPendingFullDraftQuestions([]);
       // Saved from /new with "Lưu và thêm câu hỏi": open the first question of the right kind.
       if (domain === "writing" && searchParams.get("add") === "1") {
-        const formType = writingFormType(data.type || meta[domain].type, data.questions);
+        const formType = formTypeOf(data);
         setQuestion({ ...emptyQuestion(domain), taskType: defaultWritingTaskType(formType) });
         setIsAddingQuestion(true);
         router.replace(`/admin/writing/${data.id}`, { scroll: false });
@@ -1072,7 +1089,8 @@ export default function SkillCmsWorkspace({
       toast.success("Đã lưu bản nháp");
       setPendingFullDraftQuestions([]);
       router.push(
-        `/admin/${domain}/${savedItem.id}${options.addQuestion ? "?add=1" : ""}`,
+        // The kind travels with the URL: an empty picture and an empty "Viết câu" exercise look alike.
+        `/admin/${domain}/${savedItem.id}${options.addQuestion ? `?add=1&kind=${form.type}` : ""}`,
       );
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, "Lưu thất bại"));

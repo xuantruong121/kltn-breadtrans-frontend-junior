@@ -208,6 +208,9 @@ test("a picture-type exercise of plain sentences reads as Viết câu", () => {
   assert.equal(writingFormType("WRITING_PICTURE", [{ content: { taskType: "PICTURE_SENTENCE" } }]), "WRITING_PICTURE");
   // A new exercise has no sentences yet: it keeps the type it was created with.
   assert.equal(writingFormType("WRITING_PICTURE", []), "WRITING_PICTURE");
+  // An empty "Dịch câu" exercise is known by its topic (owner 2026-11-20).
+  assert.equal(writingFormType("WRITING_PICTURE", [], "TRANSLATION"), "TRANSLATION");
+  assert.equal(writingFormType("WRITING_EMAIL", [], "TRANSLATION"), "WRITING_EMAIL");
 });
 
 test("a Dịch câu exercise reads as its own form type, and hints round-trip as lines", () => {

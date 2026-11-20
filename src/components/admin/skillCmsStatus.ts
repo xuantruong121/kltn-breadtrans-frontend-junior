@@ -313,8 +313,11 @@ export const defaultWritingTaskType = (formType: string) =>
 export const writingFormType = (
   type: string,
   questions: Array<{ content?: { taskType?: unknown; imageUrl?: unknown } | null }> = [],
+  /** The backend's kind: TRANSLATION comes from the topic, so it holds for an empty exercise too. */
+  writingKind?: string | null,
 ) => {
   if (type !== "WRITING_PICTURE") return type;
+  if (writingKind === "TRANSLATION") return "TRANSLATION";
   const taskTypes = questions.map((q) => String(q.content?.taskType ?? "").toUpperCase());
   if (taskTypes.includes("SENTENCE_TRANSLATION")) return "TRANSLATION";
   // Plain sentences with no picture are "Viết câu".
