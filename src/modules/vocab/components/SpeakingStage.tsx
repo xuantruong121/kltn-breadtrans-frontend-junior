@@ -67,9 +67,9 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
   const canRateSrs = score !== null || feedback !== null || isSkipped;
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6">
+    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6 short:space-y-3">
       {/* Target Word & Meaning Card */}
-      <div className="glass-face w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 text-center space-y-4 shadow-xs">
+      <div className="glass-face w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 short:p-5 text-center space-y-4 short:space-y-2 shadow-xs">
         <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
           <Mic size={15} />
           Phát âm từ này
@@ -80,7 +80,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
         </p>
 
         <div className="flex items-center justify-center gap-3.5">
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl short:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
             {word.word}
           </h2>
 
@@ -105,7 +105,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
       {/* Large Circular Blue Microphone Button */}
       <div className="flex flex-col items-center justify-center py-2">
         {/* Concentric Microphone Container */}
-        <div className="relative flex items-center justify-center size-24">
+        <div className="relative flex items-center justify-center size-24 short:size-20">
           {/* Pulsing Wave Animation Rings (Concentric with button) */}
           {isRecording && (
             <>
@@ -117,7 +117,7 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
           <button
             type="button"
             onClick={onToggleRecord}
-            className={`relative z-10 size-20 rounded-full shadow-lg flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer ${
+            className={`relative z-10 size-20 short:size-16 rounded-full shadow-lg flex items-center justify-center text-white transition-all active:scale-95 cursor-pointer ${
               isRecording
                 ? "bg-rose-500 shadow-rose-200 dark:shadow-rose-950/50 ring-4 ring-rose-200 dark:ring-rose-950/60"
                 : "bg-sky-500 hover:bg-sky-600 shadow-sky-200 dark:shadow-sky-950/50 ring-4 ring-sky-100 dark:ring-sky-950/60"

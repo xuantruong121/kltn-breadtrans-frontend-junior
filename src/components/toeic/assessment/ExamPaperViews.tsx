@@ -49,7 +49,7 @@ const PROMPT_BOX =
 
 function PromptImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <img src={src} alt={alt} className="mx-auto max-h-96 w-auto max-w-full rounded-md object-contain" />
+    <img src={src} alt={alt} className="mx-auto max-h-96 short:max-h-60 w-auto max-w-full rounded-md object-contain" />
   );
 }
 
@@ -71,7 +71,7 @@ export function SpeakingPaper({
   if (shared && tasks.length > 1)
     return (
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className={`${PROMPT_BOX} lg:sticky lg:top-24 lg:self-start`}>
+        <div className={`${PROMPT_BOX} lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto`}>
           {shared.stimulusTitle && <p className="mb-2 font-semibold">{shared.stimulusTitle}</p>}
           <p className="whitespace-pre-line">{shared.stimulusText}</p>
         </div>

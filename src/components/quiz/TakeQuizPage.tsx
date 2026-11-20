@@ -56,6 +56,7 @@ import {
 import { calculateProgressiveDictationFeedback } from "@/components/listening/listeningDictationUtils";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 export type QuizRouteContext = "listening" | "reading" | "exams";
 
@@ -665,7 +666,7 @@ export default function TakeQuizPage(props: {
 
       <div
         className={`mx-auto w-full space-y-5 pb-20 px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 flex-1 ${
-          isReading ? "max-w-[1560px]" : "max-w-7xl"
+          isReading ? "max-w-[1560px] lg:pb-6" : "max-w-7xl"
         }`}
       >
         {isReading ? (
@@ -717,7 +718,7 @@ export default function TakeQuizPage(props: {
                   mobileTab === "questions" ? "hidden lg:block" : "block"
                 }`}
               >
-                <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm flex flex-col lg:sticky lg:top-20 max-h-[calc(100vh-180px)] min-h-[560px]">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-sm flex flex-col lg:sticky lg:top-20 max-h-[calc(100vh-180px)] min-h-[560px] lg:max-h-[calc(100dvh-6.5rem)] lg:min-h-[min(560px,calc(100dvh-6.5rem))]">
                   {/* Passage Header */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pb-3 mb-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className="flex min-w-0 items-center gap-2.5">
@@ -872,7 +873,7 @@ export default function TakeQuizPage(props: {
                   mobileTab === "passage" ? "hidden lg:block" : "block"
                 }`}
               >
-                <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col justify-between lg:sticky lg:top-20 max-h-[calc(100vh-180px)] min-h-[560px]">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col justify-between lg:sticky lg:top-20 max-h-[calc(100vh-180px)] min-h-[560px] lg:max-h-[calc(100dvh-6.5rem)] lg:min-h-[min(560px,calc(100dvh-6.5rem))]">
                   {/* TOP: Question Status Bar & Compact Question Numbers Matrix */}
                   <div className="space-y-2.5 pb-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
                     <div className="flex items-center justify-between">
@@ -921,14 +922,14 @@ export default function TakeQuizPage(props: {
                   </div>
 
                   {/* MIDDLE: Active Question Title & Compact Stacked Options */}
-                  <div className="py-3 flex-1 overflow-y-auto pr-1 space-y-3">
+                  <div className="@container py-3 flex-1 overflow-y-auto pr-1 space-y-3">
                     <h3 className="text-sm sm:text-base font-extrabold leading-snug text-slate-900 dark:text-slate-100">
                       {currentQuestion.content?.text ||
                         "Đọc bài và chọn đáp án chính xác:"}
                     </h3>
 
-                    {/* Compact Stacked Choices with clear typography */}
-                    <div className="space-y-2 pt-0.5">
+                    {/* Choices: two columns when every option is short (lib/practice/optionLayout). */}
+                    <div className={`${optionGridClass(currentQuestion.content?.options || [])} gap-2 pt-0.5`}>
                       {(
                         currentQuestion.content?.options || ["A", "B", "C", "D"]
                       ).map((opt: string, i: number) => {
@@ -1296,7 +1297,8 @@ export default function TakeQuizPage(props: {
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="@container">
+                  <div className={`${optionGridClass(currentQuestion.content?.options || [])} gap-4`}>
                     {(
                       currentQuestion.content?.options || ["A", "B", "C", "D"]
                     ).map((opt: string, i: number) => (
@@ -1314,6 +1316,7 @@ export default function TakeQuizPage(props: {
                         <span className="break-words">{opt}</span>
                       </button>
                     ))}
+                  </div>
                   </div>
                 )}
               </motion.div>

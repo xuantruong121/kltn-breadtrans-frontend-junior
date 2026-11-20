@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 type Props = {
   questionId: number;
@@ -50,7 +51,7 @@ export const ToeicPaperQuestion = memo(function ToeicPaperQuestion({
         >
           {questionNumber}
         </button>
-        <div className="min-w-0 flex-1">
+        <div className="@container min-w-0 flex-1">
           {editHref && (
             <a
               href={editHref}
@@ -68,7 +69,7 @@ export const ToeicPaperQuestion = memo(function ToeicPaperQuestion({
             role="radiogroup"
             aria-labelledby={!audioOnly && text ? labelId : undefined}
             aria-label={audioOnly || !text ? `Câu ${questionNumber}` : undefined}
-            className={audioOnly ? "flex flex-wrap gap-x-6 gap-y-1 pt-1.5" : "mt-1.5 space-y-0.5"}
+            className={audioOnly ? "flex flex-wrap gap-x-6 gap-y-1 pt-1.5" : `mt-1.5 ${optionGridClass(options)} gap-x-4 gap-y-0.5`}
           >
             {options.map((option, index) => {
               const letter = String.fromCharCode(65 + index);

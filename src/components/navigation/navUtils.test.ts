@@ -10,7 +10,11 @@ import {
   isFlashcardRoute,
   isMarketRoute,
   isMoreRoute,
+  isMoreSheetRoute,
+  isArenaRoute,
   SKILL_SHEET_ITEMS,
+  MORE_SHEET_ITEMS,
+  GUEST_MORE_SHEET_ITEMS,
 } from "./navUtils.ts";
 
 describe("Navigation Route Classification", () => {
@@ -137,11 +141,36 @@ describe("Navigation Route Classification", () => {
 });
 
 describe("Skills sheet of the bottom bar", () => {
-  it("offers the four skills, flashcards and grammar, each a skills route", () => {
+  it("offers the four skills and flashcards (no grammar, owner 2026-11-19), each a skills route", () => {
     assert.deepEqual(
       SKILL_SHEET_ITEMS.map((item) => item.href),
-      ["/listening", "/speaking", "/reading", "/writing", "/flashcard", "/grammar"],
+      ["/listening", "/speaking", "/reading", "/writing", "/flashcard"],
     );
     for (const item of SKILL_SHEET_ITEMS) assert.equal(isSkillsRoute(item.href), true, item.href);
+  });
+});
+
+describe("More sheet of the bottom bar", () => {
+  it("reaches the ranking, shop, pet, FAQ and account on a phone", () => {
+    assert.deepEqual(
+      MORE_SHEET_ITEMS.map((item) => item.href),
+      ["/ranking", "/market", "/pet", "/help", "/hub?tab=account-profile"],
+    );
+  });
+
+  it("gives a guest a sign-in instead of the pet and account", () => {
+    const hrefs = GUEST_MORE_SHEET_ITEMS.map((item) => item.href);
+    assert.deepEqual(hrefs, ["/ranking", "/market", "/help", "/login"]);
+  });
+
+  it("marks the More tab on every page it opens, and not on the arena tab's pages", () => {
+    for (const item of MORE_SHEET_ITEMS) {
+      assert.equal(isMoreSheetRoute(item.href.split("?")[0]), true, item.href);
+    }
+    assert.equal(isMoreSheetRoute("/market/orders"), true);
+    assert.equal(isMoreSheetRoute("/arena"), false);
+    assert.equal(isArenaRoute("/arena"), true);
+    assert.equal(isMoreSheetRoute("/marketing"), false);
+    assert.equal(isMoreSheetRoute("/dashboard"), false);
   });
 });

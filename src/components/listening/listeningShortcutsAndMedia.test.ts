@@ -472,17 +472,21 @@ test("Image layout: ListeningComprehensionWorkspace uses a compact, bounded imag
   assert.ok(content.includes("w-fit") || content.includes("max-w-full"));
   assert.ok(content.includes("object-contain"));
   assert.ok(content.includes("lg:max-h-[300px]") && content.includes("xl:max-h-[360px]"));
+  // A short laptop screen (about 1280x650) keeps the image small so the panel fits.
+  assert.ok(content.includes("short:max-h-[200px]"));
   assert.equal(content.includes("lg:max-h-[440px]"), false);
 });
 
-test("Layout: the listening workspace splits the screen in half and lays answers out two by two", () => {
+test("Layout: the listening workspace splits the screen in half and lays short answers out two by two", () => {
   const content = fs.readFileSync(
     path.resolve(process.cwd(), "src/components/listening/ListeningComprehensionWorkspace.tsx"),
     "utf-8",
   );
   assert.ok(content.includes("lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"));
   assert.equal(content.includes("lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]"), false);
-  assert.ok(content.includes('<div className="grid grid-cols-1 gap-2.5 xl:grid-cols-2">'));
+  // Columns follow the answer length and the panel width (owner 2026-11-19, lib/practice/optionLayout).
+  assert.ok(content.includes('<div className={`${optionGridClass(options)} gap-2.5`}>'));
+  assert.ok(content.includes('<div className="@container">'));
   // Answer cards stay touch-sized after shrinking.
   assert.ok(content.includes("min-h-11 px-4 py-3 rounded-2xl border-2"));
 });

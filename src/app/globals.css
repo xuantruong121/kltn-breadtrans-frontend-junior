@@ -2,6 +2,14 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * A laptop screen that is wide but short (14-inch at 125-150% scaling, about
+ * 1280x650 inside the browser; owner 2026-11-19). Practice rooms use `short:`
+ * to fit their main controls without scrolling. Phones are left alone: they
+ * scroll by design. 760 matches stageMode() in modules/dungeon/stageLayout.ts.
+ */
+@custom-variant short (@media (min-width: 1024px) and (max-height: 760px));
+
 @theme {
   --font-sans: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
 

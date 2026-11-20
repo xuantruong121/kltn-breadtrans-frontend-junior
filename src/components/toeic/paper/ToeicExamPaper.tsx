@@ -91,7 +91,7 @@ const Group = memo(function Group({
           src={group.imageUrl}
           alt={`Ảnh câu ${numbers[0]}`}
           loading="lazy"
-          className="mb-1 ml-12 max-h-80 w-auto max-w-[calc(100%-3rem)] rounded-md border border-slate-200 object-contain dark:border-slate-700"
+          className="mb-1 ml-12 max-h-80 short:max-h-56 w-auto max-w-[calc(100%-3rem)] rounded-md border border-slate-200 object-contain dark:border-slate-700"
         />
       )}
       {passage ? (

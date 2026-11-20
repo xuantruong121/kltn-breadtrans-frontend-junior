@@ -149,5 +149,33 @@ export const SKILL_SHEET_ITEMS: NavItemConfig[] = [
   { label: "Luyện Đọc", href: "/reading" },
   { label: "Luyện Viết", href: "/writing" },
   { label: "Flashcard", href: "/flashcard" },
-  { label: "Ngữ pháp", href: "/grammar" },
 ];
+
+/**
+ * The "Thêm" tab of the phone's bottom bar (owner 2026-11-19): the places the
+ * header lists on a laptop but a phone had no way to reach. Đấu trường has its
+ * own tab, so it is not repeated here.
+ */
+export const MORE_SHEET_ITEMS: NavItemConfig[] = [
+  { label: "Bảng xếp hạng", href: "/ranking" },
+  { label: "Cửa hàng", href: "/market" },
+  { label: "Thú ảo", href: "/pet" },
+  { label: "FAQ", href: "/help" },
+  { label: "Tài khoản", href: "/hub?tab=account-profile" },
+];
+
+/** A guest's "Thêm": no pet or account yet, a way to sign in instead. */
+export const GUEST_MORE_SHEET_ITEMS: NavItemConfig[] = [
+  { label: "Bảng xếp hạng", href: "/ranking" },
+  { label: "Cửa hàng", href: "/market" },
+  { label: "FAQ", href: "/help" },
+  { label: "Đăng nhập", href: "/login" },
+];
+
+/** Pages reached through "Thêm", so the tab shows where the learner is. */
+export function isMoreSheetRoute(pathname: string): boolean {
+  if (!pathname) return false;
+  return ["/ranking", "/market", "/pet", "/help", "/hub"].some(
+    (base) => pathname === base || pathname.startsWith(`${base}/`),
+  );
+}

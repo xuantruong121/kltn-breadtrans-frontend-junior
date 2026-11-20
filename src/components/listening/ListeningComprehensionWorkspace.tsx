@@ -58,6 +58,7 @@ import {
   revealAndFetchTranscript,
 } from "./listeningTranscriptResources";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 interface ListeningComprehensionWorkspaceProps {
   quiz?: Quiz | null;
@@ -1465,7 +1466,7 @@ export function ListeningComprehensionWorkspace({
                   loading="eager"
                   decoding="async"
                   onError={() => setFailedImageKey(imageKey)}
-                  className="w-auto max-w-full h-auto max-h-56 sm:max-h-64 lg:max-h-[300px] xl:max-h-[360px] object-contain rounded-xl mx-auto block"
+                  className="w-auto max-w-full h-auto max-h-56 sm:max-h-64 lg:max-h-[300px] xl:max-h-[360px] short:max-h-[200px] object-contain rounded-xl mx-auto block"
                 />
               </div>
             )}
@@ -1485,7 +1486,7 @@ export function ListeningComprehensionWorkspace({
             {!isDialogue && !isDictation && !imageUrl && (
               <section
                 aria-label="Khu vực tập trung nghe"
-                className="my-4 flex min-h-[220px] flex-1 items-center justify-center rounded-2xl border border-sky-100 dark:border-sky-950 bg-sky-50/60 dark:bg-sky-950/20 px-6 py-10 text-center shadow-xs sm:min-h-[280px]"
+                className="my-4 flex min-h-[220px] flex-1 items-center justify-center rounded-2xl border border-sky-100 dark:border-sky-950 bg-sky-50/60 dark:bg-sky-950/20 px-6 py-10 text-center shadow-xs sm:min-h-[280px] short:min-h-[160px] short:py-6"
               >
                 <div className="max-w-md">
                   <div className="mx-auto flex size-14 items-center justify-center rounded-2xl border border-sky-200 dark:border-sky-800 bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 shadow-xs">
@@ -1824,7 +1825,8 @@ export function ListeningComprehensionWorkspace({
                     )}
                   </div>
                 ) : (
-                <div className="grid grid-cols-1 gap-2.5 xl:grid-cols-2">
+                <div className="@container">
+                <div className={`${optionGridClass(options)} gap-2.5`}>
                   {options.map((opt, idx) => {
                     const key = String.fromCharCode(65 + idx);
                     const isSelected = selectedAnswer === opt;
@@ -1925,6 +1927,7 @@ export function ListeningComprehensionWorkspace({
                       </button>
                     );
                   })}
+                </div>
                 </div>
                 )}
 

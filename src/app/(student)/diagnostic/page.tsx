@@ -71,6 +71,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { enterFullscreen, exitFullscreen, useIsFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { F11_HINT, fullscreenAfterResult } from "@/lib/diagnostic/fullscreenExit";
 import { SPEAKING_MIC_CONSTRAINTS } from "@/lib/speaking/micConstraints";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -646,8 +647,8 @@ export default function DiagnosticPage() {
   const speakingBusy = speakingPhase === "starting" || speakingPhase === "processing";
   const elapsed = `${Math.floor(recordingMs / 60000)}:${String(Math.floor((recordingMs % 60000) / 1000)).padStart(2, "0")}`;
 
-  // Dynamic layout: if any option is long (>45 chars), use single column
-  const hasLongOptions = current.options?.some((opt) => opt.length > 45);
+  // Answer columns follow the option length and the panel width (lib/practice/optionLayout).
+  const optionGrid = optionGridClass(current.options ?? []);
 
   return (
     <>
@@ -679,7 +680,7 @@ export default function DiagnosticPage() {
           </div>
         )}
 
-        <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8">
+        <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8 short:p-4">
           {/* Question list: a bar with a drawer below lg, a sticky sidebar from lg. */}
           <div className="lg:order-2 lg:sticky lg:top-6">
             <DiagnosticQuestionNavigator
@@ -696,10 +697,10 @@ export default function DiagnosticPage() {
             />
           </div>
 
-          <section className="min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:order-1 lg:p-10">
+          <section className="@container min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:order-1 lg:p-10 short:p-6">
             {/* READING PASSAGE UI HIERARCHY */}
             {isReading && passageBody && (
-              <article className="mb-8 rounded-2xl bg-slate-50 px-5 py-5 dark:bg-slate-850 sm:px-7 sm:py-6" aria-label="Đoạn đọc">
+              <article className="mb-8 short:mb-4 rounded-2xl bg-slate-50 px-5 py-5 dark:bg-slate-850 sm:px-7 sm:py-6 short:py-4" aria-label="Đoạn đọc">
                 <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
                   {passageTitle || "Đoạn đọc"}
                 </p>
@@ -721,7 +722,7 @@ export default function DiagnosticPage() {
 
             {/* LISTENING AUDIO PLAYER */}
             {isListening && (
-              <div className="mb-8 rounded-2xl border border-teal-200 bg-teal-50/70 p-5 dark:border-teal-900 dark:bg-teal-950/30 sm:p-6">
+              <div className="mb-8 short:mb-4 rounded-2xl border border-teal-200 bg-teal-50/70 p-5 dark:border-teal-900 dark:bg-teal-950/30 sm:p-6 short:p-4">
                 <p className="text-sm font-extrabold text-teal-900 dark:text-teal-100">
                   Nghe đoạn âm thanh dưới đây rồi chọn câu trả lời đúng nhất:
                 </p>
@@ -887,9 +888,7 @@ export default function DiagnosticPage() {
             ) : (
               /* OBJECTIVE MULTIPLE CHOICE OPTIONS WITH AUTO-ADVANCE */
               <div
-                className={`mt-8 grid gap-3.5 ${
-                  hasLongOptions ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"
-                }`}
+                className={`mt-8 short:mt-4 ${optionGrid} gap-3.5`}
               >
                 {current.options.map((option, index) => {
                   const isSelected = answers[current.id] === index;

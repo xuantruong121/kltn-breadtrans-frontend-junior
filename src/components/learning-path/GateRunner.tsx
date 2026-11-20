@@ -22,6 +22,7 @@ import {
   type GateSkill,
 } from "@/lib/learning-path/levelLock";
 import { PRACTICE_SKILL_LABEL } from "@/lib/learning-path/practiceLevel";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 const PRIMARY =
   "inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60";
@@ -104,14 +105,14 @@ function QuestionView({
           {question.passage}
         </section>
       )}
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <section className="@container space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
         {question.hasAudio && <GateAudio key={question.id} attemptId={attemptId} questionId={question.id} />}
         {question.text && (
           <p lang="en" className="text-base font-semibold text-slate-900 dark:text-slate-100">
             {question.text}
           </p>
         )}
-        <div role="radiogroup" aria-label="Các phương án" className="space-y-2">
+        <div role="radiogroup" aria-label="Các phương án" className={`${optionGridClass(question.options)} gap-2`}>
           {question.options.map((option) => (
             <button
               key={option}

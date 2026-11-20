@@ -2081,7 +2081,7 @@ export function DailyDictationWorkspace({
         <div className="w-full rounded-2xl border border-stone-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-xs">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
             {/* Left Column: Player & Sentence Showcase */}
-            <div className="lg:col-span-6 flex flex-col justify-between rounded-xl bg-stone-50/70 dark:bg-slate-800/60 border border-stone-200/80 dark:border-slate-700/80 p-4 sm:p-5 min-h-[460px]">
+            <div className="lg:col-span-6 flex flex-col justify-between rounded-xl bg-stone-50/70 dark:bg-slate-800/60 border border-stone-200/80 dark:border-slate-700/80 p-4 sm:p-5 min-h-[460px] short:min-h-0">
               <div>
                 {/* Left Top Bar: Translation Select & Repeat Checkbox */}
                 <div className="flex items-center justify-between gap-3 mb-4">
@@ -2281,7 +2281,7 @@ export function DailyDictationWorkspace({
             </div>
 
             {/* Right Column: Scrollable Playlist of Sentences */}
-            <div className="lg:col-span-6 flex flex-col justify-between rounded-xl bg-stone-50/40 dark:bg-slate-800/40 border border-stone-200/80 dark:border-slate-700/80 p-3 sm:p-4 min-h-[460px]">
+            <div className="lg:col-span-6 flex flex-col justify-between rounded-xl bg-stone-50/40 dark:bg-slate-800/40 border border-stone-200/80 dark:border-slate-700/80 p-3 sm:p-4 min-h-[460px] short:min-h-0">
               {isTranscriptLoading && fullTranscript.length === 0 ? (
                     <div className="space-y-2 p-2" aria-live="polite" aria-label="Đang tải lời thoại">
                       {questions.slice(0, Math.min(6, questions.length)).map((question) => (
@@ -2306,7 +2306,7 @@ export function DailyDictationWorkspace({
               ) : (
                   <div
                     ref={transcriptListRef}
-                    className="h-[360px] sm:h-[400px] overflow-y-auto space-y-1.5 pr-1.5 custom-scrollbar"
+                    className="h-[360px] sm:h-[400px] short:h-[max(220px,calc(100dvh-330px))] overflow-y-auto space-y-1.5 pr-1.5 custom-scrollbar"
                     role="list"
                     aria-label="Danh sách câu lời thoại"
                   >

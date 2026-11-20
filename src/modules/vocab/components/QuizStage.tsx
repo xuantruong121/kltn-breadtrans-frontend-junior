@@ -4,6 +4,7 @@ import React from "react";
 import { Volume2, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { VocabWord } from "@/lib/api/services/vocab.service";
 import { QuizOption } from "../types/study";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 interface QuizStageProps {
   word: VocabWord;
@@ -26,9 +27,9 @@ export const QuizStage: React.FC<QuizStageProps> = ({
   const ipaUkText = word.ipaUk ? `/${word.ipaUk.replace(/^\/|\/$/g, "")}/` : "/UK/";
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6">
+    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6 short:space-y-3">
       {/* Question Header Card */}
-      <div className="glass-face w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 text-center space-y-4 shadow-xs">
+      <div className="glass-face w-full rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 short:p-5 text-center space-y-4 short:space-y-2 shadow-xs">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
             <HelpCircle size={15} />
@@ -38,7 +39,7 @@ export const QuizStage: React.FC<QuizStageProps> = ({
         </div>
 
         {/* Target Word */}
-        <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl short:text-5xl font-black text-slate-900 dark:text-slate-100 tracking-tight">
           {word.word}
         </h2>
 
@@ -72,8 +73,9 @@ export const QuizStage: React.FC<QuizStageProps> = ({
         </div>
       </div>
 
-      {/* Answer Grid: 4 Vertical Option Cards */}
-      <div className="w-full space-y-3" role="radiogroup" aria-label="Lựa chọn câu trả lời">
+      {/* Answer grid: two columns when every option is short (lib/practice/optionLayout). */}
+      <div className="@container w-full">
+      <div className={`${optionGridClass(options.map((option) => option.text))} gap-3 short:gap-2`} role="radiogroup" aria-label="Lựa chọn câu trả lời">
         {options.map((option) => {
           const isSelected = selectedKey === option.key;
           let styleClass =
@@ -97,7 +99,7 @@ export const QuizStage: React.FC<QuizStageProps> = ({
               type="button"
               disabled={answered}
               onClick={() => onSelectOption(option.key)}
-              className={`w-full flex items-center justify-between p-4 sm:p-4.5 rounded-2xl border-2 transition-all duration-150 text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none min-h-[58px] ${styleClass}`}
+              className={`w-full flex items-center justify-between p-4 sm:p-4.5 rounded-2xl border-2 transition-all duration-150 text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none min-h-[58px] short:min-h-12 short:p-3 ${styleClass}`}
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <span
@@ -128,6 +130,7 @@ export const QuizStage: React.FC<QuizStageProps> = ({
             </button>
           );
         })}
+      </div>
       </div>
     </div>
   );

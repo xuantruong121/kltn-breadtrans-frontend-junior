@@ -15,6 +15,7 @@ import { PlayerScoreCard, type RoundMark } from "./components/PlayerScoreCard";
 import { RoundTimerBar } from "./components/RoundTimerBar";
 import { SoundToggle } from "./components/SoundToggle";
 import { arenaSound, buzz } from "./sound/arenaSound";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 type Progress = { score: number; answered: number; hasAnsweredCurrentRound?: boolean } | undefined;
 
@@ -180,7 +181,7 @@ export default function ArenaMatchRoom({
   const myResult = roundResult ? (isP1 ? roundResult.p1 : roundResult.p2) : null;
 
   return (
-    <div className="relative isolate mx-auto max-w-5xl overflow-hidden rounded-2xl px-3 pb-40 pt-5 sm:px-6 sm:pt-7">
+    <div className="relative isolate mx-auto max-w-5xl overflow-hidden rounded-2xl px-3 pb-40 pt-5 sm:px-6 sm:pt-7 short:pt-3 short:pb-24">
       <ArenaBackdrop />
     <div className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -259,7 +260,7 @@ export default function ArenaMatchRoom({
           </div>
 
           {question && currentRoundData && (
-            <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+            <div className="@container relative overflow-hidden rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-7 short:p-5">
               <RoundTimerBar
                 key={currentRoundData.roundIndex}
                 serverStartTime={currentRoundData.serverStartTime}
@@ -301,7 +302,7 @@ export default function ArenaMatchRoom({
                     )}
                   </div>
 
-                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className={`mt-6 short:mt-4 ${optionGridClass(question.options)} gap-3`}>
                     {question.options.map((option, i) => {
                       const isMine = mySelection === option;
                       const isAnswer = roundResult?.correctAnswer === option;
