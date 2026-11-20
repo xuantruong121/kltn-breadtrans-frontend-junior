@@ -12,6 +12,8 @@ import {
   writingQuizType,
   defaultWritingTaskType,
   WRITING_FORM_KINDS,
+  writingDraftKind,
+  writingDraftQuestion,
   parseHintLines,
   hintLines,
   writingUsesPictures, TRACK_FIELD_COPY } from "./skillCmsStatus.ts";
@@ -228,3 +230,36 @@ test("admin track copy says lĩnh vực, as the learner onboarding does", () => 
     assert.doesNotMatch(text, /ngành/i);
   }
 });
+
+test("AI drafts exist for email and Dịch câu only (owner 2026-11-19)", () => {
+  assert.deepEqual(
+    WRITING_FORM_KINDS.map((kind) => writingDraftKind(kind.value)),
+    ["EMAIL", "TRANSLATION", null, null],
+  );
+});
+
+test("a picked AI task saves as a question of its kind", () => {
+  assert.deepEqual(
+    writingDraftQuestion({ taskType: "REQUEST", prompt: "Ask for a day off.", wordRange: [60, 100], explanation: "Nêu lý do." }, "B1"),
+    { type: "WRITING", prompt: "Ask for a day off.", taskType: "REQUEST", level: "B1", wordRange: [60, 100], explanation: "Nêu lý do." },
+  );
+  assert.deepEqual(
+    writingDraftQuestion({
+      taskType: "SENTENCE_TRANSLATION",
+      prompt: "Tôi có hai quyển sách.",
+      acceptedAnswers: ["I have two books.", "I've got two books."],
+      hints: [{ vi: "quyển sách", en: "book" }],
+      grammarTip: "Số nhiều thêm s.",
+      wordRange: [1, 2],
+    }),
+    {
+      type: "WRITING",
+      prompt: "Tôi có hai quyển sách.",
+      taskType: "SENTENCE_TRANSLATION",
+      acceptedAnswers: ["I have two books.", "I've got two books."],
+      hints: [{ vi: "quyển sách", en: "book" }],
+      grammarTip: "Số nhiều thêm s.",
+    },
+  );
+});
+

@@ -12,6 +12,7 @@ import {
   Circle,
   FileAudio,
   FilePlus2,
+  FileStack,
   Loader2,
   Plus,
   Search,
@@ -52,6 +53,7 @@ import {
   defaultWritingTaskType,
   WRITING_FORM_KINDS,
   WRITING_KIND_LABEL,
+  writingDraftKind,
   parseHintLines,
   hintLines,
   writingUsesPictures,
@@ -59,6 +61,8 @@ import {
 } from "./skillCmsStatus";
 import { AdminImageThumb } from "./AdminImageThumb";
 import { TranslationReviewPanel, TRANSLATION_REVIEW_KEYS } from "./TranslationReviewPanel";
+import { WritingAiDraftPanel } from "./WritingAiDraftPanel";
+import { AiCreateDialog } from "./AiCreateDialog";
 import { translationReviewService } from "@/lib/api/services/translation-review.service";
 import {
   quizDisplayTitle,
@@ -525,6 +529,9 @@ export default function SkillCmsWorkspace({
   // The "new question" editor is opened on demand; editing happens in place.
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
   const [titleError, setTitleError] = useState(false);
+  // Writing AI (owner 2026-11-19): the create dialog on the list, the draft panel in the editor.
+  const [writingAiCreating, setWritingAiCreating] = useState(false);
+  const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean } | null>(null);
   const [questionPreview, setQuestionPreview] = useState<{
     questionId: number;
     url: string;
@@ -1008,6 +1015,11 @@ export default function SkillCmsWorkspace({
         const formType = writingFormType(data.type || meta[domain].type, data.questions);
         setQuestion({ ...emptyQuestion(domain), taskType: defaultWritingTaskType(formType) });
         setIsAddingQuestion(true);
+        router.replace(`/admin/writing/${data.id}`, { scroll: false });
+      }
+      // Created from "Tạo bằng AI": the draft panel opens and asks the AI at once.
+      if (domain === "writing" && Number(searchParams.get("ai")) > 0) {
+        setWritingAi({ count: Number(searchParams.get("ai")), auto: true });
         router.replace(`/admin/writing/${data.id}`, { scroll: false });
       }
     } catch (error: any) {
@@ -1554,15 +1566,58 @@ export default function SkillCmsWorkspace({
               )}
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => router.push(`/admin/${domain}/new`)}
-              className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
-            >
-              <FilePlus2 size={16} /> {domain === "reading" ? "Tạo bài đọc" : domain === "writing" ? "Tạo bài viết" : "Tạo bản nháp"}
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {domain === "writing" && (
+                <button type="button" onClick={() => setWritingAiCreating(true)} className={BTN_AI}>
+                  <FileStack size={16} aria-hidden="true" /> Tạo bằng AI
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => router.push(`/admin/${domain}/new`)}
+                className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
+              >
+                <FilePlus2 size={16} /> {domain === "reading" ? "Tạo bài đọc" : domain === "writing" ? "Tạo bài viết" : "Tạo bản nháp"}
+              </button>
+            </div>
           )}
         </header>
+
+        {writingAiCreating && (
+          <AiCreateDialog
+            title="Tạo bài Viết bằng AI"
+            nameLabel="Chủ đề"
+            namePlaceholder="Ví dụ: Email xin nghỉ phép"
+            countLabel="Số câu"
+            maxCount={10}
+            defaultCount={5}
+            levels={["A1", "A2", "B1", "B2", "C1"].map((level) => ({ value: level, label: level }))}
+            kinds={[
+              { value: "EMAIL", label: "Viết email" },
+              { value: "TRANSLATION", label: "Dịch câu" },
+            ]}
+            onClose={() => setWritingAiCreating(false)}
+            onCreate={async ({ name, level, count, kind }) => {
+              try {
+                const translation = kind === "TRANSLATION";
+                const created = unwrap<any>(
+                  await axiosClient.post("/admin/skill-content/writing", {
+                    title: name,
+                    description: "",
+                    level,
+                    timeLimit: 15,
+                    passage: "",
+                    type: writingQuizType(translation ? "TRANSLATION" : "WRITING_EMAIL"),
+                    writingKind: translation ? "TRANSLATION" : undefined,
+                  }),
+                );
+                router.push(`/admin/writing/${created.id}?ai=${count}`);
+              } catch (error) {
+                toast.error(getApiErrorMessage(error, "Không tạo được bài nháp."));
+              }
+            }}
+          />
+        )}
 
         {domain === "writing" && (
           <div role="tablist" aria-label="Trang Viết" className="flex gap-6 border-b border-slate-200">
@@ -2528,6 +2583,11 @@ export default function SkillCmsWorkspace({
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
+            {isWriting && id && writingDraftKind(form.type) && (
+              <button type="button" onClick={() => setWritingAi({ count: 5, auto: false })} className={BTN_AI}>
+                <FileStack size={16} aria-hidden="true" /> Soạn bằng AI
+              </button>
+            )}
             {(isListening || domain === "reading") && (
               <div className="flex flex-wrap items-center gap-2">
                 {isListening &&
@@ -3288,6 +3348,19 @@ export default function SkillCmsWorkspace({
       </div>
 
       {/* MODAL: LISTENING CONTENT REVIEW */}
+      {writingAi && id && writingDraftKind(form.type) && (
+        <WritingAiDraftPanel
+          quizId={Number(id)}
+          topic={form.title}
+          level={form.level}
+          kind={writingDraftKind(form.type) as "EMAIL" | "TRANSLATION"}
+          initialCount={writingAi.count}
+          autoStart={writingAi.auto}
+          onUseDescription={(description) => setForm((current) => ({ ...current, description }))}
+          onClose={() => setWritingAi(null)}
+          onSaved={() => loadItem()}
+        />
+      )}
       {fullDraft && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
           <div

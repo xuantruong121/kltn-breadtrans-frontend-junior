@@ -8,7 +8,7 @@ import { BTN_AI, BTN_SECONDARY } from "@/components/admin/cmsButtons";
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900";
 
-export type AiCreateRequest = { name: string; level: string; count: number };
+export type AiCreateRequest = { name: string; level: string; count: number; kind?: string };
 
 /**
  * Starts a deck or a grammar topic from a subject. The draft opens in its
@@ -22,6 +22,7 @@ export function AiCreateDialog({
   maxCount,
   defaultCount,
   levels,
+  kinds,
   onCreate,
   onClose,
 }: {
@@ -32,12 +33,15 @@ export function AiCreateDialog({
   maxCount: number;
   defaultCount: number;
   levels: Array<{ value: string; label: string }>;
+  /** Writing: which kind of exercise the AI drafts. Vocab and grammar leave it out. */
+  kinds?: Array<{ value: string; label: string }>;
   onCreate: (request: AiCreateRequest) => Promise<void>;
   onClose: () => void;
 }) {
   const [name, setName] = useState("");
   const [level, setLevel] = useState(levels[0]?.value ?? "");
   const [count, setCount] = useState(defaultCount);
+  const [kind, setKind] = useState(kinds?.[0]?.value);
   const [busy, setBusy] = useState(false);
 
   const submit = async (event: FormEvent) => {
@@ -45,7 +49,7 @@ export function AiCreateDialog({
     if (!name.trim()) return;
     setBusy(true);
     try {
-      await onCreate({ name: name.trim(), level, count });
+      await onCreate({ name: name.trim(), level, count, ...(kind ? { kind } : {}) });
     } finally {
       setBusy(false);
     }
@@ -72,6 +76,18 @@ export function AiCreateDialog({
             className={FIELD}
           />
         </label>
+        {kinds && (
+          <label className="block text-sm font-semibold text-slate-800">
+            Dạng bài
+            <select value={kind} onChange={(event) => setKind(event.target.value)} className={FIELD}>
+              {kinds.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm font-semibold text-slate-800">
             Trình độ

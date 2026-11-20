@@ -344,3 +344,44 @@ export const hintLines = (hints: unknown) =>
         .map((h) => `${h.vi} = ${h.en}`)
         .join("\n")
     : "";
+
+/**
+ * Which AI draft a Writing kind can ask for (owner 2026-11-19): email and
+ * "Dịch câu" only. A picture exercise needs real photographs; "Viết câu" has
+ * no AI draft yet.
+ */
+export const writingDraftKind = (formType: string): "EMAIL" | "TRANSLATION" | null =>
+  formType === "TRANSLATION" ? "TRANSLATION" : formType === "WRITING_EMAIL" ? "EMAIL" : null;
+
+/** One task from POST /admin/writing/ai/full-draft, as the backend checked it. */
+export type WritingDraftTask = {
+  taskType: string;
+  prompt: string;
+  wordRange?: [number, number];
+  explanation?: string;
+  acceptedAnswers?: string[];
+  hints?: Array<{ vi: string; en: string }>;
+  grammarTip?: string;
+};
+
+/** The body that saves a picked AI task as a question of the exercise. */
+export function writingDraftQuestion(task: WritingDraftTask, level?: string) {
+  const translation = task.taskType === "SENTENCE_TRANSLATION";
+  return {
+    type: "WRITING",
+    prompt: task.prompt,
+    taskType: task.taskType,
+    ...(level ? { level } : {}),
+    ...(translation
+      ? {
+          acceptedAnswers: task.acceptedAnswers ?? [],
+          hints: task.hints ?? [],
+          grammarTip: task.grammarTip ?? "",
+        }
+      : {
+          ...(task.wordRange ? { wordRange: task.wordRange } : {}),
+          ...(task.explanation ? { explanation: task.explanation } : {}),
+        }),
+  };
+}
+
