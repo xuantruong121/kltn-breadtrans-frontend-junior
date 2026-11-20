@@ -793,6 +793,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
               lockedReason={lockedReason(shownPart.part)}
               onSelect={onSelect}
               onToggleMark={onToggleMark}
+              listeningBar={showListeningBar}
             />
           </div>
         </div>

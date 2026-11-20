@@ -680,7 +680,9 @@ export default function DiagnosticPage() {
           </div>
         )}
 
-        <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8 short:p-4">
+        {/* Short laptops under 1280px (1024x600, measured 20/11): a 232px sidebar leaves the question
+            panel 688px wide, so medium answers take two columns and "Câu tiếp" stays on screen. */}
+        <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8 short:p-4 short:max-xl:grid-cols-[minmax(0,1fr)_232px]">
           {/* Question list: a bar with a drawer below lg, a sticky sidebar from lg. */}
           <div className="lg:order-2 lg:sticky lg:top-6">
             <DiagnosticQuestionNavigator
@@ -923,7 +925,7 @@ export default function DiagnosticPage() {
             )}
 
             {/* Bottom Actions: Previous / Next / Submit */}
-            <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-6 dark:border-slate-800">
+            <div className="mt-10 short:mt-5 flex items-center justify-between border-t border-slate-100 pt-6 short:pt-4 dark:border-slate-800">
               {current.section !== "SPEAKING" ? (
                 <button
                   type="button"
