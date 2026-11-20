@@ -310,16 +310,18 @@ export function ToeicAnswerDialog({
           <button
             type="button"
             onClick={onPrev}
-            disabled={!hasPrev}
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className={`inline-flex min-h-11 items-center gap-1 rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 ${
+              hasPrev ? "" : "invisible"
+            }`}
           >
             <ChevronLeft size={16} aria-hidden="true" /> Câu trước
           </button>
           <button
             type="button"
             onClick={onNext}
-            disabled={!hasNext}
-            className="inline-flex min-h-11 items-center gap-1 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-40"
+            className={`inline-flex min-h-11 items-center gap-1 rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 ${
+              hasNext ? "" : "invisible"
+            }`}
           >
             Câu tiếp theo <ChevronRight size={16} aria-hidden="true" />
           </button>

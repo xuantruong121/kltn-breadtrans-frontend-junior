@@ -136,7 +136,7 @@ export function MistakeCard({
           type="button"
           disabled={busy}
           onClick={onResolve}
-          className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-emerald-300 px-3 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+          className="inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border border-emerald-300 px-3 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed dark:border-emerald-800 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
         >
           <Check size={14} strokeWidth={2} aria-hidden="true" /> Đã hiểu, bỏ khỏi sổ
         </button>

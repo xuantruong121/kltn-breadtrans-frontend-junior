@@ -1,5 +1,7 @@
 "use client";
 
+import { ADMIN_CARD, ADMIN_CARD_GRID } from "@/components/admin/cmsStyles";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
@@ -219,25 +221,12 @@ export default function AdminSpeakingPage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* HEADER */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-950">
-            Bộ luyện nói
-          </h1>
-          <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {totalSets} bộ · {publishedSetCount} đã xuất bản ·{" "}
-            {totalSets - publishedSetCount} bản nháp
-          </p>
-        </div>
-
-        <Link
-          href="/admin/speaking/new"
-          className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-        >
-          <Plus size={16} /> Tạo bộ luyện
-        </Link>
-      </div>
+      <AdminPageHeader
+        title="Bộ luyện nói"
+        stats={`${totalSets} bộ · ${publishedSetCount} đã xuất bản · ${totalSets - publishedSetCount} bản nháp`}
+        ai={{ label: "Tạo bằng AI", href: "/admin/speaking/new?ai=1" }}
+        create={{ label: "Tạo bộ luyện nói", href: "/admin/speaking/new" }}
+      />
 
       {/* FILTERS */}
       <div className="space-y-3">
@@ -260,6 +249,21 @@ export default function AdminSpeakingPage() {
           />
         </label>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trạng thái
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as typeof statusFilter);
+                setCurrentPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="ALL">Tất cả</option>
+              <option value="DRAFT">Bản nháp</option>
+              <option value="PUBLISHED">Đã xuất bản</option>
+            </select>
+          </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
             Trình độ
             <select
@@ -314,21 +318,6 @@ export default function AdminSpeakingPage() {
                   {track.label}
                 </option>
               ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trạng thái
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as typeof statusFilter);
-                setCurrentPage(1);
-              }}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="DRAFT">Bản nháp</option>
-              <option value="PUBLISHED">Đã xuất bản</option>
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -421,11 +410,9 @@ export default function AdminSpeakingPage() {
                 />
                 <button
                   type="button"
-                  disabled={
-                    !newCategoryName.trim() || createCategoryMutation.isPending
-                  }
+                  disabled={createCategoryMutation.isPending}
                   onClick={() => createCategoryMutation.mutate()}
-                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                  className={`rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-wait ${!newCategoryName.trim() ? "invisible" : ""}`}
                 >
                   Tạo
                 </button>
@@ -567,11 +554,11 @@ export default function AdminSpeakingPage() {
         <div className="space-y-4">
           {/* Cards fill the canvas in 320px-minimum columns (3 at 1440,
               4 at 1920) with one 16px gutter. */}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+          <div className={ADMIN_CARD_GRID}>
             {paginatedSets.map((set) => (
               <div
                 key={set.id}
-                className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300"
+                className={ADMIN_CARD}
               >
                 <div className="flex items-center gap-2">
                   <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold text-blue-800">

@@ -196,7 +196,7 @@ export default function AdminLearnerTrackingPage() {
           type="button"
           onClick={() => refetch()}
           disabled={isFetching}
-          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 shadow-sm hover:border-blue-300 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:cursor-wait"
         >
           <RefreshCw size={16} className={isFetching ? "animate-spin" : ""} /> Làm mới dữ liệu
         </button>

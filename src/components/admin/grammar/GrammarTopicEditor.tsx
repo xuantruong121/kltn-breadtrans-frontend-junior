@@ -74,7 +74,7 @@ type Candidate = GrammarDraft & { chosen: boolean };
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 const ICON_BTN =
-  "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed";
 /** The server's AI limits: more questions for a whole draft than for a top-up. */
 const AI_MAX = { draft: 20, suggest: 5 };
 const unwrap = <T,>(value: any): T => (value?.data ?? value) as T;
@@ -378,9 +378,9 @@ function TopicBody({ topic }: { topic: Topic | null }) {
               <button
                 type="button"
                 onClick={() => setConfirmLifecycle(true)}
-                disabled={busy || Boolean(blocker)}
+                disabled={busy}
                 title={blocker ?? undefined}
-                className={BTN_SUCCESS}
+                className={`${BTN_SUCCESS} ${blocker ? "invisible" : ""}`}
               >
                 <Send size={16} />
                 {published ? "Chuyển về bản nháp" : "Xuất bản"}
@@ -618,23 +618,21 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 <div className="mt-3 flex justify-between">
                   <button
                     type="button"
-                    disabled={previewIndex === 0}
                     onClick={() => {
                       setPreviewIndex((i) => Math.max(0, i - 1));
                       setPreviewPick(null);
                     }}
-                    className={BTN_SECONDARY}
+                    className={`${BTN_SECONDARY} ${previewIndex === 0 ? "invisible" : ""}`}
                   >
                     Câu trước
                   </button>
                   <button
                     type="button"
-                    disabled={previewIndex >= questions.length - 1}
                     onClick={() => {
                       setPreviewIndex((i) => Math.min(questions.length - 1, i + 1));
                       setPreviewPick(null);
                     }}
-                    className={BTN_SECONDARY}
+                    className={`${BTN_SECONDARY} ${previewIndex >= questions.length - 1 ? "invisible" : ""}`}
                   >
                     Câu sau
                   </button>
@@ -691,18 +689,16 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                       <button
                         type="button"
                         onClick={() => void move(index, -1)}
-                        disabled={index === 0}
                         aria-label={`Đưa câu ${index + 1} lên trước`}
-                        className={ICON_BTN}
+                        className={`${ICON_BTN} ${index === 0 ? "invisible" : ""}`}
                       >
                         <ChevronUp size={16} />
                       </button>
                       <button
                         type="button"
                         onClick={() => void move(index, 1)}
-                        disabled={index === questions.length - 1}
                         aria-label={`Đưa câu ${index + 1} xuống sau`}
-                        className={ICON_BTN}
+                        className={`${ICON_BTN} ${index === questions.length - 1 ? "invisible" : ""}`}
                       >
                         <ChevronDown size={16} />
                       </button>
@@ -879,7 +875,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                     </ul>
                     <button
                       type="button"
-                      disabled={busy || !chosenCount}
+                      disabled={busy}
                       onClick={async () => {
                         setBusy(true);
                         const added = await addQuestions(
@@ -899,7 +895,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                           setPanel(null);
                         }
                       }}
-                      className={`${BTN_PRIMARY} mt-3`}
+                      className={`${BTN_PRIMARY} mt-3 ${!chosenCount ? "invisible" : ""}`}
                     >
                       <Plus size={16} /> {pendingLabel(chosenCount)} đã chọn
                     </button>
@@ -912,13 +908,12 @@ function TopicBody({ topic }: { topic: Topic | null }) {
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  disabled={!topic}
                   title={topic ? undefined : "Tạo chủ đề trước"}
                   onClick={() => {
                     setCopyFrom(null);
                     setEditingId("new");
                   }}
-                  className={BTN_SECONDARY}
+                  className={`${BTN_SECONDARY} ${topic ? "" : "invisible"}`}
                 >
                   <Plus size={16} /> Thêm câu hỏi
                 </button>

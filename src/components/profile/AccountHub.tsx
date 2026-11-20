@@ -33,6 +33,7 @@ import {
 
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { useCosmetics } from "@/lib/avatar/useCosmetics";
 import {
   planService,
   formatVnd,
@@ -100,11 +101,8 @@ export function AccountHub() {
   const logout = useAuthStore((state) => state.logout);
   const {
     unlockedItems,
-    equippedAvatarFrame,
-    equippedBadge,
-    equipAvatarFrame,
-    equipBadge,
   } = useGamificationStore();
+  const { equippedAvatarFrame, equippedBadge, equipAvatarFrame, equipBadge } = useCosmetics();
 
   // Resolve active tab from URL query param
   const rawTab = searchParams.get("tab") || "account-profile";
@@ -1067,7 +1065,7 @@ export function AccountHub() {
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 flex items-center gap-2"
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:cursor-wait flex items-center gap-2"
                     >
                       {isSaving && (
                         <Loader2 size={16} className="animate-spin" />
@@ -1205,7 +1203,7 @@ export function AccountHub() {
                     <button
                       type="submit"
                       disabled={isChangingPassword}
-                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 flex items-center gap-2"
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:cursor-wait flex items-center gap-2"
                     >
                       {isChangingPassword && <Loader2 size={16} className="animate-spin" />}
                       <span>Đổi mật khẩu</span>
@@ -1404,11 +1402,9 @@ export function AccountHub() {
                               type="button"
                               onClick={() => {
                                 if (isEquipped) {
-                                  equipAvatarFrame(null);
-                                  toast("Đã tháo khung avatar");
+                                  void equipAvatarFrame(null).then((ok) => ok && toast("Đã tháo khung avatar"));
                                 } else {
-                                  equipAvatarFrame(item.id);
-                                  toast.success(`Đã trang bị "${item.name}"!`);
+                                  void equipAvatarFrame(item.id).then((ok) => ok && toast.success(`Đã trang bị "${item.name}"!`));
                                 }
                               }}
                               className={`w-full py-2 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${
@@ -1432,11 +1428,9 @@ export function AccountHub() {
                               type="button"
                               onClick={() => {
                                 if (isEquipped) {
-                                  equipBadge(null);
-                                  toast("Đã tháo huy hiệu");
+                                  void equipBadge(null).then((ok) => ok && toast("Đã tháo huy hiệu"));
                                 } else {
-                                  equipBadge(item.id);
-                                  toast.success(`Đã trang bị "${item.name}"!`);
+                                  void equipBadge(item.id).then((ok) => ok && toast.success(`Đã trang bị "${item.name}"!`));
                                 }
                               }}
                               className={`w-full py-2 rounded-xl font-bold text-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 ${

@@ -71,6 +71,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { enterFullscreen, exitFullscreen, useIsFullscreen } from "@/lib/toeic/useExamFullscreen";
 import { F11_HINT, fullscreenAfterResult } from "@/lib/diagnostic/fullscreenExit";
 import { SPEAKING_MIC_CONSTRAINTS } from "@/lib/speaking/micConstraints";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 function createSubmissionToken() {
   return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
@@ -646,8 +647,8 @@ export default function DiagnosticPage() {
   const speakingBusy = speakingPhase === "starting" || speakingPhase === "processing";
   const elapsed = `${Math.floor(recordingMs / 60000)}:${String(Math.floor((recordingMs % 60000) / 1000)).padStart(2, "0")}`;
 
-  // Dynamic layout: if any option is long (>45 chars), use single column
-  const hasLongOptions = current.options?.some((opt) => opt.length > 45);
+  // Answer columns follow the option length and the panel width (lib/practice/optionLayout).
+  const optionGrid = optionGridClass(current.options ?? []);
 
   return (
     <>
@@ -679,7 +680,9 @@ export default function DiagnosticPage() {
           </div>
         )}
 
-        <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8">
+        {/* Short laptops under 1280px (1024x600, measured 20/11): a 232px sidebar leaves the question
+            panel 688px wide, so medium answers take two columns and "Câu tiếp" stays on screen. */}
+        <main className="mx-auto grid w-full max-w-7xl flex-1 content-start gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:p-8 short:p-4 short:max-xl:grid-cols-[minmax(0,1fr)_232px]">
           {/* Question list: a bar with a drawer below lg, a sticky sidebar from lg. */}
           <div className="lg:order-2 lg:sticky lg:top-6">
             <DiagnosticQuestionNavigator
@@ -696,10 +699,10 @@ export default function DiagnosticPage() {
             />
           </div>
 
-          <section className="min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:order-1 lg:p-10">
+          <section className="@container min-w-0 rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-8 lg:order-1 lg:p-10 short:p-6">
             {/* READING PASSAGE UI HIERARCHY */}
             {isReading && passageBody && (
-              <article className="mb-8 rounded-2xl bg-slate-50 px-5 py-5 dark:bg-slate-850 sm:px-7 sm:py-6" aria-label="Đoạn đọc">
+              <article className="mb-8 short:mb-4 rounded-2xl bg-slate-50 px-5 py-5 dark:bg-slate-850 sm:px-7 sm:py-6 short:py-4" aria-label="Đoạn đọc">
                 <p className="text-sm font-bold text-slate-600 dark:text-slate-400">
                   {passageTitle || "Đoạn đọc"}
                 </p>
@@ -721,7 +724,7 @@ export default function DiagnosticPage() {
 
             {/* LISTENING AUDIO PLAYER */}
             {isListening && (
-              <div className="mb-8 rounded-2xl border border-teal-200 bg-teal-50/70 p-5 dark:border-teal-900 dark:bg-teal-950/30 sm:p-6">
+              <div className="mb-8 short:mb-4 rounded-2xl border border-teal-200 bg-teal-50/70 p-5 dark:border-teal-900 dark:bg-teal-950/30 sm:p-6 short:p-4">
                 <p className="text-sm font-extrabold text-teal-900 dark:text-teal-100">
                   Nghe đoạn âm thanh dưới đây rồi chọn câu trả lời đúng nhất:
                 </p>
@@ -801,7 +804,7 @@ export default function DiagnosticPage() {
                     onClick={() => (recording ? stopRecording() : void startRecording(current.id, limitMs))}
                     disabled={speakingBusy || skipping}
                     aria-pressed={recording}
-                    className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-6 text-sm font-extrabold text-white transition-colors disabled:opacity-60 ${
+                    className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-6 text-sm font-extrabold text-white transition-colors disabled:cursor-wait ${
                       recording ? "bg-rose-600 hover:bg-rose-700" : "bg-teal-600 hover:bg-teal-700"
                     }`}
                   >
@@ -828,7 +831,7 @@ export default function DiagnosticPage() {
                     type="button"
                     onClick={() => void skipSpeaking(current.id)}
                     disabled={recording || speakingBusy || skipping}
-                    className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-wait dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                   >
                     <SkipForward size={16} aria-hidden="true" />
                     <span>Bỏ qua</span>
@@ -887,9 +890,7 @@ export default function DiagnosticPage() {
             ) : (
               /* OBJECTIVE MULTIPLE CHOICE OPTIONS WITH AUTO-ADVANCE */
               <div
-                className={`mt-8 grid gap-3.5 ${
-                  hasLongOptions ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"
-                }`}
+                className={`mt-8 short:mt-4 ${optionGrid} gap-3.5`}
               >
                 {current.options.map((option, index) => {
                   const isSelected = answers[current.id] === index;
@@ -923,9 +924,11 @@ export default function DiagnosticPage() {
               </div>
             )}
 
-            {/* Bottom Actions: Previous / Next / Submit */}
-            <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-6 dark:border-slate-800">
-              {current.section !== "SPEAKING" ? (
+            {/* Bottom Actions: Previous / Next / Submit. An action that cannot run yet is hidden, not
+                faded (owner rule 17/11): "Câu trước" from the second question, "Câu tiếp" once
+                answered; the empty slot keeps the row's height so nothing jumps. */}
+            <div className="mt-10 short:mt-5 flex items-center justify-between border-t border-slate-100 pt-6 short:pt-4 dark:border-slate-800">
+              {current.section !== "SPEAKING" && step > 0 ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -935,8 +938,7 @@ export default function DiagnosticPage() {
                     }
                     setStep((value) => Math.max(0, value - 1));
                   }}
-                  disabled={!step}
-                  className="min-h-11 rounded-xl border border-slate-200 px-5 text-sm font-extrabold text-slate-700 hover:bg-slate-50 disabled:opacity-30 dark:border-slate-700 dark:text-slate-300"
+                  className="min-h-11 rounded-xl border border-slate-200 px-5 text-sm font-extrabold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
                 >
                   Câu trước
                 </button>
@@ -944,15 +946,14 @@ export default function DiagnosticPage() {
                 <div />
               )}
 
+              {answers[current.id] === undefined ||
+              (typeof answers[current.id] === "string" && !(answers[current.id] as string).trim()) ||
+              listeningNotReady ? (
+                <div className="min-h-11" aria-hidden="true" />
+              ) : (
               <button
                 type="button"
-                disabled={
-                  answers[current.id] === undefined ||
-                  (typeof answers[current.id] === "string" &&
-                    !(answers[current.id] as string).trim()) ||
-                  submit.isPending ||
-                  listeningNotReady
-                }
+                disabled={submit.isPending}
                 onClick={() => {
                   if (autoAdvanceTimer) {
                     clearTimeout(autoAdvanceTimer);
@@ -964,7 +965,7 @@ export default function DiagnosticPage() {
                     setStep((value) => value + 1);
                   }
                 }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-6 text-sm font-extrabold text-white transition hover:bg-teal-800 disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-6 text-sm font-extrabold text-white transition hover:bg-teal-800 disabled:cursor-wait"
               >
                 {submit.isPending ? (
                   <>
@@ -983,6 +984,7 @@ export default function DiagnosticPage() {
                   </>
                 )}
               </button>
+              )}
             </div>
 
             {submit.isError && (
@@ -1099,7 +1101,7 @@ function DiagnosticResultView({
         <span>Quay lại</span>
       </button>
       {/* 1. Header Card: what was administered and how it was scored */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
+      <section className="rounded-3xl border border-slate-200 border-t-4 border-t-blue-500 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-blue-500 dark:bg-slate-900 sm:p-9">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-sm font-black text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
             <CheckCircle2 size={15} />
@@ -1153,7 +1155,7 @@ function DiagnosticResultView({
             {speakingTaskIds.map((questionId, index) => {
               const item = result.speakingResponses?.find((row) => row.questionId === questionId);
               return (
-                <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
+                <article key={questionId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base dark:border-slate-700 dark:bg-slate-850">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Nói {index + 1}</h4>
                     <TaskStatusChip status={item?.status} score={item?.score ?? null} />
@@ -1172,7 +1174,7 @@ function DiagnosticResultView({
                   )}
                   {item?.status === "SKIPPED" && (
                     <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                      Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không được tính trọng số.
+                      Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không tính vào điểm tổng.
                     </p>
                   )}
                   {item?.status === "GRADING_FAILED" && (
@@ -1180,7 +1182,7 @@ function DiagnosticResultView({
                       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                         Bản ghi của bạn vẫn được lưu nhưng chưa chấm được. Kỹ năng Nói chưa có điểm cho tới khi chấm lại thành công.
                       </p>
-                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:opacity-50 dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>
+                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:cursor-wait dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>
                     </>
                   )}
                 </article>
@@ -1201,20 +1203,20 @@ function DiagnosticResultView({
                 !item && result.questionsResult.find((row) => row.questionId === questionId)?.selectedText === "";
               if (!item)
                 return (
-                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
+                  <article key={questionId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base dark:border-slate-700 dark:bg-slate-850">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                       <TaskStatusChip status={skipped ? "SKIPPED" : undefined} score={null} />
                     </div>
                     {skipped && (
                       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
-                        Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không được tính trọng số.
+                        Bạn đã bỏ qua bài này nên bài không được chấm. Bài bỏ qua không bị tính 0 và không tính vào điểm tổng.
                       </p>
                     )}
                   </article>
                 );
               return (
-              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-white p-4 text-base dark:border-slate-700 dark:bg-slate-900">
+              <article key={item.questionId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-base dark:border-slate-700 dark:bg-slate-850">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h4 className="font-black text-slate-900 dark:text-slate-100">Bài Viết {index + 1}</h4>
                   <TaskStatusChip status={item.status} score={item.score} />
@@ -1225,7 +1227,7 @@ function DiagnosticResultView({
                 {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} weights={item.criterionWeights} />}
                 {item.feedback && <FeedbackSummary text={item.feedback} />}
                 <SuggestionList items={item.suggestions} />
-                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:opacity-50 dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>}
+                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:cursor-wait dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
               );
             })}
@@ -1289,7 +1291,7 @@ function DiagnosticResultView({
 
       {/* 2. Concrete Practice Recommendations */}
       {practiceItems.length > 0 && (
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
+        <section className="rounded-3xl border border-slate-200 border-t-4 border-t-teal-500 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-teal-500 dark:bg-slate-900 sm:p-9">
           <div className="flex items-center gap-2">
             <BookOpen size={20} className="text-teal-600 dark:text-teal-400" />
             <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
@@ -1305,7 +1307,7 @@ function DiagnosticResultView({
               <Link
                 key={rec.id}
                 href={rec.route}
-                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4.5 transition-all hover:border-teal-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-slate-50 p-4.5 transition-all hover:border-teal-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
               >
                 <div>
                   <span className="inline-block rounded-md bg-teal-100 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-teal-700 dark:bg-teal-950 dark:text-teal-300">
@@ -1329,7 +1331,7 @@ function DiagnosticResultView({
       )}
 
       {/* 3. Filterable Grouped Answer Review */}
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-9">
+      <section className="rounded-3xl border border-slate-200 border-t-4 border-t-slate-400 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-slate-500 dark:bg-slate-900 sm:p-9">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
             Đối chiếu câu trả lời
@@ -1384,7 +1386,7 @@ function DiagnosticResultView({
                 return (
                   <div
                     key={item.questionId}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 text-sm dark:border-slate-800 dark:bg-slate-850"
+                    className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-800 dark:bg-slate-850"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-extrabold text-slate-800 dark:text-slate-200">
@@ -1413,10 +1415,10 @@ function DiagnosticResultView({
                   key={item.questionId}
                   className={`rounded-2xl border p-4 text-sm transition-colors ${
                     item.isCorrect
-                      ? "border-emerald-200/90 bg-emerald-50/30 dark:border-emerald-950 dark:bg-emerald-950/20"
+                      ? "border-emerald-200 bg-emerald-50/70 dark:border-emerald-900 dark:bg-emerald-950/30"
                       : item.isCorrect === false
-                        ? "border-rose-200/90 bg-rose-50/30 dark:border-rose-950 dark:bg-rose-950/20"
-                        : "border-slate-200 bg-slate-50/40 dark:border-slate-800 dark:bg-slate-850"
+                        ? "border-rose-200 bg-rose-50/70 dark:border-rose-900 dark:bg-rose-950/30"
+                        : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-850"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">

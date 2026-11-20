@@ -98,9 +98,9 @@ export default function ImageUploadField({
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  disabled={disabled || uploading}
+                  disabled={uploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  className={`inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors disabled:cursor-wait ${disabled ? "invisible" : ""}`}
                 >
                   {uploading ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -111,9 +111,9 @@ export default function ImageUploadField({
                 </button>
                 <button
                   type="button"
-                  disabled={disabled || uploading}
+                  disabled={uploading}
                   onClick={handleRemove}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors disabled:opacity-50 dark:text-rose-400"
+                  className={`inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 transition-colors disabled:cursor-wait dark:text-rose-400 ${disabled ? "invisible" : ""}`}
                 >
                   <Trash2 size={13} />
                   Xóa ảnh
@@ -133,9 +133,9 @@ export default function ImageUploadField({
             <p className="mt-1 text-xs text-slate-600 mb-3 dark:text-slate-400">{helperText}</p>
             <button
               type="button"
-              disabled={disabled || uploading}
+              disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:cursor-wait ${disabled ? "invisible" : ""}`}
             >
               {uploading ? (
                 <Loader2 size={14} className="animate-spin" />

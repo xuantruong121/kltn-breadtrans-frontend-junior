@@ -219,7 +219,7 @@ export default function AdminCostsPage() {
           type="button"
           onClick={() => refetch()}
           disabled={isRefetching}
-          className="inline-flex items-center gap-2 self-start rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-50 hover:border-slate-400 active:scale-[0.98] disabled:opacity-50 cursor-pointer sm:self-auto"
+          className="inline-flex items-center gap-2 self-start rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 shadow-xs transition-all hover:bg-slate-50 hover:border-slate-400 active:scale-[0.98] disabled:cursor-wait cursor-pointer sm:self-auto"
         >
           <RefreshCw className={`h-4 w-4 text-slate-600 ${isRefetching ? "animate-spin" : ""}`} />
           <span>{isRefetching ? "Đang đồng bộ..." : "Làm mới dữ liệu"}</span>
@@ -650,7 +650,7 @@ export default function AdminCostsPage() {
               type="button"
               onClick={() => purgeCacheMutation.mutate()}
               disabled={isPurgingCache}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-3.5 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100 hover:border-rose-300 active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50/70 px-3.5 py-2 text-xs font-bold text-rose-700 transition hover:bg-rose-100 hover:border-rose-300 active:scale-[0.98] disabled:cursor-wait cursor-pointer shadow-2xs"
             >
               <Trash2 className="h-3.5 w-3.5" />
               <span>{isPurgingCache ? "Đang xóa bộ nhớ đệm..." : "Xóa bộ nhớ đệm"}</span>
@@ -659,7 +659,7 @@ export default function AdminCostsPage() {
               type="button"
               onClick={() => cleanupR2Mutation.mutate()}
               disabled={isCleaningR2}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400 active:scale-[0.98] disabled:opacity-50 cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400 active:scale-[0.98] disabled:cursor-wait cursor-pointer shadow-2xs"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${isCleaningR2 ? "animate-spin" : ""}`} />
               <span>{isCleaningR2 ? "Đang quét R2..." : "Dọn dẹp R2 (> 90 ngày)"}</span>

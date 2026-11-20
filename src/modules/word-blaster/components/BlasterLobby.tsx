@@ -112,7 +112,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
                 onClick={() => setStake(s)}
                 className={`flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 transition-transform active:scale-95 sm:h-[72px] sm:w-[72px] ${
                   stake === s ? "border-amber-600 bg-amber-500 text-white" : "border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-400 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
-                } ${balance !== null && !isGuest && balance < s ? "opacity-45" : ""}`}
+                }`}
               >
                 <span className="text-lg font-extrabold tabular-nums leading-none">{s}</span>
                 <BreadCoinIcon size={14} strokeWidth={2.25} className="mt-0.5" aria-hidden="true" />
@@ -150,8 +150,8 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <button
             type="button"
             onClick={() => void begin()}
-            disabled={starting || (!isGuest && short > 0)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-extrabold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={starting}
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-extrabold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed sm:w-auto ${!isGuest && short > 0 ? "invisible" : ""}`}
           >
             <Crosshair size={18} strokeWidth={2.25} aria-hidden="true" />
             {isGuest ? "Đăng nhập để chơi" : starting ? "Đang mở ván…" : "Bắt đầu"}

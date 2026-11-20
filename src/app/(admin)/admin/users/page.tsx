@@ -636,13 +636,14 @@ export default function AdminUsersPage() {
                 </button>
                 <button
                   onClick={() => createMutation.mutate(createForm)}
-                  disabled={
-                    createMutation.isPending ||
+                  disabled={createMutation.isPending}
+                  className={`flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-sm disabled:cursor-wait ${
                     !createForm.email ||
                     (createForm.role === "STUDENT" && !createForm.password) ||
                     !createForm.fullName
-                  }
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-sm disabled:opacity-50"
+                      ? "invisible"
+                      : ""
+                  }`}
                 >
                   {createMutation.isPending ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -794,10 +795,8 @@ export default function AdminUsersPage() {
                       data: editForm,
                     })
                   }
-                  disabled={
-                    updateMutation.isPending || !editForm.fullName.trim()
-                  }
-                  className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-sm disabled:opacity-50"
+                  disabled={updateMutation.isPending}
+                  className={`flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black flex items-center justify-center gap-2 transition-all shadow-md text-sm disabled:cursor-wait ${!editForm.fullName.trim() ? "invisible" : ""}`}
                 >
                   {updateMutation.isPending && (
                     <Loader2 size={16} className="animate-spin" />
@@ -851,7 +850,7 @@ export default function AdminUsersPage() {
                   type="button"
                   disabled={deleteMutation.isPending}
                   onClick={() => deleteMutation.mutate(deleteTarget.id)}
-                  className="px-6 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-black shadow-md flex items-center gap-2 text-sm disabled:opacity-50"
+                  className="px-6 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl font-black shadow-md flex items-center gap-2 text-sm disabled:cursor-wait"
                 >
                   {deleteMutation.isPending && (
                     <Loader2 size={16} className="animate-spin" />

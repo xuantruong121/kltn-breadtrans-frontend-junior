@@ -125,6 +125,32 @@ export const PET_SPECIES_LIST: PetSpecies[] = [
       stage4: { name: "Huyền Thoại Cáo Âm Nhạc", minLevel: 10, desc: "Siêu sao cáo toàn cầu rực rỡ" },
     },
   },
+  {
+    // Unlocked by "Pet Bun đồng hành" in the shop (petLogic SHOP_PET_SPECIES).
+    id: "petbun",
+    name: "Bun",
+    speciesName: "Thỏ Bun Vàng",
+    title: "Bạn Đồng Hành Đặc Biệt",
+    element: "Hệ Đặc Biệt",
+    elementColor: "bg-yellow-100 text-yellow-900 border-yellow-300",
+    buff: "Động lực mỗi ngày",
+    buffDetail: "Ở bên nhắc bạn giữ nhịp học đều đặn mỗi ngày.",
+    lore: "Bun là chú thỏ vàng óng chỉ có trong Cửa hàng Bánh Mì, luôn vẫy đôi tai dài chào bạn mỗi lần mở bài học mới.",
+    quote: "Hôm nay mình học thêm một bài nhé, Bun đi cùng bạn!",
+    themeColor: {
+      bg: "from-yellow-300 via-amber-300 to-yellow-400",
+      border: "border-yellow-400",
+      shadow: "shadow-xs",
+      accent: "bg-yellow-500",
+      text: "text-yellow-950",
+    },
+    stages: {
+      stage1: { name: "Bun Con", minLevel: 1, desc: "Thỏ con tai cụp" },
+      stage2: { name: "Bun Tai Dài", minLevel: 4, desc: "Thỏ vẫy đôi tai dài" },
+      stage3: { name: "Bun Rực Vàng", minLevel: 7, desc: "Thỏ phát sáng vàng óng" },
+      stage4: { name: "Bun Huyền Thoại", minLevel: 10, desc: "Thỏ vàng huyền thoại" },
+    },
+  },
 ];
 
 /**
@@ -141,6 +167,10 @@ export const getSpeciesIdFromPetName = (name?: string): string => {
   }
   if (n.includes("cáo") || n === "foxy" || n.includes("fox") || n.includes("phim")) {
     return "foxy";
+  }
+  // Bought in the shop; an exact key, so seeded pets named "Bun" stay Bready.
+  if (n === "petbun" || n.includes("pet bun")) {
+    return "petbun";
   }
   return "bready";
 };

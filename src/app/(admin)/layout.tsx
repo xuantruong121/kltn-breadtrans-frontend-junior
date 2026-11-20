@@ -35,6 +35,8 @@ import { useAuthStore } from "@/stores/authStore";
 import { useAuthSyncStore } from "@/stores/authSyncStore";
 import axiosClient from "@/lib/api/axiosClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { TRANSLATION_REVIEW_KEYS } from "@/components/admin/TranslationReviewPanel";
+import { translationReviewService } from "@/lib/api/services/translation-review.service";
 import { useSyncExternalStore, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supportService } from "@/lib/api/services/support.service";
@@ -117,6 +119,14 @@ export default function AdminLayout({
     refetchInterval: 15000,
   });
   const unreadMessageCount = unreadMessages?.count ?? 0;
+  // "Duyệt câu dịch" lives in the Writing page (owner 2026-11-19): its count sits on "Viết".
+  const { data: translationReview } = useQuery({
+    queryKey: TRANSLATION_REVIEW_KEYS.summary,
+    queryFn: translationReviewService.summary,
+    enabled: !!user && user.role === "ADMIN",
+    refetchInterval: 60000,
+  });
+  const pendingTranslations = translationReview?.total ?? 0;
 
   // User manual collapsed state; default is all open (!collapsedGroups[group.id])
   const [collapsedGroups, setCollapsedGroups] = useState<
@@ -303,6 +313,15 @@ export default function AdminLayout({
                               <span className="leading-snug text-left break-words flex-1">
                                 {item.label}
                               </span>
+                              {item.id === "writing" && pendingTranslations > 0 && (
+                                <span
+                                  className="min-w-5 rounded-full bg-amber-100 px-1.5 py-0.5 text-center text-xs font-bold leading-none text-amber-800"
+                                  role="status"
+                                  aria-label={`${pendingTranslations > 99 ? "99+" : pendingTranslations} câu dịch chờ duyệt`}
+                                >
+                                  {pendingTranslations > 99 ? "99+" : pendingTranslations}
+                                </span>
+                              )}
                               {item.id === "messages" && unreadMessageCount > 0 && (
                                 <span
                                   className="min-w-5 rounded-full bg-blue-600 px-1.5 py-0.5 text-center text-xs font-bold leading-none text-white"

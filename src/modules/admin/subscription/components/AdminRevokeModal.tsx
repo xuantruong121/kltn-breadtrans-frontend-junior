@@ -139,8 +139,8 @@ export function AdminRevokeModal({
             </button>
             <button
               type="submit"
-              disabled={revokeMutation.isPending || !reason.trim()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              disabled={revokeMutation.isPending}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm disabled:cursor-not-allowed cursor-pointer ${!reason.trim() ? "invisible" : ""}`}
             >
               {revokeMutation.isPending ? (
                 <>

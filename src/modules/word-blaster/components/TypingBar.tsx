@@ -83,8 +83,7 @@ export function TypingBar({
         </div>
         <button
           type="submit"
-          disabled={disabled}
-          className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 font-extrabold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+          className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-xl bg-amber-500 px-3.5 font-extrabold text-white transition-colors hover:bg-amber-600 ${disabled ? "invisible" : ""}`}
         >
           <Crosshair size={17} strokeWidth={2.5} aria-hidden="true" />
           Bắn

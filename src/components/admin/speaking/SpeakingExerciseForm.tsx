@@ -396,12 +396,9 @@ export default function SpeakingExerciseForm({
                 />
                 <button
                   type="button"
-                  disabled={
-                    createStimulusMutation.isPending ||
-                    !newStimulusContent.trim()
-                  }
+                  disabled={createStimulusMutation.isPending}
                   onClick={() => createStimulusMutation.mutate()}
-                  className={BTN_SECONDARY}
+                  className={`${BTN_SECONDARY} ${newStimulusContent.trim() ? "" : "invisible"}`}
                 >
                   {createStimulusMutation.isPending
                     ? "Đang tạo..."

@@ -261,7 +261,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               type="button"
               onClick={onSelectPlus}
               disabled={isPurchasing}
-              className="w-full min-h-12 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              className="w-full min-h-12 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:cursor-wait"
             >
               {isPurchasing ? "Đang xử lý..." : cta.label}
             </button>
@@ -286,7 +286,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               type="button"
               onClick={onSelectPlus}
               disabled={isPurchasing}
-              className="w-full min-h-12 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
+              className="w-full min-h-12 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:cursor-wait"
             >
               {isPurchasing ? "Đang xử lý..." : cta.label}
             </button>
@@ -392,8 +392,8 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         <button
           type="button"
           onClick={onSelectPro}
-          disabled={cta.disabled || isPurchasing || isCatalogError || !proPricing.isPurchasable}
-          className="w-full min-h-12 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isPurchasing}
+          className={`w-full min-h-12 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] px-4 text-sm sm:text-base font-extrabold text-white shadow-xs transition-all cursor-pointer disabled:cursor-not-allowed ${cta.disabled || isCatalogError || !proPricing.isPurchasable ? "invisible" : ""}`}
         >
           {isPurchasing ? "Đang xử lý..." : cta.label}
         </button>

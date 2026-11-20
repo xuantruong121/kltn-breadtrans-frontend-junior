@@ -117,10 +117,8 @@ export default function OnboardingPage() {
     router.push("/dashboard");
   };
 
-  const finishDisabled =
-    save.isPending ||
-    (isLast && profileQuery.isLoading) ||
-    (isLast && !placed && levelPath === "SELF" && !answers.selfLevel);
+  const finishPending = save.isPending || (isLast && profileQuery.isLoading);
+  const finishNotReady = isLast && !placed && levelPath === "SELF" && !answers.selfLevel;
   const headline = step === "level" && placed
     ? { title: "Mức luyện tập của bạn", hint: "Đã xác định từ bài đánh giá đầu vào." }
     : STEP_TITLE[step];
@@ -266,8 +264,10 @@ export default function OnboardingPage() {
           <button
             type="button"
             onClick={() => (isLast ? finish() : setStepIndex((i) => i + 1))}
-            disabled={isLast ? finishDisabled : !canContinue(step, answers)}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={isLast && finishPending}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed ${
+              (isLast ? finishNotReady : !canContinue(step, answers)) ? "invisible" : ""
+            }`}
           >
             {isLast ? (!placed && levelPath === "TEST" ? "Lưu và làm bài kiểm tra" : "Lưu và bắt đầu") : "Tiếp tục"}
             <ArrowRight size={18} aria-hidden="true" />

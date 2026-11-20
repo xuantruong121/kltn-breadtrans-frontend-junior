@@ -171,7 +171,7 @@ export default function GoogleAccountLinkModal({
             <button
               type="submit"
               disabled={isLoading}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 disabled:cursor-wait"
             >
               {isLoading ? (
                 <>

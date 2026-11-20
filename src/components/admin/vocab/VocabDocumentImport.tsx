@@ -128,7 +128,7 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
                 <DocumentImportButton onText={setText} disabled={busy} />
                 <button
                   type="button"
-                  disabled={busy || !text}
+                  disabled={busy}
                   onClick={() => void suggest()}
                   className={BTN_AI}
                 >
@@ -225,9 +225,9 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
               </button>
               <button
                 type="button"
-                disabled={busy || total === 0}
+                disabled={busy}
                 onClick={() => void create()}
-                className={BTN_PRIMARY}
+                className={`${BTN_PRIMARY} ${total === 0 ? "invisible" : ""}`}
               >
                 {busy && <Loader2 size={15} className="animate-spin" />}
                 Tạo bản nháp

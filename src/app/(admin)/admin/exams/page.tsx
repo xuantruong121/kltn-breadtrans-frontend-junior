@@ -1,26 +1,11 @@
 "use client";
 
+import { ADMIN_CARD, ADMIN_CARD_GRID } from "@/components/admin/cmsStyles";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Plus,
-  Loader2,
-  Search,
-  Trash2,
-  ArrowLeft,
-  CheckCircle2,
-  AlertTriangle,
-  Image as ImageIcon,
-  Clock,
-  X,
-  Eye,
-  Check,
-  FileStack,
-  Upload,
-  ArrowRight,
-} from "lucide-react";
+import { Plus, Loader2, Search, Trash2, ArrowLeft, CheckCircle2, AlertTriangle, Image as ImageIcon, Clock, X, Eye, Check, Upload, ArrowRight } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
@@ -1027,7 +1012,7 @@ export default function AdminExamsPage() {
                       <button
                         onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
                         disabled={fillMissingImagesMutation.isPending}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
                       >
                         <ImageIcon size={15} />
                         {fillMissingImagesMutation.isPending
@@ -1239,7 +1224,7 @@ export default function AdminExamsPage() {
                     <button
                       onClick={() => buildMasterMutation.mutate(examDetail.id)}
                       disabled={buildMasterMutation.isPending}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
                     >
                       {buildMasterMutation.isPending && (
                         <Loader2 size={13} className="animate-spin" />
@@ -1591,7 +1576,7 @@ export default function AdminExamsPage() {
               <button
                 type="submit"
                 disabled={updateExamMutation.isPending}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
               >
                 {updateExamMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
@@ -1647,7 +1632,7 @@ export default function AdminExamsPage() {
                 <button
                   type="submit"
                   disabled={imageSearchMutation.isPending}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                 >
                   {imageSearchMutation.isPending ? (
                     <Loader2 size={15} className="animate-spin" />
@@ -1741,7 +1726,7 @@ export default function AdminExamsPage() {
                             selectImageMutation.mutate(candidate.id)
                           }
                           disabled={selectImageMutation.isPending}
-                          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 ${candidate.analysis?.status === "UNSUITABLE" ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:cursor-wait ${candidate.analysis?.status === "UNSUITABLE" ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}`}
                           aria-label={
                             candidate.analysis?.status === "UNSUITABLE"
                               ? "Chọn và tiếp tục với ảnh AI đánh giá chưa tối ưu"
@@ -1946,7 +1931,7 @@ export default function AdminExamsPage() {
                   <button
                     type="submit"
                     disabled={saveGroupMutation.isPending}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                   >
                     {saveGroupMutation.isPending
                       ? "Đang lưu..."
@@ -2097,7 +2082,7 @@ export default function AdminExamsPage() {
                   <button
                     type="submit"
                     disabled={saveQuestionMutation.isPending}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                   >
                     {saveQuestionMutation.isPending
                       ? "Đang lưu..."
@@ -2181,7 +2166,7 @@ export default function AdminExamsPage() {
                     type="button"
                     disabled={isAiPart5Loading}
                     onClick={handleGenerateAiPart5}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:cursor-wait transition-colors"
                   >
                     {isAiPart5Loading ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -2430,34 +2415,18 @@ export default function AdminExamsPage() {
   return (
     <div className="space-y-6 p-6">
       {/* HEADER */}
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Kho đề luyện</h1>
-          <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {totalExams} đề ·{" "}
-            {examList.facets?.published ?? 0}{" "}
-            đã xuất bản ·{" "}
-            {examList.facets?.learnerReady ?? 0} sẵn sàng cho học viên
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => {
-              setExamForm(newExamForm());
-              setIsExamModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-          >
-            <Plus size={16} /> Tạo thủ công
-          </button>
-          <Link
-            href="/admin/exams/new"
-            className="inline-flex items-center gap-2 rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
-          >
-            <FileStack size={16} /> AI soạn đề
-          </Link>
-        </div>
-      </header>
+      <AdminPageHeader
+        title="Kho đề luyện"
+        stats={`${totalExams} đề · ${examList.facets?.published ?? 0} đã xuất bản · ${examList.facets?.learnerReady ?? 0} sẵn sàng cho học viên`}
+        ai={{ label: "Tạo bằng AI", href: "/admin/exams/new?mode=ai" }}
+        create={{
+          label: "Tạo đề",
+          onClick: () => {
+            setExamForm(newExamForm());
+            setIsExamModalOpen(true);
+          },
+        }}
+      />
 
       {/* FILTER & SEARCH */}
       <div className="space-y-3">
@@ -2480,6 +2449,24 @@ export default function AdminExamsPage() {
           />
         </label>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trạng thái
+            <select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(
+                  event.target.value as "ALL" | "DRAFT" | "PUBLISHED" | "ARCHIVED",
+                );
+                setCurrentPage(1);
+              }}
+              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+            >
+              <option value="ALL">Tất cả</option>
+              <option value="DRAFT">Bản nháp</option>
+              <option value="PUBLISHED">Đã xuất bản</option>
+              <option value="ARCHIVED">Ngừng phát hành</option>
+            </select>
+          </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
             Kỳ thi
             <select
@@ -2509,24 +2496,6 @@ export default function AdminExamsPage() {
               <option value="TOEIC_LR">Listening &amp; Reading</option>
               <option value="TOEIC_SW">Speaking &amp; Writing</option>
               <option value="TOEIC_4_SKILLS">4 kỹ năng</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trạng thái
-            <select
-              value={statusFilter}
-              onChange={(event) => {
-                setStatusFilter(
-                  event.target.value as "ALL" | "DRAFT" | "PUBLISHED" | "ARCHIVED",
-                );
-                setCurrentPage(1);
-              }}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="DRAFT">Bản nháp</option>
-              <option value="PUBLISHED">Đã xuất bản</option>
-              <option value="ARCHIVED">Ngừng phát hành</option>
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -2595,7 +2564,7 @@ export default function AdminExamsPage() {
         <div className="space-y-6">
           {/* Cards fill the canvas in 320px-minimum columns (3 at 1440,
               4 at 1920) with one 16px gutter. */}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+          <div className={ADMIN_CARD_GRID}>
             {paginatedExams.map((exam) => {
               const isPublished = exam.publicationStatus === "PUBLISHED";
               const parts = (
@@ -2608,7 +2577,7 @@ export default function AdminExamsPage() {
               return (
                 <article
                   key={exam.id}
-                  className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300"
+                  className={ADMIN_CARD}
                 >
                   <div className="flex items-center gap-2">
                     <span className="truncate text-xs font-semibold text-slate-600">
@@ -2933,7 +2902,7 @@ export default function AdminExamsPage() {
                 <button
                   type="submit"
                   disabled={createExamMutation.isPending}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                 >
                   {createExamMutation.isPending
                     ? "Đang tạo..."

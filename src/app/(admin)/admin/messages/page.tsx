@@ -651,8 +651,8 @@ function AdminMessagesContent() {
                   />
                   <button
                     type="submit"
-                    disabled={!draft.trim() || sendMutation.isPending}
-                    className="grid min-h-11 min-w-11 place-items-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                    disabled={sendMutation.isPending}
+                    className={`grid min-h-11 min-w-11 place-items-center rounded-lg bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed cursor-pointer ${!draft.trim() ? "invisible" : ""}`}
                     aria-label="Gửi tin nhắn"
                   >
                     {sendMutation.isPending ? (

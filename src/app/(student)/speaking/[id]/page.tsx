@@ -1522,7 +1522,7 @@ export default function SpeakingExerciseDetailPage() {
       <div
         className={`flex flex-wrap items-center justify-center font-black tracking-tight select-none text-center ${
           isStage1Mode
-            ? "text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-slate-900 dark:text-slate-100 leading-tight py-2 px-2 max-w-5xl xl:max-w-6xl mx-auto"
+            ? "text-2xl sm:text-3xl md:text-5xl lg:text-6xl short:text-4xl text-slate-900 dark:text-slate-100 leading-tight py-2 px-2 max-w-5xl xl:max-w-6xl mx-auto"
             : "text-2xl sm:text-3xl md:text-3xl lg:text-4xl text-slate-900 dark:text-slate-100 leading-snug py-3 px-1 max-w-2xl mx-auto"
         }`}
       >
@@ -1903,7 +1903,7 @@ export default function SpeakingExerciseDetailPage() {
                   {/* Accent selector pills */}
                   <div
                     className={`flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-opacity ${
-                      isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                      isPlayingTTS ? "cursor-wait" : ""
                     }`}
                     role="group"
                     aria-label="Chọn chất giọng phát âm từ"
@@ -1945,7 +1945,7 @@ export default function SpeakingExerciseDetailPage() {
                   </div>
                   <div
                     className={`flex items-center gap-1 ${
-                      isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                      isPlayingTTS ? "cursor-wait" : ""
                     }`}
                     role="group"
                     aria-label="Chọn tốc độ phát âm từ"
@@ -1984,7 +1984,7 @@ export default function SpeakingExerciseDetailPage() {
                   <button
                     type="button"
                     onClick={startRecording}
-                    className="size-16 sm:size-20 rounded-full bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center border border-amber-600/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
+                    className="size-16 sm:size-20 short:size-16 rounded-full bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center border border-amber-600/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
                     title="Bắt đầu thu âm (Phím Space / R)"
                     aria-label="Bắt đầu thu âm"
                   >
@@ -2073,7 +2073,7 @@ export default function SpeakingExerciseDetailPage() {
                     <button
                       type="button"
                       onClick={stopRecording}
-                      className="size-16 sm:size-20 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center border border-rose-700/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
+                      className="size-16 sm:size-20 short:size-16 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center border border-rose-700/20 shadow-sm hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 transition-all cursor-pointer active:scale-95 group"
                       title="Dừng ghi âm (Phím Space / R)"
                       aria-label="Dừng ghi âm và chấm điểm"
                     >
@@ -2529,7 +2529,7 @@ export default function SpeakingExerciseDetailPage() {
                 }}
                 disabled={phase === "RECORDING" || isAnalyzing}
                 aria-label="Câu trước"
-                className="min-h-11 shrink-0 px-3 sm:px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 shrink-0 px-3 sm:px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed"
               >
                 <ArrowLeft size={14} aria-hidden="true" /><span className="hidden sm:inline"> Câu trước</span>
               </button>

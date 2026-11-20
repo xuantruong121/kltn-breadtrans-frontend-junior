@@ -113,7 +113,7 @@ export function PracticeExitConfirmDialog({
             type="button"
             onClick={onStay}
             disabled={isNavigating}
-            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-5 text-sm font-bold text-slate-700 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-slate-750 hover:text-slate-900 dark:hover:text-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-5 text-sm font-bold text-slate-700 dark:text-slate-300 transition hover:bg-slate-100 dark:hover:bg-slate-750 hover:text-slate-900 dark:hover:text-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-wait cursor-pointer"
           >
             Ở lại học tiếp
           </button>
@@ -124,7 +124,7 @@ export function PracticeExitConfirmDialog({
             type="button"
             onClick={onConfirmExit}
             disabled={isNavigating}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-800 dark:bg-slate-700 px-5 text-sm font-bold text-white shadow-xs transition hover:bg-slate-900 dark:hover:bg-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700 focus-visible:ring-offset-2 disabled:opacity-50 cursor-pointer"
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-800 dark:bg-slate-700 px-5 text-sm font-bold text-white shadow-xs transition hover:bg-slate-900 dark:hover:bg-slate-600 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-700 focus-visible:ring-offset-2 disabled:cursor-wait cursor-pointer"
           >
             {isNavigating ? (
               <>

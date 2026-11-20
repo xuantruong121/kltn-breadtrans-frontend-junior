@@ -255,8 +255,8 @@ export function QuickRegisterModal({
 
           <button
             type="submit"
-            disabled={isLoading || !acceptTerms}
-            className="btn-tactile-primary w-full mt-3 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            disabled={isLoading}
+            className="btn-tactile-primary w-full mt-3 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-wait"
           >
             {isLoading ? (
               <>

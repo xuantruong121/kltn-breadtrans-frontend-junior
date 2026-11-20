@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronDown, Crown } from "lucide-react";
 import { AvatarImage } from "@/components/ui/AvatarImage";
+import { BadgeGlyph } from "@/components/ui/BadgeGlyph";
+import { resolveAvatarFrame, resolveUserBadge } from "@/lib/avatar/avatarCustomizationLogic";
+import type { Cosmetics } from "@/lib/avatar/cosmetics";
 import type { RankingEntry, RankingResponse } from "@/lib/api/services/gamification.service";
 import { METRICS, PERIODS, emptyPlace, formatValue, hasPeriods, initials, leagueLine, valueHeading, type RankingMetric, type RankingPeriod } from "../rankingLogic";
 
@@ -23,13 +26,58 @@ export function TierChip({ tier }: { tier: string }) {
   );
 }
 
-export function PersonAvatar({ name, url, size, ring = "" }: { name: string; url: string | null; size: number; ring?: string }) {
-  return (
+/**
+ * A learner's round avatar at a pixel size. `frame` and `badge` are that
+ * learner's own shop items from the API (owner 2026-11-19), never the viewer's.
+ */
+export function PersonAvatar({
+  name,
+  url,
+  size,
+  ring = "",
+  frame = null,
+  badge = null,
+}: {
+  name: string;
+  url: string | null;
+  size: number;
+  ring?: string;
+  frame?: string | null;
+  badge?: string | null;
+}) {
+  const worn = resolveAvatarFrame(frame);
+  const shown = resolveUserBadge(badge);
+  const face = (
     <span
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-200 ${ring}`}
+      className={`relative z-10 flex shrink-0 items-center justify-center overflow-hidden rounded-full font-bold ${worn ? `${worn.containerRingClass} ${worn.fallbackBgClass}` : `bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 ${ring}`}`}
       style={{ width: size, height: size, fontSize: Math.max(11, size / 3) }}
     >
       <AvatarImage src={url} alt="" className="h-full w-full object-cover" fallback={initials(name)} />
+    </span>
+  );
+  if (!worn && !shown) return face;
+
+  const badgeSize = Math.max(16, Math.round(size * 0.36));
+  return (
+    <span className="relative isolate inline-flex shrink-0" style={{ width: size, height: size }}>
+      {worn && (
+        <img
+          src={worn.svgUrl}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[165%] w-[165%] max-w-none -translate-x-1/2 -translate-y-1/2 select-none"
+        />
+      )}
+      {face}
+      {shown && (
+        <span
+          title={shown.name}
+          className="absolute -bottom-0.5 -right-0.5 z-30 flex items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
+          style={{ width: badgeSize, height: badgeSize }}
+        >
+          <BadgeGlyph badge={shown} className="size-3/4" imgClassName="h-full w-full object-contain p-px" />
+        </span>
+      )}
     </span>
   );
 }
@@ -73,7 +121,7 @@ function PodiumPlace({ entry, metric, place }: { entry: RankingEntry; metric: Ra
     >
       <div className="relative">
         {place === 1 && <Crown size={26} strokeWidth={2.25} className="absolute -top-7 left-1/2 -translate-x-1/2 fill-amber-300 text-amber-500" aria-hidden="true" />}
-        <PersonAvatar name={entry.displayName} url={entry.avatarUrl} size={m.size} ring={m.ring} />
+        <PersonAvatar name={entry.displayName} url={entry.avatarUrl} size={m.size} ring={m.ring} frame={entry.avatarFrame} badge={entry.badgeKey} />
         <span className={`absolute -bottom-2 left-1/2 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full text-sm font-extrabold shadow-sm ${m.badge}`}>{place}</span>
       </div>
       <p className={`mt-4 w-full truncate font-bold text-slate-900 dark:text-slate-100 ${place === 1 ? "text-lg" : "text-sm"}`}>{entry.displayName}</p>
@@ -93,6 +141,7 @@ export function RankingBoard({
   isGuest,
   myName,
   myAvatar,
+  myCosmetics,
   onLogin,
 }: {
   data: RankingResponse | undefined;
@@ -104,6 +153,7 @@ export function RankingBoard({
   isGuest: boolean;
   myName: string;
   myAvatar: string | null;
+  myCosmetics: Cosmetics;
   onLogin: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -152,7 +202,7 @@ export function RankingBoard({
                   <td className="px-4 py-3 font-bold tabular-nums text-slate-700 dark:text-slate-300 sm:px-6">{e.rank}</td>
                   <td className="px-2 py-3">
                     <span className="flex min-w-0 items-center gap-3">
-                      <PersonAvatar name={e.displayName} url={e.avatarUrl} size={36} />
+                      <PersonAvatar name={e.displayName} url={e.avatarUrl} size={36} frame={e.avatarFrame} badge={e.badgeKey} />
                       <span className="min-w-0">
                         <span className="block truncate font-semibold text-slate-900 dark:text-slate-100">{e.displayName}</span>
                         <TierChip tier={e.tier} />
@@ -190,7 +240,14 @@ export function RankingBoard({
           </>
         ) : (
           <>
-            <PersonAvatar name={myName} url={myAvatar} size={44} ring="ring-2 ring-emerald-300 dark:ring-emerald-700" />
+            <PersonAvatar
+              name={myName}
+              url={myAvatar}
+              size={44}
+              ring="ring-2 ring-emerald-300 dark:ring-emerald-700"
+              frame={myCosmetics.avatarFrame}
+              badge={myCosmetics.badgeKey}
+            />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Vị trí của bạn</p>
               <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">

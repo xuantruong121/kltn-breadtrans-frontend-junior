@@ -259,15 +259,52 @@ export const writingUsesPictures = (
   (questions.length === 0 ||
     questions.some((question) => Boolean(question.content?.imageUrl)));
 
+/** The four Writing kinds the list filters by (owner 2026-11-19); the backend tags each row. */
+export const WRITING_KIND_LABEL: Record<string, string> = {
+  TRANSLATION: "Dịch câu",
+  PICTURE: "Viết theo tranh",
+  SENTENCE: "Viết câu",
+  EMAIL: "Viết email",
+};
+
 export const writingCardLabel = (item: {
   type?: string;
   thumbnailUrl?: string | null;
   writingKind?: string | null;
 }) => {
-  if (item.writingKind === "TRANSLATION") return "Dịch câu";
+  if (item.writingKind && WRITING_KIND_LABEL[item.writingKind]) return WRITING_KIND_LABEL[item.writingKind];
   if (item.type !== "WRITING_PICTURE") return "Viết email";
   return item.thumbnailUrl ? "Viết theo tranh" : "Viết câu";
 };
+
+/**
+ * The form's "Dạng bài viết". "Dịch câu", "Viết theo tranh" and "Viết câu" are
+ * all stored as WRITING_PICTURE; the form keeps them apart.
+ */
+export const WRITING_FORM_KINDS = [
+  { value: "WRITING_EMAIL", label: "Viết email" },
+  { value: "TRANSLATION", label: "Dịch câu" },
+  { value: "WRITING_PICTURE", label: "Viết theo tranh" },
+  { value: "SENTENCE", label: "Viết câu" },
+] as const;
+
+/** The quiz type a form kind is saved as. */
+export const writingQuizType = (formType: string) =>
+  formType === "WRITING_EMAIL" ? "WRITING_EMAIL" : "WRITING_PICTURE";
+
+/**
+ * The task type a new question of this kind starts with. "Thêm câu hỏi" used
+ * to start every task as EMAIL, so a picture task failed to save and a
+ * translation task showed no translation fields (owner 2026-11-19).
+ */
+export const defaultWritingTaskType = (formType: string) =>
+  formType === "TRANSLATION"
+    ? "SENTENCE_TRANSLATION"
+    : formType === "WRITING_PICTURE"
+      ? "PICTURE_SENTENCE"
+      : formType === "SENTENCE"
+        ? "SENTENCE"
+        : "EMAIL";
 
 /**
  * The form's "Dạng bài viết": a "Dịch câu" exercise is stored as WRITING_PICTURE,
@@ -275,12 +312,21 @@ export const writingCardLabel = (item: {
  */
 export const writingFormType = (
   type: string,
-  questions: Array<{ content?: { taskType?: unknown } | null }> = [],
-) =>
-  type === "WRITING_PICTURE" &&
-  questions.some((q) => String(q.content?.taskType ?? "").toUpperCase() === "SENTENCE_TRANSLATION")
-    ? "TRANSLATION"
-    : type;
+  questions: Array<{ content?: { taskType?: unknown; imageUrl?: unknown } | null }> = [],
+  /** The backend's kind: TRANSLATION comes from the topic, so it holds for an empty exercise too. */
+  writingKind?: string | null,
+) => {
+  if (type !== "WRITING_PICTURE") return type;
+  if (writingKind === "TRANSLATION") return "TRANSLATION";
+  const taskTypes = questions.map((q) => String(q.content?.taskType ?? "").toUpperCase());
+  if (taskTypes.includes("SENTENCE_TRANSLATION")) return "TRANSLATION";
+  // Plain sentences with no picture are "Viết câu".
+  const plain =
+    questions.length > 0 &&
+    taskTypes.every((t) => t === "SENTENCE") &&
+    questions.every((q) => !q.content?.imageUrl);
+  return plain ? "SENTENCE" : type;
+};
 
 /** "giáo viên = teacher" lines into hints; a line without both sides is dropped. */
 export function parseHintLines(text: string): Array<{ vi: string; en: string }> {
@@ -301,3 +347,44 @@ export const hintLines = (hints: unknown) =>
         .map((h) => `${h.vi} = ${h.en}`)
         .join("\n")
     : "";
+
+/**
+ * Which AI draft a Writing kind can ask for (owner 2026-11-19): email and
+ * "Dịch câu" only. A picture exercise needs real photographs; "Viết câu" has
+ * no AI draft yet.
+ */
+export const writingDraftKind = (formType: string): "EMAIL" | "TRANSLATION" | null =>
+  formType === "TRANSLATION" ? "TRANSLATION" : formType === "WRITING_EMAIL" ? "EMAIL" : null;
+
+/** One task from POST /admin/writing/ai/full-draft, as the backend checked it. */
+export type WritingDraftTask = {
+  taskType: string;
+  prompt: string;
+  wordRange?: [number, number];
+  explanation?: string;
+  acceptedAnswers?: string[];
+  hints?: Array<{ vi: string; en: string }>;
+  grammarTip?: string;
+};
+
+/** The body that saves a picked AI task as a question of the exercise. */
+export function writingDraftQuestion(task: WritingDraftTask, level?: string) {
+  const translation = task.taskType === "SENTENCE_TRANSLATION";
+  return {
+    type: "WRITING",
+    prompt: task.prompt,
+    taskType: task.taskType,
+    ...(level ? { level } : {}),
+    ...(translation
+      ? {
+          acceptedAnswers: task.acceptedAnswers ?? [],
+          hints: task.hints ?? [],
+          grammarTip: task.grammarTip ?? "",
+        }
+      : {
+          ...(task.wordRange ? { wordRange: task.wordRange } : {}),
+          ...(task.explanation ? { explanation: task.explanation } : {}),
+        }),
+  };
+}
+

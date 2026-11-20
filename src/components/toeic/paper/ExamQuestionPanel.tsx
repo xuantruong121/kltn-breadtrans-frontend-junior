@@ -66,7 +66,7 @@ export function ExamQuestionPanel({
         type="button"
         onClick={onSubmit}
         disabled={submitting}
-        className="mt-2 min-h-10 w-full rounded-md border border-blue-600 text-sm font-bold uppercase text-blue-700 transition-colors hover:bg-blue-600 hover:text-white disabled:opacity-60 dark:text-blue-300"
+        className="mt-2 min-h-10 w-full rounded-md border border-blue-600 text-sm font-bold uppercase text-blue-700 transition-colors hover:bg-blue-600 hover:text-white disabled:cursor-wait dark:text-blue-300"
       >
         Nộp bài
       </button>
@@ -75,9 +75,11 @@ export function ExamQuestionPanel({
         <button
           type="button"
           onClick={onRestore}
-          disabled={restoreDisabled || saving}
+          disabled={saving}
           title={restoreTitle}
-          className="min-h-9 rounded-md border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className={`min-h-9 rounded-md border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 ${
+            restoreDisabled ? "invisible" : ""
+          }`}
         >
           Khôi phục
         </button>
@@ -85,7 +87,7 @@ export function ExamQuestionPanel({
           type="button"
           onClick={onSave}
           disabled={saving}
-          className="inline-flex min-h-9 items-center justify-center gap-1 rounded-md border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="inline-flex min-h-9 items-center justify-center gap-1 rounded-md border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           {saving && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
           Lưu bài làm

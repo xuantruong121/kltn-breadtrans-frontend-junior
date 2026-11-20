@@ -665,7 +665,7 @@ function AdjustTab({ onAdjusted }: { onAdjusted: () => void }) {
           <button
             type="submit"
             disabled={adjustMutation.isPending}
-            className="w-full rounded-lg bg-slate-900 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-slate-800 active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+            className="w-full rounded-lg bg-slate-900 py-2.5 text-xs font-semibold text-white shadow-xs transition hover:bg-slate-800 active:scale-[0.98] disabled:cursor-wait cursor-pointer"
           >
             {adjustMutation.isPending ? "Đang xử lý..." : "Xác nhận thực hiện"}
           </button>

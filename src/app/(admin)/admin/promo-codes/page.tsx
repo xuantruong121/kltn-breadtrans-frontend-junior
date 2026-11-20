@@ -127,7 +127,7 @@ export default function PromoCodesPage() {
             <button
               type="submit"
               disabled={create.isPending}
-              className="h-10 w-full rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
+              className="h-10 w-full rounded-lg bg-slate-900 px-4 text-sm font-semibold text-white hover:bg-slate-700 disabled:cursor-wait"
             >
               {create.isPending ? "Đang tạo…" : "Tạo mã"}
             </button>
@@ -226,7 +226,7 @@ export default function PromoCodesPage() {
                             type="button"
                             disabled={toggle.isPending}
                             onClick={() => toggle.mutate({ id: row.id, active: !row.active })}
-                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
                           >
                             {row.active ? "Tắt" : "Bật"}
                           </button>

@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, Loader2, FileStack } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
@@ -40,13 +40,17 @@ const STAGE_LABEL: Record<string, string> = {
   CANCELLED: "Đã hủy",
 };
 
-export default function NewExamPage() {
+function NewExamPageBody() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [variantCode, setVariantCode] = useState("TOEIC_LR");
   // Empty means the suggested name; typing replaces it.
   const [typedTitle, setTypedTitle] = useState<string | null>(null);
   const [description, setDescription] = useState("");
-  const [authoringMode, setAuthoringMode] = useState<"MANUAL" | "AI">("MANUAL");
+  // "Tạo bằng AI" on the list opens this page with ?mode=ai (owner 2026-11-19).
+  const [authoringMode, setAuthoringMode] = useState<"MANUAL" | "AI">(() =>
+    searchParams.get("mode") === "ai" ? "AI" : "MANUAL",
+  );
   const [generationMode, setGenerationMode] = useState<"FULL_EXAM" | "PART">("FULL_EXAM");
   const [part, setPart] = useState("5");
   const [topic, setTopic] = useState("");
@@ -282,11 +286,11 @@ export default function NewExamPage() {
             </label>
           </div>}
           <p className="text-sm leading-6 text-slate-600">Đây là đề luyện tập mô phỏng cấu trúc TOEIC, không phải đề thi chính thức của ETS.</p>
-          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ: {STAGE_LABEL[aiJob.stage] ?? "Đang xử lý"}</p><p className="mt-1 text-slate-600">{aiJob.error || (aiJob.status === "GENERATED" ? "Đề đã qua kiểm tra cấu trúc. Hãy duyệt rồi áp dụng vào bản nháp trước khi xuất bản." : "Tiến độ được lưu lại; bạn có thể rời trang rồi quay lại.")}</p>{aiJob.candidate?.available && <p className="mt-2 text-sm text-slate-600">Đã soạn {aiJob.candidate.lrBatchCount} nhóm Listening & Reading · {aiJob.candidate.speakingCount} câu Speaking · {aiJob.candidate.writingCount} câu Writing</p>}<div className="mt-3 flex flex-wrap items-center gap-3">{(aiJob.status === "FAILED" || aiJob.stage === "WAITING_QUOTA") && <button type="button" onClick={retryAiJob} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">{isSubmitting ? "Đang thử lại..." : "Thử lại"}</button>}{aiJob.status === "GENERATED" && <button type="button" onClick={openCandidateWorkspace} className="rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Duyệt đề</button>}{aiJob.exam?.id && ["APPROVED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="font-semibold text-blue-700 hover:underline">Mở bản nháp</button>}</div></section>}
+          {aiJob && <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm"><p className="font-semibold text-slate-900">Tiến độ: {STAGE_LABEL[aiJob.stage] ?? "Đang xử lý"}</p><p className="mt-1 text-slate-600">{aiJob.error || (aiJob.status === "GENERATED" ? "Đề đã qua kiểm tra cấu trúc. Hãy duyệt rồi áp dụng vào bản nháp trước khi xuất bản." : "Tiến độ được lưu lại; bạn có thể rời trang rồi quay lại.")}</p>{aiJob.candidate?.available && <p className="mt-2 text-sm text-slate-600">Đã soạn {aiJob.candidate.lrBatchCount} nhóm Listening & Reading · {aiJob.candidate.speakingCount} câu Speaking · {aiJob.candidate.writingCount} câu Writing</p>}<div className="mt-3 flex flex-wrap items-center gap-3">{(aiJob.status === "FAILED" || aiJob.stage === "WAITING_QUOTA") && <button type="button" onClick={retryAiJob} disabled={isSubmitting} className="rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed">{isSubmitting ? "Đang thử lại..." : "Thử lại"}</button>}{aiJob.status === "GENERATED" && <button type="button" onClick={openCandidateWorkspace} className="rounded-lg bg-slate-950 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Duyệt đề</button>}{aiJob.exam?.id && ["APPROVED", "FAILED", "CANCELLED"].includes(aiJob.status) && <button type="button" onClick={() => router.push(`/admin/exams?exam=${aiJob.exam.id}`)} className="font-semibold text-blue-700 hover:underline">Mở bản nháp</button>}</div></section>}
           <div className="flex justify-end border-t border-slate-100 pt-5">
             <button
-              disabled={isSubmitting || (authoringMode === "MANUAL" && !title.trim())}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={isSubmitting}
+              className={`inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed ${authoringMode === "MANUAL" && !title.trim() ? "invisible" : ""}`}
             >
               {isSubmitting && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}{" "}
               {authoringMode === "AI" ? "Tạo bản nháp bằng AI" : "Tạo bản nháp"}
@@ -295,5 +299,14 @@ export default function NewExamPage() {
         </form>
       </section>
     </div>
+  );
+}
+
+/** ?mode=ai is read with useSearchParams, which needs a Suspense boundary. */
+export default function NewExamPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewExamPageBody />
+    </Suspense>
   );
 }

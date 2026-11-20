@@ -22,11 +22,12 @@ import {
   type GateSkill,
 } from "@/lib/learning-path/levelLock";
 import { PRACTICE_SKILL_LABEL } from "@/lib/learning-path/practiceLevel";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 const PRIMARY =
-  "inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-5 text-sm font-bold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed";
 const SECONDARY =
-  "inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800";
+  "inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800";
 const PANEL =
   "mx-auto w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 sm:p-7 dark:border-slate-800 dark:bg-slate-900";
 
@@ -104,14 +105,14 @@ function QuestionView({
           {question.passage}
         </section>
       )}
-      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+      <section className="@container space-y-4 rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
         {question.hasAudio && <GateAudio key={question.id} attemptId={attemptId} questionId={question.id} />}
         {question.text && (
           <p lang="en" className="text-base font-semibold text-slate-900 dark:text-slate-100">
             {question.text}
           </p>
         )}
-        <div role="radiogroup" aria-label="Các phương án" className="space-y-2">
+        <div role="radiogroup" aria-label="Các phương án" className={`${optionGridClass(question.options)} gap-2`}>
           {question.options.map((option) => (
             <button
               key={option}
@@ -238,8 +239,7 @@ export function GateRunner({ skill }: { skill: GateSkill }) {
             <>
               <button
                 type="button"
-                className={SECONDARY}
-                disabled={index === 0}
+                className={`${SECONDARY} ${index === 0 ? "invisible" : ""}`}
                 onClick={() => setIndex((i) => i - 1)}
               >
                 <ArrowLeft className="size-4" aria-hidden="true" />
@@ -252,8 +252,8 @@ export function GateRunner({ skill }: { skill: GateSkill }) {
                   )}
                   <button
                     type="button"
-                    className={PRIMARY}
-                    disabled={remaining > 0 || submit.isPending}
+                    className={`${PRIMARY} ${remaining > 0 ? "invisible" : ""}`}
+                    disabled={submit.isPending}
                     onClick={() => submit.mutate()}
                   >
                     {submit.isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}

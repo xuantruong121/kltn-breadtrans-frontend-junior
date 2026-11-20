@@ -1,10 +1,12 @@
 "use client";
 
+import { ADMIN_CARD, ADMIN_CARD_GRID, ADMIN_SELECT } from "@/components/admin/cmsStyles";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, FileStack, FileUp, Loader2, Plus, Search, Send, Trash2 } from "lucide-react";
+import { ArrowRight, Loader2, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -13,7 +15,6 @@ import { VOCAB_LEVELS } from "@/components/admin/vocab/vocabCms";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
-import { BTN_AI, BTN_SECONDARY } from "@/components/admin/cmsButtons";
 import { AiCreateDialog } from "@/components/admin/AiCreateDialog";
 import VocabDocumentImport from "@/components/admin/vocab/VocabDocumentImport";
 
@@ -29,8 +30,7 @@ type DeckSummary = {
   _count?: { words?: number };
 };
 
-const SELECT =
-  "min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
+const SELECT = ADMIN_SELECT;
 const ICON_BTN =
   "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
 
@@ -75,32 +75,13 @@ export default function AdminVocabPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Từ vựng & Flashcard</h1>
-          <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {totalDecks} bộ · {published} đã xuất bản · {totalDecks - published} bản nháp
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setImporting(true)}
-            className={BTN_SECONDARY}
-          >
-            <FileUp size={16} /> Tạo từ tài liệu
-          </button>
-          <button type="button" onClick={() => setAiCreating(true)} className={BTN_AI}>
-            <FileStack size={16} aria-hidden="true" /> Tạo bằng AI
-          </button>
-          <Link
-            href="/admin/vocab/new"
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-        >
-            <Plus size={16} /> Tạo bộ từ
-          </Link>
-        </div>
-      </header>
+      <AdminPageHeader
+        title="Từ vựng & Flashcard"
+        stats={`${totalDecks} bộ · ${published} đã xuất bản · ${totalDecks - published} bản nháp`}
+        fromDocument={{ label: "Tạo từ tài liệu", onClick: () => setImporting(true) }}
+        ai={{ label: "Tạo bằng AI", onClick: () => setAiCreating(true) }}
+        create={{ label: "Tạo bộ từ", href: "/admin/vocab/new" }}
+      />
 
       {importing && <VocabDocumentImport onClose={() => setImporting(false)} />}
       {aiCreating && (
@@ -148,6 +129,18 @@ export default function AdminVocabPage() {
         </label>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trạng thái
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as typeof status)}
+              className={SELECT}
+            >
+              <option value="ALL">Tất cả</option>
+              <option value="DRAFT">Bản nháp</option>
+              <option value="PUBLISHED">Đã xuất bản</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
             Chuyên mục
             <select value={category} onChange={(e) => setCategory(e.target.value)} className={SELECT}>
               <option value="ALL">Tất cả</option>
@@ -168,18 +161,6 @@ export default function AdminVocabPage() {
                 </option>
               ))}
               <option value="NONE">Chưa gắn</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trạng thái
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as typeof status)}
-              className={SELECT}
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="DRAFT">Bản nháp</option>
-              <option value="PUBLISHED">Đã xuất bản</option>
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -220,13 +201,13 @@ export default function AdminVocabPage() {
         </div>
       ) : (
         // Cards fill the canvas in 320px-minimum columns with one 16px gutter.
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+        <div className={ADMIN_CARD_GRID}>
           {visible.map((deck) => {
             const isPublished = deck.publicationStatus === "PUBLISHED";
             return (
               <article
                 key={deck.id}
-                className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300"
+                className={ADMIN_CARD}
               >
                 <div className="flex items-center gap-2">
                   {deck.level && (

@@ -117,8 +117,8 @@ export default function AdminFulfillmentFailedModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !reason.trim()}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting}
+              className={`inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl shadow-xs transition-colors cursor-pointer disabled:cursor-wait ${!reason.trim() ? "invisible" : ""}`}
             >
               {isSubmitting ? (
                 <>

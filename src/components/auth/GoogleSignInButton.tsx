@@ -10,6 +10,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { normalizeAuthResponse } from "@/lib/auth/authResponse";
 import { hydrateSession } from "@/lib/auth/hydrateSession";
+import { API_BASE_URL } from "@/lib/auth/refreshSession";
+import { googleRedirectUrl } from "@/lib/auth/googleRedirect";
 import {
   CONSENT_REQUIRED,
   apiErrorCode,
@@ -105,6 +107,9 @@ function getGoogleRuntime() {
   return window.__breadtransGoogleSignIn;
 }
 
+const GOOGLE_FACE =
+  "absolute inset-0 z-0 flex h-14 w-full items-center justify-center rounded-2xl border border-slate-200/90 bg-white px-6 text-base font-semibold tracking-[-0.01em] text-slate-800 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-hover:border-orange-300/80 group-hover:shadow-[0_12px_26px_-5px_rgba(234,88,12,0.18),0_3px_8px_-2px_rgba(15,23,42,0.08)] group-focus-within:ring-2 group-focus-within:ring-amber-500 group-focus-within:ring-offset-2 group-active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:group-hover:border-orange-700/80";
+
 export default function GoogleSignInButton({
   redirectUrl,
   onAccountLinkRequired,
@@ -116,6 +121,35 @@ export default function GoogleSignInButton({
   const buttonRef = useRef<HTMLDivElement>(null);
   const [isReady, setIsReady] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  // Shown when a click into Google's button leads nowhere (blocked iframe,
+  // refused origin): the full-page sign-in still works then.
+  const [showRedirectHint, setShowRedirectHint] = useState(false);
+  const redirectHref = googleRedirectUrl(API_BASE_URL);
+
+  const hintTimer = useRef<number | undefined>(undefined);
+  // A press on the button: if Google shows nothing within 3 s, offer the
+  // full-page sign-in. A successful sign-in leaves the page before that.
+  const armRedirectHint = useCallback(() => {
+    window.clearTimeout(hintTimer.current);
+    hintTimer.current = window.setTimeout(() => setShowRedirectHint(true), 3000);
+  }, []);
+
+  useEffect(() => {
+    // A click inside Google's iframe never reaches this page; it only moves
+    // focus to the iframe, which the window sees as a blur.
+    const onBlur = () => {
+      window.setTimeout(() => {
+        const iframe = buttonRef.current?.querySelector("iframe");
+        if (iframe && document.activeElement === iframe) armRedirectHint();
+      }, 0);
+    };
+    const timer = hintTimer;
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      window.clearTimeout(timer.current);
+    };
+  }, [armRedirectHint]);
   // A first Google sign-in waits for consent (owner 2026-11-16); the same
   // credential is sent again once the learner agrees.
   const [consentCredential, setConsentCredential] = useState<string | null>(null);
@@ -317,6 +351,20 @@ export default function GoogleSignInButton({
     };
   }, [clientId, handleCredentialResponse]);
 
+  const googleFace = (
+    <>
+      <span className="inline-flex items-center justify-center gap-3">
+        <GoogleMark />
+        <span>Đăng nhập bằng Google</span>
+      </span>
+      <ArrowRight
+        aria-hidden="true"
+        size={18}
+        className="absolute right-6 translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+      />
+    </>
+  );
+
   return (
     <div className="w-full">
       {isProcessing && (
@@ -328,21 +376,19 @@ export default function GoogleSignInButton({
           Đang xác thực tài khoản Google...
         </div>
       )}
-      <div className="group relative h-14 w-full overflow-hidden rounded-2xl group-focus-within:outline group-focus-within:outline-2 group-focus-within:outline-amber-500 group-focus-within:outline-offset-2">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-0 flex h-14 w-full items-center justify-center rounded-2xl border border-slate-200/90 bg-white px-6 text-base font-semibold tracking-[-0.01em] text-slate-800 shadow-[0_2px_10px_-2px_rgba(15,23,42,0.08),0_1px_2px_rgba(15,23,42,0.04)] transition-all duration-300 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] group-hover:border-orange-300/80 group-hover:shadow-[0_12px_26px_-5px_rgba(234,88,12,0.18),0_3px_8px_-2px_rgba(15,23,42,0.08)] group-focus-within:ring-2 group-focus-within:ring-amber-500 group-focus-within:ring-offset-2 group-active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:group-hover:border-orange-700/80"
-        >
-          <span className="inline-flex items-center justify-center gap-3">
-            <GoogleMark />
-            <span>Đăng nhập bằng Google</span>
-          </span>
-          <ArrowRight
-            aria-hidden="true"
-            size={18}
-            className="absolute right-6 translate-x-1 opacity-0 transition-[transform,opacity] duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-          />
-        </div>
+      <div
+        onPointerDownCapture={armRedirectHint}
+        className="group relative h-14 w-full overflow-hidden rounded-2xl group-focus-within:outline group-focus-within:outline-2 group-focus-within:outline-amber-500 group-focus-within:outline-offset-2">
+        {isReady ? (
+          <div aria-hidden="true" className={`pointer-events-none ${GOOGLE_FACE}`}>
+            {googleFace}
+          </div>
+        ) : (
+          // Google's button has not loaded: the same face starts the full-page sign-in.
+          <a href={redirectHref} className={`cursor-pointer ${GOOGLE_FACE}`}>
+            {googleFace}
+          </a>
+        )}
         <div
           ref={buttonRef}
           aria-busy={isProcessing || !isReady}
@@ -351,6 +397,17 @@ export default function GoogleSignInButton({
           }`}
         />
       </div>
+      {showRedirectHint && !isProcessing && (
+        <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
+          Không thấy cửa sổ Google?{" "}
+          <a
+            href={redirectHref}
+            className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-900 dark:text-sky-300 dark:hover:text-sky-200"
+          >
+            Mở trang đăng nhập Google
+          </a>
+        </p>
+      )}
       <ConsentDialog
         open={consentCredential !== null}
         title="Tạo tài khoản bằng Google"
@@ -365,7 +422,7 @@ export default function GoogleSignInButton({
           type="button"
           onClick={() => setConsentCredential(null)}
           disabled={isProcessing}
-          className="cursor-pointer transition-colors min-h-11 rounded-xl px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="cursor-pointer transition-colors min-h-11 rounded-xl px-4 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed dark:text-slate-300 dark:hover:bg-slate-800"
         >
           Không tạo tài khoản
         </button>

@@ -378,7 +378,7 @@ function Dialog({
           <button type="button" onClick={onStay} className="min-h-11 rounded-md border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
             {stay}
           </button>
-          <button type="button" onClick={onGo} disabled={busy} className="min-h-11 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">
+          <button type="button" onClick={onGo} disabled={busy} className="min-h-11 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-wait">
             {go}
           </button>
         </div>

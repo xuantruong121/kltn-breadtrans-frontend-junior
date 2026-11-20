@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Award, Trophy } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { cosmeticsOf } from "@/lib/avatar/cosmetics";
 import { gamificationService } from "@/lib/api/services/gamification.service";
 import { NO_BADGE_FACTS } from "@/modules/arena/badges";
 import { RankingBoard } from "@/modules/ranking/components/RankingBoard";
@@ -70,6 +71,7 @@ export default function RankingPage() {
           isGuest={isGuest}
           myName={myName}
           myAvatar={myAvatar}
+          myCosmetics={cosmeticsOf(user?.profile)}
           onLogin={() => router.push("/login?redirect=/ranking")}
         />
         <RankingSidebar hall={hall} activity={activity} isGuest={isGuest} myBadges={myBadges ?? []} facts={badgeProgress?.facts ?? NO_BADGE_FACTS} />

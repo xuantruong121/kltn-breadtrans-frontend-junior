@@ -6,7 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
 import { MATCH_END_QUERY_KEYS, WALLET_QUERY_KEYS } from "@/modules/arena/arenaWallet";
-import { socketBaseUrl } from "@/lib/realtime/socketUrl";
+import { socketBaseUrl, SOCKET_TRANSPORTS } from "@/lib/realtime/socketUrl";
 
 export type ArenaQuestionKind = "fill_blank" | "meaning_to_word" | "word_to_meaning";
 
@@ -19,12 +19,21 @@ export interface ArenaQuestion {
   options: string[];
 }
 
+/** A player as the server sends it; frame and badge are that player's own shop items. */
+export interface ArenaPlayer {
+  userId: number;
+  userName: string;
+  avatar?: string;
+  avatarFrame?: string | null;
+  badgeKey?: string | null;
+}
+
 export interface MatchData {
   roomId: string;
   matchId: string;
   stake: number;
-  player1: { userId: number; userName: string; avatar?: string };
-  player2: { userId: number; userName: string; avatar?: string };
+  player1: ArenaPlayer;
+  player2: ArenaPlayer;
   /** Empty: each question arrives with its round. */
   questions: ArenaQuestion[];
   totalRounds: number;
@@ -119,7 +128,7 @@ export function useArenaSocket() {
 
   useEffect(() => {
     const socket = io(`${socketBaseUrl()}/arena`, {
-      transports: ["websocket", "polling"],
+      ...SOCKET_TRANSPORTS,
       auth: (cb) => cb({ token: useAuthStore.getState().accessToken }),
       autoConnect: true,
     });

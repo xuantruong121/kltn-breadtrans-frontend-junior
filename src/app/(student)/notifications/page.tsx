@@ -129,7 +129,7 @@ export default function NotificationsPage() {
                 type="button"
                 onClick={() => markAll.mutate()}
                 disabled={markAll.isPending}
-                className="inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-950 disabled:opacity-60 sm:self-auto dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:text-white"
+                className="inline-flex min-h-11 shrink-0 items-center gap-2 self-start rounded-lg border border-slate-300 bg-white px-3.5 text-sm font-semibold text-slate-700 transition-colors hover:border-slate-400 hover:text-slate-950 disabled:cursor-wait sm:self-auto dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-slate-500 dark:hover:text-white"
               >
                 {markAll.isPending ? <Loader2 size={16} className="animate-spin" /> : <CheckCheck size={16} />}
                 Đánh dấu tất cả đã đọc
@@ -257,7 +257,7 @@ export default function NotificationsPage() {
                                 title="Đánh dấu đã đọc"
                                 disabled={marking}
                                 onClick={() => markRead.mutate(item.id)}
-                                className="grid size-10 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-60 dark:text-slate-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
+                                className="grid size-10 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-wait dark:text-slate-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
                               >
                                 {marking ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
                               </button>

@@ -11,6 +11,7 @@ import {
   type DictationReplayKey,
   isListeningShortcutIgnored,
   type ListeningWorkspaceShortcutActions,
+  listeningShortcutLegend,
 } from "./listeningShortcutConfig.ts";
 
 function createMockActions(overrides: Partial<ListeningWorkspaceShortcutActions> = {}): {
@@ -471,17 +472,21 @@ test("Image layout: ListeningComprehensionWorkspace uses a compact, bounded imag
   assert.ok(content.includes("w-fit") || content.includes("max-w-full"));
   assert.ok(content.includes("object-contain"));
   assert.ok(content.includes("lg:max-h-[300px]") && content.includes("xl:max-h-[360px]"));
+  // A short laptop screen (about 1280x650) keeps the image small so the panel fits.
+  assert.ok(content.includes("short:max-h-[200px]"));
   assert.equal(content.includes("lg:max-h-[440px]"), false);
 });
 
-test("Layout: the listening workspace splits the screen in half and lays answers out two by two", () => {
+test("Layout: the listening workspace splits the screen in half and lays short answers out two by two", () => {
   const content = fs.readFileSync(
     path.resolve(process.cwd(), "src/components/listening/ListeningComprehensionWorkspace.tsx"),
     "utf-8",
   );
   assert.ok(content.includes("lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"));
   assert.equal(content.includes("lg:grid-cols-[minmax(0,7fr)_minmax(0,3fr)]"), false);
-  assert.ok(content.includes('<div className="grid grid-cols-1 gap-2.5 xl:grid-cols-2">'));
+  // Columns follow the answer length and the panel width (owner 2026-11-19, lib/practice/optionLayout).
+  assert.ok(content.includes('<div className={`${optionGridClass(options)} gap-2.5`}>'));
+  assert.ok(content.includes('<div className="@container">'));
   // Answer cards stay touch-sized after shrinking.
   assert.ok(content.includes("min-h-11 px-4 py-3 rounded-2xl border-2"));
 });
@@ -829,4 +834,16 @@ test("Obsolete logic removal: DailyDictationWorkspace.tsx does not contain legac
 
   // 3. Must NOT listen to external breadtrans:replay-listening-audio event (no multiple replay sources)
   assert.equal(content.includes('addEventListener("breadtrans:replay-listening-audio"'), false);
+});
+
+test("Legend: a choice question says Enter moves on, a dictation line says Enter checks", () => {
+  const choice = listeningShortcutLegend(false);
+  const dictation = listeningShortcutLegend(true);
+  const label = (list: ReturnType<typeof listeningShortcutLegend>, id: string) =>
+    list.find((s) => s.id === id)?.label;
+  assert.equal(label(choice, "CHECK_OR_NEXT"), "Câu tiếp / Nộp bài");
+  assert.equal(label(choice, "SELECT_ANSWER"), "Chọn đáp án A – D (chấm ngay)");
+  assert.equal(label(dictation, "CHECK_OR_NEXT"), "Kiểm tra / Câu tiếp");
+  assert.equal(label(dictation, "SELECT_ANSWER"), undefined);
+  for (const list of [choice, dictation]) assert.equal(label(list, "REWIND"), "Lùi 5 giây");
 });

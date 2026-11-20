@@ -244,22 +244,22 @@ export default function IssueReportsPage() {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              disabled={page <= 1 || query.isFetching}
+              disabled={query.isFetching}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
-              className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className={`inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed ${page <= 1 ? "invisible" : ""}`}
             >
               <ChevronLeft size={16} />
               Trước
             </button>
             <button
               type="button"
-              disabled={page >= (query.data?.totalPages ?? 1) || query.isFetching}
+              disabled={query.isFetching}
               onClick={() =>
                 setPage((current) =>
                   Math.min(query.data?.totalPages ?? current, current + 1),
                 )
               }
-              className="inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className={`inline-flex min-h-10 items-center gap-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed ${page >= (query.data?.totalPages ?? 1) ? "invisible" : ""}`}
             >
               Sau
               <ChevronRight size={16} />
@@ -363,6 +363,9 @@ export default function IssueReportsPage() {
                 placeholder="Học viên sẽ nhận được ghi chú này khi báo lỗi được đóng."
               />
             </label>
+            {!closingNoteReady && (
+              <p className="mt-1 text-sm text-slate-600">Viết ghi chú từ 5 ký tự để đóng báo lỗi.</p>
+            )}
             <div className="mt-4 flex flex-wrap justify-end gap-2">
               <button
                 type="button"
@@ -380,25 +383,25 @@ export default function IssueReportsPage() {
               </button>
               <button
                 type="button"
-                disabled={update.isPending || !closingNoteReady}
+                disabled={update.isPending}
                 onClick={() => close(selected.id, "DUPLICATE")}
-                className="min-h-11 rounded-xl border border-slate-300 px-4 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className={`min-h-11 rounded-xl border border-slate-300 px-4 font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait ${!closingNoteReady ? "invisible" : ""}`}
               >
                 Trùng
               </button>
               <button
                 type="button"
-                disabled={update.isPending || !closingNoteReady}
+                disabled={update.isPending}
                 onClick={() => close(selected.id, "REJECTED")}
-                className="min-h-11 rounded-xl border border-rose-200 px-4 font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                className={`min-h-11 rounded-xl border border-rose-200 px-4 font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-wait ${!closingNoteReady ? "invisible" : ""}`}
               >
                 Từ chối
               </button>
               <button
                 type="button"
-                disabled={update.isPending || !closingNoteReady}
+                disabled={update.isPending}
                 onClick={() => close(selected.id, "RESOLVED")}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 font-bold text-white hover:bg-emerald-800 disabled:opacity-50"
+                className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 font-bold text-white hover:bg-emerald-800 disabled:cursor-wait ${!closingNoteReady ? "invisible" : ""}`}
               >
                 <CheckCircle2 size={17} />
                 Đã xử lý

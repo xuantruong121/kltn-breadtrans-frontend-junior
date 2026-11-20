@@ -171,7 +171,7 @@ export function DiagnosticResultTab() {
                   type="button"
                   onClick={() => restart.mutate()}
                   disabled={restart.isPending}
-                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-rose-600 px-5 text-sm font-extrabold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-rose-600 px-5 text-sm font-extrabold text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed"
                 >
                   {restart.isPending ? (
                     <Loader2 size={16} className="animate-spin" aria-hidden="true" />

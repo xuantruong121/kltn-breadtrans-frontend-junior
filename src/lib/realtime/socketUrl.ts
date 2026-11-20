@@ -14,3 +14,13 @@ export function socketBaseUrl(
   if (env.api && /^https?:\/\//.test(env.api)) return env.api.replace(/\/api\/?$/, "").replace(/\/$/, "");
   return "http://localhost:3001";
 }
+
+/**
+ * How every socket connects: WebSocket first, HTTP long-polling when a network
+ * blocks WebSocket (some company proxies and public Wi-Fi). socket.io-client
+ * 4.8 only moves on to the next transport with `tryAllTransports`.
+ */
+export const SOCKET_TRANSPORTS = {
+  transports: ["websocket", "polling"],
+  tryAllTransports: true,
+} satisfies { transports: string[]; tryAllTransports: boolean };

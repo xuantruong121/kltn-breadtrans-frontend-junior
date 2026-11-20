@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, CheckCircle2, Zap, Award, Loader2 } from "lucide-react";
+import { X, CheckCircle2, Zap, Award, Loader2, Lock } from "lucide-react";
 import { PET_SPECIES_LIST, PetSpecies, getSpeciesIdFromPetName } from "../types";
 import { CompanionPet2D } from "./CompanionPet2D";
 
@@ -14,6 +15,8 @@ interface PetSelectorModalProps {
   onClose: () => void;
   onSelectPet: (species: PetSpecies) => void;
   isUpdating?: boolean;
+  /** Shop species not bought yet: shown with a way to the shop, not selectable. */
+  lockedSpeciesIds?: readonly string[];
 }
 
 export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
@@ -24,6 +27,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
   onClose,
   onSelectPet,
   isUpdating = false,
+  lockedSpeciesIds = [],
 }) => {
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -93,6 +97,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             {PET_SPECIES_LIST.map((species) => {
               const isSelected = selectedSpeciesId === species.id;
+              const isLocked = !isSelected && lockedSpeciesIds.includes(species.id);
               const speciesLevel = isSelected
                 ? petLevel || 1
                 : roster?.[species.id]?.level || 1;
@@ -128,9 +133,16 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                             >
                               {species.element}
                             </span>
-                            <span className="text-xs font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
-                              Cấp {speciesLevel}
-                            </span>
+                            {isLocked ? (
+                              <span className="inline-flex items-center gap-1 text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                                <Lock size={11} aria-hidden="true" />
+                                Chưa sở hữu
+                              </span>
+                            ) : (
+                              <span className="text-xs font-bold text-amber-900 bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                                Cấp {speciesLevel}
+                              </span>
+                            )}
                           </div>
                           <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-tight mt-1">
                             {species.speciesName}
@@ -174,6 +186,15 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                   </div>
 
                   {/* Action Button */}
+                  {isLocked ? (
+                    <Link
+                      href="/market"
+                      onClick={onClose}
+                      className="w-full min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border border-amber-300 bg-white text-amber-800 hover:bg-amber-50 focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none"
+                    >
+                      Đổi Bun trong Cửa hàng
+                    </Link>
+                  ) : (
                   <button
                     type="button"
                     disabled={isSelected || isUpdating}
@@ -202,6 +223,7 @@ export const PetSelectorModal: React.FC<PetSelectorModalProps> = ({
                       </>
                     )}
                   </button>
+                  )}
                 </div>
               );
             })}

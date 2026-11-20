@@ -114,9 +114,8 @@ export const Pagination: React.FC<PaginationProps> = ({
           <button
             type="button"
             onClick={() => onPageChange(1)}
-            disabled={currentPage === 1}
             title="Trang đầu"
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs"
+            className={`w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer shadow-2xs ${currentPage === 1 ? "invisible" : ""}`}
           >
             <ChevronsLeft size={16} />
           </button>
@@ -126,9 +125,8 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           type="button"
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
           title="Trang trước"
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs"
+          className={`w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer shadow-2xs ${currentPage === 1 ? "invisible" : ""}`}
         >
           <ChevronLeft size={16} />
         </button>
@@ -171,9 +169,8 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           type="button"
           onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
           title="Trang tiếp"
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs"
+          className={`w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer shadow-2xs ${currentPage === totalPages ? "invisible" : ""}`}
         >
           <ChevronRight size={16} />
         </button>
@@ -183,9 +180,8 @@ export const Pagination: React.FC<PaginationProps> = ({
           <button
             type="button"
             onClick={() => onPageChange(totalPages)}
-            disabled={currentPage === totalPages}
             title="Trang cuối"
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer shadow-2xs"
+            className={`w-9 h-9 flex items-center justify-center rounded-xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer shadow-2xs ${currentPage === totalPages ? "invisible" : ""}`}
           >
             <ChevronsRight size={16} />
           </button>

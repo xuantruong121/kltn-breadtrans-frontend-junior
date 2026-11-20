@@ -818,8 +818,9 @@ export const PronunciationReportCard: React.FC<PronunciationReportCardProps> = (
               <button
                 type="button"
                 onClick={handleTogglePlayLearner}
-                disabled={!activeLearnerSrc}
-                className="size-10 rounded-xl bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center shrink-0 transition-transform active:scale-95 cursor-pointer shadow-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                className={`size-10 rounded-xl bg-amber-600 hover:bg-amber-700 text-white flex items-center justify-center shrink-0 transition-transform active:scale-95 cursor-pointer shadow-xs ${
+                  activeLearnerSrc ? "" : "invisible"
+                }`}
                 title={activeLearnerSrc ? (isPlayingLearner ? "Tạm dừng" : "Nghe lại") : "Chưa có bản ghi"}
               >
                 {isPlayingLearner ? <Pause size={16} /> : <Play size={16} className="ml-0.5 fill-white" />}

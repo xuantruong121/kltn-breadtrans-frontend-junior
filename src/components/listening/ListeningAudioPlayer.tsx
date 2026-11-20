@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Pause, Play, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import { Loader2, Pause, Play, Rewind, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
 import { audioTrackKey, shouldAutoPlay } from "./listeningAutoPlay";
 
@@ -311,7 +311,7 @@ export function ListeningAudioPlayer({
                 onClick={togglePlay}
                 disabled={isLoading}
                 aria-label={isPlaying ? "Tạm dừng" : "Phát âm thanh"}
-                className="flex size-12 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm transition-all hover:bg-amber-600 active:scale-95 disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer"
+                className="flex size-12 items-center justify-center rounded-xl bg-amber-500 text-white shadow-sm transition-all hover:bg-amber-600 active:scale-95 disabled:cursor-wait focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer"
               >
                 {isLoading ? (
                   <Loader2 size={21} className="animate-spin" aria-hidden="true" />
@@ -327,10 +327,12 @@ export function ListeningAudioPlayer({
                 onClick={rewind5s}
                 disabled={isLoading}
                 title="Lùi 5 giây (Shift + Mũi tên trái)"
-                className="flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
+                aria-label="Lùi 5 giây"
+                className="flex h-11 min-w-11 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-wait focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 cursor-pointer dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-slate-100"
               >
-                <RotateCcw size={16} aria-hidden="true" />
-                <span className="sr-only">Lùi 5 giây</span>
+                {/* A rewind mark plus the step, so it does not read as "retry" or "reload". */}
+                <Rewind size={16} fill="currentColor" aria-hidden="true" />
+                <span aria-hidden="true" className="text-xs font-extrabold tabular-nums">5s</span>
               </button>
             </div>
 

@@ -28,6 +28,8 @@ type Props = {
   onToggleMark: (questionId: number) => void;
   /** Admin preview only: link from a question to where it is edited. */
   editHrefFor?: (questionNumber: number) => string;
+  /** The attempt page shows its sticky listening bar above the paper. */
+  listeningBar?: boolean;
 };
 
 function Passage({ text }: { text: string }) {
@@ -52,6 +54,7 @@ const Group = memo(function Group({
   onSelect,
   onToggleMark,
   editHrefFor,
+  listeningBar,
 }: {
   group: ToeicQuestionGroup;
   answers: Record<number, number>;
@@ -60,6 +63,7 @@ const Group = memo(function Group({
   onSelect: Props["onSelect"];
   onToggleMark: Props["onToggleMark"];
   editHrefFor: Props["editHrefFor"];
+  listeningBar: boolean;
 }) {
   const passage = isPassageWorthShowing(group.part, group.passageText) ? group.passageText : null;
   const numbers = group.questions.map((q) => q.questionNumber);
@@ -91,12 +95,19 @@ const Group = memo(function Group({
           src={group.imageUrl}
           alt={`Ảnh câu ${numbers[0]}`}
           loading="lazy"
-          className="mb-1 ml-12 max-h-80 w-auto max-w-[calc(100%-3rem)] rounded-md border border-slate-200 object-contain dark:border-slate-700"
+          className="mb-1 ml-12 max-h-80 short:max-h-56 w-auto max-w-[calc(100%-3rem)] rounded-md border border-slate-200 object-contain dark:border-slate-700"
         />
       )}
       {passage ? (
         <div className="grid gap-5 lg:grid-cols-2">
-          <div className="lg:sticky lg:top-36 lg:max-h-[calc(100dvh-10rem)] lg:self-start lg:overflow-y-auto">
+          {/* Before the page scrolls the panel starts below the top bars, the Part tabs and the
+              directions: ~156px, or ~209px with the listening bar, where 10rem left its last ~49px
+              below the screen (measured 20/11), so that case takes 14rem. */}
+          <div
+            className={`lg:sticky lg:top-36 lg:self-start lg:overflow-y-auto ${
+              listeningBar ? "lg:max-h-[calc(100dvh-14rem)]" : "lg:max-h-[calc(100dvh-10rem)]"
+            }`}
+          >
             <Passage text={passage} />
           </div>
           <div>{questions}</div>
@@ -109,7 +120,7 @@ const Group = memo(function Group({
 });
 
 /** The questions of ONE Part, in order, with shared context shown once per group. */
-export function ToeicExamPaper({ part, answers, marked, lockedReason, onSelect, onToggleMark, editHrefFor }: Props) {
+export function ToeicExamPaper({ part, answers, marked, lockedReason, onSelect, onToggleMark, editHrefFor, listeningBar = false }: Props) {
   return (
     <div>
       <p className="mb-1 text-sm text-slate-600 dark:text-slate-300">{PART_DIRECTIONS[part.part]}</p>
@@ -126,6 +137,7 @@ export function ToeicExamPaper({ part, answers, marked, lockedReason, onSelect, 
           onSelect={onSelect}
           onToggleMark={onToggleMark}
           editHrefFor={editHrefFor}
+          listeningBar={listeningBar}
         />
       ))}
     </div>

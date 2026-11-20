@@ -2,42 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  Circle,
-  FileAudio,
-  FilePlus2,
-  Loader2,
-  Plus,
-  Search,
-  Save,
-  Send,
-  Trash2,
-  Upload,
-  Volume2,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, FileAudio, FileStack, Loader2, Plus, Search, Save, Send, Trash2, Upload, Volume2, X } from "lucide-react";
 
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
-import { WritingPictureList } from "@/components/admin/WritingPictureList";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import {
-  BTN_AI,
-  BTN_BASE,
-  BTN_DANGER,
-  BTN_PRIMARY,
-  BTN_SECONDARY,
-  BTN_SUCCESS,
-} from "./cmsButtons";
+import { BTN_AI, BTN_DANGER, BTN_DARK, BTN_PRIMARY, BTN_SECONDARY, BTN_SUCCESS } from "./cmsButtons";
 import {
   audioBadgeFor,
   CMS_LEVELS,
@@ -48,12 +24,23 @@ import {
   CONTENT_TRACKS,
   writingCardLabel,
   writingFormType,
+  writingQuizType,
+  defaultWritingTaskType,
+  WRITING_FORM_KINDS,
+  WRITING_KIND_LABEL,
+  writingDraftKind,
   parseHintLines,
   hintLines,
   writingUsesPictures,
   type ListFilters,
 } from "./skillCmsStatus";
 import { AdminImageThumb } from "./AdminImageThumb";
+import { AdminPageHeader } from "./AdminPageHeader";
+import { ADMIN_CARD_GRID, ADMIN_SELECT } from "./cmsStyles";
+import { TranslationReviewPanel, TRANSLATION_REVIEW_KEYS } from "./TranslationReviewPanel";
+import { WritingAiDraftPanel } from "./WritingAiDraftPanel";
+import { AiCreateDialog } from "./AiCreateDialog";
+import { translationReviewService } from "@/lib/api/services/translation-review.service";
 import {
   quizDisplayTitle,
   quizIdsMatchingTitle,
@@ -124,8 +111,7 @@ function levelFromTitle(title?: string | null): string | null {
     : null;
 }
 
-const FILTER_SELECT =
-  "min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
+const FILTER_SELECT = ADMIN_SELECT;
 const NO_FILTERS: Omit<ListFilters, "query" | "status"> = {
   level: "ALL",
   audio: "ALL",
@@ -168,17 +154,16 @@ function getListeningMode(content: any): ListeningMode {
 const publicationStatusLabel = (status?: string) =>
   status === "PUBLISHED" ? "Đã xuất bản" : "Bản nháp";
 
-const writingTypeLabel = (type: string) =>
-  type === "TRANSLATION" ? "Dịch câu" : type === "WRITING_PICTURE" ? "Viết theo tranh" : "Viết email";
-
 const writingTaskOptions = (quizType: string) =>
   quizType === "TRANSLATION"
     ? [{ value: "SENTENCE_TRANSLATION", label: "Dịch câu Việt → Anh" }]
+    : quizType === "SENTENCE"
+    ? [{ value: "SENTENCE", label: "Viết câu" }]
     : quizType === "WRITING_PICTURE"
     ? [
-        { value: "SENTENCE", label: "Viết câu theo tranh" },
-        { value: "PICTURE_SENTENCE", label: "Mô tả tranh theo từ khóa" },
+        { value: "PICTURE_SENTENCE", label: "Viết câu theo tranh (2 từ gợi ý)" },
         { value: "DESCRIBE_PICTURE", label: "Mô tả tranh" },
+        { value: "SENTENCE", label: "Viết câu" },
       ]
     : [
         { value: "EMAIL", label: "Phản hồi email" },
@@ -382,7 +367,6 @@ export default function SkillCmsWorkspace({
   const [writingTypeFilter, setWritingTypeFilter] = useState("ALL");
   const [trackFilter, setTrackFilter] = useState("ALL");
   // The list screen loads one page; search, filters and sort run on the server.
-  const [writingTab, setWritingTab] = useState<"PRACTICE" | "PICTURE">("PRACTICE");
   const list = useAdminList<
     any,
     {
@@ -401,13 +385,26 @@ export default function SkillCmsWorkspace({
       audio: listFilters.audio,
       sort: listFilters.sort,
       mode: domain === "listening" ? listeningModeFilter : undefined,
-      type: domain === "writing" ? writingTypeFilter : undefined,
+      kind: domain === "writing" ? writingTypeFilter : undefined,
       track: trackFilter,
       titleIds: quizIdsMatchingTitle(searchTerm).join(",") || undefined,
     },
     enabled: mode === "list",
   });
   const [isCreateMenuOpen, setIsCreateMenuOpen] = useState(false);
+  // Writing: "Duyệt câu dịch" is a tab of this page, with counts per exercise (owner 2026-11-19).
+  const writingView = domain === "writing" && searchParams.get("tab") === "review" ? "review" : "practice";
+  const reviewQuizId = Number(searchParams.get("quiz")) || undefined;
+  const { data: reviewSummary } = useQuery({
+    queryKey: TRANSLATION_REVIEW_KEYS.summary,
+    queryFn: translationReviewService.summary,
+    enabled: domain === "writing" && mode === "list",
+  });
+  const openWritingView = (view: "practice" | "review", quiz?: number) =>
+    router.replace(
+      view === "review" ? `/admin/writing?tab=review${quiz ? `&quiz=${quiz}` : ""}` : "/admin/writing",
+      { scroll: false },
+    );
   const [pendingPublicationStatus, setPendingPublicationStatus] = useState<
     "DRAFT" | "PUBLISHED" | null
   >(null);
@@ -507,6 +504,13 @@ export default function SkillCmsWorkspace({
   );
   // The "new question" editor is opened on demand; editing happens in place.
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
+  const [titleError, setTitleError] = useState(false);
+  // Opened from "Tạo bằng AI" on the list (owner 2026-11-19): the AI drafts from the title.
+  const aiStart =
+    mode !== "list" && !id && (domain === "listening" || domain === "reading") && searchParams.get("ai") === "1";
+  // Writing AI (owner 2026-11-19): the create dialog on the list, the draft panel in the editor.
+  const [writingAiCreating, setWritingAiCreating] = useState(false);
+  const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean } | null>(null);
   const [questionPreview, setQuestionPreview] = useState<{
     questionId: number;
     url: string;
@@ -940,6 +944,23 @@ export default function SkillCmsWorkspace({
     [domain, id, mode],
   );
 
+  /**
+   * The form's "Dạng bài viết" for a loaded exercise: from its sentences, the
+   * backend's kind ("Dịch câu" by topic), or, while still empty, the kind it
+   * was just created as (?kind= from "Lưu và thêm câu hỏi").
+   */
+  const formTypeOf = (data: any) => {
+    const fromItem = writingFormType(data.type || meta[domain].type, data.questions, data.writingKind);
+    const created = searchParams.get("kind");
+    return domain === "writing" &&
+      !(data.questions ?? []).length &&
+      created &&
+      WRITING_FORM_KINDS.some((kind) => kind.value === created) &&
+      writingQuizType(created) === data.type
+      ? created
+      : fromItem;
+  };
+
   const loadItem = async () => {
     if (!id) {
       setLoading(false);
@@ -982,9 +1003,21 @@ export default function SkillCmsWorkspace({
         level: data.level || levelFromTitle(data.title) || "A2",
         timeLimit: String(data.timeLimit ?? 15),
         passage: data.passage || data.theoryContent || "",
-        type: writingFormType(data.type || meta[domain].type, data.questions),
+        type: formTypeOf(data),
       });
       setPendingFullDraftQuestions([]);
+      // Saved from /new with "Lưu và thêm câu hỏi": open the first question of the right kind.
+      if (domain === "writing" && searchParams.get("add") === "1") {
+        const formType = formTypeOf(data);
+        setQuestion({ ...emptyQuestion(domain), taskType: defaultWritingTaskType(formType) });
+        setIsAddingQuestion(true);
+        router.replace(`/admin/writing/${data.id}`, { scroll: false });
+      }
+      // Created from "Tạo bằng AI": the draft panel opens and asks the AI at once.
+      if (domain === "writing" && Number(searchParams.get("ai")) > 0) {
+        setWritingAi({ count: Number(searchParams.get("ai")), auto: true });
+        router.replace(`/admin/writing/${data.id}`, { scroll: false });
+      }
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, "Không thể tải nội dung"));
     } finally {
@@ -998,9 +1031,11 @@ export default function SkillCmsWorkspace({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadItem is rebuilt each render; reload only when the route changes
   }, [domain, mode, id]);
 
-  const saveContent = async () => {
+  /** `addQuestion`: a new Writing exercise is saved, then its first question opens (owner 2026-11-19). */
+  const saveContent = async (options: { addQuestion?: boolean } = {}) => {
     if (!form.title.trim()) {
-      toast.error("Cần nhập tiêu đề");
+      setTitleError(true);
+      document.getElementById("cms-title")?.focus();
       return;
     }
     setBusy(true);
@@ -1008,13 +1043,8 @@ export default function SkillCmsWorkspace({
       const payload = {
         ...form,
         timeLimit: Number(form.timeLimit) || undefined,
-        // "Dịch câu" is stored as WRITING_PICTURE in its own topic.
-        type:
-          domain === "writing"
-            ? form.type === "TRANSLATION"
-              ? "WRITING_PICTURE"
-              : form.type
-            : undefined,
+        // "Dịch câu" and "Viết câu" are stored as WRITING_PICTURE ("Dịch câu" in its own topic).
+        type: domain === "writing" ? writingQuizType(form.type) : undefined,
         writingKind:
           domain === "writing" && form.type === "TRANSLATION"
             ? "TRANSLATION"
@@ -1058,7 +1088,10 @@ export default function SkillCmsWorkspace({
       }
       toast.success("Đã lưu bản nháp");
       setPendingFullDraftQuestions([]);
-      router.push(`/admin/${domain}/${savedItem.id}`);
+      router.push(
+        // The kind travels with the URL: an empty picture and an empty "Viết câu" exercise look alike.
+        `/admin/${domain}/${savedItem.id}${options.addQuestion ? `?add=1&kind=${form.type}` : ""}`,
+      );
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, "Lưu thất bại"));
     } finally {
@@ -1484,24 +1517,30 @@ export default function SkillCmsWorkspace({
     // with one 16px gutter both ways: n x card + (n - 1) x 16 = canvas.
     return (
       <div className="space-y-6 p-6">
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
-            <p className="mt-1 text-sm tabular-nums text-slate-600">
-              {totalItems} bài · {publishedCount} đã xuất bản ·{" "}
-              {totalItems - publishedCount} bản nháp
-            </p>
-          </div>
-          {domain === "listening" ? (
+        <AdminPageHeader
+          title={title}
+          stats={`${totalItems} bài · ${publishedCount} đã xuất bản · ${totalItems - publishedCount} bản nháp`}
+          ai={
+            domain === "writing"
+              ? { label: "Tạo bằng AI", onClick: () => setWritingAiCreating(true) }
+              : { label: "Tạo bằng AI", href: `/admin/${domain}/new?ai=1` }
+          }
+          create={
+            domain === "listening"
+              ? undefined
+              : { label: domain === "reading" ? "Tạo bài đọc" : "Tạo bài viết", href: `/admin/${domain}/new` }
+          }
+          createSlot={
+            domain === "listening" ? (
             <div className="relative">
               <button
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={isCreateMenuOpen}
                 onClick={() => setIsCreateMenuOpen((current) => !current)}
-                className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
+                className={BTN_DARK}
               >
-                <FilePlus2 size={16} /> Thêm bài nghe <ChevronDown size={15} />
+                <Plus size={16} aria-hidden="true" /> Tạo bài nghe <ChevronDown size={15} aria-hidden="true" />
               </button>
               {isCreateMenuOpen && (
                 <div
@@ -1529,48 +1568,81 @@ export default function SkillCmsWorkspace({
                 </div>
               )}
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => router.push(`/admin/${domain}/new`)}
-              className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
-            >
-              <FilePlus2 size={16} /> Tạo bản nháp
-            </button>
-          )}
-        </header>
+            ) : undefined
+          }
+        />
+
+        {writingAiCreating && (
+          <AiCreateDialog
+            title="Tạo bài Viết bằng AI"
+            nameLabel="Chủ đề"
+            namePlaceholder="Ví dụ: Email xin nghỉ phép"
+            countLabel="Số câu"
+            maxCount={10}
+            defaultCount={5}
+            levels={["A1", "A2", "B1", "B2", "C1"].map((level) => ({ value: level, label: level }))}
+            kinds={[
+              { value: "EMAIL", label: "Viết email" },
+              { value: "TRANSLATION", label: "Dịch câu" },
+            ]}
+            onClose={() => setWritingAiCreating(false)}
+            onCreate={async ({ name, level, count, kind }) => {
+              try {
+                const translation = kind === "TRANSLATION";
+                const created = unwrap<any>(
+                  await axiosClient.post("/admin/skill-content/writing", {
+                    title: name,
+                    description: "",
+                    level,
+                    timeLimit: 15,
+                    passage: "",
+                    type: writingQuizType(translation ? "TRANSLATION" : "WRITING_EMAIL"),
+                    writingKind: translation ? "TRANSLATION" : undefined,
+                  }),
+                );
+                router.push(`/admin/writing/${created.id}?ai=${count}`);
+              } catch (error) {
+                toast.error(getApiErrorMessage(error, "Không tạo được bài nháp."));
+              }
+            }}
+          />
+        )}
 
         {domain === "writing" && (
-          <div role="tablist" aria-label="Loại bài viết" className="flex flex-wrap gap-2">
+          <div role="tablist" aria-label="Trang Viết" className="flex gap-6 border-b border-slate-200">
             {(
               [
-                ["PRACTICE", "Bài luyện viết"],
-                ["PICTURE", "Viết câu theo tranh"],
+                ["practice", "Bài luyện viết"],
+                ["review", "Duyệt câu dịch"],
               ] as const
-            ).map(([value, label]) => (
+            ).map(([view, label]) => (
               <button
-                key={value}
+                key={view}
                 type="button"
                 role="tab"
-                aria-selected={writingTab === value}
-                onClick={() => setWritingTab(value)}
-                className={`min-h-10 rounded-lg border px-4 text-sm font-semibold transition-colors ${
-                  writingTab === value
-                    ? "border-slate-950 bg-slate-950 text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                aria-selected={writingView === view}
+                onClick={() => openWritingView(view)}
+                className={`-mb-px border-b-2 pb-2.5 text-sm font-semibold transition-colors ${
+                  writingView === view
+                    ? "border-slate-950 text-slate-950"
+                    : "border-transparent text-slate-600 hover:text-slate-900"
                 }`}
               >
                 {label}
+                {view === "review" && (reviewSummary?.total ?? 0) > 0 && (
+                  <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-bold tabular-nums text-amber-800">
+                    {reviewSummary?.total}
+                  </span>
+                )}
               </button>
             ))}
           </div>
         )}
 
-        {domain === "writing" && writingTab === "PICTURE" ? (
-          <WritingPictureList />
+        {writingView === "review" ? (
+          <TranslationReviewPanel quizId={reviewQuizId} onClearQuiz={() => openWritingView("review")} />
         ) : (
         <>
-
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           {domain === "listening" && (
             <div
@@ -1692,12 +1764,11 @@ export default function SkillCmsWorkspace({
                 className={FILTER_SELECT}
               >
                 <option value="ALL">Tất cả</option>
-                <option value="WRITING_EMAIL">
-                  {writingTypeLabel("WRITING_EMAIL")}
-                </option>
-                <option value="WRITING_PICTURE">
-                  {writingTypeLabel("WRITING_PICTURE")}
-                </option>
+                {Object.entries(WRITING_KIND_LABEL).map(([kind, label]) => (
+                  <option key={kind} value={kind}>
+                    {label}
+                  </option>
+                ))}
               </select>
             </label>
           )}
@@ -1746,7 +1817,7 @@ export default function SkillCmsWorkspace({
           </div>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+        <div className={ADMIN_CARD_GRID}>
           {visibleItems.map((content) => {
             const level = contentLevel(content);
             // The same Vietnamese title learners read; the stored one keeps
@@ -1754,11 +1825,14 @@ export default function SkillCmsWorkspace({
             const cardTitle = quizDisplayTitle(content.id, content.title ?? "");
             const published = content.publicationStatus === "PUBLISHED";
             const audio = audioBadgeFor(content);
+            const pendingReview = domain === "writing" ? (reviewSummary?.byQuiz[String(content.id)] ?? 0) : 0;
             return (
+              <div key={content.id} className="flex h-full flex-col">
               <Link
-                key={content.id}
                 href={`/admin/${domain}/${content.id}`}
-                className="group flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+                className={`group flex flex-1 flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
+                  pendingReview > 0 ? "rounded-b-none" : ""
+                }`}
               >
                 <div className="flex items-center gap-2">
                   {level && (
@@ -1834,6 +1908,15 @@ export default function SkillCmsWorkspace({
                   </div>
                 </div>
               </Link>
+              {pendingReview > 0 && (
+                <Link
+                  href={`/admin/writing?tab=review&quiz=${content.id}`}
+                  className="rounded-b-xl border border-t-0 border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                >
+                  {pendingReview} câu dịch chờ duyệt
+                </Link>
+              )}
+              </div>
             );
           })}
           {totalItems === 0 && (
@@ -2391,8 +2474,8 @@ export default function SkillCmsWorkspace({
           <button
             type="button"
             onClick={() => void saveQuestion(false)}
-            disabled={busy || !id}
-            className={BTN_PRIMARY}
+            disabled={busy}
+            className={`${BTN_PRIMARY} ${id ? "" : "invisible"}`}
           >
             {question.id ? <CheckCircle2 size={16} /> : <Plus size={16} />}{" "}
             {question.id ? "Lưu câu hỏi" : "Thêm câu hỏi"}
@@ -2401,8 +2484,8 @@ export default function SkillCmsWorkspace({
             <button
               type="button"
               onClick={() => void saveQuestion(true)}
-              disabled={busy || !id}
-              className={BTN_AI}
+              disabled={busy}
+              className={`${BTN_AI} ${id ? "" : "invisible"}`}
             >
               <FileAudio size={16} /> Lưu và tạo audio
             </button>
@@ -2489,6 +2572,16 @@ export default function SkillCmsWorkspace({
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
+            {aiStart && (
+              <p className="w-full text-sm text-amber-800">
+                Nhập tiêu đề (chủ đề) và trình độ bên dưới, rồi bấm “Soạn cả bài bằng AI”.
+              </p>
+            )}
+            {isWriting && id && writingDraftKind(form.type) && (
+              <button type="button" onClick={() => setWritingAi({ count: 5, auto: false })} className={BTN_AI}>
+                <FileStack size={16} aria-hidden="true" /> Soạn bằng AI
+              </button>
+            )}
             {(isListening || domain === "reading") && (
               <div className="flex flex-wrap items-center gap-2">
                 {isListening &&
@@ -2548,23 +2641,16 @@ export default function SkillCmsWorkspace({
                     />
                   </label>
                 )}
-                <DocumentImportButton
-                  onText={setDocumentText}
-                  disabled={draftLocked}
-                />
+                {!draftLocked && <DocumentImportButton onText={setDocumentText} />}
                 <button
                   type="button"
                   onClick={() => void handleSuggestFullDraft()}
-                  disabled={
-                    draftLocked ||
-                    (isListening && selectedListeningMode === "COMPREHENSION")
-                  }
-                  title={
+                                    title={
                     draftLocked
                       ? "Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’"
                       : "Dùng Tiêu đề làm chủ đề và Trình độ bên dưới. Bản nháp hiện ra để xem lại trước khi áp dụng."
                   }
-                  className={BTN_AI}
+                  className={`${BTN_AI} ${draftLocked || (isListening && selectedListeningMode === "COMPREHENSION") ? "invisible" : ""}`}
                 >
                   Soạn cả bài bằng AI
                 </button>
@@ -2580,12 +2666,23 @@ export default function SkillCmsWorkspace({
             <label className="text-sm font-medium">
               Tiêu đề
               <input
+                id="cms-title"
+                // The page opened from "Tạo bằng AI": the AI drafts from this title.
+                autoFocus={aiStart}
                 value={form.title}
-                onChange={(event) =>
-                  setForm({ ...form, title: event.target.value })
-                }
+                aria-invalid={titleError || undefined}
+                aria-describedby={titleError ? "cms-title-error" : undefined}
+                onChange={(event) => {
+                  setForm({ ...form, title: event.target.value });
+                  if (titleError) setTitleError(false);
+                }}
                 className={inputClassName()}
               />
+              {titleError && (
+                <span id="cms-title-error" className="mt-1 block text-xs font-normal text-rose-700">
+                  Cần nhập tiêu đề trước khi lưu.
+                </span>
+              )}
             </label>
             <label className="text-sm font-medium">
               Trình độ
@@ -2632,24 +2729,22 @@ export default function SkillCmsWorkspace({
                     setForm({ ...form, type });
                     setQuestion((current) => ({
                       ...current,
-                      taskType:
-                        type === "TRANSLATION"
-                          ? "SENTENCE_TRANSLATION"
-                          : type === "WRITING_PICTURE"
-                            ? "SENTENCE"
-                            : "EMAIL",
+                      taskType: defaultWritingTaskType(type),
                     }));
                   }}
                   className={inputClassName()}
                 >
-                  <option value="WRITING_PICTURE">
-                    {writingTypeLabel("WRITING_PICTURE")}
-                  </option>
-                  <option value="WRITING_EMAIL">
-                    {writingTypeLabel("WRITING_EMAIL")}
-                  </option>
-                  <option value="TRANSLATION">{writingTypeLabel("TRANSLATION")}</option>
+                  {WRITING_FORM_KINDS.map((kind) => (
+                    <option key={kind.value} value={kind.value}>
+                      {kind.label}
+                    </option>
+                  ))}
                 </select>
+                {form.type === "WRITING_PICTURE" && (
+                  <span className="mt-1 block text-xs font-normal text-slate-600">
+                    Mỗi câu có một tranh; tải ảnh khi thêm câu hỏi.
+                  </span>
+                )}
               </label>
             )}
             {/* Reading only: a Listening question keeps its transcript in
@@ -2704,12 +2799,15 @@ export default function SkillCmsWorkspace({
                       ? "Bài nghe chép: mỗi câu có audio riêng ở danh sách câu hỏi; audio dưới đây ghép cả bài."
                       : "Một đoạn audio liền mạch cho cả bài, tạo từ lời thoại. Học viên nghe rồi trả lời các câu hỏi bên dưới."}
                   </p>
+                  {!id && (
+                    <p className="mt-1 text-sm font-medium text-slate-700">Lưu bài trước, sau đó tạo audio.</p>
+                  )}
                 </div>
                 <button
                   type="button"
                   onClick={() => void audioAction("validate")}
-                  disabled={busy || !id}
-                  className={BTN_SECONDARY}
+                  disabled={busy}
+                  className={`${BTN_SECONDARY} ${id ? "" : "invisible"}`}
                 >
                   <CheckCircle2 size={16} /> Kiểm tra lời thoại
                 </button>
@@ -2835,8 +2933,8 @@ export default function SkillCmsWorkspace({
                     <button
                       type="button"
                       onClick={() => void audioAction("generate-preview")}
-                      disabled={busy || !id}
-                      className={BTN_PRIMARY}
+                      disabled={busy}
+                      className={`${BTN_PRIMARY} ${id ? "" : "invisible"}`}
                     >
                       <FileAudio size={16} /> Tạo audio
                     </button>
@@ -3177,9 +3275,9 @@ export default function SkillCmsWorkspace({
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      disabled={busy || !bulkLines.trim()}
+                      disabled={busy}
                       onClick={() => void addDictationLines()}
-                      className={BTN_PRIMARY}
+                      className={`${BTN_PRIMARY} ${!bulkLines.trim() ? "invisible" : ""}`}
                     >
                       <Plus size={16} /> Thêm{" "}
                       {bulkLines.split("\n").filter((l) => l.trim()).length} câu
@@ -3211,22 +3309,32 @@ export default function SkillCmsWorkspace({
                 <p className="text-sm font-semibold text-slate-900">Câu hỏi mới</p>
                 {renderQuestionEditor()}
               </div>
+            ) : !id && domain !== "writing" ? (
+              <p className="text-sm font-medium text-slate-700">Lưu bài trước, sau đó thêm câu hỏi.</p>
             ) : (
               <button
                 type="button"
-                disabled={!id}
+                disabled={busy}
                 onClick={() => {
+                  // A Writing exercise is saved first, then opens its first question.
+                  if (!id) {
+                    void saveContent({ addQuestion: true });
+                    return;
+                  }
                   setQuestion({
                     ...emptyQuestion(domain),
                     ...(isListening && selectedListeningMode !== "DICTATION"
                       ? { type: "MULTIPLE_CHOICE" }
+                      : {}),
+                    ...(domain === "writing"
+                      ? { taskType: defaultWritingTaskType(form.type) }
                       : {}),
                   });
                   setIsAddingQuestion(true);
                 }}
                 className={BTN_SECONDARY}
               >
-                <Plus size={16} /> Thêm câu hỏi
+                <Plus size={16} /> {!id && domain === "writing" ? "Lưu và thêm câu hỏi" : "Thêm câu hỏi"}
               </button>
             )}
           </div>
@@ -3234,6 +3342,19 @@ export default function SkillCmsWorkspace({
       </div>
 
       {/* MODAL: LISTENING CONTENT REVIEW */}
+      {writingAi && id && writingDraftKind(form.type) && (
+        <WritingAiDraftPanel
+          quizId={Number(id)}
+          topic={form.title}
+          level={form.level}
+          kind={writingDraftKind(form.type) as "EMAIL" | "TRANSLATION"}
+          initialCount={writingAi.count}
+          autoStart={writingAi.auto}
+          onUseDescription={(description) => setForm((current) => ({ ...current, description }))}
+          onClose={() => setWritingAi(null)}
+          onSaved={() => loadItem()}
+        />
+      )}
       {fullDraft && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-4">
           <div
@@ -3744,7 +3865,7 @@ export default function SkillCmsWorkspace({
                 type="button"
                 onClick={() => void handleSuggestListeningContent()}
                 disabled={isListeningContentAiLoading}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-wait"
               >
                 {isListeningContentAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
@@ -3854,7 +3975,7 @@ export default function SkillCmsWorkspace({
                 type="button"
                 onClick={() => void handleSuggestListeningQuestions()}
                 disabled={isListeningQuestionsAiLoading}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-50"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-wait"
               >
                 {isListeningQuestionsAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
@@ -4194,7 +4315,7 @@ export default function SkillCmsWorkspace({
                 type="button"
                 onClick={() => void handleSuggestWritingTask()}
                 disabled={isWritingAiLoading}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-wait"
               >
                 {isWritingAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
@@ -4298,12 +4419,9 @@ export default function SkillCmsWorkspace({
                 </span>
                 <button
                   type="button"
-                  disabled={
-                    isPassageAiLoading ||
-                    (!passageAiTopic.trim() && !form.title.trim())
-                  }
+                  disabled={isPassageAiLoading}
                   onClick={handleSuggestPassage}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                  className={`inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:cursor-wait transition-colors ${!passageAiTopic.trim() && !form.title.trim() ? "invisible" : ""}`}
                 >
                   {isPassageAiLoading ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -4412,9 +4530,9 @@ export default function SkillCmsWorkspace({
               </select>
               <button
                 type="button"
-                disabled={isQuestionsAiLoading || !form.passage.trim()}
+                disabled={isQuestionsAiLoading}
                 onClick={handleSuggestReadingQuestions}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-1.5 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                className={`inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-1.5 font-semibold text-white hover:bg-slate-800 disabled:cursor-wait transition-colors ${!form.passage.trim() ? "invisible" : ""}`}
               >
                 {isQuestionsAiLoading ? (
                   <Loader2 size={13} className="animate-spin" />

@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
+import { useCosmetics } from "@/lib/avatar/useCosmetics";
 import { MarketProduct, MarketOrder, MarketInventoryResponse, MarketBalanceResponse } from "../types";
 import { MarketItemCard } from "../components/MarketItemCard";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
@@ -79,12 +80,9 @@ export const MarketScreen: React.FC = () => {
   const triggerButtonRef = useRef<HTMLElement | null>(null);
 
   const {
-    equippedAvatarFrame,
-    equippedBadge,
     unlockItem,
-    equipAvatarFrame,
-    equipBadge,
   } = useGamificationStore();
+  const { equippedAvatarFrame, equippedBadge, equipAvatarFrame, equipBadge } = useCosmetics();
 
   // 1. Products query (Public / Guest Allowed)
   const {
@@ -173,11 +171,9 @@ export const MarketScreen: React.FC = () => {
         equippedAvatarFrame === String(product.id);
 
       if (isAlreadyEquipped) {
-        equipAvatarFrame(null);
-        toast.success("Đã tháo khung avatar");
+        void equipAvatarFrame(null).then((ok) => ok && toast.success("Đã tháo khung avatar"));
       } else {
-        equipAvatarFrame(slugOrId);
-        toast.success(`Đã trang bị khung "${product.name}"`);
+        void equipAvatarFrame(slugOrId).then((ok) => ok && toast.success(`Đã trang bị khung "${product.name}"`));
       }
     } else if (product.category === "BADGE") {
       const isAlreadyEquipped =
@@ -186,11 +182,9 @@ export const MarketScreen: React.FC = () => {
         equippedBadge === String(product.id);
 
       if (isAlreadyEquipped) {
-        equipBadge(null);
-        toast.success("Đã tháo huy hiệu");
+        void equipBadge(null).then((ok) => ok && toast.success("Đã tháo huy hiệu"));
       } else {
-        equipBadge(slugOrId);
-        toast.success(`Đã trang bị huy hiệu "${product.name}"`);
+        void equipBadge(slugOrId).then((ok) => ok && toast.success(`Đã trang bị huy hiệu "${product.name}"`));
       }
     }
   };

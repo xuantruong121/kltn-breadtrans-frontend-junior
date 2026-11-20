@@ -43,7 +43,7 @@ export function ToeicListeningBar({
         onClick={blocked ? onRetry : onToggle}
         disabled={loading}
         aria-label={playing && !blocked ? "Tạm dừng" : "Phát"}
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-600 text-white transition-colors hover:bg-blue-700 disabled:cursor-wait"
       >
         {loading ? <Loader2 size={17} className="animate-spin" /> : playing && !blocked ? <Pause size={17} /> : <Play size={17} />}
       </button>

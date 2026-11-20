@@ -101,7 +101,8 @@ const WORD_RULES: WordRule[] = [
 
 /** Icons that must come from the glossary component, not be drawn directly. */
 const ICON_OWNERS: Array<{ icon: string; ownerFiles: RegExp; why: string }> = [
-  { icon: "Wheat", ownerFiles: /^components\/ui\/BreadCoinIcon\.tsx$|^lib\/ui\/glossary\.tsx?$/, why: "Bánh Mì goes through BreadCoinIcon" },
+  // Bánh Mì is the baguette of BreadCoinIcon (owner 2026-11-19); wheat would read as grain.
+  { icon: "Wheat", ownerFiles: /^$/, why: "Bánh Mì goes through BreadCoinIcon (a baguette), never the wheat ear" },
   {
     icon: "Croissant",
     ownerFiles: /^(lib\/ui\/glossary\.tsx?|components\/FloatingAiTutor\.tsx|components\/auth\/QuickRegisterModal\.tsx|components\/notifications\/NotificationIcon\.tsx)$/,

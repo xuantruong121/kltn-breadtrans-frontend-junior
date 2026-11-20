@@ -39,10 +39,10 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
     : "/UK/";
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6">
+    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6 short:space-y-3">
       {/* 3D Flippable Card Container */}
       <div
-        className="w-full h-[490px] sm:h-[530px] md:h-[560px] [perspective:1000px] cursor-pointer select-none"
+        className="w-full h-[490px] sm:h-[530px] md:h-[560px] short:h-[clamp(300px,calc(100dvh-290px),560px)] [perspective:1000px] cursor-pointer select-none"
         onClick={onFlip}
       >
         <motion.div
@@ -53,7 +53,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           {/* ==================================================== */}
           {/* FRONT FACE */}
           {/* ==================================================== */}
-          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 short:p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
@@ -72,7 +72,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                     aria-pressed={isSaved}
                     aria-label={isSaved ? `Bỏ lưu ${word.word}` : `Lưu ${word.word} vào Từ đã lưu`}
                     title={isSaved ? "Bỏ lưu từ" : "Lưu vào Từ đã lưu"}
-                    className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                    className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors disabled:cursor-wait ${
                       isSaved
                         ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300"
                         : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -91,8 +91,8 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
             </div>
 
             {/* Main Word Body */}
-            <div className="flex flex-col items-center justify-center text-center my-auto space-y-4">
-              <h2 className="text-5xl sm:text-6xl md:text-7xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+            <div className="flex flex-col items-center justify-center text-center my-auto space-y-4 short:space-y-3">
+              <h2 className="text-5xl sm:text-6xl md:text-7xl short:text-6xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                 {word.word}
               </h2>
 
@@ -143,7 +143,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           {/* ==================================================== */}
           {/* BACK FACE (Zero-scroll, single-glance layout) */}
           {/* ==================================================== */}
-          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl border border-sky-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow overflow-hidden select-none">
+          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl border border-sky-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 short:p-5 flex flex-col justify-between gap-2 shadow-sm hover:shadow-md transition-shadow overflow-hidden short:overflow-y-auto select-none">
             {/* Top Header Bar */}
             <div className="flex items-center justify-between shrink-0">
               <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 px-3.5 py-1.5 rounded-full">
@@ -168,7 +168,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
 
             {/* Primary Meaning Block */}
             <div className="text-center my-auto py-2">
-              <h3 className="text-4xl sm:text-5xl md:text-6xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
+              <h3 className="text-4xl sm:text-5xl md:text-6xl short:text-4xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                 {word.meaning}
               </h3>
               <div className="flex items-center justify-center gap-2 mt-2">
@@ -186,11 +186,11 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
             {/* Example Sentence Card */}
             {(word.exampleEn || word.exampleVi) && (
               <div
-                className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 p-4 sm:p-5 space-y-1.5 text-left shrink-0 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 p-4 sm:p-5 short:p-3.5 space-y-1.5 text-left shrink-0 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <p className="text-base sm:text-lg md:text-xl font-bold text-slate-800 dark:text-slate-200 leading-snug italic">
+                  <p className="text-base sm:text-lg md:text-xl short:text-lg font-bold text-slate-800 dark:text-slate-200 leading-snug italic">
                     &ldquo;{word.exampleEn}&rdquo;
                   </p>
                   {word.exampleEn && (
@@ -271,7 +271,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           <button
             type="button"
             onClick={onMarkMastered}
-            className="glass-fill flex-1 inline-flex min-h-[52px] sm:min-h-[56px] items-center justify-center gap-2.5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-black text-base sm:text-lg transition-all active:scale-98 shadow-2xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
+            className="glass-fill flex-1 inline-flex min-h-[52px] sm:min-h-[56px] short:min-h-12 items-center justify-center gap-2.5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-black text-base sm:text-lg transition-all active:scale-98 shadow-2xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
           >
             <Check size={20} />
             <span>Đã thuộc</span>
@@ -284,7 +284,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           <button
             type="button"
             onClick={onEscalate}
-            className="flex-1 inline-flex min-h-[52px] sm:min-h-[56px] items-center justify-center gap-2.5 rounded-2xl bg-sky-700 hover:bg-sky-800 text-white font-black text-base sm:text-lg transition-all active:scale-98 shadow-sm focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
+            className="flex-1 inline-flex min-h-[52px] sm:min-h-[56px] short:min-h-12 items-center justify-center gap-2.5 rounded-2xl bg-sky-700 hover:bg-sky-800 text-white font-black text-base sm:text-lg transition-all active:scale-98 shadow-sm focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:outline-none cursor-pointer"
           >
             <span>Chưa nhớ</span>
             <kbd className="hidden sm:inline text-xs font-mono font-bold bg-sky-700 text-white px-2 py-0.5 rounded-md ml-1.5">
@@ -294,7 +294,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
         </div>
 
         {/* Subtext Hint */}
-        <p className="text-sm text-slate-600 dark:text-slate-400 text-center font-medium">
+        <p className="text-sm short:text-xs text-slate-600 dark:text-slate-400 text-center font-medium">
           Bấm &ldquo;Chưa nhớ&rdquo; để qua chế độ học tiếp theo
         </p>
       </div>

@@ -83,7 +83,7 @@ export const Button3D: React.FC<Button3DProps> = ({
       whileHover={disabled ? {} : { scale: 1.02 }}
       whileTap={disabled ? {} : { y: 4 }}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 font-bold select-none cursor-pointer transition-all duration-75 active:shadow-none disabled:opacity-50 disabled:cursor-not-allowed ${v.bg} ${v.text} ${v.shadow} ${v.border} ${s} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 font-bold select-none cursor-pointer transition-all duration-75 active:shadow-none disabled:cursor-not-allowed ${v.bg} ${v.text} ${v.shadow} ${v.border} ${s} ${className}`}
       {...props}
     >
       {icon && <span className="shrink-0">{icon}</span>}

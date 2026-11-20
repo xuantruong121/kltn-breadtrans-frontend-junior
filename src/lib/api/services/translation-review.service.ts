@@ -25,9 +25,20 @@ export interface TranslationReviewPage {
   totalPages: number;
 }
 
+/** How many translations wait, in all and per "Dịch câu" exercise (owner 2026-11-19). */
+export interface TranslationReviewSummary {
+  total: number;
+  byQuiz: Record<string, number>;
+}
+
 export const translationReviewService = {
-  list: async (page: number, limit = 20): Promise<TranslationReviewPage> =>
-    axiosClient.get("/admin/translation-answers", { params: { page, limit } }) as unknown as Promise<TranslationReviewPage>,
+  list: async (page: number, limit = 20, quizId?: number): Promise<TranslationReviewPage> =>
+    axiosClient.get("/admin/translation-answers", {
+      params: { page, limit, ...(quizId ? { quizId } : {}) },
+    }) as unknown as Promise<TranslationReviewPage>,
+
+  summary: async (): Promise<TranslationReviewSummary> =>
+    axiosClient.get("/admin/translation-answers/summary") as unknown as Promise<TranslationReviewSummary>,
 
   approve: async (questionId: number, answer: string): Promise<{ questionId: number; acceptedAnswers: string[] }> =>
     axiosClient.post("/admin/translation-answers/approve", { questionId, answer }) as unknown as Promise<{

@@ -24,6 +24,7 @@ import {
 } from "./grammarPracticeLogic";
 import { levelLabel } from "@/lib/ui/displayLabels";
 import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
+import { optionGridClass } from "@/lib/practice/optionLayout";
 
 export interface GrammarQuizProps {
   topic: GrammarTopicDetail;
@@ -303,13 +304,13 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
             </div>
 
             <article
-              className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900"
+              className="@container rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900"
               data-testid="grammar-question-card"
             >
               <p className="text-lg font-semibold leading-relaxed text-slate-900 sm:text-xl dark:text-slate-100">
                 {currentQuestion.question}
               </p>
-              <div className="mt-5 space-y-2.5" role="radiogroup" aria-label="Đáp án">
+              <div className={`mt-5 ${optionGridClass(currentQuestion.options)} gap-2.5`} role="radiogroup" aria-label="Đáp án">
                 {currentQuestion.options.map((option, optionIndex) => {
                   const state = optionState(
                     optionIndex,
@@ -404,10 +405,9 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
         <div className="flex items-center gap-2">
         <button
           type="button"
-          disabled={currentIndex === 0}
           onClick={() => goTo(getPrevIndex(currentIndex))}
           aria-label="Câu trước"
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 ${currentIndex === 0 ? "invisible" : ""}`}
         >
           <ChevronLeft size={18} aria-hidden="true" />
           <span className="hidden sm:inline">Câu trước</span>
@@ -450,13 +450,12 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
 
         <button
           type="button"
-          disabled={currentIndex === questions.length - 1}
           onClick={() => {
             const next = currentCheck ? nextUnanswered(questions, checks, currentIndex) : null;
             goTo(next !== null && next > currentIndex ? next : getNextIndex(currentIndex, questions.length));
           }}
           aria-label="Câu tiếp"
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 ${currentIndex === questions.length - 1 ? "invisible" : ""}`}
         >
           <span className="hidden sm:inline">Câu tiếp</span>
           <ChevronRight size={18} aria-hidden="true" />

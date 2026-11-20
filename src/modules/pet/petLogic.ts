@@ -308,3 +308,19 @@ export function petLevelProgress(
     percent: Math.round((expInLevel / PET_EXP_PER_LEVEL) * 100),
   };
 }
+
+/**
+ * Species bought in the shop, by the product that unlocks them (BE
+ * market-effects PET_BUN_*). Owned while an approved order holds the product,
+ * the same rule the server applies when switching.
+ */
+export const PET_BUN_SLUG = "pet-bun";
+export const SHOP_PET_SPECIES: Readonly<Record<string, string>> = { petbun: PET_BUN_SLUG };
+
+/** Shop species the learner has not bought yet (from /market/inventory ownedSlugs). */
+export function lockedSpeciesIds(ownedSlugs: readonly string[] | null | undefined): string[] {
+  const owned = new Set(ownedSlugs ?? []);
+  return Object.entries(SHOP_PET_SPECIES)
+    .filter(([, slug]) => !owned.has(slug))
+    .map(([speciesId]) => speciesId);
+}

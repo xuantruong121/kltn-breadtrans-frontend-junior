@@ -2,11 +2,13 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Check, Truck } from "lucide-react";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import clsx from "clsx";
 import { MarketProduct } from "../types";
 import { getMarketItemVisual } from "../marketVisuals";
+import { PET_BUN_SLUG } from "@/modules/pet/petLogic";
 
 interface MarketItemCardProps {
   product: MarketProduct;
@@ -75,6 +77,8 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
   const rarity = RARITY_CONFIG[product.rarity?.toUpperCase()] || RARITY_CONFIG.COMMON;
   const isOutOfStock = product.stock <= 0;
   const isEquippable = (product.category === "AVATAR_FRAME" || product.category === "BADGE") && isUnlocked;
+  // A bought pet is not bought again: the card leads to the pet page instead.
+  const isOwnedPet = product.slug === PET_BUN_SLUG && isUnlocked;
   const categoryLabel = CATEGORY_LABEL_MAP[product.category] || product.category;
 
   return (
@@ -167,7 +171,15 @@ export const MarketItemCard: React.FC<MarketItemCardProps> = ({
         </div>
 
         {/* Action Button — Strictly NO ORANGE, NO BLACK */}
-        {isEquippable ? (
+        {isOwnedPet ? (
+          <Link
+            href="/pet"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-4 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+          >
+            <Check size={14} className="stroke-[2.5]" aria-hidden="true" />
+            <span>Đã có · Xem thú ảo</span>
+          </Link>
+        ) : isEquippable ? (
           <button
             type="button"
             onClick={() => onEquipToggle?.(product)}

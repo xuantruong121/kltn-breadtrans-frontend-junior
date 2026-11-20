@@ -259,7 +259,7 @@ export function IssueReportDialog({
               <button
                 type="submit"
                 disabled={mutation.isPending}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-bold text-white shadow-sm hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-5 text-sm font-bold text-white shadow-sm hover:bg-amber-600 disabled:cursor-not-allowed"
               >
                 {mutation.isPending && (
                   <Loader2 size={16} className="animate-spin" />

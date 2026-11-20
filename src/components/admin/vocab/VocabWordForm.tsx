@@ -416,10 +416,9 @@ export default function VocabWordForm({
                 <button
                   type="button"
                   onClick={() => listen(accent)}
-                  disabled={!form.word.trim()}
                   aria-label={`Nghe giọng ${accent.toUpperCase()}`}
                   title={`Nghe giọng ${accent.toUpperCase()}`}
-                  className={BTN_SECONDARY}
+                  className={`${BTN_SECONDARY} ${form.word.trim() ? "" : "invisible"}`}
                 >
                   <Volume2 size={16} /> {accent.toUpperCase()}
                 </button>
@@ -431,9 +430,9 @@ export default function VocabWordForm({
           <button
             type="button"
             onClick={() => void lookupPhonetics()}
-            disabled={lookingUp || !form.word.trim()}
+            disabled={lookingUp}
             title="Lấy phiên âm US/UK và audio từ từ điển mà học viên dùng khi tra từ."
-            className={`${BTN_SECONDARY} w-full`}
+            className={`${BTN_SECONDARY} w-full ${form.word.trim() ? "" : "invisible"}`}
           >
             {lookingUp ? (
               <Loader2 size={16} className="animate-spin" />
@@ -528,9 +527,9 @@ export default function VocabWordForm({
         <button
           type="button"
           onClick={() => void suggest()}
-          disabled={suggesting || Boolean(picked)}
+          disabled={suggesting}
           title="AI điền nghĩa, phiên âm và câu ví dụ vào các ô còn trống."
-          className={`${BTN_AI} ml-auto`}
+          className={`${BTN_AI} ml-auto ${picked ? "invisible" : ""}`}
         >
           {suggesting && <Loader2 size={14} className="animate-spin" />}
           Gợi ý bằng AI

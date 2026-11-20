@@ -49,7 +49,7 @@ const PROMPT_BOX =
 
 function PromptImage({ src, alt }: { src: string; alt: string }) {
   return (
-    <img src={src} alt={alt} className="mx-auto max-h-96 w-auto max-w-full rounded-md object-contain" />
+    <img src={src} alt={alt} className="mx-auto max-h-96 short:max-h-60 w-auto max-w-full rounded-md object-contain" />
   );
 }
 
@@ -62,16 +62,28 @@ export function SpeakingPaper({
   tasks,
   renderAnswer,
   marks,
+  preview = false,
 }: {
   tasks: SpeakingPaperTask[];
   renderAnswer: (task: SpeakingPaperTask) => ReactNode;
   marks?: PaperMarks;
+  /** The admin learner preview: its sticky bar (header + section tabs) ends ~109px down. */
+  preview?: boolean;
 }) {
   const shared = tasks.find((task) => task.stimulusText);
   if (shared && tasks.length > 1)
     return (
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className={`${PROMPT_BOX} lg:sticky lg:top-24 lg:self-start`}>
+        {/* Before the page scrolls the box starts ~173px down in the room (header, group tabs, title):
+            with 7rem a stimulus taller than ~430px at 600px high ended below the screen. 12rem keeps
+            it on screen (exam 5's 304px stimulus fits either way, measured 20/11). In the preview the
+            box starts ~209px down and the sticky bar ends at ~109px, where top-24 hid its first 13px
+            once stuck: there it sticks at top-32 with 14rem (measured 20/11). */}
+        <div
+          className={`${PROMPT_BOX} lg:sticky lg:self-start lg:overflow-y-auto ${
+            preview ? "lg:top-32 lg:max-h-[calc(100dvh-14rem)]" : "lg:top-24 lg:max-h-[calc(100dvh-12rem)]"
+          }`}
+        >
           {shared.stimulusTitle && <p className="mb-2 font-semibold">{shared.stimulusTitle}</p>}
           <p className="whitespace-pre-line">{shared.stimulusText}</p>
         </div>

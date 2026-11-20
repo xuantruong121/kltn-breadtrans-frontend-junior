@@ -1,5 +1,5 @@
 export interface ListeningShortcutDefinition {
-  id: "PLAY_PAUSE" | "SELECT_ANSWER" | "CHECK_OR_NEXT" | "REPLAY";
+  id: "PLAY_PAUSE" | "SELECT_ANSWER" | "CHECK_OR_NEXT" | "REPLAY" | "REWIND";
   label: string;
   keys: string[];
   keyDisplay: string;
@@ -414,4 +414,25 @@ export function handleListeningKeyboardShortcut(
   state?: CtrlShortcutState,
 ): ListeningShortcutResult {
   return handleListeningKeyDown(e, actions, state);
+}
+
+/**
+ * The shortcuts popover for the current question. Choosing an option (a click
+ * or 1–4) already grades a multiple-choice question, so there Enter only moves
+ * on; a dictation line still needs Enter to be checked. Rewind is handled by
+ * the audio player, so it is listed here and nowhere in the key handler.
+ */
+export function listeningShortcutLegend(isDictation: boolean): ListeningShortcutDefinition[] {
+  const legend: ListeningShortcutDefinition[] = [];
+  for (const shortcut of LISTENING_SHORTCUTS) {
+    if (shortcut.id === "SELECT_ANSWER") {
+      if (!isDictation) legend.push({ ...shortcut, label: "Chọn đáp án A – D (chấm ngay)" });
+    } else if (shortcut.id === "CHECK_OR_NEXT") {
+      legend.push({ ...shortcut, label: isDictation ? "Kiểm tra / Câu tiếp" : "Câu tiếp / Nộp bài" });
+    } else {
+      legend.push(shortcut);
+    }
+  }
+  legend.push({ id: "REWIND", label: "Lùi 5 giây", keys: ["Shift", "ArrowLeft"], keyDisplay: "Shift + ←" });
+  return legend;
 }

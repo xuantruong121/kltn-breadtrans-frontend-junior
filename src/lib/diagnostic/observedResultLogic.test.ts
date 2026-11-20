@@ -7,6 +7,10 @@ import {
   formatDifficulty,
   formatNumber,
   formatSubskill,
+  objectiveLine,
+  productiveLine,
+  skillTone,
+  weightsSummary,
   withheldMessage,
   type ObservedLike,
 } from "./observedResultLogic.ts";
@@ -41,13 +45,13 @@ test("explanation lists every term; skipped tasks carry no weight", () => {
       ["Nghe (6/10 câu đúng)", "60 × 35%", true],
       ["Đọc (8/10 câu đúng)", "80 × 35%", true],
       ["Nói – bài 1", "75 × 7,5%", true],
-      ["Nói – bài 2", "bỏ qua – không tính điểm, không tính trọng số", false],
-      ["Viết – bài 1", "bỏ qua – không tính điểm, không tính trọng số", false],
-      ["Viết – bài 2", "bỏ qua – không tính điểm, không tính trọng số", false],
+      ["Nói – bài 2", "bỏ qua – không tính vào điểm tổng", false],
+      ["Viết – bài 1", "bỏ qua – không tính vào điểm tổng", false],
+      ["Viết – bài 2", "bỏ qua – không tính vào điểm tổng", false],
     ],
   );
   assert.equal(e.denominator, "35% + 35% + 7,5% × 1 bài đã chấm = 77,5%");
-  assert.equal(e.outcome, "Điểm quan sát = tổng các dòng được tính ÷ 77,5% = 70,5/100");
+  assert.equal(e.outcome, "Điểm tổng = tổng các dòng được tính ÷ 77,5% = 70,5/100");
 });
 
 test("a pending or failed task withholds the score and says why", () => {
@@ -76,4 +80,23 @@ test("subskill labels are Vietnamese; unknown keys pass through", () => {
   assert.equal(formatSubskill("UNSPECIFIED"), "Chưa phân loại");
   assert.equal(formatSubskill("new skill"), "new skill");
   assert.equal(formatNumber(70.45), "70,5");
+});
+
+test("skill lines say the share is of the total score, from the result's own weights", () => {
+  assert.equal(objectiveLine(t02.listening), "6/10 câu đúng · chiếm 35% điểm tổng");
+  assert.equal(productiveLine(t02.speaking), "1/2 bài đã chấm · mỗi bài chiếm 7,5% điểm tổng");
+  assert.equal(productiveLine({ graded: 0, total: 2, tasks: [] }), "0/2 bài đã chấm · mỗi bài chiếm 7,5% điểm tổng");
+  assert.equal(
+    weightsSummary(t02),
+    "Điểm tổng gồm Nghe 35%, Đọc 35% và 4 bài Nói, Viết, mỗi bài 7,5%. Phần chưa chấm không tính; các phần đã chấm được chia lại cho đủ 100%.",
+  );
+});
+
+test("skill cards take the skill's colour only when the skill has a score", () => {
+  assert.match(skillTone("LISTENING", true), /bg-blue-50/);
+  assert.match(skillTone("READING", true), /bg-emerald-50/);
+  assert.match(skillTone("SPEAKING", true), /bg-teal-50/);
+  assert.match(skillTone("WRITING", true), /bg-rose-50/);
+  for (const skill of ["LISTENING", "READING", "SPEAKING", "WRITING"] as const)
+    assert.match(skillTone(skill, false), /bg-slate-50/);
 });
