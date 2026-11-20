@@ -1420,10 +1420,11 @@ export function DailyDictationWorkspace({
 
       {/* 4. Main Exercise Card */}
       {activeTab === "dictation" ? (
-        <div className="w-full rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 lg:p-6 shadow-xs transition-all">
+        <div className="w-full rounded-2xl sm:rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 lg:p-6 short:p-4 shadow-xs transition-all">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 lg:gap-6 items-start">
             {/* Left Column (lg:col-span-7): Player & Dictation Input */}
-            <div className="lg:col-span-7 flex flex-col gap-3 sm:gap-3.5">
+            {/* short: at 1024x600 the audio bar wraps to two rows and pushed "Kiểm tra" 3px off screen (measured 20/11). */}
+            <div className="lg:col-span-7 flex flex-col gap-3 sm:gap-3.5 short:gap-2.5">
               {/* Sentence Navigator & Settings Row */}
               <div className="flex items-center justify-between gap-4">
                 {/* Left: ← Câu 1 / 21 → */}
@@ -1473,7 +1474,7 @@ export function DailyDictationWorkspace({
               </div>
 
               {/* Audio Player (BreadTrans clean light inline player) */}
-              <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 p-2.5 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3.5 shadow-2xs">
+              <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700/80 p-2.5 sm:p-3 flex flex-wrap items-center gap-2.5 sm:gap-3.5 short:gap-2.5 shadow-2xs">
                 {/* Play / Pause button */}
                 <button
                   type="button"
