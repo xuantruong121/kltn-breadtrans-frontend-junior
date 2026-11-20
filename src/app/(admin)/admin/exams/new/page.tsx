@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Check, Loader2, FileStack } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
@@ -40,13 +40,17 @@ const STAGE_LABEL: Record<string, string> = {
   CANCELLED: "Đã hủy",
 };
 
-export default function NewExamPage() {
+function NewExamPageBody() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [variantCode, setVariantCode] = useState("TOEIC_LR");
   // Empty means the suggested name; typing replaces it.
   const [typedTitle, setTypedTitle] = useState<string | null>(null);
   const [description, setDescription] = useState("");
-  const [authoringMode, setAuthoringMode] = useState<"MANUAL" | "AI">("MANUAL");
+  // "Tạo bằng AI" on the list opens this page with ?mode=ai (owner 2026-11-19).
+  const [authoringMode, setAuthoringMode] = useState<"MANUAL" | "AI">(() =>
+    searchParams.get("mode") === "ai" ? "AI" : "MANUAL",
+  );
   const [generationMode, setGenerationMode] = useState<"FULL_EXAM" | "PART">("FULL_EXAM");
   const [part, setPart] = useState("5");
   const [topic, setTopic] = useState("");
@@ -295,5 +299,14 @@ export default function NewExamPage() {
         </form>
       </section>
     </div>
+  );
+}
+
+/** ?mode=ai is read with useSearchParams, which needs a Suspense boundary. */
+export default function NewExamPage() {
+  return (
+    <Suspense fallback={null}>
+      <NewExamPageBody />
+    </Suspense>
   );
 }

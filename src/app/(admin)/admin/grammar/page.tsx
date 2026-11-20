@@ -1,11 +1,13 @@
 "use client";
 
+import { ADMIN_CARD, ADMIN_CARD_GRID, ADMIN_SELECT } from "@/components/admin/cmsStyles";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, FileStack, Loader2, Lock, Plus, Search, Send, Trash2 } from "lucide-react";
+import { ArrowRight, Loader2, Lock, Search, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -17,7 +19,6 @@ import {
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
-import { BTN_AI } from "@/components/admin/cmsButtons";
 import { AiCreateDialog } from "@/components/admin/AiCreateDialog";
 
 type TopicSummary = {
@@ -32,8 +33,7 @@ type TopicSummary = {
   publicationStatus: "DRAFT" | "PUBLISHED";
 };
 
-const SELECT =
-  "min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
+const SELECT = ADMIN_SELECT;
 const ICON_BTN =
   "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
 
@@ -71,27 +71,17 @@ export default function AdminGrammarPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Ngữ pháp</h1>
-          <p className="mt-1 text-sm tabular-nums text-slate-600">
-            {totalTopics} chủ đề · {published} đã xuất bản ·{" "}
-            {totalTopics - published} bản nháp
+      <AdminPageHeader
+        title="Ngữ pháp"
+        stats={
+          <>
+            {totalTopics} chủ đề · {published} đã xuất bản · {totalTopics - published} bản nháp
             {list.facets?.locked ? ` · ${list.facets.locked} đã có học viên làm` : ""}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => setAiCreating(true)} className={BTN_AI}>
-          <FileStack size={16} aria-hidden="true" /> Tạo bằng AI
-        </button>
-        <Link
-          href="/admin/grammar/new"
-          className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-        >
-          <Plus size={16} /> Tạo chủ đề
-        </Link>
-        </div>
-      </header>
+          </>
+        }
+        ai={{ label: "Tạo bằng AI", onClick: () => setAiCreating(true) }}
+        create={{ label: "Tạo chủ đề", href: "/admin/grammar/new" }}
+      />
 
       {aiCreating && (
         <AiCreateDialog
@@ -136,17 +126,6 @@ export default function AdminGrammarPage() {
         </label>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trình độ
-            <select value={level} onChange={(e) => setLevel(e.target.value)} className={SELECT}>
-              <option value="ALL">Tất cả</option>
-              {GRAMMAR_LEVELS.map((value) => (
-                <option key={value.value} value={value.value}>
-                  {value.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
             Trạng thái
             <select
               value={status}
@@ -156,6 +135,17 @@ export default function AdminGrammarPage() {
               <option value="ALL">Tất cả</option>
               <option value="DRAFT">Bản nháp</option>
               <option value="PUBLISHED">Đã xuất bản</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-sm text-slate-600">
+            Trình độ
+            <select value={level} onChange={(e) => setLevel(e.target.value)} className={SELECT}>
+              <option value="ALL">Tất cả</option>
+              {GRAMMAR_LEVELS.map((value) => (
+                <option key={value.value} value={value.value}>
+                  {value.label}
+                </option>
+              ))}
             </select>
           </label>
           <label className="flex items-center gap-2 text-sm text-slate-600">
@@ -197,13 +187,13 @@ export default function AdminGrammarPage() {
         </div>
       ) : (
         // Cards fill the canvas in 320px-minimum columns with one 16px gutter.
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+        <div className={ADMIN_CARD_GRID}>
           {visible.map((topic) => {
             const isPublished = topic.publicationStatus === "PUBLISHED";
             return (
               <article
                 key={topic.id}
-                className="flex h-full flex-col rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-colors hover:border-slate-300"
+                className={ADMIN_CARD}
               >
                 <div className="flex items-center gap-2">
                   {topic.level && (

@@ -6,3 +6,5 @@ export const BTN_PRIMARY = `${BTN_BASE} bg-blue-600 text-white hover:bg-blue-700
 export const BTN_SUCCESS = `${BTN_BASE} bg-emerald-700 text-white hover:bg-emerald-800 active:bg-emerald-900`;
 export const BTN_DANGER = `${BTN_BASE} border border-rose-200 bg-white text-rose-600 hover:border-rose-300 hover:bg-rose-50 active:bg-rose-100`;
 export const BTN_AI = `${BTN_BASE} border border-amber-300 bg-amber-50 text-amber-900 hover:border-amber-400 hover:bg-amber-100 active:bg-amber-200`;
+/** The page's main create button (owner 2026-11-19: five hand-written copies before). */
+export const BTN_DARK = `${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`;

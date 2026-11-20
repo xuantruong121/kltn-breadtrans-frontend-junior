@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminImageThumb } from "@/components/admin/AdminImageThumb";
 import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
@@ -109,6 +109,12 @@ export default function SpeakingSetEditor({ id }: { id?: string }) {
 function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  // Opened from "Tạo bằng AI" on the list (owner 2026-11-19): the AI needs a name first.
+  const searchParams = useSearchParams();
+  const aiStart = !set && searchParams.get("ai") === "1";
+  useEffect(() => {
+    if (aiStart) document.getElementById("speaking-set-title")?.focus();
+  }, [aiStart]);
 
   const { data: categories = [] } = useQuery<SpeakingCategory[]>({
     queryKey: ["admin-speaking-categories"],
@@ -551,6 +557,11 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
               </button>
             </div>
           </div>
+          {aiStart && (
+            <p className="mt-2 text-sm text-amber-800">
+              Nhập tên bộ (chủ đề) và trình độ bên dưới, rồi bấm “Soạn cả bộ bằng AI”.
+            </p>
+          )}
           {exercises.length > 0 && !published && (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Bộ đã có câu luyện — dùng ‘Thêm câu luyện bằng AI’ ở mục Câu
@@ -599,6 +610,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
             <label className="text-sm font-medium text-slate-800">
               Tên bộ luyện
               <input
+                id="speaking-set-title"
                 value={form.title}
                 disabled={published}
                 onChange={(event) =>

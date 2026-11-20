@@ -1,15 +1,17 @@
 "use client";
 
+import { ADMIN_SELECT } from "@/components/admin/cmsStyles";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Loader2, Plus, Search, Trash2, Volume2, X } from "lucide-react";
+import { Check, Loader2, Search, Trash2, Volume2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, BTN_SUCCESS } from "@/components/admin/cmsButtons";
+import { BTN_DANGER, BTN_SECONDARY, BTN_SUCCESS } from "@/components/admin/cmsButtons";
 import VocabWordForm, { type WordPayload } from "@/components/admin/vocab/VocabWordForm";
 import {
   DICTIONARY_SOURCE,
@@ -30,8 +32,7 @@ type EntryPage = {
 type EntryDecks = { decks: Array<{ deckWordId: number; id: number; title: string }> };
 
 const PAGE_SIZE = 25;
-const SELECT =
-  "min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
+const SELECT = ADMIN_SELECT;
 const STATUS_TABS: Array<{ value: Status | "ALL"; label: string }> = [
   { value: "ALL", label: "Tất cả" },
   { value: "PENDING_REVIEW", label: "Chờ duyệt" },
@@ -125,18 +126,16 @@ export default function AdminDictionaryPage() {
 
   return (
     <div className="space-y-6 p-6">
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-950">Kho từ điển</h1>
-          <p className="mt-1 max-w-3xl text-sm text-slate-600">
-            Mỗi từ (theo loại từ) chỉ có một mục. Bộ flashcard, nút tra từ, luyện nói và Đấu trường
-            đều đọc từ đây; sửa một mục là đổi ở mọi nơi dùng nó.
-          </p>
-        </div>
-        <button type="button" onClick={() => setEditingId("new")} className={BTN_PRIMARY}>
-          <Plus size={16} /> Thêm từ
-        </button>
-      </header>
+      <AdminPageHeader
+        title="Kho từ điển"
+        stats={
+          counts
+            ? `${allCount} mục · ${counts.APPROVED} đã duyệt · ${counts.PENDING_REVIEW} chờ duyệt · ${counts.REJECTED} bị từ chối`
+            : undefined
+        }
+        description="Mỗi từ (theo loại từ) chỉ có một mục. Bộ flashcard, nút tra từ, luyện nói và Đấu trường đều đọc từ đây; sửa một mục là đổi ở mọi nơi dùng nó."
+        create={{ label: "Thêm từ", onClick: () => setEditingId("new") }}
+      />
 
       {editingId === "new" && (
         <section className="rounded-xl border border-blue-300 bg-white p-4 shadow-sm">

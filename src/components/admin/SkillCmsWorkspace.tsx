@@ -4,25 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
-  ChevronDown,
-  Circle,
-  FileAudio,
-  FilePlus2,
-  FileStack,
-  Loader2,
-  Plus,
-  Search,
-  Save,
-  Send,
-  Trash2,
-  Upload,
-  Volume2,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, FileAudio, FileStack, Loader2, Plus, Search, Save, Send, Trash2, Upload, Volume2, X } from "lucide-react";
 
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
@@ -31,14 +13,7 @@ import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import {
-  BTN_AI,
-  BTN_BASE,
-  BTN_DANGER,
-  BTN_PRIMARY,
-  BTN_SECONDARY,
-  BTN_SUCCESS,
-} from "./cmsButtons";
+import { BTN_AI, BTN_DANGER, BTN_DARK, BTN_PRIMARY, BTN_SECONDARY, BTN_SUCCESS } from "./cmsButtons";
 import {
   audioBadgeFor,
   CMS_LEVELS,
@@ -60,6 +35,8 @@ import {
   type ListFilters,
 } from "./skillCmsStatus";
 import { AdminImageThumb } from "./AdminImageThumb";
+import { AdminPageHeader } from "./AdminPageHeader";
+import { ADMIN_CARD_GRID, ADMIN_SELECT } from "./cmsStyles";
 import { TranslationReviewPanel, TRANSLATION_REVIEW_KEYS } from "./TranslationReviewPanel";
 import { WritingAiDraftPanel } from "./WritingAiDraftPanel";
 import { AiCreateDialog } from "./AiCreateDialog";
@@ -134,8 +111,7 @@ function levelFromTitle(title?: string | null): string | null {
     : null;
 }
 
-const FILTER_SELECT =
-  "min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200";
+const FILTER_SELECT = ADMIN_SELECT;
 const NO_FILTERS: Omit<ListFilters, "query" | "status"> = {
   level: "ALL",
   audio: "ALL",
@@ -529,6 +505,12 @@ export default function SkillCmsWorkspace({
   // The "new question" editor is opened on demand; editing happens in place.
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
   const [titleError, setTitleError] = useState(false);
+  // Opened from "Tạo bằng AI" on the list (owner 2026-11-19): the AI drafts from the title.
+  const aiStart =
+    mode !== "list" && !id && (domain === "listening" || domain === "reading") && searchParams.get("ai") === "1";
+  useEffect(() => {
+    if (aiStart) document.getElementById("cms-title")?.focus();
+  }, [aiStart]);
   // Writing AI (owner 2026-11-19): the create dialog on the list, the draft panel in the editor.
   const [writingAiCreating, setWritingAiCreating] = useState(false);
   const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean } | null>(null);
@@ -1520,24 +1502,30 @@ export default function SkillCmsWorkspace({
     // with one 16px gutter both ways: n x card + (n - 1) x 16 = canvas.
     return (
       <div className="space-y-6 p-6">
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
-            <p className="mt-1 text-sm tabular-nums text-slate-600">
-              {totalItems} bài · {publishedCount} đã xuất bản ·{" "}
-              {totalItems - publishedCount} bản nháp
-            </p>
-          </div>
-          {domain === "listening" ? (
+        <AdminPageHeader
+          title={title}
+          stats={`${totalItems} bài · ${publishedCount} đã xuất bản · ${totalItems - publishedCount} bản nháp`}
+          ai={
+            domain === "writing"
+              ? { label: "Tạo bằng AI", onClick: () => setWritingAiCreating(true) }
+              : { label: "Tạo bằng AI", href: `/admin/${domain}/new?ai=1` }
+          }
+          create={
+            domain === "listening"
+              ? undefined
+              : { label: domain === "reading" ? "Tạo bài đọc" : "Tạo bài viết", href: `/admin/${domain}/new` }
+          }
+          createSlot={
+            domain === "listening" ? (
             <div className="relative">
               <button
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={isCreateMenuOpen}
                 onClick={() => setIsCreateMenuOpen((current) => !current)}
-                className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
+                className={BTN_DARK}
               >
-                <FilePlus2 size={16} /> Thêm bài nghe <ChevronDown size={15} />
+                <Plus size={16} aria-hidden="true" /> Tạo bài nghe <ChevronDown size={15} aria-hidden="true" />
               </button>
               {isCreateMenuOpen && (
                 <div
@@ -1565,23 +1553,9 @@ export default function SkillCmsWorkspace({
                 </div>
               )}
             </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              {domain === "writing" && (
-                <button type="button" onClick={() => setWritingAiCreating(true)} className={BTN_AI}>
-                  <FileStack size={16} aria-hidden="true" /> Tạo bằng AI
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => router.push(`/admin/${domain}/new`)}
-                className={`${BTN_BASE} bg-slate-950 text-white hover:bg-slate-800 active:bg-slate-700`}
-              >
-                <FilePlus2 size={16} /> {domain === "reading" ? "Tạo bài đọc" : domain === "writing" ? "Tạo bài viết" : "Tạo bản nháp"}
-              </button>
-            </div>
-          )}
-        </header>
+            ) : undefined
+          }
+        />
 
         {writingAiCreating && (
           <AiCreateDialog
@@ -1828,7 +1802,7 @@ export default function SkillCmsWorkspace({
           </div>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-4">
+        <div className={ADMIN_CARD_GRID}>
           {visibleItems.map((content) => {
             const level = contentLevel(content);
             // The same Vietnamese title learners read; the stored one keeps
@@ -2583,6 +2557,11 @@ export default function SkillCmsWorkspace({
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-semibold text-slate-950">Thông tin nội dung</h2>
+            {aiStart && (
+              <p className="w-full text-sm text-amber-800">
+                Nhập tiêu đề (chủ đề) và trình độ bên dưới, rồi bấm “Soạn cả bài bằng AI”.
+              </p>
+            )}
             {isWriting && id && writingDraftKind(form.type) && (
               <button type="button" onClick={() => setWritingAi({ count: 5, auto: false })} className={BTN_AI}>
                 <FileStack size={16} aria-hidden="true" /> Soạn bằng AI
