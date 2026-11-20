@@ -71,7 +71,10 @@ export function SpeakingPaper({
   if (shared && tasks.length > 1)
     return (
       <div className="grid gap-5 lg:grid-cols-2">
-        <div className={`${PROMPT_BOX} lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto`}>
+        {/* Before the page scrolls the box starts ~173px down in the room (header, group tabs, title):
+            with 7rem a stimulus taller than ~430px at 600px high ended below the screen. 12rem keeps
+            it on screen (exam 5's 304px stimulus fits either way, measured 20/11). */}
+        <div className={`${PROMPT_BOX} lg:sticky lg:top-24 lg:self-start lg:max-h-[calc(100dvh-12rem)] lg:overflow-y-auto`}>
           {shared.stimulusTitle && <p className="mb-2 font-semibold">{shared.stimulusTitle}</p>}
           <p className="whitespace-pre-line">{shared.stimulusText}</p>
         </div>

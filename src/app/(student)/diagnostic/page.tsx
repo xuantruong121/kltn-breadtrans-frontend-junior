@@ -924,9 +924,11 @@ export default function DiagnosticPage() {
               </div>
             )}
 
-            {/* Bottom Actions: Previous / Next / Submit */}
+            {/* Bottom Actions: Previous / Next / Submit. An action that cannot run yet is hidden, not
+                faded (owner rule 17/11): "Câu trước" from the second question, "Câu tiếp" once
+                answered; the empty slot keeps the row's height so nothing jumps. */}
             <div className="mt-10 short:mt-5 flex items-center justify-between border-t border-slate-100 pt-6 short:pt-4 dark:border-slate-800">
-              {current.section !== "SPEAKING" ? (
+              {current.section !== "SPEAKING" && step > 0 ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -936,8 +938,7 @@ export default function DiagnosticPage() {
                     }
                     setStep((value) => Math.max(0, value - 1));
                   }}
-                  disabled={!step}
-                  className="min-h-11 rounded-xl border border-slate-200 px-5 text-sm font-extrabold text-slate-700 hover:bg-slate-50 disabled:opacity-30 dark:border-slate-700 dark:text-slate-300"
+                  className="min-h-11 rounded-xl border border-slate-200 px-5 text-sm font-extrabold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
                 >
                   Câu trước
                 </button>
@@ -945,15 +946,14 @@ export default function DiagnosticPage() {
                 <div />
               )}
 
+              {answers[current.id] === undefined ||
+              (typeof answers[current.id] === "string" && !(answers[current.id] as string).trim()) ||
+              listeningNotReady ? (
+                <div className="min-h-11" aria-hidden="true" />
+              ) : (
               <button
                 type="button"
-                disabled={
-                  answers[current.id] === undefined ||
-                  (typeof answers[current.id] === "string" &&
-                    !(answers[current.id] as string).trim()) ||
-                  submit.isPending ||
-                  listeningNotReady
-                }
+                disabled={submit.isPending}
                 onClick={() => {
                   if (autoAdvanceTimer) {
                     clearTimeout(autoAdvanceTimer);
@@ -965,7 +965,7 @@ export default function DiagnosticPage() {
                     setStep((value) => value + 1);
                   }
                 }}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-6 text-sm font-extrabold text-white transition hover:bg-teal-800 disabled:opacity-40"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal-700 px-6 text-sm font-extrabold text-white transition hover:bg-teal-800 disabled:cursor-wait"
               >
                 {submit.isPending ? (
                   <>
@@ -984,6 +984,7 @@ export default function DiagnosticPage() {
                   </>
                 )}
               </button>
+              )}
             </div>
 
             {submit.isError && (
