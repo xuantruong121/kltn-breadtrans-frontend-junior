@@ -6,7 +6,8 @@
  *
  * Two columns only when the longest option fits its column:
  * - up to 20 characters: from a 20rem panel (the narrow reading side panel);
- * - up to 45 characters (the Entry Diagnostic's old rule): from a 36rem panel;
+ * - up to 45 characters (the Entry Diagnostic's old rule): from a 42rem panel,
+ *   so a 44-character option still fits one line per column;
  * - longer: always one column.
  */
 export const SHORT_OPTION_CHARS = 20;
@@ -24,6 +25,6 @@ export function hasLongOption(options: readonly (string | null | undefined)[], l
 export function optionGridClass(options: readonly (string | null | undefined)[]): string {
   const longest = longestOption(options);
   if (longest <= SHORT_OPTION_CHARS) return "grid grid-cols-1 @xs:grid-cols-2";
-  if (longest <= LONG_OPTION_CHARS) return "grid grid-cols-1 @xl:grid-cols-2";
+  if (longest <= LONG_OPTION_CHARS) return "grid grid-cols-1 @2xl:grid-cols-2";
   return "grid grid-cols-1";
 }

@@ -10,7 +10,7 @@ describe("answer list layout", () => {
   it("needs a wider panel for two columns of medium options", () => {
     assert.equal(
       optionGridClass(["Going to the library", "Submitting a research proposal", "A", "B"]),
-      "grid grid-cols-1 @xl:grid-cols-2",
+      "grid grid-cols-1 @2xl:grid-cols-2",
     );
   });
 
@@ -27,7 +27,7 @@ describe("answer list layout", () => {
 
   it("treats exactly 20 and 45 characters as still fitting", () => {
     assert.equal(optionGridClass(["x".repeat(20)]), "grid grid-cols-1 @xs:grid-cols-2");
-    assert.equal(optionGridClass(["x".repeat(45)]), "grid grid-cols-1 @xl:grid-cols-2");
+    assert.equal(optionGridClass(["x".repeat(45)]), "grid grid-cols-1 @2xl:grid-cols-2");
     assert.equal(optionGridClass(["x".repeat(46)]), "grid grid-cols-1");
   });
 });
