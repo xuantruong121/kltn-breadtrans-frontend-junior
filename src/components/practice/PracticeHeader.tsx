@@ -169,7 +169,7 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
           onClick={onExit}
           disabled={exitDisabled}
           aria-label={exitLabel}
-          className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shrink-0 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+          className="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-2.5 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer shrink-0 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
         >
           <ArrowLeft size={16} aria-hidden="true" />
           <span className="text-xs sm:text-sm">{exitLabel}</span>

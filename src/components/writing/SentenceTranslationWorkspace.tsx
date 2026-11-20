@@ -425,8 +425,10 @@ export function SentenceTranslationWorkspace({
                     key="check"
                     type="button"
                     onClick={() => void runCheck()}
-                    disabled={pending || !answer.trim()}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                    disabled={pending}
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed cursor-pointer ${
+                      answer.trim() ? "" : "invisible"
+                    }`}
                   >
                     {pending ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : <Check size={18} aria-hidden="true" />}
                     {pending ? "Đang kiểm tra..." : "Kiểm tra"}
@@ -481,10 +483,11 @@ export function SentenceTranslationWorkspace({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled={index === 0}
             onClick={() => goTo(index - 1)}
             aria-label="Câu trước"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-[15px] font-semibold text-slate-800 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+            className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-[15px] font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer ${
+              index === 0 ? "invisible" : ""
+            }`}
           >
             <ChevronLeft size={18} aria-hidden="true" />
             <span className="hidden sm:inline">Câu trước</span>
@@ -494,10 +497,11 @@ export function SentenceTranslationWorkspace({
           </span>
           <button
             type="button"
-            disabled={index >= tasks.length - 1}
             onClick={() => goTo(index + 1)}
             aria-label="Câu tiếp"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+            className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-blue-700 cursor-pointer ${
+              index >= tasks.length - 1 ? "invisible" : ""
+            }`}
           >
             <span className="hidden sm:inline">Câu tiếp</span>
             <ChevronRight size={18} aria-hidden="true" />

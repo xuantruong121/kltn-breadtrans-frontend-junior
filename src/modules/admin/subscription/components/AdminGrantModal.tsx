@@ -330,7 +330,14 @@ export function AdminGrantModal({
                 !reason.trim() ||
                 durationDays <= 0
               }
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm disabled:cursor-not-allowed cursor-pointer ${
+                !activeStudent ||
+                !effectivePlanVersionId ||
+                !reason.trim() ||
+                durationDays <= 0
+                  ? "invisible"
+                  : ""
+              }`}
             >
               {grantMutation.isPending ? (
                 <>

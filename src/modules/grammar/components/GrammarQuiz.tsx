@@ -405,10 +405,9 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
         <div className="flex items-center gap-2">
         <button
           type="button"
-          disabled={currentIndex === 0}
           onClick={() => goTo(getPrevIndex(currentIndex))}
           aria-label="Câu trước"
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+          className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 ${currentIndex === 0 ? "invisible" : ""}`}
         >
           <ChevronLeft size={18} aria-hidden="true" />
           <span className="hidden sm:inline">Câu trước</span>
@@ -451,13 +450,12 @@ export const GrammarQuiz: React.FC<GrammarQuizProps> = ({ topic, onDirtyChange }
 
         <button
           type="button"
-          disabled={currentIndex === questions.length - 1}
           onClick={() => {
             const next = currentCheck ? nextUnanswered(questions, checks, currentIndex) : null;
             goTo(next !== null && next > currentIndex ? next : getNextIndex(currentIndex, questions.length));
           }}
           aria-label="Câu tiếp"
-          className="inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 ${currentIndex === questions.length - 1 ? "invisible" : ""}`}
         >
           <span className="hidden sm:inline">Câu tiếp</span>
           <ChevronRight size={18} aria-hidden="true" />

@@ -116,8 +116,8 @@ export default function AdminRejectOrderModal({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !reason.trim()}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting}
+              className={`inline-flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm rounded-xl shadow-xs transition-colors cursor-pointer disabled:cursor-wait ${!reason.trim() ? "invisible" : ""}`}
             >
               {isSubmitting ? (
                 <>

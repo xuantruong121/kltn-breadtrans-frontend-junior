@@ -332,6 +332,7 @@ function PlansPageContent() {
           onSubmit={(e) => {
             e.preventDefault();
             const code = normalizePromoCode(promoInput);
+            if (!code) return;
             if (!user) {
               router.push(getLoginRedirectUrl("plus"));
               return;
@@ -356,8 +357,9 @@ function PlansPageContent() {
           <div className="flex gap-2">
             <button
               type="submit"
-              disabled={!normalizePromoCode(promoInput)}
-              className="h-11 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+              className={`h-11 rounded-xl bg-slate-900 px-5 text-sm font-semibold text-white transition-colors hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 ${
+                normalizePromoCode(promoInput) ? "" : "invisible"
+              }`}
             >
               Áp dụng
             </button>

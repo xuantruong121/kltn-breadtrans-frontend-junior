@@ -1012,7 +1012,7 @@ export default function AdminExamsPage() {
                       <button
                         onClick={() => fillMissingImagesMutation.mutate(examDetail.id)}
                         disabled={fillMissingImagesMutation.isPending}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
                       >
                         <ImageIcon size={15} />
                         {fillMissingImagesMutation.isPending
@@ -1224,7 +1224,7 @@ export default function AdminExamsPage() {
                     <button
                       onClick={() => buildMasterMutation.mutate(examDetail.id)}
                       disabled={buildMasterMutation.isPending}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
                     >
                       {buildMasterMutation.isPending && (
                         <Loader2 size={13} className="animate-spin" />
@@ -1576,7 +1576,7 @@ export default function AdminExamsPage() {
               <button
                 type="submit"
                 disabled={updateExamMutation.isPending}
-                className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
               >
                 {updateExamMutation.isPending ? "Đang lưu..." : "Lưu thay đổi"}
               </button>
@@ -1632,7 +1632,7 @@ export default function AdminExamsPage() {
                 <button
                   type="submit"
                   disabled={imageSearchMutation.isPending}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                 >
                   {imageSearchMutation.isPending ? (
                     <Loader2 size={15} className="animate-spin" />
@@ -1726,7 +1726,7 @@ export default function AdminExamsPage() {
                             selectImageMutation.mutate(candidate.id)
                           }
                           disabled={selectImageMutation.isPending}
-                          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:opacity-50 ${candidate.analysis?.status === "UNSUITABLE" ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white disabled:cursor-wait ${candidate.analysis?.status === "UNSUITABLE" ? "bg-amber-600 hover:bg-amber-700" : "bg-blue-600 hover:bg-blue-700"}`}
                           aria-label={
                             candidate.analysis?.status === "UNSUITABLE"
                               ? "Chọn và tiếp tục với ảnh AI đánh giá chưa tối ưu"
@@ -1931,7 +1931,7 @@ export default function AdminExamsPage() {
                   <button
                     type="submit"
                     disabled={saveGroupMutation.isPending}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                   >
                     {saveGroupMutation.isPending
                       ? "Đang lưu..."
@@ -2082,7 +2082,7 @@ export default function AdminExamsPage() {
                   <button
                     type="submit"
                     disabled={saveQuestionMutation.isPending}
-                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                    className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                   >
                     {saveQuestionMutation.isPending
                       ? "Đang lưu..."
@@ -2166,7 +2166,7 @@ export default function AdminExamsPage() {
                     type="button"
                     disabled={isAiPart5Loading}
                     onClick={handleGenerateAiPart5}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:cursor-wait transition-colors"
                   >
                     {isAiPart5Loading ? (
                       <Loader2 size={13} className="animate-spin" />
@@ -2902,7 +2902,7 @@ export default function AdminExamsPage() {
                 <button
                   type="submit"
                   disabled={createExamMutation.isPending}
-                  className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
                 >
                   {createExamMutation.isPending
                     ? "Đang tạo..."

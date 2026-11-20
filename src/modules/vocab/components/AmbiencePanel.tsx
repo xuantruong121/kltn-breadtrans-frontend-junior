@@ -71,8 +71,7 @@ export function AmbienceControls() {
             <button
               type="button"
               onClick={() => studySound.nextSong()}
-              disabled={!prefs.music}
-              className="inline-flex size-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:opacity-40 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+              className={`inline-flex size-8 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100 ${!prefs.music ? "invisible" : ""}`}
               aria-label="Bài tiếp theo"
               title="Bài tiếp theo"
             >

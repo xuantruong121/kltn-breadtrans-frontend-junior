@@ -65,7 +65,7 @@ type SetForm = {
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-50";
 const ICON_BTN =
-  "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed";
 const taskTypeLabel = (value?: string | null) =>
   TASK_TYPES.find((task) => task.value === value)?.label ?? value ?? "—";
 
@@ -468,8 +468,8 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
               }
               saveMutation.mutate();
             }}
-            disabled={busy || published}
-            className={BTN_SECONDARY}
+            disabled={busy}
+            className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
           >
             {saveMutation.isPending ? (
               <Loader2 size={16} className="animate-spin" />
@@ -508,9 +508,9 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
               <button
                 type="button"
                 onClick={() => suggestSetMutation.mutate()}
-                disabled={suggestSetMutation.isPending || published}
+                disabled={suggestSetMutation.isPending}
                 title="AI gợi ý tên, mô tả, trình độ và phân loại; bạn xem lại trước khi dùng."
-                className={BTN_SECONDARY}
+                className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
               >
                 {suggestSetMutation.isPending && (
                   <Loader2 size={14} className="animate-spin" />
@@ -535,20 +535,17 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                   />
                 </label>
               )}
-              <DocumentImportButton
-                onText={setDocumentText}
-                disabled={draftLocked}
-              />
+              {!draftLocked && <DocumentImportButton onText={setDocumentText} />}
               <button
                 type="button"
                 onClick={() => fullDraftMutation.mutate()}
-                disabled={draftLocked || fullDraftMutation.isPending}
+                disabled={fullDraftMutation.isPending}
                 title={
                   draftLocked
                     ? "Bộ đã có câu luyện — dùng ‘Thêm câu luyện bằng AI’"
                     : "Dùng Tên và Trình độ bên dưới; bản nháp hiện ra để xem lại."
                 }
-                className={BTN_AI}
+                className={`${BTN_AI} ${draftLocked ? "invisible" : ""}`}
               >
                 {fullDraftMutation.isPending && (
                   <Loader2 size={14} className="animate-spin" />
@@ -657,9 +654,8 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 </select>
                 <button
                   type="button"
-                  disabled={published}
                   onClick={() => setInlineCategoryOpen((open) => !open)}
-                  className={BTN_SECONDARY}
+                  className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
                 >
                   <Plus size={14} /> Phân loại mới
                 </button>
@@ -675,12 +671,9 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                   />
                   <button
                     type="button"
-                    disabled={
-                      !newCategoryName.trim() ||
-                      createCategoryMutation.isPending
-                    }
+                    disabled={createCategoryMutation.isPending}
                     onClick={() => createCategoryMutation.mutate()}
-                    className={BTN_SECONDARY}
+                    className={`${BTN_SECONDARY} ${!newCategoryName.trim() ? "invisible" : ""}`}
                   >
                     Tạo và chọn
                   </button>
@@ -1010,7 +1003,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                                 onClick={async () => {
                                   if (await makeReference(exercise.id)) refresh();
                                 }}
-                                className="inline-flex min-h-8 cursor-pointer items-center gap-1 font-semibold text-slate-700 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex min-h-8 cursor-pointer items-center gap-1 font-semibold text-slate-700 hover:text-blue-700 disabled:cursor-not-allowed"
                               >
                                 {audioBusyId === exercise.id && (
                                   <Loader2 size={14} className="animate-spin" />
@@ -1035,28 +1028,20 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                           <button
                             type="button"
                             onClick={() => move(index, -1)}
-                            disabled={
-                              published ||
-                              index === 0 ||
-                              reorderMutation.isPending
-                            }
+                            disabled={reorderMutation.isPending}
                             aria-label={`Đưa câu ${index + 1} lên trước`}
                             title="Lên trước"
-                            className={ICON_BTN}
+                            className={`${ICON_BTN} ${published || index === 0 ? "invisible" : ""}`}
                           >
                             <ChevronUp size={16} />
                           </button>
                           <button
                             type="button"
                             onClick={() => move(index, 1)}
-                            disabled={
-                              published ||
-                              index === exercises.length - 1 ||
-                              reorderMutation.isPending
-                            }
+                            disabled={reorderMutation.isPending}
                             aria-label={`Đưa câu ${index + 1} xuống sau`}
                             title="Xuống sau"
-                            className={ICON_BTN}
+                            className={`${ICON_BTN} ${published || index === exercises.length - 1 ? "invisible" : ""}`}
                           >
                             <ChevronDown size={16} />
                           </button>
@@ -1066,8 +1051,8 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                               setAutoSuggest(false);
                               setEditingId(exercise.id);
                             }}
-                            disabled={published || editing}
-                            className={BTN_SECONDARY}
+                            disabled={editing}
+                            className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
                           >
                             {editing ? "Đang sửa" : "Sửa"}
                           </button>
@@ -1079,9 +1064,8 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                                 title: exercise.title,
                               })
                             }
-                            disabled={published}
                             aria-label={`Xóa câu ${index + 1}`}
-                            className={BTN_DANGER}
+                            className={`${BTN_DANGER} ${published ? "invisible" : ""}`}
                           >
                             <Trash2 size={14} />
                           </button>
@@ -1122,24 +1106,22 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      disabled={published}
                       onClick={() => {
                         setAutoSuggest(false);
                         setEditingId("new");
                       }}
-                      className={BTN_SECONDARY}
+                      className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
                     >
                       <Plus size={16} /> Thêm câu luyện
                     </button>
                     <button
                       type="button"
-                      disabled={published}
                       onClick={() => {
                         setAutoSuggest(true);
                         setEditingId("new");
                       }}
                       title="AI gợi ý 3 câu theo bộ luyện; bạn chọn rồi sửa trước khi thêm."
-                      className={BTN_AI}
+                      className={`${BTN_AI} ${published ? "invisible" : ""}`}
                     >
                       Thêm câu luyện bằng AI
                     </button>

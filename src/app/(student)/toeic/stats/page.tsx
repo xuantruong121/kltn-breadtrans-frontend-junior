@@ -204,7 +204,7 @@ function GoalEditor({ goal, field }: { goal: ToeicLrStats["goal"]; field: "examD
         className="min-h-10 w-full max-w-40 rounded-md border border-slate-300 px-2 text-center text-base dark:border-slate-700 dark:bg-slate-950"
       />
       <span className="flex gap-1">
-        <button type="submit" disabled={save.isPending} aria-label="Lưu" className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60">
+        <button type="submit" disabled={save.isPending} aria-label="Lưu" className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-wait">
           <Check size={16} />
         </button>
         <button type="button" onClick={() => setEditing(false)} aria-label="Hủy" className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 dark:border-slate-700 dark:text-slate-300">

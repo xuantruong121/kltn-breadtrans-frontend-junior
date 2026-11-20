@@ -110,18 +110,18 @@ export default function AudioUploadField({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  disabled={disabled || uploading}
+                  disabled={uploading}
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  className={`inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:cursor-wait ${disabled ? "invisible" : ""}`}
                 >
                   {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
                   {uploading ? "Đang tải..." : "Thay tệp mới"}
                 </button>
                 <button
                   type="button"
-                  disabled={disabled || uploading}
+                  disabled={uploading}
                   onClick={handleRemove}
-                  className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 transition-colors disabled:opacity-50 dark:text-rose-400"
+                  className={`inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50 transition-colors disabled:cursor-wait dark:text-rose-400 ${disabled ? "invisible" : ""}`}
                   title="Gỡ bỏ âm thanh"
                 >
                   <Trash2 size={12} />
@@ -155,9 +155,9 @@ export default function AudioUploadField({
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                disabled={disabled || uploading}
+                disabled={uploading}
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:opacity-50"
+                className={`inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors disabled:cursor-wait ${disabled ? "invisible" : ""}`}
               >
                 {uploading ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
                 {uploading ? "Đang tải..." : "Tải tệp âm thanh"}

@@ -1903,7 +1903,7 @@ export default function SpeakingExerciseDetailPage() {
                   {/* Accent selector pills */}
                   <div
                     className={`flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 transition-opacity ${
-                      isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                      isPlayingTTS ? "cursor-wait" : ""
                     }`}
                     role="group"
                     aria-label="Chọn chất giọng phát âm từ"
@@ -1945,7 +1945,7 @@ export default function SpeakingExerciseDetailPage() {
                   </div>
                   <div
                     className={`flex items-center gap-1 ${
-                      isPlayingTTS ? "opacity-60 cursor-not-allowed" : ""
+                      isPlayingTTS ? "cursor-wait" : ""
                     }`}
                     role="group"
                     aria-label="Chọn tốc độ phát âm từ"
@@ -2529,7 +2529,7 @@ export default function SpeakingExerciseDetailPage() {
                 }}
                 disabled={phase === "RECORDING" || isAnalyzing}
                 aria-label="Câu trước"
-                className="min-h-11 shrink-0 px-3 sm:px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 shrink-0 px-3 sm:px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-xs sm:text-sm inline-flex items-center gap-1 disabled:cursor-not-allowed"
               >
                 <ArrowLeft size={14} aria-hidden="true" /><span className="hidden sm:inline"> Câu trước</span>
               </button>

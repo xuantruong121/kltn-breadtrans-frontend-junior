@@ -7,7 +7,7 @@ import { pushStateText } from "@/lib/push/pushLogic";
 import { useBrowserPush } from "@/lib/push/useBrowserPush";
 
 const buttonBase =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold disabled:opacity-60";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold disabled:cursor-wait";
 
 /** "Thông báo trình duyệt trên thiết bị này": turn Web Push on or off for this browser, send a test. */
 export function BrowserPushPanel() {

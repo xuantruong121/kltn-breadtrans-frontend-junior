@@ -220,7 +220,7 @@ export function AdminExtendModal({
             <button
               type="submit"
               disabled={extendMutation.isPending || !reason.trim() || effectiveDays <= 0}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-lg shadow-sm disabled:cursor-not-allowed cursor-pointer ${!reason.trim() || effectiveDays <= 0 ? "invisible" : ""}`}
             >
               {extendMutation.isPending ? (
                 <>

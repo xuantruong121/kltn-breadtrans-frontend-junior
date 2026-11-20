@@ -210,7 +210,7 @@ export function QuickLoginModal({
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-tactile-primary w-full mt-2 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="btn-tactile-primary w-full mt-2 py-3 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:cursor-wait"
           >
             {isLoading ? (
               <>

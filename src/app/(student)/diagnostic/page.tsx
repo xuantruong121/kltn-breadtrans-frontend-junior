@@ -804,7 +804,7 @@ export default function DiagnosticPage() {
                     onClick={() => (recording ? stopRecording() : void startRecording(current.id, limitMs))}
                     disabled={speakingBusy || skipping}
                     aria-pressed={recording}
-                    className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-6 text-sm font-extrabold text-white transition-colors disabled:opacity-60 ${
+                    className={`inline-flex min-h-12 items-center gap-2 rounded-xl px-6 text-sm font-extrabold text-white transition-colors disabled:cursor-wait ${
                       recording ? "bg-rose-600 hover:bg-rose-700" : "bg-teal-600 hover:bg-teal-700"
                     }`}
                   >
@@ -831,7 +831,7 @@ export default function DiagnosticPage() {
                     type="button"
                     onClick={() => void skipSpeaking(current.id)}
                     disabled={recording || speakingBusy || skipping}
-                    className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+                    className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 text-sm font-extrabold text-slate-700 transition-colors hover:bg-slate-100 disabled:cursor-wait dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
                   >
                     <SkipForward size={16} aria-hidden="true" />
                     <span>Bỏ qua</span>
@@ -1182,7 +1182,7 @@ function DiagnosticResultView({
                       <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
                         Bản ghi của bạn vẫn được lưu nhưng chưa chấm được. Kỹ năng Nói chưa có điểm cho tới khi chấm lại thành công.
                       </p>
-                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:opacity-50 dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>
+                      <button type="button" onClick={() => retrySpeaking.mutate(questionId)} disabled={retrySpeaking.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:cursor-wait dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>
                     </>
                   )}
                 </article>
@@ -1227,7 +1227,7 @@ function DiagnosticResultView({
                 {item.status === "GRADED" && <CriteriaList criteria={item.criteria} feedback={item.criterionFeedback} weights={item.criterionWeights} />}
                 {item.feedback && <FeedbackSummary text={item.feedback} />}
                 <SuggestionList items={item.suggestions} />
-                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:opacity-50 dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>}
+                {item.status === "GRADING_FAILED" && <button type="button" onClick={() => retryWriting.mutate(item.questionId)} disabled={retryWriting.isPending} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-teal-300 px-3 text-sm font-bold text-teal-700 transition hover:bg-teal-50 disabled:cursor-wait dark:border-teal-800 dark:text-teal-300"><RotateCcw size={14} /> Chấm lại</button>}
               </article>
               );
             })}

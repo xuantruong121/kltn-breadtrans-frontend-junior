@@ -196,7 +196,7 @@ export default function MediaSearchPanel({
           type="button"
           onClick={() => void search()}
           disabled={loading !== null}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
         >
           {loading === "search" ? (
             <Loader2 size={13} className="animate-spin" />
@@ -210,7 +210,7 @@ export default function MediaSearchPanel({
             type="button"
             onClick={() => void generate()}
             disabled={loading !== null}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
           >
             {loading === "generate" ? (
               <Loader2 size={13} className="animate-spin" />
@@ -232,7 +232,7 @@ export default function MediaSearchPanel({
               type="button"
               onClick={() => void search()}
               disabled={loading !== null}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
             >
               Thử lại
             </button>
@@ -267,7 +267,7 @@ export default function MediaSearchPanel({
               type="button"
               onClick={() => void accept()}
               disabled={loading !== null}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
             >
               {loading === "accept" && <Loader2 size={13} className="animate-spin" />}
               Dùng ảnh này
@@ -276,7 +276,7 @@ export default function MediaSearchPanel({
               type="button"
               onClick={() => void search()}
               disabled={loading !== null}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
             >
               Tìm ảnh khác
             </button>
@@ -301,7 +301,7 @@ export default function MediaSearchPanel({
               type="button"
               onClick={() => void generate()}
               disabled={loading !== null}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
             >
               Sinh ảnh khác
             </button>
@@ -340,7 +340,7 @@ export default function MediaSearchPanel({
                 type="button"
                 onClick={() => void acceptGenerated()}
                 disabled={loading !== null}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 disabled:cursor-wait"
               >
                 {loading === "generate-accept" && (
                   <Loader2 size={13} className="animate-spin" />
@@ -351,7 +351,7 @@ export default function MediaSearchPanel({
                 type="button"
                 onClick={() => void generate()}
                 disabled={loading !== null}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
               >
                 Sinh ảnh khác
               </button>

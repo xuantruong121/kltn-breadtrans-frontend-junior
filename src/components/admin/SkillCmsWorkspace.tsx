@@ -2474,8 +2474,8 @@ export default function SkillCmsWorkspace({
           <button
             type="button"
             onClick={() => void saveQuestion(false)}
-            disabled={busy || !id}
-            className={BTN_PRIMARY}
+            disabled={busy}
+            className={`${BTN_PRIMARY} ${id ? "" : "invisible"}`}
           >
             {question.id ? <CheckCircle2 size={16} /> : <Plus size={16} />}{" "}
             {question.id ? "Lưu câu hỏi" : "Thêm câu hỏi"}
@@ -2484,8 +2484,8 @@ export default function SkillCmsWorkspace({
             <button
               type="button"
               onClick={() => void saveQuestion(true)}
-              disabled={busy || !id}
-              className={BTN_AI}
+              disabled={busy}
+              className={`${BTN_AI} ${id ? "" : "invisible"}`}
             >
               <FileAudio size={16} /> Lưu và tạo audio
             </button>
@@ -2641,23 +2641,16 @@ export default function SkillCmsWorkspace({
                     />
                   </label>
                 )}
-                <DocumentImportButton
-                  onText={setDocumentText}
-                  disabled={draftLocked}
-                />
+                {!draftLocked && <DocumentImportButton onText={setDocumentText} />}
                 <button
                   type="button"
                   onClick={() => void handleSuggestFullDraft()}
-                  disabled={
-                    draftLocked ||
-                    (isListening && selectedListeningMode === "COMPREHENSION")
-                  }
-                  title={
+                                    title={
                     draftLocked
                       ? "Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’"
                       : "Dùng Tiêu đề làm chủ đề và Trình độ bên dưới. Bản nháp hiện ra để xem lại trước khi áp dụng."
                   }
-                  className={BTN_AI}
+                  className={`${BTN_AI} ${draftLocked || (isListening && selectedListeningMode === "COMPREHENSION") ? "invisible" : ""}`}
                 >
                   Soạn cả bài bằng AI
                 </button>
@@ -2806,12 +2799,15 @@ export default function SkillCmsWorkspace({
                       ? "Bài nghe chép: mỗi câu có audio riêng ở danh sách câu hỏi; audio dưới đây ghép cả bài."
                       : "Một đoạn audio liền mạch cho cả bài, tạo từ lời thoại. Học viên nghe rồi trả lời các câu hỏi bên dưới."}
                   </p>
+                  {!id && (
+                    <p className="mt-1 text-sm font-medium text-slate-700">Lưu bài trước, sau đó tạo audio.</p>
+                  )}
                 </div>
                 <button
                   type="button"
                   onClick={() => void audioAction("validate")}
-                  disabled={busy || !id}
-                  className={BTN_SECONDARY}
+                  disabled={busy}
+                  className={`${BTN_SECONDARY} ${id ? "" : "invisible"}`}
                 >
                   <CheckCircle2 size={16} /> Kiểm tra lời thoại
                 </button>
@@ -2937,8 +2933,8 @@ export default function SkillCmsWorkspace({
                     <button
                       type="button"
                       onClick={() => void audioAction("generate-preview")}
-                      disabled={busy || !id}
-                      className={BTN_PRIMARY}
+                      disabled={busy}
+                      className={`${BTN_PRIMARY} ${id ? "" : "invisible"}`}
                     >
                       <FileAudio size={16} /> Tạo audio
                     </button>
@@ -3279,9 +3275,9 @@ export default function SkillCmsWorkspace({
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      disabled={busy || !bulkLines.trim()}
+                      disabled={busy}
                       onClick={() => void addDictationLines()}
-                      className={BTN_PRIMARY}
+                      className={`${BTN_PRIMARY} ${!bulkLines.trim() ? "invisible" : ""}`}
                     >
                       <Plus size={16} /> Thêm{" "}
                       {bulkLines.split("\n").filter((l) => l.trim()).length} câu
@@ -3313,10 +3309,12 @@ export default function SkillCmsWorkspace({
                 <p className="text-sm font-semibold text-slate-900">Câu hỏi mới</p>
                 {renderQuestionEditor()}
               </div>
+            ) : !id && domain !== "writing" ? (
+              <p className="text-sm font-medium text-slate-700">Lưu bài trước, sau đó thêm câu hỏi.</p>
             ) : (
               <button
                 type="button"
-                disabled={(!id && domain !== "writing") || busy}
+                disabled={busy}
                 onClick={() => {
                   // A Writing exercise is saved first, then opens its first question.
                   if (!id) {
@@ -3867,7 +3865,7 @@ export default function SkillCmsWorkspace({
                 type="button"
                 onClick={() => void handleSuggestListeningContent()}
                 disabled={isListeningContentAiLoading}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-wait"
               >
                 {isListeningContentAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
@@ -3977,7 +3975,7 @@ export default function SkillCmsWorkspace({
                 type="button"
                 onClick={() => void handleSuggestListeningQuestions()}
                 disabled={isListeningQuestionsAiLoading}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:opacity-50"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-wait"
               >
                 {isListeningQuestionsAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
@@ -4317,7 +4315,7 @@ export default function SkillCmsWorkspace({
                 type="button"
                 onClick={() => void handleSuggestWritingTask()}
                 disabled={isWritingAiLoading}
-                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:opacity-50"
+                className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-300 disabled:cursor-wait"
               >
                 {isWritingAiLoading && (
                   <Loader2 size={14} className="animate-spin" />
@@ -4421,12 +4419,9 @@ export default function SkillCmsWorkspace({
                 </span>
                 <button
                   type="button"
-                  disabled={
-                    isPassageAiLoading ||
-                    (!passageAiTopic.trim() && !form.title.trim())
-                  }
+                  disabled={isPassageAiLoading}
                   onClick={handleSuggestPassage}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                  className={`inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white hover:bg-slate-800 disabled:cursor-wait transition-colors ${!passageAiTopic.trim() && !form.title.trim() ? "invisible" : ""}`}
                 >
                   {isPassageAiLoading ? (
                     <Loader2 size={13} className="animate-spin" />
@@ -4535,9 +4530,9 @@ export default function SkillCmsWorkspace({
               </select>
               <button
                 type="button"
-                disabled={isQuestionsAiLoading || !form.passage.trim()}
+                disabled={isQuestionsAiLoading}
                 onClick={handleSuggestReadingQuestions}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-1.5 font-semibold text-white hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                className={`inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-1.5 font-semibold text-white hover:bg-slate-800 disabled:cursor-wait transition-colors ${!form.passage.trim() ? "invisible" : ""}`}
               >
                 {isQuestionsAiLoading ? (
                   <Loader2 size={13} className="animate-spin" />

@@ -152,7 +152,7 @@ export default function ExamStudioPage({
             type="button"
             onClick={() => duplicateMutation.mutate()}
             disabled={duplicateMutation.isPending}
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-wait dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
           >
             Nhân bản đề
           </button>
@@ -181,7 +181,7 @@ export default function ExamStudioPage({
                 type="button"
                 onClick={() => unpublishMutation.mutate()}
                 disabled={unpublishMutation.isPending}
-                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                className="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-wait dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 Chuyển về bản nháp
               </button>

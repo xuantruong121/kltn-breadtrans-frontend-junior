@@ -175,7 +175,7 @@ export function AvatarCropDialog({ file, photo, isSaving, onCancel, onConfirm }:
             type="button"
             onClick={onCancel}
             disabled={isSaving}
-            className="min-h-11 cursor-pointer rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+            className="min-h-11 cursor-pointer rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             Hủy
           </button>
@@ -183,7 +183,7 @@ export function AvatarCropDialog({ file, photo, isSaving, onCancel, onConfirm }:
             type="button"
             onClick={confirm}
             disabled={isSaving}
-            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-bold text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed"
           >
             {isSaving ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
             Lưu ảnh

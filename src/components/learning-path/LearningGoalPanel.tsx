@@ -182,14 +182,16 @@ export function LearningGoalPanel({
           type="button"
           onClick={() => setDraft(null)}
           disabled={save.isPending}
-          className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+          className="min-h-11 rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:cursor-wait dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           Huỷ
         </button>
         <button
           type="submit"
-          disabled={save.isPending || pastDay}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-bold text-white hover:bg-blue-800 disabled:opacity-60"
+          disabled={save.isPending}
+          className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-700 px-4 text-sm font-bold text-white hover:bg-blue-800 disabled:cursor-wait ${
+            pastDay ? "invisible" : ""
+          }`}
         >
           {save.isPending && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
           Lưu mục tiêu

@@ -514,8 +514,10 @@ export default function WritingDetailPage(props: {
                 <button
                   type="button"
                   onClick={handleEvaluate}
-                  disabled={isEvaluating || wordCount === 0}
-                  className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                  disabled={isEvaluating}
+                  className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed cursor-pointer ${
+                    wordCount === 0 ? "invisible" : ""
+                  }`}
                 >
                   {isEvaluating ? (
                     <>

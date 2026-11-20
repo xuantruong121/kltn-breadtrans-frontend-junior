@@ -54,7 +54,7 @@ export function ToppingChoice({
               animate={{ rotateY: 0, opacity: 1, y: 0 }}
               transition={{ delay: reduce ? 0 : 0.15 + i * 0.12, type: "spring", stiffness: 220, damping: 20 }}
               whileHover={reduce ? undefined : { y: -4 }}
-              className={`flex h-full flex-col items-center gap-2 rounded-2xl border-2 bg-gradient-to-b p-4 text-center transition-colors disabled:opacity-60 ${RARITY_TONE[offer.rarity]}`}
+              className={`flex h-full flex-col items-center gap-2 rounded-2xl border-2 bg-gradient-to-b p-4 text-center transition-colors disabled:cursor-wait ${RARITY_TONE[offer.rarity]}`}
             >
               <span className="flex w-full items-center justify-between text-[11px] font-bold uppercase tracking-wide opacity-80">
                 <span>{RARITY_LABEL[offer.rarity]}</span>

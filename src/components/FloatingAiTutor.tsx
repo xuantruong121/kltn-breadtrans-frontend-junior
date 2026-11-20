@@ -939,7 +939,7 @@ function FloatingAiTutorInner() {
                       <button
                         onClick={handleReload}
                         disabled={isFetchingHistory}
-                        className="hover:bg-white/20 p-1.5 rounded-xl transition-colors text-amber-100 hover:text-white cursor-pointer disabled:opacity-50"
+                        className="hover:bg-white/20 p-1.5 rounded-xl transition-colors text-amber-100 hover:text-white cursor-pointer disabled:cursor-wait"
                         title="Tải lại lịch sử cuộc trò chuyện từ máy chủ"
                       >
                         <RotateCcw size={16} className={isFetchingHistory ? "animate-spin" : ""} />
@@ -1011,7 +1011,7 @@ function FloatingAiTutorInner() {
                       <button
                         onClick={handleLoadOlderMessages}
                         disabled={isLoadingOlder}
-                        className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-full shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        className="px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-full shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer disabled:cursor-wait"
                       >
                         {isLoadingOlder ? (
                           <>
@@ -1207,8 +1207,8 @@ function FloatingAiTutorInner() {
                   <button
                     type="button"
                     onClick={handleSend}
-                    disabled={!input.trim() || isLoading}
-                    className="bg-orange-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-sm cursor-pointer shrink-0"
+                    disabled={isLoading}
+                    className={`bg-orange-500 text-white p-3 rounded-2xl hover:brightness-110 disabled:cursor-wait transition-all shadow-sm cursor-pointer shrink-0 ${!input.trim() ? "invisible" : ""}`}
                     title="Gửi tin nhắn"
                     aria-label="Gửi tin nhắn"
                   >

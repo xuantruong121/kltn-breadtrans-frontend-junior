@@ -254,7 +254,7 @@ export default function ToeicWritingExamComposer({
               <ImageUploadField
                 label="Ảnh của câu"
                 value={form.imageUrl}
-                disabled={disabled}
+                disabled={!section?.editable}
                 onChange={(imageUrl) => setForm({ ...form, imageUrl })}
               />
               <label className="block text-sm font-semibold text-slate-700">

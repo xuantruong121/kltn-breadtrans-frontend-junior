@@ -96,7 +96,7 @@ export function ConfirmDialog({
             onClick={onCancel}
             disabled={isPending}
             aria-label="Đóng hộp thoại"
-            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50"
+            className="grid min-h-11 min-w-11 place-items-center rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:cursor-wait"
           >
             <X size={19} />
           </button>
@@ -107,7 +107,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onCancel}
             disabled={isPending}
-            className="min-h-11 rounded-xl border border-slate-300 dark:border-slate-700 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+            className="min-h-11 rounded-xl border border-slate-300 dark:border-slate-700 px-4 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:cursor-wait"
           >
             {cancelLabel}
           </button>
@@ -115,7 +115,7 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={isPending}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:cursor-wait"
           >
             {isPending && <Loader2 size={16} className="animate-spin" />}{" "}
             {isPending ? "Đang xóa..." : confirmLabel}

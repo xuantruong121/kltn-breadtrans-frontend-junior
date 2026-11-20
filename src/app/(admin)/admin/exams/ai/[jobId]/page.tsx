@@ -484,8 +484,7 @@ export default function ExamAiCandidateWorkspacePage({
               <button
                 type="button"
                 onClick={selectAllValid}
-                disabled={!validUnappliedKeys.length}
-                className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-40 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                className={`rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 ${!validUnappliedKeys.length ? "invisible" : ""}`}
               >
                 Chọn tất cả hợp lệ
               </button>
@@ -521,7 +520,7 @@ export default function ExamAiCandidateWorkspacePage({
                       type="button"
                       onClick={() => regeneratePart(part)}
                       disabled={regenerating === `PART_${part}`}
-                      className="text-xs font-medium text-slate-500 hover:text-slate-800 disabled:opacity-40 dark:text-slate-400 dark:hover:text-slate-100"
+                      className="text-xs font-medium text-slate-500 hover:text-slate-800 disabled:cursor-wait dark:text-slate-400 dark:hover:text-slate-100"
                     >
                       {regenerating === `PART_${part}`
                         ? "Đang tạo lại..."
@@ -573,7 +572,7 @@ export default function ExamAiCandidateWorkspacePage({
                                   type="button"
                                   onClick={() => regenerateGroup(group.candidateKey)}
                                   disabled={regenerating === group.candidateKey}
-                                  className="text-xs font-medium text-slate-500 hover:text-slate-800 disabled:opacity-40 dark:text-slate-400 dark:hover:text-slate-100"
+                                  className="text-xs font-medium text-slate-500 hover:text-slate-800 disabled:cursor-wait dark:text-slate-400 dark:hover:text-slate-100"
                                 >
                                   {regenerating === group.candidateKey
                                     ? "Đang tạo lại..."
@@ -878,8 +877,8 @@ export default function ExamAiCandidateWorkspacePage({
             <button
               type="button"
               onClick={runApply}
-              disabled={!selected.size || applying}
-              className="inline-flex items-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40 dark:bg-slate-100 dark:text-slate-900"
+              disabled={applying}
+              className={`inline-flex items-center gap-2 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-wait dark:bg-slate-100 dark:text-slate-900 ${!selected.size ? "invisible" : ""}`}
             >
               {applying && <Loader2 size={14} className="animate-spin" />}
               Áp dụng {selected.size} nội dung đã chọn

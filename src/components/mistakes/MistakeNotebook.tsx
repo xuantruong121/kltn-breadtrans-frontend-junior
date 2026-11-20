@@ -148,7 +148,7 @@ export function MistakeNotebook() {
               type="button"
               onClick={() => setReviewing(true)}
               disabled={reviewing}
-              className="inline-flex min-h-11 cursor-pointer items-center rounded-lg bg-amber-500 px-4 text-sm font-bold text-white transition-colors hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-lg bg-amber-500 px-4 text-sm font-bold text-white transition-colors hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed"
             >
               Ôn {summary.data.answerable} câu
             </button>
@@ -296,9 +296,10 @@ export function MistakeNotebook() {
               <nav aria-label="Trang" className="mt-4 flex items-center justify-between gap-3">
                 <button
                   type="button"
-                  disabled={page <= 1}
                   onClick={() => go({ page: page - 1 })}
-                  className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  className={`inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 ${
+                    page <= 1 ? "invisible" : ""
+                  }`}
                 >
                   Trang trước
                 </button>
@@ -307,9 +308,10 @@ export function MistakeNotebook() {
                 </span>
                 <button
                   type="button"
-                  disabled={page >= pages}
                   onClick={() => go({ page: page + 1 })}
-                  className="inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  className={`inline-flex min-h-10 items-center rounded-lg border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 ${
+                    page >= pages ? "invisible" : ""
+                  }`}
                 >
                   Trang sau
                 </button>

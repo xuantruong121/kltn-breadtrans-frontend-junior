@@ -92,7 +92,7 @@ export function LevelChoiceCard({ profile }: { profile: LearnerProfile | undefin
                 disabled={choose.isPending}
                 onClick={() => choose.mutate(o.value)}
                 title={o.description}
-                className="min-h-14 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-blue-400 hover:bg-blue-50 disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-blue-950/40"
+                className="min-h-14 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left hover:border-blue-400 hover:bg-blue-50 disabled:cursor-wait dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-blue-950/40"
               >
                 <span className="block text-base font-bold text-slate-900 dark:text-slate-100">{o.label}</span>
                 <span className="block text-xs text-slate-600 dark:text-slate-400">{o.description}</span>

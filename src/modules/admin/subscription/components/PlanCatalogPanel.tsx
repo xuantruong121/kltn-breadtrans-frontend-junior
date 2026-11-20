@@ -205,7 +205,7 @@ function DraftEditor({
           type="button"
           disabled={discard.isPending}
           onClick={() => discard.mutate(undefined)}
-          className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
         >
           Bỏ bản nháp
         </button>
@@ -213,7 +213,7 @@ function DraftEditor({
           type="button"
           disabled={save.isPending}
           onClick={() => save.mutate(undefined)}
-          className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
         >
           Lưu bản nháp
         </button>
@@ -270,7 +270,7 @@ function PlanCard({
             type="button"
             disabled={create.isPending}
             onClick={() => create.mutate(undefined)}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
           >
             <Plus size={16} /> Tạo bản nháp
           </button>

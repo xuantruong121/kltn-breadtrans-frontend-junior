@@ -89,7 +89,7 @@ export default function ToeicBundlePage({ params }: { params: Promise<{ quizId: 
             type="button"
             disabled={isLaunching}
             onClick={handleStartLR}
-            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-4 text-sm font-black text-white hover:bg-amber-600 disabled:opacity-50 cursor-pointer"
+            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-xl bg-amber-500 px-4 text-sm font-black text-white hover:bg-amber-600 disabled:cursor-wait cursor-pointer"
           >
             Bắt đầu phần L&amp;R <ArrowRight size={16} />
           </button>

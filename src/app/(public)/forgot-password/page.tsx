@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
               </div>
             </div>
 
-            <button type="submit" disabled={isLoading} className="btn-tactile-primary flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-md transition-all hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 sm:text-base">
+            <button type="submit" disabled={isLoading} className="btn-tactile-primary flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-md transition-all hover:bg-amber-700 disabled:cursor-not-allowed sm:text-base">
               {isLoading ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : <ArrowRight size={18} aria-hidden="true" />}
               {isLoading ? "Đang gửi yêu cầu..." : "Gửi liên kết đặt lại"}
             </button>

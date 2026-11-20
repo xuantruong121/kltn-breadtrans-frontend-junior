@@ -410,11 +410,9 @@ export default function AdminSpeakingPage() {
                 />
                 <button
                   type="button"
-                  disabled={
-                    !newCategoryName.trim() || createCategoryMutation.isPending
-                  }
+                  disabled={createCategoryMutation.isPending}
                   onClick={() => createCategoryMutation.mutate()}
-                  className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                  className={`rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:cursor-wait ${!newCategoryName.trim() ? "invisible" : ""}`}
                 >
                   Tạo
                 </button>

@@ -880,7 +880,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
                   Thoát
                 </button>
               ) : (
-                <button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-md bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:opacity-60">
+                <button type="button" onClick={() => cancel.mutate()} disabled={cancel.isPending} className="min-h-11 rounded-md bg-rose-600 px-4 text-sm font-bold text-white hover:bg-rose-700 disabled:cursor-wait">
                   {cancel.isPending ? "Đang hủy..." : "Hủy lượt thi"}
                 </button>
               )}
@@ -918,7 +918,7 @@ export default function ToeicAttemptPage({ params }: { params: Promise<{ attempt
               <button type="button" onClick={() => setShowSubmitSummary(false)} className="min-h-11 rounded-md border border-slate-200 px-4 text-sm font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800">
                 Quay lại làm bài
               </button>
-              <button type="button" onClick={() => submit.mutate()} disabled={submit.isPending} className="min-h-11 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:opacity-60">
+              <button type="button" onClick={() => submit.mutate()} disabled={submit.isPending} className="min-h-11 rounded-md bg-blue-600 px-4 text-sm font-bold text-white hover:bg-blue-700 disabled:cursor-wait">
                 {submit.isPending ? "Đang nộp..." : "Xác nhận nộp bài"}
               </button>
             </div>

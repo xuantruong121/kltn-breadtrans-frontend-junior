@@ -150,8 +150,8 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <button
             type="button"
             onClick={() => void begin()}
-            disabled={starting || (!isGuest && short > 0)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-extrabold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            disabled={starting}
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3.5 text-base font-extrabold text-white transition-colors hover:bg-amber-600 disabled:cursor-not-allowed sm:w-auto ${!isGuest && short > 0 ? "invisible" : ""}`}
           >
             <Crosshair size={18} strokeWidth={2.25} aria-hidden="true" />
             {isGuest ? "Đăng nhập để chơi" : starting ? "Đang mở ván…" : "Bắt đầu"}

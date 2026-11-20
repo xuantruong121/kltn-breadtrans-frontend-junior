@@ -103,7 +103,7 @@ export function BossTyping({
           placeholder={compact ? "Gõ từ" : "Gõ từ rồi nhấn Enter"}
           className="min-w-0 flex-1 rounded-xl border-2 border-white/15 bg-black/40 px-3 py-2.5 font-mono text-lg font-bold text-amber-50 caret-amber-300 outline-none placeholder:font-sans placeholder:font-medium placeholder:text-white/40 focus:border-amber-300/70"
         />
-        <button type="submit" disabled={disabled || !value.trim()} className="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 font-extrabold text-white transition-colors hover:bg-amber-600 disabled:opacity-50">
+        <button type="submit" disabled={disabled} className={`inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-4 font-extrabold text-white transition-colors hover:bg-amber-600 disabled:cursor-wait ${!value.trim() ? "invisible" : ""}`}>
           <CornerDownLeft size={17} strokeWidth={2.5} aria-hidden="true" />
           Đánh
         </button>

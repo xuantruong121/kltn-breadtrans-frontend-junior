@@ -1337,16 +1337,17 @@ export function ListeningComprehensionWorkspace({
                   >
                     Nghe chép
                   </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={showFullTranscript}
-                    disabled={!isChecked}
-                    onClick={() => setShowFullTranscript(true)}
-                    className="min-h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Toàn bộ lời thoại
-                  </button>
+                  {isChecked && (
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={showFullTranscript}
+                      onClick={() => setShowFullTranscript(true)}
+                      className="min-h-10 rounded-lg px-4 text-sm font-semibold text-slate-500 dark:text-slate-400 transition hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-slate-200"
+                    >
+                      Toàn bộ lời thoại
+                    </button>
+                  )}
                 </div>
                 <span className="shrink-0 text-xs font-bold text-slate-600 dark:text-slate-400">
                   {currentIndex + 1} / {questions.length}
@@ -1678,7 +1679,7 @@ export function ListeningComprehensionWorkspace({
                         type="button"
                         onClick={() => void handleCheck()}
                         disabled={isChecking}
-                        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-extrabold text-white shadow-xs transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+                        className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-sky-600 px-4 text-sm font-extrabold text-white shadow-xs transition hover:bg-sky-700 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                       >
                         {isChecking ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <PenLine size={16} aria-hidden="true" />}
                         {isChecking
@@ -2139,9 +2140,10 @@ export function ListeningComprehensionWorkspace({
               setAutoPlayQuestionId(null);
               if (currentIndex > 0) setCurrentIndex((p) => p - 1);
             }}
-            disabled={currentIndex === 0}
             aria-label="Câu trước"
-            className="min-h-11 shrink-0 px-3 sm:px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed transition-colors text-sm"
+            className={`min-h-11 shrink-0 px-3 sm:px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors text-sm ${
+              currentIndex === 0 ? "invisible" : ""
+            }`}
           >
             ←<span className="hidden sm:inline"> Câu trước</span>
           </button>
@@ -2243,7 +2245,7 @@ export function ListeningComprehensionWorkspace({
                 type="button"
                 onClick={handleSkipQuestion}
                 disabled={isChecking}
-                className="min-h-11 shrink-0 whitespace-nowrap rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 disabled:opacity-50"
+                className="min-h-11 shrink-0 whitespace-nowrap rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 disabled:cursor-wait"
               >
                 Bỏ qua
               </button>
@@ -2261,7 +2263,7 @@ export function ListeningComprehensionWorkspace({
               type="button"
               onClick={handleFinalSubmit}
               disabled={isSubmitting || submitMutation.isPending}
-              className="shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-sm transition-all active:scale-95 disabled:opacity-60 cursor-pointer inline-flex items-center gap-2 text-sm"
+              className="shrink-0 whitespace-nowrap px-4 sm:px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-sm transition-all active:scale-95 disabled:cursor-wait cursor-pointer inline-flex items-center gap-2 text-sm"
             >
               {reviewOnly ? (
                 <>

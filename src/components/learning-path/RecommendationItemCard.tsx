@@ -48,7 +48,7 @@ export function RecommendationItemCard({
             disabled={toggle.isPending}
             aria-pressed={item.saved}
             aria-label={item.saved ? "Bỏ lưu bài này" : "Lưu bài này"}
-            className="-m-2 flex size-10 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-blue-700 disabled:opacity-50 dark:hover:bg-slate-800"
+            className="-m-2 flex size-10 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-blue-700 disabled:cursor-wait dark:hover:bg-slate-800"
           >
             {item.saved ? (
               <BookmarkCheck size={20} className="text-blue-700 dark:text-blue-300" aria-hidden="true" />

@@ -317,8 +317,8 @@ export default function RegisterFlow() {
 
             <button
               type="submit"
-              disabled={isSubmitting || !acceptTerms}
-              className="btn-tactile-primary mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-150 hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
+              disabled={isSubmitting}
+              className="btn-tactile-primary mt-2 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-amber-600 px-6 py-3.5 text-sm font-bold text-white shadow-md transition-all duration-150 hover:bg-amber-700 disabled:cursor-wait sm:text-base"
             >
               {isSubmitting ? (
                 <>

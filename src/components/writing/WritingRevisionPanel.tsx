@@ -246,7 +246,7 @@ export function WritingRevisionPanel({
                 setError(null);
               }}
               disabled={sending}
-              className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+              className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
             >
               Huỷ
             </button>

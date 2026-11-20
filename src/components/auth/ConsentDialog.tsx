@@ -96,8 +96,8 @@ export function ConsentDialog({
         <button
           type="button"
           onClick={onConfirm}
-          disabled={!checked || isPending}
-          className="cursor-pointer transition-colors mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isPending}
+          className={`cursor-pointer transition-colors mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 text-sm font-bold text-white hover:bg-amber-700 disabled:cursor-not-allowed ${!checked ? "invisible" : ""}`}
         >
           {isPending ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null}
           {confirmLabel}

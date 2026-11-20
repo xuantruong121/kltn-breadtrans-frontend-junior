@@ -107,8 +107,9 @@ export function GrammarCatalog({
             type="button"
             onClick={startRandom}
             aria-describedby="grammar-random-hint"
-            disabled={visible.length === 0}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            className={`inline-flex min-h-10 items-center gap-2 rounded-xl bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 cursor-pointer ${
+              visible.length === 0 ? "invisible" : ""
+            }`}
           >
             <Shuffle size={16} strokeWidth={2} aria-hidden="true" />
             Luyện ngẫu nhiên

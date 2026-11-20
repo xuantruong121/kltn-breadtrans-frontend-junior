@@ -72,7 +72,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                     aria-pressed={isSaved}
                     aria-label={isSaved ? `Bỏ lưu ${word.word}` : `Lưu ${word.word} vào Từ đã lưu`}
                     title={isSaved ? "Bỏ lưu từ" : "Lưu vào Từ đã lưu"}
-                    className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-60 ${
+                    className={`inline-flex min-h-9 cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 text-xs font-semibold transition-colors disabled:cursor-wait ${
                       isSaved
                         ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300"
                         : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"

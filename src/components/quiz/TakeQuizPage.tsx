@@ -978,8 +978,7 @@ export default function TakeQuizPage(props: {
                         onClick={() => {
                           if (currentStep > 0) setCurrentStep(currentStep - 1);
                         }}
-                        disabled={currentStep === 0}
-                        className="px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed flex items-center gap-1"
+                        className={`px-3.5 py-2 rounded-xl font-bold text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer flex items-center gap-1 ${currentStep === 0 ? "invisible" : ""}`}
                       >
                         <ChevronLeft size={14} />
                         <span>Câu trước</span>
@@ -1327,8 +1326,7 @@ export default function TakeQuizPage(props: {
                   onClick={() => {
                     if (currentStep > 0) setCurrentStep(currentStep - 1);
                   }}
-                  disabled={currentStep === 0}
-                  className="px-6 py-3.5 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed"
+                  className={`px-6 py-3.5 rounded-2xl font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer ${currentStep === 0 ? "invisible" : ""}`}
                 >
                   ← Câu trước
                 </button>

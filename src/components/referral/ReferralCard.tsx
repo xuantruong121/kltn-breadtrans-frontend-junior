@@ -97,8 +97,8 @@ export function ReferralCard() {
               />
               <button
                 type="submit"
-                disabled={!normalizeReferralCode(friendCode) || claim.isPending}
-                className="h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                disabled={claim.isPending}
+                className={`h-10 rounded-lg border border-slate-300 px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-wait dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 ${!normalizeReferralCode(friendCode) ? "invisible" : ""}`}
               >
                 Nhận mã
               </button>

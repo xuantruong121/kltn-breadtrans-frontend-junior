@@ -127,7 +127,7 @@ function GroupMenu<G extends ExamCardGroup>({
                     setOpen(false);
                     onAction(action, group);
                   }}
-                  className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm disabled:opacity-50 ${action === "deleteGroup" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700 hover:bg-slate-100"}`}
+                  className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm disabled:cursor-wait ${action === "deleteGroup" ? "text-rose-700 hover:bg-rose-50" : "text-slate-700 hover:bg-slate-100"}`}
                 >
                   <Icon size={14} aria-hidden="true" />
                   {action === "editContent"

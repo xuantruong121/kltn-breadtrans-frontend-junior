@@ -703,7 +703,7 @@ export function AppHeader() {
                                         title="Đánh dấu đã đọc"
                                         disabled={marking}
                                         onClick={() => markReadMut.mutate(item.id)}
-                                        className="mr-1 mt-2 grid size-8 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-60 dark:text-slate-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
+                                        className="mr-1 mt-2 grid size-8 shrink-0 place-items-center rounded-lg text-slate-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 disabled:cursor-wait dark:text-slate-400 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
                                       >
                                         {marking ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}
                                       </button>

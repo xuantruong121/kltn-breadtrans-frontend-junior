@@ -1065,7 +1065,7 @@ export function AccountHub() {
                     <button
                       type="submit"
                       disabled={isSaving}
-                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 flex items-center gap-2"
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:cursor-wait flex items-center gap-2"
                     >
                       {isSaving && (
                         <Loader2 size={16} className="animate-spin" />
@@ -1203,7 +1203,7 @@ export function AccountHub() {
                     <button
                       type="submit"
                       disabled={isChangingPassword}
-                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:opacity-60 flex items-center gap-2"
+                      className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-sm shadow-sm transition-all cursor-pointer disabled:cursor-wait flex items-center gap-2"
                     >
                       {isChangingPassword && <Loader2 size={16} className="animate-spin" />}
                       <span>Đổi mật khẩu</span>

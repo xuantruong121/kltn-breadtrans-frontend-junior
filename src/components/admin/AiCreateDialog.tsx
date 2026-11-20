@@ -118,7 +118,7 @@ export function AiCreateDialog({
           <button type="button" onClick={onClose} disabled={busy} className={BTN_SECONDARY}>
             Hủy
           </button>
-          <button type="submit" disabled={busy || !name.trim()} className={BTN_AI}>
+          <button type="submit" disabled={busy} className={`${BTN_AI} ${name.trim() ? "" : "invisible"}`}>
             {busy && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
             Tạo bằng AI
           </button>

@@ -214,7 +214,7 @@ function SpeakingAnswer({
           type="button"
           onClick={() => void begin()}
           disabled={blocked}
-          className="inline-flex min-h-11 items-center gap-2 rounded-md bg-amber-500 px-4 text-sm font-bold uppercase text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md bg-amber-500 px-4 text-sm font-bold uppercase text-white hover:bg-amber-600 disabled:cursor-not-allowed"
         >
           <Mic size={16} aria-hidden="true" /> {label}
         </button>

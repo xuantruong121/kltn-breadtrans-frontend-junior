@@ -65,13 +65,13 @@ export function TrackTagField({
             key={value}
             type="button"
             aria-pressed={active}
-            disabled={saving || locked}
+            disabled={saving}
             onClick={() => void toggle(value)}
-            className={`min-h-10 cursor-pointer rounded-lg border px-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            className={`min-h-10 cursor-pointer rounded-lg border px-3 text-sm font-medium transition disabled:cursor-not-allowed ${
               active
                 ? "border-blue-600 bg-blue-50 text-blue-800"
                 : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            }`}
+            } ${locked ? "invisible" : ""}`}
           >
             {label}
           </button>

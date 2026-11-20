@@ -148,7 +148,7 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
             onClick={onClose}
             disabled={isSaving}
             aria-label="Đóng"
-            className="grid min-h-10 min-w-10 place-items-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+            className="grid min-h-10 min-w-10 place-items-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800 disabled:cursor-wait transition-colors"
           >
             <X size={20} />
           </button>
@@ -255,14 +255,14 @@ export const ShippingCompletionModal: React.FC<ShippingCompletionModalProps> = (
               type="button"
               onClick={onClose}
               disabled={isSaving}
-              className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 disabled:opacity-50 transition-colors"
+              className="min-h-11 rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-700 hover:bg-slate-50 active:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 disabled:cursor-wait transition-colors"
             >
               Hủy
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-xs hover:bg-amber-700 active:bg-amber-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 disabled:opacity-60 transition-colors cursor-pointer"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-xs hover:bg-amber-700 active:bg-amber-800 dark:bg-amber-500 dark:hover:bg-amber-600 dark:text-slate-950 disabled:cursor-wait transition-colors cursor-pointer"
             >
               {isSaving && <Loader2 size={16} className="animate-spin" />}
               <span>Lưu thông tin nhận quà</span>

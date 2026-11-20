@@ -81,7 +81,7 @@ export function DeviceSessions() {
                   onClick={() =>
                     void run(s.deviceId, () => axiosClient.delete(`/auth/sessions/${encodeURIComponent(s.deviceId)}`), "Đã đăng xuất thiết bị.")
                   }
-                  className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:bg-slate-900 dark:text-rose-300 cursor-pointer"
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 text-sm font-semibold text-rose-700 transition-colors hover:bg-rose-50 disabled:cursor-not-allowed dark:border-rose-900/60 dark:bg-slate-900 dark:text-rose-300 cursor-pointer"
                 >
                   {busy === s.deviceId ? <Loader2 size={15} className="animate-spin" aria-hidden="true" /> : <LogOut size={15} aria-hidden="true" />}
                   Đăng xuất
@@ -96,7 +96,7 @@ export function DeviceSessions() {
           type="button"
           disabled={busy !== null}
           onClick={() => void run("others", () => axiosClient.post("/auth/sessions/revoke-others"), "Đã đăng xuất các thiết bị khác.")}
-          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-800 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300 cursor-pointer"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm font-bold text-rose-800 transition-colors hover:bg-rose-100 disabled:cursor-not-allowed dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300 cursor-pointer"
         >
           {busy === "others" ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <LogOut size={16} aria-hidden="true" />}
           Đăng xuất các thiết bị khác ({others.length})

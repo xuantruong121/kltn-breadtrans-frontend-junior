@@ -156,9 +156,9 @@ export default function GrammarPastePanel({
       </div>
       <button
         type="button"
-        disabled={adding || !valid.length}
+        disabled={adding}
         onClick={() => void add()}
-        className={`${BTN_PRIMARY} mt-3`}
+        className={`${BTN_PRIMARY} mt-3 ${valid.length ? "" : "invisible"}`}
       >
         {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={16} />}
         {addLabel(valid.length)}

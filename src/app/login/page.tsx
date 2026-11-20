@@ -329,7 +329,7 @@ function LoginForm() {
             type="submit"
             id="submitBtn"
             disabled={isLoading}
-            className="btn-tactile-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-slate-950 shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-tactile-primary w-full py-3.5 px-6 rounded-xl font-bold text-sm sm:text-base bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-slate-950 shadow-md transition-all duration-150 flex items-center justify-center gap-2 select-none cursor-pointer disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>

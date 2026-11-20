@@ -859,7 +859,7 @@ export default function AdminPlanPurchasesPage() {
                         onClick={() =>
                           confirmPurchaseMutation.mutate(selectedPurchase.id)
                         }
-                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60 cursor-pointer"
+                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-wait cursor-pointer"
                       >
                         <CheckCircle2 size={16} /> Xác nhận & kích hoạt
                       </button>
@@ -909,10 +909,8 @@ export default function AdminPlanPurchasesPage() {
               </button>
               <button
                 type="submit"
-                disabled={
-                  rejectPurchaseMutation.isPending || !rejectReason.trim()
-                }
-                className="rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:opacity-60 cursor-pointer"
+                disabled={rejectPurchaseMutation.isPending}
+                className={`rounded-lg bg-rose-600 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-700 disabled:cursor-wait cursor-pointer ${!rejectReason.trim() ? "invisible" : ""}`}
               >
                 Xác nhận từ chối
               </button>

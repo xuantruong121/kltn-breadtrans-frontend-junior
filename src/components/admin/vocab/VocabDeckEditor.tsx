@@ -88,7 +88,7 @@ type DraftWord = {
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
 const ICON_BTN =
-  "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed";
 
 const unwrap = <T,>(value: any): T => (value?.data ?? value) as T;
 
@@ -642,18 +642,18 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                           <button
                             type="button"
                             onClick={() => void move(word.id, -1)}
-                            disabled={busy || Boolean(search) || index === 0}
+                            disabled={busy}
                             aria-label={`Đưa "${word.word}" lên trước`}
-                            className={ICON_BTN}
+                            className={`${ICON_BTN} ${search || index === 0 ? "invisible" : ""}`}
                           >
                             <ChevronUp size={16} />
                           </button>
                           <button
                             type="button"
                             onClick={() => void move(word.id, 1)}
-                            disabled={busy || Boolean(search) || index === stats.total - 1}
+                            disabled={busy}
                             aria-label={`Đưa "${word.word}" xuống sau`}
-                            className={ICON_BTN}
+                            className={`${ICON_BTN} ${search || index === stats.total - 1 ? "invisible" : ""}`}
                           >
                             <ChevronDown size={16} />
                           </button>
@@ -771,14 +771,14 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        disabled={busy || !pastedReady.length}
+                        disabled={busy}
                         onClick={async () => {
                           if (await addWords(pastedReady, "Đang thêm")) {
                             setPasteText("");
                             setPanel(null);
                           }
                         }}
-                        className={BTN_PRIMARY}
+                        className={`${BTN_PRIMARY} ${!pastedReady.length ? "invisible" : ""}`}
                       >
                         <Plus size={16} /> Thêm {pastedReady.length} từ
                       </button>
@@ -838,7 +838,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                         </ul>
                         <button
                           type="button"
-                          disabled={busy || !aiWords.some((r) => r.chosen)}
+                          disabled={busy}
                           onClick={async () => {
                             if (
                               await addWords(
@@ -850,7 +850,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                               setPanel(null);
                             }
                           }}
-                          className={`${BTN_PRIMARY} mt-3`}
+                          className={`${BTN_PRIMARY} mt-3 ${!aiWords.some((r) => r.chosen) ? "invisible" : ""}`}
                         >
                           <Plus size={16} /> Thêm {aiWords.filter((r) => r.chosen).length} từ đã chọn
                         </button>
