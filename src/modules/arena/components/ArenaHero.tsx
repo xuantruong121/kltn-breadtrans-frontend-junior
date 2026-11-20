@@ -99,7 +99,6 @@ export function ArenaHero({
           <div className="mt-2 flex gap-3">
             {STAKES.map((s) => {
               const selected = stake === s;
-              const ok = affordable(s);
               return (
                 <button
                   key={s}
@@ -110,7 +109,7 @@ export function ArenaHero({
                     selected
                       ? "border-amber-600 bg-amber-500 text-white"
                       : "border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-400 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
-                  } ${ok ? "" : "opacity-45"}`}
+                  }`}
                 >
                   <span className="text-lg font-extrabold tabular-nums leading-none">{s}</span>
                   <BreadCoinIcon size={14} strokeWidth={2.25} className="mt-0.5" aria-hidden="true" />

@@ -1590,15 +1590,22 @@ export function DailyDictationWorkspace({
                   </button>
                   {showAudioMenu && (
                     <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900 p-1.5 text-sm shadow-xl">
+                      {/* After a failed load the item said "Audio đang tải" forever; it now says so plainly. */}
+                      {audioError ? (
+                        <p className="flex min-h-10 items-center gap-2 px-3 font-semibold text-rose-700 dark:text-rose-300">
+                          Không tải được âm thanh
+                        </p>
+                      ) : (
                       <button
                         type="button"
                         disabled={!audioBlobUrl}
                         onClick={downloadAudio}
-                        className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 disabled:cursor-not-allowed cursor-pointer"
+                        className="flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 disabled:cursor-wait cursor-pointer"
                       >
                         <Download size={15} />
                         <span>{audioBlobUrl ? "Tải audio" : "Audio đang tải"}</span>
                       </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => {

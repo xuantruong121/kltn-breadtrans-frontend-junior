@@ -77,7 +77,7 @@ export const ToeicPaperQuestion = memo(function ToeicPaperQuestion({
               return (
                 <label
                   key={index}
-                  className={`flex min-h-9 cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1 text-[15px] leading-relaxed transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+                  className={`flex min-h-9 cursor-pointer items-start gap-2.5 rounded-md px-1.5 py-1 text-[15px] leading-relaxed transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60 ${disabled ? "cursor-not-allowed" : ""}`}
                 >
                   <input
                     type="radio"
