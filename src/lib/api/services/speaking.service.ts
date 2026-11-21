@@ -1,4 +1,5 @@
 import type { PracticeLevel } from "@/lib/learning-path/practiceLevel";
+import type { SetTrack } from "@/lib/speaking/trackChips";
 import axiosClient from "../axiosClient";
 
 export interface SpeakingExercise {
@@ -27,6 +28,8 @@ export interface SpeakingExercise {
   translation?: string;
   description?: string;
   isCompleted?: boolean;
+  /** Sent with an unlocked item; learners only get published ones, an admin also drafts. */
+  publicationStatus?: "DRAFT" | "PUBLISHED";
   isPremiumContent?: boolean;
   /** The level this item sits at, as access decides it. */
   practiceLevel?: PracticeLevel | null;
@@ -54,6 +57,8 @@ export interface SpeakingPracticeSetSummary {
   description: string;
   category: string;
   categoryLabel?: string;
+  /** The set's Lĩnh vực: active tracks only, in the admins' order (Phân loại folded into it). */
+  tracks?: SetTrack[];
   exerciseCount: number;
   completedCount: number;
   exerciseIds: number[];

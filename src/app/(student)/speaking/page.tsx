@@ -38,6 +38,7 @@ import {
   type StatusFilter,
 } from "@/lib/practice/catalogFilters";
 import { presentSpeakingProgress } from "@/lib/speaking/speakingExperienceLogic";
+import { ALL_TRACKS, inTrackChip, trackChips, tracksMatchSearch } from "@/lib/speaking/trackChips";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
 import { speakingSetDisplayTitle, withoutLevelPhrase } from "@/lib/catalog/displayTitles";
 
@@ -62,7 +63,8 @@ export default function SpeakingExercisesPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyFilter>("ALL");
-  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  // A Lĩnh vực chip; Phân loại folded into Lĩnh vực (owner 2026-11-21).
+  const [selectedTrack, setSelectedTrack] = useState<string>(ALL_TRACKS);
   const [sortOrder, setSortOrder] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("ALL");
   const [currentPage, setCurrentPage] = useState(1);
@@ -151,6 +153,7 @@ export default function SpeakingExercisesPage() {
         description: first.description ?? "Bài luyện nói theo câu.",
         category: first.category,
         categoryLabel: first.categoryLabel,
+        tracks: [],
         exerciseCount: 1,
         completedCount: first.isCompleted ? 1 : 0,
         exerciseIds: orderedItems.map((item) => item.id),
@@ -173,27 +176,17 @@ export default function SpeakingExercisesPage() {
     });
   }, [exercises]);
 
-  // Extract unique categories
-  const categories = useMemo(() => {
-    if (!practiceSets) return [];
-    const set = new Set<string>();
-    practiceSets.forEach((ex) => {
-      if (ex.category) set.add(ex.category);
-    });
-    return Array.from(set);
-  }, [practiceSets]);
-
-  // Category counts
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    if (!practiceSets) return counts;
-    practiceSets.forEach((ex) => {
-      const cat = ex.category;
-      if (!cat) return;
-      counts[cat] = (counts[cat] || 0) + 1;
-    });
-    return counts;
-  }, [practiceSets]);
+  // "Tất cả" and each Lĩnh vực with a published set, in the admins' order.
+  const chips = useMemo(
+    () =>
+      trackChips(
+        practiceSets.map((set) => ({
+          tracks: set.practiceSet.tracks,
+          publicationStatus: set.publicationStatus,
+        })),
+      ),
+    [practiceSets],
+  );
 
   // Count completed
   const completedCount = useMemo(() => {
@@ -212,7 +205,7 @@ export default function SpeakingExercisesPage() {
         ex.title?.toLowerCase().includes(q) ||
         ex.targetText?.toLowerCase().includes(q) ||
         ex.translation?.toLowerCase().includes(q) ||
-        ex.category?.toLowerCase().includes(q);
+        tracksMatchSearch(ex.practiceSet.tracks, q);
 
       const matchDifficulty = matchesDifficultyFilter(
         speakingLevelOf(ex),
@@ -220,16 +213,14 @@ export default function SpeakingExercisesPage() {
         ex.practiceLevel,
       );
 
-      const matchCategory =
-        selectedCategory === "ALL" ||
-        (ex.category || "").toUpperCase() === selectedCategory.toUpperCase();
+      const matchTrack = inTrackChip({ tracks: ex.practiceSet.tracks }, selectedTrack);
 
       const matchStatus = matchesStatusFilter(
         speakingSetStatus(ex),
         selectedStatus,
       );
 
-      return matchSearch && matchDifficulty && matchCategory && matchStatus;
+      return matchSearch && matchDifficulty && matchTrack && matchStatus;
     });
 
     // Sorted over every set before pagination slices a page.
@@ -249,7 +240,7 @@ export default function SpeakingExercisesPage() {
     practiceSets,
     searchTerm,
     selectedDifficulty,
-    selectedCategory,
+    selectedTrack,
     selectedStatus,
     sortOrder,
   ]);
@@ -358,7 +349,7 @@ export default function SpeakingExercisesPage() {
       <RecommendedForYou skill="SPEAKING" />
 
       <section className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-2xs sm:p-5 space-y-4">
-        {/* Row 1: Search Input (with Ctrl+K / Cmd+K badge and clear button) & Category Chips */}
+        {/* Row 1: Search Input (with Ctrl+K / Cmd+K badge and clear button) & Lĩnh vực Chips */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           {/* Search Input */}
           <div className="relative flex-1 lg:max-w-md">
@@ -399,43 +390,26 @@ export default function SpeakingExercisesPage() {
             </div>
           </div>
 
-          {/* Category Pill Dock */}
+          {/* Lĩnh vực chips */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedCategory("ALL");
-                setCurrentPage(1);
-              }}
-              className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
-                selectedCategory === "ALL"
-                  ? "bg-teal-700 text-white shadow-2xs"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
-              }`}
-            >
-              Tất cả ({practiceSets.length})
-            </button>
-
-            {categories.map((cat) => {
-              const count = categoryCounts[cat] || 0;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCategory(cat);
-                    setCurrentPage(1);
-                  }}
-                  className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
-                    selectedCategory === cat
-                      ? "bg-teal-700 text-white shadow-2xs"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
-                  }`}
-                >
-                  {practiceSets.find((item) => item.category === cat)?.categoryLabel ?? cat} ({count})
-                </button>
-              );
-            })}
+            {chips.map((chip) => (
+              <button
+                key={chip.code}
+                type="button"
+                aria-pressed={selectedTrack === chip.code}
+                onClick={() => {
+                  setSelectedTrack(chip.code);
+                  setCurrentPage(1);
+                }}
+                className={`min-h-9 rounded-xl px-3 text-xs font-black transition whitespace-nowrap cursor-pointer ${
+                  selectedTrack === chip.code
+                    ? "bg-teal-700 text-white shadow-2xs"
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100"
+                }`}
+              >
+                {chip.label} ({chip.count})
+              </button>
+            ))}
           </div>
         </div>
 
@@ -461,7 +435,7 @@ export default function SpeakingExercisesPage() {
           onReset={() => {
             setSearchTerm("");
             setSelectedDifficulty("ALL");
-            setSelectedCategory("ALL");
+            setSelectedTrack(ALL_TRACKS);
             setSortOrder(DEFAULT_CATALOG_SORT);
             setSelectedStatus("ALL");
             setCurrentPage(1);
@@ -555,7 +529,7 @@ export default function SpeakingExercisesPage() {
                 onClick={() => {
                   setSelectedDifficulty("ALL");
                   setSearchTerm("");
-                  setSelectedCategory("ALL");
+                  setSelectedTrack(ALL_TRACKS);
                   setSelectedStatus("ALL");
                   setCurrentPage(1);
                 }}

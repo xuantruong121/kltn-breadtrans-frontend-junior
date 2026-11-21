@@ -59,7 +59,7 @@ export function presentSpeakingProgress(
 }
 
 export function resolveSpeakingMode(
-  exercise: Pick<SpeakingExercise, "title" | "category" | "taskType">,
+  exercise: Pick<SpeakingExercise, "title" | "taskType">,
 ): SpeakingModeInfo {
   if (exercise.taskType === "READ_ALOUD") {
     return { id: "READ_ALOUD", label: "Đọc thành tiếng", objective: "Luyện đọc rõ ràng, liền mạch và đúng ngữ điệu.", needsModel: true };
@@ -78,7 +78,8 @@ export function resolveSpeakingMode(
   }
 
   // Compatibility-only fallback for legacy rows whose taskType is still NULL.
-  const text = `${exercise.title ?? ""} ${exercise.category ?? ""}`.toLowerCase();
+  // The title alone: the old category (Phân loại) folded into Lĩnh vực.
+  const text = (exercise.title ?? "").toLowerCase();
 
   if (text.includes("read aloud") || text.includes("đọc thành tiếng")) {
     return { id: "READ_ALOUD", label: "Đọc thành tiếng", objective: "Luyện đọc rõ ràng, liền mạch và đúng ngữ điệu.", needsModel: true };

@@ -71,3 +71,10 @@ test("Nói sends the shared sort values and is titled 'Nội dung Nói'", () => 
   assert.doesNotMatch(speaking, /UPDATED/);
   assert.match(speaking, /title="Nội dung Nói"/);
 });
+
+test("Nói filters by Lĩnh vực, with no Phân loại filter or category request (owner 2026-11-21)", () => {
+  const speaking = read(OWN_PAGES.speaking);
+  assert.match(speaking, /track=\{\{ value: trackFilter/);
+  assert.doesNotMatch(speaking, /\bextra=\{/);
+  assert.doesNotMatch(speaking, /category: |speaking\/categories/);
+});

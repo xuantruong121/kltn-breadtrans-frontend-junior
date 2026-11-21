@@ -40,7 +40,7 @@ export type ToolbarSlots = {
   status?: FixedFilter<PublicationFilter>;
   level?: ToolbarChoice;
   track?: TrackFilter;
-  /** A filter only this page has: Audio on Nghe, Phân loại on Nói, Chuyên mục on Từ vựng. */
+  /** A filter only this page has: Audio on Nghe, Chuyên mục on Từ vựng. */
   extra?: ToolbarChoice & { label: string };
   sort?: FixedFilter<AdminListSort>;
 };

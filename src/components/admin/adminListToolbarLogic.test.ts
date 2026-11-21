@@ -61,11 +61,13 @@ test("toolbarFilters leaves out the slots a page does not have", () => {
     "Lĩnh vực",
     "Sắp xếp",
   ]);
-  // Nói: Phân loại is the page's own filter, so it comes after Lĩnh vực.
-  assert.deepEqual(
-    labels(toolbarFilters({ extra: { label: "Phân loại", ...choice("DAILY") }, sort, track, level: choice("A2"), status }, "speaking")),
-    ["Trạng thái", "Trình độ", "Lĩnh vực", "Phân loại", "Sắp xếp"],
-  );
+  // Nói: Phân loại folded into Lĩnh vực (2026-11-21), so it has no filter of its own.
+  assert.deepEqual(labels(toolbarFilters({ sort, track, level: choice("A2"), status }, "speaking")), [
+    "Trạng thái",
+    "Trình độ",
+    "Lĩnh vực",
+    "Sắp xếp",
+  ]);
   // Ngữ pháp: three filters.
   assert.deepEqual(labels(toolbarFilters({ sort, level: choice("BEGINNER"), status }, "grammar")), [
     "Trạng thái",

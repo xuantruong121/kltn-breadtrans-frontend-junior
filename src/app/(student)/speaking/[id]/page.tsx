@@ -64,6 +64,7 @@ import {
   scoreDelta,
   formatSpeakingScore,
 } from "@/lib/speaking/speakingExperienceLogic";
+import { trackLine } from "@/lib/speaking/trackChips";
 import { usePracticeExitGuard } from "@/hooks/usePracticeExitGuard";
 import { ReportIssueButton } from "@/components/issue-report";
 import { classifyPracticeLoadError } from "@/lib/practice/practiceLoadErrorLogic";
@@ -330,7 +331,7 @@ export default function SpeakingExerciseDetailPage() {
   const speakingMode = useMemo(
     () =>
       resolveSpeakingMode(
-        exercise ?? activeCatalogExercise ?? { title: "", category: "GENERAL" },
+        exercise ?? activeCatalogExercise ?? { title: "" },
       ),
     [exercise, activeCatalogExercise],
   );
@@ -1711,7 +1712,7 @@ export default function SpeakingExerciseDetailPage() {
       <div className="w-full h-dvh overflow-hidden flex flex-col bg-white dark:bg-slate-950 font-sans">
         <PracticeHeader
           title={speakingTitle}
-          category={exercise.categoryLabel ?? exercise.category}
+          category={trackLine(activePracticeSet?.tracks)}
           difficulty={exercise.difficulty}
           positionText={
             activePracticeSet && currentPracticeSetPosition > 0
