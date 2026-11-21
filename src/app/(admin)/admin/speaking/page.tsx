@@ -20,7 +20,8 @@ import {
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
-import { trackNames } from "@/components/admin/skillCmsStatus";
+import { trackNames } from "@/lib/learning-path/tracks";
+import { useAdminLearningTracks } from "@/lib/learning-path/useLearningTracks";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -47,6 +48,8 @@ export default function AdminSpeakingPage() {
   const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [trackFilter, setTrackFilter] = useState<string>("ALL");
+  // Names, order and on/off of the tracks: the filter and each card's track line.
+  const { data: adminTracks = [] } = useAdminLearningTracks();
   const [statusFilter, setStatusFilter] = useState<PublicationFilter>("ALL");
   const [sortBy, setSortBy] = useState<AdminListSort>("NEWEST");
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
@@ -236,7 +239,7 @@ export default function AdminSpeakingPage() {
           onChange: setLevelFilter,
           options: levelOptions.map((level) => ({ value: level, label: levelLabel(level) })),
         }}
-        track={{ value: trackFilter, onChange: setTrackFilter }}
+        track={{ value: trackFilter, onChange: setTrackFilter, tracks: adminTracks }}
         extra={{
           label: "Phân loại",
           value: categoryFilter,
@@ -497,7 +500,7 @@ export default function AdminSpeakingPage() {
                   {set.description || "Chưa có mô tả cho bộ luyện tập này."}
                 </p>
                 <p className="mt-2 truncate text-xs text-slate-600 dark:text-slate-400">
-                  {trackNames(set.tracks)}
+                  {trackNames(set.tracks, adminTracks)}
                 </p>
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm text-slate-600">

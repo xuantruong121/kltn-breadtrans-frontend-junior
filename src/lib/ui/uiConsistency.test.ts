@@ -133,6 +133,21 @@ test("no emoji anywhere in the source", () => {
   assert.deepEqual(found, []);
 });
 
+// Owner 2026-11-21: admins name the tracks on the Lĩnh vực page, and every
+// screen reads them from the API. A copy kept in the source goes stale at the
+// first rename, so the old names may not appear anywhere, comments included.
+test("track names come from the API, not from the source", () => {
+  const OLD_TRACK_NAMES =
+    /Văn phòng – Kinh doanh|Bán hàng – CSKH|Nhà hàng – Khách sạn – Du lịch|Sinh viên – Học thuật|Chưa xác định lĩnh vực/;
+  const found: string[] = [];
+  for (const f of FILES)
+    f.text.split("\n").forEach((line, i) => {
+      if (OLD_TRACK_NAMES.test(line) && !allowed(f.rel, "track names"))
+        found.push(`${f.rel}:${i + 1}: ${line.trim().slice(0, 90)}`);
+    });
+  assert.deepEqual(found, []);
+});
+
 test("each thing is written one way (glossary.ts)", () => {
   const found: string[] = [];
   for (const f of FILES)

@@ -6,7 +6,6 @@ import {
   filterSkillContent,
   latestAudioBadge,
   publishChecklist,
-  trackNames,
   writingCardLabel,
   writingFormType,
   writingQuizType,
@@ -78,12 +77,6 @@ test("a dialogue with a clip on every question has its audio", () => {
     }),
     { label: "Audio 2/2 câu", tone: "ok" },
   );
-});
-
-test("track names read in full, and say when none is set", () => {
-  assert.equal(trackNames(["IT_SOFTWARE"]), "Công nghệ thông tin");
-  assert.equal(trackNames([]), "Chưa gắn lĩnh vực");
-  assert.equal(trackNames(undefined), "Chưa gắn lĩnh vực");
 });
 
 test("publishChecklist: flags a missing English explanation, a bad key and unpublished audio", () => {
@@ -229,6 +222,7 @@ test("a Dịch câu exercise reads as its own form type, and hints round-trip as
 
 test("admin track copy says lĩnh vực, as the learner onboarding does", () => {
   assert.equal(TRACK_FIELD_COPY.label, "Lĩnh vực");
+  assert.equal(TRACK_FIELD_COPY.untagged, "Chưa gắn lĩnh vực");
   for (const text of Object.values(TRACK_FIELD_COPY)) {
     assert.doesNotMatch(text, /ngành/i);
   }

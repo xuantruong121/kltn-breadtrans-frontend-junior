@@ -20,7 +20,6 @@ import {
   cmsLevelFromTitle,
   contentLevel,
   publishChecklist,
-  trackNames,
   writingCardLabel,
   writingFormType,
   writingQuizType,
@@ -47,6 +46,8 @@ import {
   quizIdsMatchingTitle,
 } from "@/lib/catalog/displayTitles";
 import { TrackTagField } from "./TrackTagField";
+import { trackNames } from "@/lib/learning-path/tracks";
+import { useAdminLearningTracks } from "@/lib/learning-path/useLearningTracks";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "./useAdminList";
 import { ADMIN_PAGE_SIZES } from "./adminList";
@@ -374,6 +375,8 @@ export default function SkillCmsWorkspace({
     useState<Omit<ListFilters, "query" | "status">>(NO_FILTERS);
   const [writingTypeFilter, setWritingTypeFilter] = useState("ALL");
   const [trackFilter, setTrackFilter] = useState("ALL");
+  // Names, order and on/off of the tracks: the filter and each card's track line.
+  const { data: adminTracks = [] } = useAdminLearningTracks();
   // The list screen loads one page; search, filters and sort run on the server.
   const list = useAdminList<
     any,
@@ -1682,7 +1685,7 @@ export default function SkillCmsWorkspace({
             onChange: (value) => setFilter("level", value),
             options: levelsPresent.map((level) => ({ value: level, label: level })),
           }}
-          track={{ value: trackFilter, onChange: setTrackFilter }}
+          track={{ value: trackFilter, onChange: setTrackFilter, tracks: adminTracks }}
           extra={
             domain === "listening"
               ? {
@@ -1783,7 +1786,7 @@ export default function SkillCmsWorkspace({
                   </div>
                 </div>
                 <p className="mt-2 truncate text-sm text-slate-600 dark:text-slate-400">
-                  {trackNames(content.tracks)}
+                  {trackNames(content.tracks, adminTracks)}
                 </p>
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-3 border-t border-slate-100 pt-3 text-sm text-slate-600">

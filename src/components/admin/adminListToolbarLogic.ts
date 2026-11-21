@@ -7,7 +7,8 @@
  * Not named adminListToolbar.ts: on Windows that differs from
  * AdminListToolbar.tsx only by case, and "./AdminListToolbar" resolved to it.
  */
-import { CONTENT_TRACKS, type ListSort } from "./skillCmsStatus.ts";
+import { trackFilterOptions, type NamedTrack } from "../../lib/learning-path/tracks.ts";
+import { TRACK_FIELD_COPY, type ListSort } from "./skillCmsStatus.ts";
 
 export type AdminContentList =
   | "listening"
@@ -21,18 +22,24 @@ export type ToolbarOption = { value: string; label: string };
 export type PublicationFilter = "ALL" | "DRAFT" | "PUBLISHED";
 export type AdminListSort = ListSort;
 
-/** A filter whose options the toolbar owns: Trạng thái, Lĩnh vực, Sắp xếp. */
+/** A filter whose options the toolbar owns: Trạng thái, Sắp xếp. */
 type FixedFilter<V extends string> = { value: V; onChange: (value: V) => void };
 
 /** A filter whose options the page supplies; "Tất cả" is put in front. */
 export type ToolbarChoice = FixedFilter<string> & { options: ToolbarOption[] };
+
+/**
+ * Lĩnh vực: the page passes the admin track list from the API; the toolbar
+ * puts "Tất cả" and "Chưa gắn lĩnh vực" in front.
+ */
+export type TrackFilter = FixedFilter<string> & { tracks: readonly NamedTrack[] };
 
 /** Named slots: the name, not the order of the props, decides the place. */
 export type ToolbarSlots = {
   kind?: ToolbarChoice;
   status?: FixedFilter<PublicationFilter>;
   level?: ToolbarChoice;
-  track?: FixedFilter<string>;
+  track?: TrackFilter;
   /** A filter only this page has: Audio on Nghe, Phân loại on Nói, Chuyên mục on Từ vựng. */
   extra?: ToolbarChoice & { label: string };
   sort?: FixedFilter<AdminListSort>;
@@ -54,12 +61,6 @@ export const STATUS_OPTIONS: ToolbarOption[] = [
   ALL,
   { value: "DRAFT", label: "Bản nháp" },
   { value: "PUBLISHED", label: "Đã xuất bản" },
-];
-
-export const TRACK_OPTIONS: ToolbarOption[] = [
-  ALL,
-  { value: "UNTAGGED", label: "Chưa gắn lĩnh vực" },
-  ...CONTENT_TRACKS,
 ];
 
 /** What "fewest first" counts on each list. */
@@ -126,7 +127,13 @@ export function toolbarFilters(
       ? { slot: "level", label: "Trình độ", value: level.value, onChange: level.onChange, options: [ALL, ...level.options] }
       : null,
     track
-      ? { slot: "track", label: "Lĩnh vực", value: track.value, onChange: track.onChange, options: TRACK_OPTIONS }
+      ? {
+          slot: "track",
+          label: TRACK_FIELD_COPY.label,
+          value: track.value,
+          onChange: track.onChange,
+          options: trackFilterOptions(track.tracks),
+        }
       : null,
     extra
       ? { slot: "extra", label: extra.label, value: extra.value, onChange: extra.onChange, options: [ALL, ...extra.options] }

@@ -1,22 +1,20 @@
 /**
  * Onboarding (F5): goal, career track, daily time, then level (diagnostic or
- * self-chosen). Option lists and the request body; no React, no I/O.
+ * self-chosen). Option lists and the request body; no React, no I/O. The
+ * tracks come from GET /learning-tracks (tracks.ts), not from here.
  */
 import type { LevelProgress } from "./levelLock.ts";
 import type { PracticeLevel, PracticeSkill } from "./practiceLevel.ts";
 
 export type LearningGoal = "GENERAL" | "TOEIC_SCORE" | "WORK_COMMUNICATION" | "STUDY" | "TRAVEL";
-export type LearningTrack =
-  | "GENERAL"
-  | "IT_SOFTWARE"
-  | "OFFICE_BUSINESS"
-  | "SALES_CUSTOMER_SERVICE"
-  | "HOSPITALITY_TOURISM"
-  | "STUDENT_ACADEMIC";
+/** A track code. Admins create tracks, so any code the API sends; GENERAL is the default. */
+export type LearningTrack = string;
 export type PlacementSource = "NONE" | "DIAGNOSTIC" | "SELF";
 
 export type LearnerProfile = {
   track: LearningTrack;
+  /** The track's name as admins set it ("Chung" for GENERAL). */
+  trackName: string;
   goal: LearningGoal;
   minutesPerDay: number;
   targetDate: string | null;
@@ -56,15 +54,6 @@ export const GOAL_OPTIONS: Array<{ value: LearningGoal; label: string; descripti
   { value: "STUDY", label: "Học tập", description: "Đọc tài liệu, nghe bài giảng, viết bài" },
   { value: "TRAVEL", label: "Du lịch", description: "Đặt phòng, hỏi đường, gọi món" },
   { value: "GENERAL", label: "Tiếng Anh tổng quát", description: "Cải thiện đều cả bốn kỹ năng" },
-];
-
-export const TRACK_OPTIONS: Array<{ value: LearningTrack; label: string; description: string }> = [
-  { value: "IT_SOFTWARE", label: "Công nghệ thông tin", description: "Phần mềm, kỹ thuật, sản phẩm số" },
-  { value: "OFFICE_BUSINESS", label: "Văn phòng – Kinh doanh", description: "Hành chính, kế toán, nhân sự, quản lý" },
-  { value: "SALES_CUSTOMER_SERVICE", label: "Bán hàng – CSKH", description: "Tư vấn, chăm sóc và hỗ trợ khách hàng" },
-  { value: "HOSPITALITY_TOURISM", label: "Nhà hàng – Khách sạn – Du lịch", description: "Lễ tân, phục vụ, hướng dẫn viên" },
-  { value: "STUDENT_ACADEMIC", label: "Sinh viên – Học thuật", description: "Học tập, nghiên cứu, thi chứng chỉ" },
-  { value: "GENERAL", label: "Chưa xác định", description: "Bài luyện đa dạng chủ đề" },
 ];
 
 export const MINUTE_OPTIONS = [10, 15, 20, 30, 45, 60];

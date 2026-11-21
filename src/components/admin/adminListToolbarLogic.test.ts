@@ -1,6 +1,5 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CONTENT_TRACKS } from "./skillCmsStatus.ts";
 import {
   kindOptionLabel,
   listUnit,
@@ -17,7 +16,16 @@ const choice = (...values: string[]) => ({
   options: values.map((value) => ({ value, label: value })),
 });
 const status = { value: "ALL" as const, onChange: noop };
-const track = { value: "ALL", onChange: noop };
+/** The admin track list as the API sends it: names and order are the admins'. */
+const track = {
+  value: "ALL",
+  onChange: noop,
+  tracks: [
+    { code: "NURSING", name: "Y tế – Điều dưỡng", isActive: true },
+    { code: "LOGISTICS", name: "Kho vận", isActive: false },
+    { code: "GENERAL", name: "Chung", isActive: true },
+  ],
+};
 const sort = { value: "NEWEST" as const, onChange: noop };
 const ALL = { value: "ALL", label: "Tất cả" };
 const LISTS: AdminContentList[] = ["listening", "reading", "writing", "speaking", "grammar", "vocab"];
@@ -71,7 +79,7 @@ test("toolbarFilters leaves out the slots a page does not have", () => {
   );
 });
 
-test("toolbarFilters puts 'Tất cả' before a page's options and owns the status and track options", () => {
+test("toolbarFilters puts 'Tất cả' before a page's options, owns the status options and names the API's tracks", () => {
   const [kind, statusFilter, level, trackFilter, extra, sortFilter] = toolbarFilters(
     { kind: choice("DICTATION"), status, level: choice("A1"), track, extra: { label: "Audio", ...choice("none") }, sort },
     "listening",
@@ -84,7 +92,13 @@ test("toolbarFilters puts 'Tất cả' before a page's options and owns the stat
     { value: "DRAFT", label: "Bản nháp" },
     { value: "PUBLISHED", label: "Đã xuất bản" },
   ]);
-  assert.deepEqual(trackFilter.options, [ALL, { value: "UNTAGGED", label: "Chưa gắn lĩnh vực" }, ...CONTENT_TRACKS]);
+  assert.deepEqual(trackFilter.options, [
+    ALL,
+    { value: "UNTAGGED", label: "Chưa gắn lĩnh vực" },
+    { value: "NURSING", label: "Y tế – Điều dưỡng" },
+    { value: "LOGISTICS", label: "Kho vận (đã tắt)" },
+    { value: "GENERAL", label: "Chung" },
+  ]);
   assert.equal(sortFilter.options.some((option) => option.value === "ALL"), false);
   assert.deepEqual(sortFilter.options, sortOptions("listening"));
 });

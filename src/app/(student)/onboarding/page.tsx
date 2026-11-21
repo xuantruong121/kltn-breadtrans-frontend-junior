@@ -12,13 +12,14 @@ import {
   MINUTE_OPTIONS,
   ONBOARDING_SKIPPED_KEY,
   ONBOARDING_STEPS,
-  TRACK_OPTIONS,
   canContinue,
   hasDiagnosticPlacement,
   profilePayload,
   type OnboardingAnswers,
 } from "@/lib/learning-path/onboarding";
 import { PRACTICE_LEVEL_LABEL, prioritySkillsText, skillsBelowOverall } from "@/lib/learning-path/practiceLevel";
+import { trackChoices } from "@/lib/learning-path/tracks";
+import { useLearningTracks } from "@/lib/learning-path/useLearningTracks";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
 const STEP_TITLE: Record<(typeof ONBOARDING_STEPS)[number], { title: string; hint: string }> = {
@@ -86,6 +87,14 @@ export default function OnboardingPage() {
     queryKey: ["learning-path-profile"],
     queryFn: () => learningPathService.getProfile(),
   });
+  const tracksQuery = useLearningTracks();
+  // The learner's own track stays offered even if admins turned it off since.
+  const profile = profileQuery.data;
+  const tracks = trackChoices(
+    tracksQuery.data ?? [],
+    profile?.track,
+    profile ? [{ code: profile.track, name: profile.trackName }] : [],
+  );
   // A diagnostic result already set the level; the API refuses a self-chosen one.
   const placed = hasDiagnosticPlacement(profileQuery.data);
   const placedLevel = profileQuery.data?.placementLevel;
@@ -155,13 +164,33 @@ export default function OnboardingPage() {
               ))}
             </div>
           )}
-          {step === "track" && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {TRACK_OPTIONS.map((o) => (
-                <OptionTile key={o.value} selected={answers.track === o.value} label={o.label} description={o.description} onSelect={() => set({ track: o.value })} />
-              ))}
-            </div>
-          )}
+          {step === "track" &&
+            (tracksQuery.isLoading ? (
+              <p className="text-base text-slate-600 dark:text-slate-400">Đang tải...</p>
+            ) : tracksQuery.isError ? (
+              <p className="text-sm font-semibold text-rose-700 dark:text-rose-400" role="alert">
+                {getApiErrorMessage(tracksQuery.error, "Chưa tải được danh sách lĩnh vực.")}{" "}
+                <button
+                  type="button"
+                  onClick={() => void tracksQuery.refetch()}
+                  className="min-h-11 font-bold underline underline-offset-2"
+                >
+                  Thử lại
+                </button>
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {tracks.map((o) => (
+                  <OptionTile
+                    key={o.code}
+                    selected={answers.track === o.code}
+                    label={o.name}
+                    description={o.description ?? undefined}
+                    onSelect={() => set({ track: o.code })}
+                  />
+                ))}
+              </div>
+            ))}
           {step === "time" && (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
