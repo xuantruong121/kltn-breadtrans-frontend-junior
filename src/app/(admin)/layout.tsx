@@ -30,6 +30,7 @@ import {
   TrendingUp,
   TicketPercent,
   ListChecks,
+  Tags,
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAuthSyncStore } from "@/stores/authSyncStore";
@@ -83,6 +84,7 @@ const NAV_ICONS: Record<string, NavItem["icon"]> = {
   PenTool,
   Settings,
   ShoppingBag,
+  Tags,
   TicketPercent,
   TrendingUp,
   Users,

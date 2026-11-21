@@ -120,6 +120,13 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         label: "Luyện đề",
         iconName: "Award",
       },
+      // The tracks learners choose and content is tagged with (owner 2026-11-21).
+      {
+        id: "learning-tracks",
+        href: "/admin/learning-tracks",
+        label: "Lĩnh vực",
+        iconName: "Tags",
+      },
     ],
   },
   {
