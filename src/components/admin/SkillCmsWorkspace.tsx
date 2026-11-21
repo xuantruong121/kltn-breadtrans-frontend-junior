@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, FileAudio, FileStack, Loader2, Plus, Search, Save, Send, Trash2, Upload, Volume2, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, FileAudio, FileStack, Loader2, Plus, Save, Send, Trash2, Upload, Volume2, X } from "lucide-react";
 
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
@@ -21,7 +21,6 @@ import {
   contentLevel,
   publishChecklist,
   trackNames,
-  CONTENT_TRACKS,
   writingCardLabel,
   writingFormType,
   writingQuizType,
@@ -36,7 +35,9 @@ import {
 } from "./skillCmsStatus";
 import { AdminImageThumb } from "./AdminImageThumb";
 import { AdminPageHeader } from "./AdminPageHeader";
-import { ADMIN_CARD_GRID, ADMIN_SELECT } from "./cmsStyles";
+import { AdminListToolbar } from "./AdminListToolbar";
+import { kindOptionLabel } from "./adminListToolbarLogic";
+import { ADMIN_CARD_GRID } from "./cmsStyles";
 import { TranslationReviewPanel, TRANSLATION_REVIEW_KEYS } from "./TranslationReviewPanel";
 import { WritingAiDraftPanel } from "./WritingAiDraftPanel";
 import { AiCreateDialog } from "./AiCreateDialog";
@@ -111,7 +112,6 @@ function levelFromTitle(title?: string | null): string | null {
     : null;
 }
 
-const FILTER_SELECT = ADMIN_SELECT;
 const NO_FILTERS: Omit<ListFilters, "query" | "status"> = {
   level: "ALL",
   audio: "ALL",
@@ -125,6 +125,14 @@ const LISTENING_MODE_OPTIONS: Array<{
   { value: "COMPREHENSION", label: "Nghe hiểu" },
   { value: "DICTATION", label: "Nghe chép" },
   { value: "DIALOGUE", label: "Hội thoại" },
+];
+
+/** Nghe's own filter in the toolbar: how far each bài's audio has got. */
+const AUDIO_FILTER_OPTIONS: Array<{ value: ListFilters["audio"]; label: string }> = [
+  { value: "ok", label: "Đang dùng" },
+  { value: "pending", label: "Chờ duyệt / xuất bản" },
+  { value: "none", label: "Chưa có audio" },
+  { value: "error", label: "Lỗi" },
 ];
 
 /** What a dictation item shows the learner; the sentence itself is the answer. */
@@ -374,6 +382,8 @@ export default function SkillCmsWorkspace({
       published: number;
       modes: Record<ListeningMode, number>;
       levels: string[];
+      /** Viết: bài per kind (TRANSLATION, PICTURE, SENTENCE, EMAIL), once the API sends it. */
+      kinds?: Partial<Record<string, number>>;
     }
   >({
     key: `admin-skill-content-${domain}`,
@@ -1474,7 +1484,9 @@ export default function SkillCmsWorkspace({
     }
   };
 
-  if (mode === "list" ? list.isLoading : loading)
+  // The list keeps its header and toolbar while the first page loads: its
+  // spinner sits where the cards go.
+  if (mode === "edit" && loading)
     return (
       <div className="flex min-h-64 items-center justify-center">
         <Loader2 className="animate-spin text-slate-600" />
@@ -1501,16 +1513,27 @@ export default function SkillCmsWorkspace({
     ) => setListFilters((current) => ({ ...current, [key]: value }));
 
     const publishedCount = list.facets?.published ?? 0;
-    const modeTabs: Array<[ListeningModeFilter, string, number]> = [
-      ["ALL", "Tất cả", totalItems],
-      ...LISTENING_MODE_OPTIONS.map(
-        (option): [ListeningModeFilter, string, number] => [
-          option.value,
-          option.label,
-          list.facets?.modes?.[option.value] ?? 0,
-        ],
-      ),
-    ];
+    // "Dạng bài": Nghe's three forms or Viết's four kinds, with their counts.
+    const kindFilter =
+      domain === "listening"
+        ? {
+            value: listeningModeFilter,
+            onChange: (value: string) => setListeningModeFilter(value as ListeningModeFilter),
+            options: LISTENING_MODE_OPTIONS.map((option) => ({
+              value: option.value,
+              label: kindOptionLabel(option.label, list.facets?.modes?.[option.value]),
+            })),
+          }
+        : domain === "writing"
+          ? {
+              value: writingTypeFilter,
+              onChange: setWritingTypeFilter,
+              options: Object.entries(WRITING_KIND_LABEL).map(([kind, label]) => ({
+                value: kind,
+                label: kindOptionLabel(label, list.facets?.kinds?.[kind]),
+              })),
+            }
+          : undefined;
 
     // Full canvas width. Cards fill the canvas in as many 320px-minimum
     // columns as fit (1 on a phone, 2 on a tablet, 3 at 1440, 4 at 1920),
@@ -1519,7 +1542,11 @@ export default function SkillCmsWorkspace({
       <div className="space-y-6 p-6">
         <AdminPageHeader
           title={title}
-          stats={`${totalItems} bài · ${publishedCount} đã xuất bản · ${totalItems - publishedCount} bản nháp`}
+          stats={
+            list.facets
+              ? `${totalItems} bài · ${publishedCount} đã xuất bản · ${totalItems - publishedCount} bản nháp`
+              : undefined
+          }
           ai={
             domain === "writing"
               ? { label: "Tạo bằng AI", onClick: () => setWritingAiCreating(true) }
@@ -1643,180 +1670,53 @@ export default function SkillCmsWorkspace({
           <TranslationReviewPanel quizId={reviewQuizId} onClearQuiz={() => openWritingView("review")} />
         ) : (
         <>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          {domain === "listening" && (
-            <div
-              role="group"
-              aria-label="Lọc loại bài nghe"
-              className="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1"
-            >
-              {modeTabs.map(([value, label, count]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={listeningModeFilter === value}
-                  onClick={() => setListeningModeFilter(value)}
-                  className={`min-h-9 cursor-pointer rounded-md px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${
-                    listeningModeFilter === value
-                      ? "bg-white text-slate-950 shadow-sm"
-                      : "text-slate-600 hover:text-slate-950"
-                  }`}
-                >
-                  {label}{" "}
-                  <span className="font-medium tabular-nums text-slate-600 dark:text-slate-400">
-                    {count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-          <label className="relative min-w-0 flex-1">
-            <span className="sr-only">Tìm nội dung {meta[domain].label}</span>
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-              size={18}
-              aria-hidden="true"
-            />
-            <input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Tìm theo tiêu đề, mô tả, trình độ..."
-              className="min-h-11 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            />
-          </label>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trạng thái
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(
-                  event.target.value as "ALL" | "DRAFT" | "PUBLISHED",
-                )
-              }
-              className={FILTER_SELECT}
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="DRAFT">Bản nháp</option>
-              <option value="PUBLISHED">Đã xuất bản</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trình độ
-            <select
-              value={listFilters.level}
-              onChange={(event) => setFilter("level", event.target.value)}
-              className={FILTER_SELECT}
-            >
-              <option value="ALL">Tất cả</option>
-              {levelsPresent.map((level) => (
-                <option key={level} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Lĩnh vực
-            <select
-              value={trackFilter}
-              onChange={(event) => setTrackFilter(event.target.value)}
-              className={FILTER_SELECT}
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="UNTAGGED">Chưa gắn lĩnh vực</option>
-              {CONTENT_TRACKS.map((track) => (
-                <option key={track.value} value={track.value}>
-                  {track.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          {domain === "listening" && (
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              Audio
-              <select
-                value={listFilters.audio}
-                onChange={(event) =>
-                  setFilter(
-                    "audio",
-                    event.target.value as ListFilters["audio"],
-                  )
+        <AdminListToolbar
+          content={domain}
+          searchLabel={`Tìm nội dung ${meta[domain].label}`}
+          search={searchTerm}
+          onSearchChange={setSearchTerm}
+          kind={kindFilter}
+          status={{ value: statusFilter, onChange: setStatusFilter }}
+          level={{
+            value: listFilters.level,
+            onChange: (value) => setFilter("level", value),
+            options: levelsPresent.map((level) => ({ value: level, label: level })),
+          }}
+          track={{ value: trackFilter, onChange: setTrackFilter }}
+          extra={
+            domain === "listening"
+              ? {
+                  label: "Audio",
+                  value: listFilters.audio,
+                  onChange: (value) => setFilter("audio", value as ListFilters["audio"]),
+                  options: AUDIO_FILTER_OPTIONS,
                 }
-                className={FILTER_SELECT}
-              >
-                <option value="ALL">Tất cả</option>
-                <option value="ok">Đang dùng</option>
-                <option value="pending">Chờ duyệt / xuất bản</option>
-                <option value="none">Chưa có audio</option>
-                <option value="error">Lỗi</option>
-              </select>
-            </label>
-          )}
-          {domain === "writing" && (
-            <label className="flex items-center gap-2 text-sm text-slate-600">
-              Dạng bài
-              <select
-                value={writingTypeFilter}
-                onChange={(event) => setWritingTypeFilter(event.target.value)}
-                className={FILTER_SELECT}
-              >
-                <option value="ALL">Tất cả</option>
-                {Object.entries(WRITING_KIND_LABEL).map(([kind, label]) => (
-                  <option key={kind} value={kind}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Sắp xếp
-            <select
-              value={listFilters.sort}
-              onChange={(event) =>
-                setFilter("sort", event.target.value as ListFilters["sort"])
-              }
-              className={FILTER_SELECT}
-            >
-              <option value="NEWEST">Mới tạo trước</option>
-              <option value="OLDEST">Cũ trước</option>
-              <option value="LEVEL">Trình độ A1 → C2</option>
-              <option value="TITLE">Tên A → Z</option>
-              <option value="FEWEST">Ít câu hỏi trước</option>
-            </select>
-          </label>
-          <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
-            <span className="tabular-nums">
-              {list.total === totalItems
-                ? `${list.total} bài`
-                : `Khớp ${list.total}/${totalItems}`}
-              {list.isFetching ? " · đang tải" : ""}
-            </span>
-            {filtersActive && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchTerm("");
-                  setStatusFilter("ALL");
-                  setListeningModeFilter("ALL");
-                  setWritingTypeFilter("ALL");
-                  setTrackFilter("ALL");
-                  setListFilters((current) => ({
-                    ...NO_FILTERS,
-                    sort: current.sort,
-                  }));
-                }}
-                className="cursor-pointer font-semibold text-slate-900 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-              >
-                Xóa bộ lọc
-              </button>
-            )}
-          </div>
-        </div>
+              : undefined
+          }
+          sort={{ value: listFilters.sort, onChange: (value) => setFilter("sort", value) }}
+          total={list.facets?.total}
+          matched={list.total}
+          fetching={list.isFetching}
+          filtersActive={filtersActive}
+          onClearFilters={() => {
+            setSearchTerm("");
+            setStatusFilter("ALL");
+            setListeningModeFilter("ALL");
+            setWritingTypeFilter("ALL");
+            setTrackFilter("ALL");
+            setListFilters((current) => ({
+              ...NO_FILTERS,
+              sort: current.sort,
+            }));
+          }}
+        />
 
+        {list.isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="animate-spin text-slate-500" size={32} />
+          </div>
+        ) : (
+        <>
         <div className={ADMIN_CARD_GRID}>
           {visibleItems.map((content) => {
             const level = contentLevel(content);
@@ -1920,15 +1820,15 @@ export default function SkillCmsWorkspace({
             );
           })}
           {totalItems === 0 && (
-            <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
+            <p className="col-span-full text-sm text-slate-600">
               Chưa có nội dung {meta[domain].label}. Hãy tạo bản nháp đầu tiên
               để bắt đầu.
-            </div>
+            </p>
           )}
           {totalItems > 0 && visibleItems.length === 0 && (
-            <div className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
+            <p className="col-span-full text-sm text-slate-600">
               Không tìm thấy nội dung phù hợp. Hãy đổi từ khóa hoặc bộ lọc.
-            </div>
+            </p>
           )}
         </div>
         <Pagination
@@ -1941,6 +1841,8 @@ export default function SkillCmsWorkspace({
           pageSizeOptions={ADMIN_PAGE_SIZES}
           alwaysShow
         />
+        </>
+        )}
         </>
         )}
       </div>

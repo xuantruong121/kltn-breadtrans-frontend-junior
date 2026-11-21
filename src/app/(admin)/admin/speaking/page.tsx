@@ -2,22 +2,25 @@
 
 import { ADMIN_CARD, ADMIN_CARD_GRID } from "@/components/admin/cmsStyles";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminListToolbar } from "@/components/admin/AdminListToolbar";
+import type {
+  AdminListSort,
+  PublicationFilter,
+} from "@/components/admin/adminListToolbarLogic";
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
   Loader2,
-  Search,
   Trash2,
   Edit2,
   Send,
-  Layers,
   ArrowRight,
 } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
-import { CONTENT_TRACKS, trackNames } from "@/components/admin/skillCmsStatus";
+import { trackNames } from "@/components/admin/skillCmsStatus";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -44,12 +47,8 @@ export default function AdminSpeakingPage() {
   const [levelFilter, setLevelFilter] = useState<string>("ALL");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [trackFilter, setTrackFilter] = useState<string>("ALL");
-  const [statusFilter, setStatusFilter] = useState<
-    "ALL" | "DRAFT" | "PUBLISHED"
-  >("ALL");
-  const [sortBy, setSortBy] = useState<
-    "UPDATED" | "TITLE" | "LEVEL" | "FEWEST"
-  >("UPDATED");
+  const [statusFilter, setStatusFilter] = useState<PublicationFilter>("ALL");
+  const [sortBy, setSortBy] = useState<AdminListSort>("NEWEST");
   const [showCategoryManagement, setShowCategoryManagement] = useState(false);
   const [categorySearch, setCategorySearch] = useState("");
   const [categoryCreateOpen, setCategoryCreateOpen] = useState(false);
@@ -87,14 +86,12 @@ export default function AdminSpeakingPage() {
       category: categoryFilter,
       track: trackFilter,
       status: statusFilter,
-      sort: sortBy === "UPDATED" ? "NEWEST" : sortBy,
+      sort: sortBy,
       titleIds: speakingSetsMatchingTitle(searchTerm).join(",") || undefined,
     },
     initialPageSize: 12,
   });
   const isLoading = list.isLoading;
-  // The page resets itself when a filter changes.
-  const setCurrentPage = list.setPage;
 
   const { data: categories = [] } = useQuery<SpeakingCategory[]>({
     queryKey: ["admin-speaking-categories"],
@@ -222,146 +219,46 @@ export default function AdminSpeakingPage() {
   return (
     <div className="space-y-6 p-6">
       <AdminPageHeader
-        title="Bộ luyện nói"
+        title="Nội dung Nói"
         stats={`${totalSets} bộ · ${publishedSetCount} đã xuất bản · ${totalSets - publishedSetCount} bản nháp`}
         ai={{ label: "Tạo bằng AI", href: "/admin/speaking/new?ai=1" }}
         create={{ label: "Tạo bộ luyện nói", href: "/admin/speaking/new" }}
       />
 
-      {/* FILTERS */}
-      <div className="space-y-3">
-        <label className="relative block">
-          <span className="sr-only">Tìm bộ luyện nói</span>
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-            size={18}
-            aria-hidden="true"
-          />
-          <input
-            type="text"
-            placeholder="Tìm theo tên, mô tả, phân loại..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="min-h-11 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm text-slate-900 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-          />
-        </label>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trạng thái
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value as typeof statusFilter);
-                setCurrentPage(1);
-              }}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="DRAFT">Bản nháp</option>
-              <option value="PUBLISHED">Đã xuất bản</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trình độ
-            <select
-              value={levelFilter}
-              onChange={(e) => {
-                setLevelFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="ALL">Tất cả</option>
-              {levelOptions.map((level) => (
-                <option key={level} value={level}>
-                  {levelLabel(level)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Phân loại
-            <select
-              value={categoryFilter}
-              onChange={(e) => {
-                setCategoryFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="ALL">Tất cả</option>
-              {categories.map((category) => (
-                <option key={category.code} value={category.code}>
-                  {category.name}
-                  {category.isActive ? "" : " (đã tắt)"}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Lĩnh vực
-            <select
-              value={trackFilter}
-              onChange={(e) => {
-                setTrackFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="UNTAGGED">Chưa gắn lĩnh vực</option>
-              {CONTENT_TRACKS.map((track) => (
-                <option key={track.value} value={track.value}>
-                  {track.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Sắp xếp
-            <select
-              value={sortBy}
-              onChange={(e) => {
-                setSortBy(e.target.value as typeof sortBy);
-                setCurrentPage(1);
-              }}
-              className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-800 outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-            >
-              <option value="UPDATED">Mới cập nhật trước</option>
-              <option value="LEVEL">Trình độ thấp → cao</option>
-              <option value="TITLE">Tên A → Z</option>
-              <option value="FEWEST">Ít câu luyện trước</option>
-            </select>
-          </label>
-          <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
-            <span className="tabular-nums">
-              {list.total === totalSets
-                ? `${list.total} bộ`
-                : `Khớp ${list.total}/${totalSets}`}
-              {list.isFetching && !isLoading ? " · đang tải" : ""}
-            </span>
-            {setFiltersActive && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchTerm("");
-                  setLevelFilter("ALL");
-                  setCategoryFilter("ALL");
-                  setTrackFilter("ALL");
-                  setStatusFilter("ALL");
-                  setCurrentPage(1);
-                }}
-                className="cursor-pointer font-semibold text-slate-900 underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-              >
-                Xóa bộ lọc
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <AdminListToolbar
+        content="speaking"
+        searchLabel="Tìm bộ luyện nói"
+        search={searchTerm}
+        onSearchChange={setSearchTerm}
+        status={{ value: statusFilter, onChange: setStatusFilter }}
+        level={{
+          value: levelFilter,
+          onChange: setLevelFilter,
+          options: levelOptions.map((level) => ({ value: level, label: levelLabel(level) })),
+        }}
+        track={{ value: trackFilter, onChange: setTrackFilter }}
+        extra={{
+          label: "Phân loại",
+          value: categoryFilter,
+          onChange: setCategoryFilter,
+          options: categories.map((category) => ({
+            value: category.code,
+            label: category.isActive ? category.name : `${category.name} (đã tắt)`,
+          })),
+        }}
+        sort={{ value: sortBy, onChange: setSortBy }}
+        total={list.facets?.total}
+        matched={list.total}
+        fetching={list.isFetching}
+        filtersActive={setFiltersActive}
+        onClearFilters={() => {
+          setSearchTerm("");
+          setLevelFilter("ALL");
+          setCategoryFilter("ALL");
+          setTrackFilter("ALL");
+          setStatusFilter("ALL");
+        }}
+      />
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
         <button
@@ -381,7 +278,7 @@ export default function AdminSpeakingPage() {
               <input
                 value={categorySearch}
                 onChange={(event) => setCategorySearch(event.target.value)}
-                placeholder="Tìm theo tên hoặc mã phân loại..."
+                placeholder="Tìm phân loại theo tên hoặc mã..."
                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-900 outline-none focus:border-slate-400 sm:max-w-sm"
               />
               <button
@@ -668,12 +565,11 @@ export default function AdminSpeakingPage() {
           </div>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-600 dark:text-slate-400">
-          <Layers size={32} className="mx-auto mb-2 text-slate-300" />
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           {totalSets
             ? "Không có bộ luyện nào khớp bộ lọc. Hãy đổi từ khóa hoặc bộ lọc."
             : "Chưa có bộ luyện nói nào. Nhấn “Tạo bộ luyện” để bắt đầu."}
-        </div>
+        </p>
       )}
 
       {/* CONFIRM DELETE SET */}
