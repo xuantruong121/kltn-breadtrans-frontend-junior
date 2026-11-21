@@ -75,6 +75,7 @@ export default function AdminGrammarPage() {
     <div className="space-y-6 p-6">
       <AdminPageHeader
         title="Ngữ pháp"
+        description="Học viên xem trong trang Đọc, tab Ngữ pháp."
         stats={
           <>
             {totalTopics} chủ đề · {published} đã xuất bản · {totalTopics - published} bản nháp

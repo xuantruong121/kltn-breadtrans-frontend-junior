@@ -223,6 +223,16 @@ describe("Admin IA and Messaging UX Invariants", () => {
       }
     });
 
+    it("puts Ngữ pháp directly under Đọc in NỘI DUNG HỌC", () => {
+      const contentGroup = ADMIN_NAV_GROUPS.find((g) => g.id === "content-group")!;
+      const ids = contentGroup.items.map((item) => item.id);
+      assert.equal(ids.indexOf("grammar"), ids.indexOf("reading") + 1);
+      assert.deepEqual(
+        contentGroup.items.map((item) => item.label),
+        ["Nghe", "Nói", "Đọc", "Ngữ pháp", "Viết", "Từ vựng & Flashcard", "Kho từ điển", "Luyện đề"],
+      );
+    });
+
     it("keeps authoring inside the tabs instead of separate entries", () => {
       const hrefs = ADMIN_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
       assert.ok(hrefs.includes("/admin/dictionary"));

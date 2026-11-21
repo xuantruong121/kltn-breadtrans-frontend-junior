@@ -89,6 +89,13 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         label: "Đọc",
         iconName: "BookOpen",
       },
+      // Learners find grammar inside Đọc (tab Ngữ pháp), so it sits under it.
+      {
+        id: "grammar",
+        href: "/admin/grammar",
+        label: "Ngữ pháp",
+        iconName: "GraduationCap",
+      },
       {
         id: "writing",
         href: "/admin/writing",
@@ -106,12 +113,6 @@ export const ADMIN_NAV_GROUPS: AdminNavGroupConfig[] = [
         href: "/admin/dictionary",
         label: "Kho từ điển",
         iconName: "BookText",
-      },
-      {
-        id: "grammar",
-        href: "/admin/grammar",
-        label: "Ngữ pháp",
-        iconName: "GraduationCap",
       },
       {
         id: "exams",
