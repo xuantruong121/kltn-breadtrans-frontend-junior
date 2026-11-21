@@ -94,6 +94,41 @@ export function deletionRequestBody(input: DeletionConfirm) {
     : { confirmEmail: input.confirmEmail.trim() };
 }
 
+/** What GET /subscriptions/me/expiry-summary says about the plan, as far as deletion cares. */
+export type DeletionPlanState = {
+  isPaid: boolean;
+  planCode: string;
+  endsAt: string | null;
+  queuedRenewal: { planCode: string; startsAt: string } | null;
+  trial?: unknown;
+} | null;
+
+/**
+ * What the learner loses with the account, only what applies (owner
+ * 2026-11-21): a paid plan still running, a renewal already bought, and the
+ * Bánh Mì balance. Facts only: the terms promise no refund, so neither does
+ * this. `planName` turns a plan code into "Plus" / "Pro".
+ */
+export function deletionLosses(
+  plan: DeletionPlanState,
+  breads: number,
+  planName: (code: string) => string,
+): string[] {
+  const lines: string[] = [];
+  if (plan?.isPaid && !plan.trial && plan.endsAt) {
+    lines.push(
+      `Gói ${planName(plan.planCode)} đang dùng (còn hạn đến ${formatVnDate(plan.endsAt)}) sẽ mất cùng tài khoản.`,
+    );
+  }
+  if (plan?.queuedRenewal) {
+    lines.push(
+      `Gói ${planName(plan.queuedRenewal.planCode)} đã gia hạn trước (bắt đầu từ ${formatVnDate(plan.queuedRenewal.startsAt)}) cũng sẽ mất.`,
+    );
+  }
+  if (breads > 0) lines.push(`${breads} Bánh Mì hiện có sẽ mất cùng tài khoản.`);
+  return lines;
+}
+
 const METHOD_LABELS: Record<string, string> = {
   EMAIL_SIGNUP: "Khi đăng ký bằng email",
   GOOGLE_SIGNUP: "Khi đăng ký bằng Google",

@@ -8,17 +8,21 @@ import toast from "react-hot-toast";
 import { FileText, Loader2, ShieldCheck, Trash2 } from "lucide-react";
 
 import axiosClient from "@/lib/api/axiosClient";
+import { PLAN_QUERY_KEYS, planService } from "@/lib/api/services/plan.service";
 import {
   DELETION_GRACE_DAYS,
   LEGAL_VERSION,
   canRequestDeletion,
   consentDocumentLabel,
   consentMethodLabel,
+  deletionLosses,
   deletionRequestBody,
   formatVnDate,
 } from "@/lib/auth/accountPrivacy";
+import { planName } from "@/lib/ui/terms";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { useAuthStore } from "@/stores/authStore";
+import { useGamificationStore } from "@/stores/gamificationStore";
 
 type ConsentHistory = {
   currentVersion: string;
@@ -91,6 +95,17 @@ export function AccountPrivacyTab({ hasPassword }: { hasPassword: boolean }) {
 
   const consents = history.data?.consents ?? [];
   const isAdmin = user?.role === "ADMIN";
+
+  // What else goes with the account (owner 2026-11-21): a running paid plan,
+  // a renewal bought ahead, the Bánh Mì balance.
+  const breads = useGamificationStore((state) => state.breads);
+  const plan = useQuery({
+    queryKey: PLAN_QUERY_KEYS.expirySummary,
+    queryFn: planService.getExpirySummary,
+    enabled: !!user?.id && !isAdmin,
+    staleTime: 5 * 60 * 1000,
+  });
+  const losses = deletionLosses(plan.data ?? null, breads || 0, planName);
 
   return (
     <section className="space-y-6" aria-labelledby="heading-privacy">
@@ -181,6 +196,11 @@ export function AccountPrivacyTab({ hasPassword }: { hasPassword: boolean }) {
               <li>
                 Bị xoá: hồ sơ, ảnh đại diện, bài làm, ghi âm, sổ lỗi, từ đã lưu, tiến độ học, thú ảo, đăng nhập Google.
               </li>
+              {losses.map((line) => (
+                <li key={line} className="font-semibold text-slate-900 dark:text-slate-100">
+                  {line}
+                </li>
+              ))}
               <li>
                 Được giữ ở dạng ẩn danh, không còn gắn với email hay tên của bạn: đơn hàng, thanh toán, gói đã mua, lịch sử Bánh Mì.
               </li>

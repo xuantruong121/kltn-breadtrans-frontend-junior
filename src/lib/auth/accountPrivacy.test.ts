@@ -7,6 +7,7 @@ import {
   canRequestDeletion,
   consentDocumentLabel,
   consentMethodLabel,
+  deletionLosses,
   deletionRequestBody,
   formatVnDate,
   needsConsent,
@@ -83,6 +84,36 @@ test("sends the password, or the typed e-mail for a Google-only account", () => 
   assert.deepEqual(deletionRequestBody({ ...base, hasPassword: false }), {
     confirmEmail: "learner@example.com",
   });
+});
+
+test("lists what is lost with the account, only what applies (owner 2026-11-21)", () => {
+  const name = (code: string) => (code === "PRO" ? "Pro" : "Plus");
+  const plus = {
+    isPaid: true,
+    planCode: "PLUS",
+    endsAt: "2026-12-12T10:00:00.000Z",
+    queuedRenewal: null,
+  };
+  assert.deepEqual(deletionLosses(plus, 120, name), [
+    "Gói Plus đang dùng (còn hạn đến 12/12/2026) sẽ mất cùng tài khoản.",
+    "120 Bánh Mì hiện có sẽ mất cùng tài khoản.",
+  ]);
+  // A renewal already bought is lost too.
+  assert.deepEqual(
+    deletionLosses(
+      { ...plus, queuedRenewal: { planCode: "PRO", startsAt: "2026-12-12T10:00:00.000Z" } },
+      0,
+      name,
+    ),
+    [
+      "Gói Plus đang dùng (còn hạn đến 12/12/2026) sẽ mất cùng tài khoản.",
+      "Gói Pro đã gia hạn trước (bắt đầu từ 12/12/2026) cũng sẽ mất.",
+    ],
+  );
+  // Free, a free trial, no balance, or nothing loaded yet: nothing to say.
+  assert.deepEqual(deletionLosses({ ...plus, isPaid: false, endsAt: null }, 0, name), []);
+  assert.deepEqual(deletionLosses({ ...plus, trial: { endsAt: plus.endsAt } }, 0, name), []);
+  assert.deepEqual(deletionLosses(null, 0, name), []);
 });
 
 test("labels consent history in Vietnamese", () => {
