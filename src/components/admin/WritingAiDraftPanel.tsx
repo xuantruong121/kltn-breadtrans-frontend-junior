@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { BTN_AI, BTN_SECONDARY } from "./cmsButtons";
-import { writingDraftQuestion, type WritingDraftTask } from "./skillCmsStatus";
+import { aiShortfallNotice, writingDraftQuestion, writingTaskLabel, type WritingDraftTask } from "./skillCmsStatus";
 
 type Draft = { title: string; description: string; tasks: WritingDraftTask[]; dropped: number };
 
@@ -43,6 +43,8 @@ export function WritingAiDraftPanel({
   const [busy, setBusy] = useState<"draft" | "save" | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [picked, setPicked] = useState<boolean[]>([]);
+  // How many tasks the last request asked for: the AI may send fewer (QA 2026-11-22).
+  const [requested, setRequested] = useState(0);
   const started = useRef(false);
 
   const requestDraft = async () => {
@@ -55,6 +57,7 @@ export function WritingAiDraftPanel({
         count,
       })) as unknown as Draft;
       setDraft(data);
+      setRequested(count);
       setPicked(data.tasks.map(() => true));
     } catch (error) {
       toast.error(getApiErrorMessage(error, "AI chưa soạn được bài lúc này."));
@@ -71,6 +74,7 @@ export function WritingAiDraftPanel({
   }, [autoStart]);
 
   const chosen = draft ? draft.tasks.filter((_, index) => picked[index]) : [];
+  const shortfall = draft ? aiShortfallNotice(draft.tasks.length, requested) : null;
 
   const save = async () => {
     if (!chosen.length) return;
@@ -159,8 +163,15 @@ export function WritingAiDraftPanel({
                   )}
                 </div>
               )}
-              {draft.dropped > 0 && (
-                <p className="text-sm text-amber-800">AI trả thêm {draft.dropped} câu không đạt kiểm tra; hệ thống đã bỏ.</p>
+              {shortfall ? (
+                <p className="text-sm font-medium text-amber-800">
+                  {shortfall}
+                  {draft.dropped > 0 ? ` Hệ thống đã bỏ ${draft.dropped} câu không đạt kiểm tra.` : ""}
+                </p>
+              ) : (
+                draft.dropped > 0 && (
+                  <p className="text-sm text-amber-800">AI trả thêm {draft.dropped} câu không đạt kiểm tra; hệ thống đã bỏ.</p>
+                )
               )}
               <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
                 {draft.tasks.map((task, index) => (
@@ -187,9 +198,10 @@ export function WritingAiDraftPanel({
                           </span>
                         ) : null}
                         {task.grammarTip && <span className="block text-slate-600">Ngữ pháp: {task.grammarTip}</span>}
-                        {task.wordRange && (
+                        {kind === "EMAIL" && (
                           <span className="block text-slate-600">
-                            {task.taskType} · {task.wordRange[0]}–{task.wordRange[1]} từ
+                            {writingTaskLabel(task.taskType)}
+                            {task.wordRange ? ` · ${task.wordRange[0]}–${task.wordRange[1]} từ` : ""}
                           </span>
                         )}
                         {task.explanation && <span className="block text-slate-600">{task.explanation}</span>}

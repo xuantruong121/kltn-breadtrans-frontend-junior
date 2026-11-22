@@ -77,74 +77,242 @@ export const TRACK_FIELD_COPY = {
 
 export type ChecklistItem = { label: string; done: boolean };
 
+type ChecklistQuestion = {
+  type?: string;
+  content?: any;
+  audioAssets?: Array<{ isActive?: boolean }>;
+};
+
 /**
- * What a quiz still lacks before learners see it. Advisory: the publish
- * endpoint runs its own checks.
+ * A hand-made "Hội thoại" keeps its turns in a DIALOGUE question: the
+ * transcript, not a question a learner answers. AI-made dialogue quizzes have
+ * none, so counts leave it out and both read the same (QA 2026-11-22).
+ */
+export const isTranscriptHolder = (question: { type?: string }) => question.type === "DIALOGUE";
+
+/** The questions a learner answers: a listening quiz's transcript holder is not one. */
+export const answeredQuestions = <T extends { type?: string }>(domain: string, questions: T[]) =>
+  domain === "listening" ? questions.filter((question) => !isTranscriptHolder(question)) : questions;
+
+/** "Nghe chép" needs this many sentences to publish, as the server checks. */
+export const DICTATION_MIN_SENTENCES = 20;
+export const DICTATION_MAX_SENTENCES = 30;
+
+const PICTURE_TASKS = ["PICTURE", "PICTURE_SENTENCE", "DESCRIBE_PICTURE"];
+const VIETNAMESE_LETTER = /[ăâđêôơưàáảãạằắẳẵặầấẩẫậèéẻẽẹềếểễệìíỉĩịòóỏõọồốổỗộờớởỡợùúủũụừứửữựỳýỷỹỵ]/i;
+const filled = (value: unknown) => typeof value === "string" && value.trim().length > 0;
+
+const choiceComplete = (content: any) => {
+  const key = content?.correctIndex;
+  return (
+    Array.isArray(content?.options) &&
+    typeof key === "number" &&
+    Number.isInteger(key) &&
+    key >= 0 &&
+    key < content.options.length
+  );
+};
+
+const validTurns = (content: any) => {
+  const turns = (Array.isArray(content?.transcriptSegments) ? content.transcriptSegments : []).filter(
+    (turn: any) => filled(turn?.text) && (filled(turn?.speakerId) || filled(turn?.speaker)),
+  );
+  return turns.length >= 2 && new Set(turns.map((turn: any) => turn.speakerId || turn.speaker)).size >= 2;
+};
+
+const validWordRange = (range: unknown) =>
+  Array.isArray(range) &&
+  range.length === 2 &&
+  range.every((value) => Number.isInteger(value) && value > 0) &&
+  range[0] <= range[1];
+
+/** A "Dịch câu" task as the server checks it (translationTaskIssues). */
+const translationComplete = (content: any) => {
+  const answers = (Array.isArray(content?.acceptedAnswers) ? content.acceptedAnswers : []).filter(filled);
+  return (
+    VIETNAMESE_LETTER.test(String(content?.prompt ?? content?.text ?? "")) &&
+    answers.length >= 2 &&
+    answers.every((answer: string) => !VIETNAMESE_LETTER.test(answer)) &&
+    Array.isArray(content?.hints) &&
+    content.hints.length > 0 &&
+    filled(content?.grammarTip)
+  );
+};
+
+/**
+ * What a quiz still lacks before learners see it, item for item the rules
+ * of GET :domain/:id/validate, which the publish endpoint runs again. Each
+ * domain lists only its own items: Viết has no choice questions.
  */
 export function publishChecklist(input: {
   domain: string;
   title: string;
-  questions: Array<{
-    type?: string;
-    content?: any;
-    audioAssets?: Array<{ isActive?: boolean }>;
-  }>;
+  /** The saved title carries the level tag ("Listening B1 — "), which the server reads. */
+  levelTagged: boolean;
+  questions: ChecklistQuestion[];
+  /** The quiz's recording matches its transcript and is published. */
   audioPublished?: boolean;
   listeningMode?: string;
+  /** Viết: the quiz type, WRITING_EMAIL or WRITING_PICTURE. */
+  quizType?: string;
 }): ChecklistItem[] {
-  const mcqs = input.questions.filter((q) => q.type === "MULTIPLE_CHOICE");
-  const withClip = input.questions.filter((q) =>
-    (q.audioAssets ?? []).some((asset) => asset.isActive),
-  ).length;
-  const everyClip =
-    input.questions.length > 0 && withClip === input.questions.length;
+  const answered = answeredQuestions(input.domain, input.questions);
   const items: ChecklistItem[] = [
     { label: "Có tiêu đề", done: input.title.trim().length > 0 },
-    { label: "Có ít nhất 1 câu hỏi", done: input.questions.length > 0 },
-    {
-      label: "Câu trắc nghiệm đủ đáp án",
-      done: mcqs.every((q) => {
-        const options = Array.isArray(q.content?.options)
-          ? q.content.options
-          : [];
-        const key = Number(q.content?.correctIndex);
-        return (
-          options.length >= 2 &&
-          Number.isInteger(key) &&
-          key >= 0 &&
-          key < options.length
-        );
-      }),
-    },
+    { label: "Có trình độ", done: input.levelTagged },
+    { label: "Có ít nhất 1 câu hỏi", done: answered.length > 0 },
   ];
+  const choices = answered.filter((q) => input.domain === "reading" || q.type === "MULTIPLE_CHOICE");
+  const choiceItem = {
+    label: "Câu trắc nghiệm đủ đáp án",
+    done: choices.length > 0 && choices.every((q) => choiceComplete(q.content)),
+  };
+  if (input.domain === "reading") items.push(choiceItem);
+  if (input.domain === "writing") {
+    const content = (q: ChecklistQuestion) => (q.content ?? {}) as any;
+    const taskType = (q: ChecklistQuestion) => String(content(q).taskType ?? "").trim().toUpperCase();
+    items.push({
+      label: "Mỗi câu có đề bài",
+      done:
+        answered.length > 0 &&
+        answered.every(
+          (q) =>
+            q.type === "WRITING" &&
+            filled(content(q).prompt ?? content(q).text) &&
+            (input.quizType !== "WRITING_EMAIL" || taskType(q) !== ""),
+        ),
+    });
+    const pictures = answered.filter((q) => input.quizType === "WRITING_PICTURE" && PICTURE_TASKS.includes(taskType(q)));
+    if (pictures.length)
+      items.push({ label: "Câu theo tranh có ảnh", done: pictures.every((q) => filled(content(q).imageUrl)) });
+    const translations = answered.filter((q) => taskType(q) === "SENTENCE_TRANSLATION");
+    if (translations.length)
+      items.push({
+        label: "Câu dịch đủ đáp án, gợi ý và lưu ý ngữ pháp",
+        done: translations.every((q) => translationComplete(content(q))),
+      });
+    const ranged = answered.filter((q) => content(q).wordRange !== undefined);
+    if (ranged.length)
+      items.push({ label: "Số từ tối thiểu, tối đa hợp lệ", done: ranged.every((q) => validWordRange(content(q).wordRange)) });
+  }
   if (input.domain === "listening") {
+    const dictation = answered.filter((q) => q.type === "DICTATION");
+    const allDictation = answered.length > 0 && dictation.length === answered.length;
+    if (input.listeningMode === "DICTATION" || allDictation)
+      items.push({
+        label: `Nghe chép cần ít nhất ${DICTATION_MIN_SENTENCES} câu (${dictation.length}/${DICTATION_MIN_SENTENCES})`,
+        done: answered.length > 0 && (!allDictation || answered.length >= DICTATION_MIN_SENTENCES),
+      });
+    if (dictation.length)
+      items.push({
+        label: "Mỗi câu nghe chép có câu cần chép",
+        done: dictation.every((q) =>
+          [q.content?.correctAnswer, q.content?.audioText, q.content?.text, q.content?.prompt].some(filled),
+        ),
+      });
+    if (input.listeningMode !== "DICTATION" || choices.length) items.push(choiceItem);
+    const holders = input.questions.filter(isTranscriptHolder);
+    if (holders.length)
+      items.push({ label: "Lời thoại có ít nhất 2 lượt của 2 người nói", done: holders.every((q) => validTurns(q.content)) });
+    // A learner hears the question's own clip, or the published recording
+    // when the question shares the conversation (the server's rule).
+    const playable = (q: ChecklistQuestion) =>
+      (q.audioAssets ?? []).some((asset) => asset.isActive) ||
+      (input.audioPublished === true &&
+        (typeof q.content?.targetTurnId === "string" ||
+          (Array.isArray(q.content?.transcriptSegments) && q.content.transcriptSegments.length > 0)));
+    const heard = answered.filter(playable).length;
+    const audioDone = answered.length > 0 && input.questions.every(playable);
     items.push(
-      {
-        label: "Lời giải có tiếng Việt và English",
-        done: mcqs.every((q) => {
-          const explanation = q.content?.explanation;
-          return (
-            !!explanation &&
-            typeof explanation === "object" &&
-            String(explanation.vi ?? "").trim().length > 0 &&
-            String(explanation.en ?? "").trim().length > 0
-          );
-        }),
-      },
       PER_QUESTION_MODES.includes(input.listeningMode ?? "")
-        ? {
-            label: `Audio từng câu ${withClip}/${input.questions.length}`,
-            done: everyClip,
-          }
-        : {
-            label: "Audio đã xuất bản cho học viên",
-            // Same rule as the server: one recording, or a clip per question.
-            done: input.audioPublished === true || everyClip,
-          },
+        ? { label: `Audio từng câu ${heard}/${answered.length}`, done: audioDone }
+        : { label: "Audio đã xuất bản cho học viên", done: audioDone },
     );
   }
   return items;
 }
+
+/**
+ * The result of "Kiểm tra & xuất bản" (QA 2026-11-22: it asked to publish
+ * before checking anything). The server's check decides; the checklist
+ * names each item. Publishing is offered only when both pass.
+ */
+export function publishCheckView(checklist: ChecklistItem[], server: { valid: boolean; errors?: string[] }) {
+  const failed = checklist.filter((item) => !item.done).map((item) => item.label);
+  return {
+    passed: checklist.filter((item) => item.done).map((item) => item.label),
+    failed,
+    details: server.valid ? [] : (server.errors ?? []),
+    canPublish: server.valid && failed.length === 0,
+  };
+}
+
+/**
+ * How many of the four audio steps (check, create, listen & approve,
+ * publish) are done. A quiz with no recording has done none until its
+ * transcript passed the check (QA 2026-11-22: step 1 showed done on an
+ * empty new quiz).
+ */
+export function audioStepsDone(artifactStatus: string | undefined, transcriptChecked: boolean) {
+  if (artifactStatus === "PUBLISHED") return 4;
+  if (artifactStatus === "APPROVED") return 3;
+  if (artifactStatus === "PREVIEW_READY") return 2;
+  // Generating or failed: the transcript passed, the audio is not there yet.
+  if (artifactStatus) return 1;
+  return transcriptChecked ? 1 : 0;
+}
+
+/**
+ * Why a question cannot be saved yet, or null. A "Hội thoại" turns question
+ * needs its turns, not a prompt (QA 2026-11-22: turns alone were refused).
+ */
+export function questionSaveProblem(
+  domain: string,
+  question: { type: string; prompt: string; segments?: Array<{ speaker: string; text: string }> },
+): string | null {
+  if (domain === "listening" && question.type === "DIALOGUE") {
+    const turns = (question.segments ?? []).filter((turn) => turn.speaker.trim() && turn.text.trim());
+    return turns.length >= 2 && new Set(turns.map((turn) => turn.speaker.trim())).size >= 2
+      ? null
+      : "Lời thoại cần ít nhất 2 lượt lời của 2 người nói.";
+  }
+  if (question.prompt.trim()) return null;
+  return domain === "listening" && question.type === "DICTATION" ? "Cần nhập câu cần chép." : "Cần nhập đề bài.";
+}
+
+/**
+ * The saved title is "Listening B1 — Ordering food": the server adds the head
+ * from the level picked. The editor shows and edits the part after it, keeps
+ * the head aside and puts it back on save, so a range head ("A1–A2") or a
+ * custom one ("Hội thoại C1") is not rewritten. The AI topic is the part
+ * after the head too (QA 2026-11-22: "Writing B1 — [QA] …" went to Gemini).
+ */
+export function splitTitleHead(title?: string | null): { head: string; body: string } {
+  const text = String(title ?? "");
+  const at = text.indexOf(" — ");
+  if (at < 0 || !cmsLevelFromTitle(text)) return { head: "", body: text };
+  return { head: text.slice(0, at), body: text.slice(at + 3) };
+}
+
+export const joinTitleHead = (head: string, body: string) =>
+  head && body.trim() ? `${head} — ${body.trim()}` : body.trim();
+
+/** "AI chỉ trả về X/Y câu" when the AI sent fewer items than asked for, else null. */
+export const aiShortfallNotice = (received: number, requested: number) =>
+  received < requested ? `AI chỉ trả về ${received}/${requested} câu.` : null;
+
+/**
+ * The count beside "Soạn cả bài bằng AI": questions for a dialogue, a
+ * comprehension or a reading draft; sentences for "Nghe chép", 20 to 30.
+ */
+export function fullDraftCountRange(listeningMode?: string) {
+  return listeningMode === "DICTATION"
+    ? { min: DICTATION_MIN_SENTENCES, max: DICTATION_MAX_SENTENCES, label: "Số câu" }
+    : { min: 1, max: 10, label: "Số câu hỏi" };
+}
+
+export const clampDraftCount = (count: number, range: { min: number; max: number }) =>
+  Math.min(range.max, Math.max(range.min, Math.round(Number(count) || range.min)));
 
 /** CEFR tags in the order a learner meets them. */
 export const CMS_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
@@ -291,18 +459,36 @@ export const defaultWritingTaskType = (formType: string) =>
         ? "SENTENCE"
         : "EMAIL";
 
+/** The form's "Dạng bài viết" for each kind the backend names. */
+const FORM_TYPE_OF_KIND: Record<string, string> = {
+  TRANSLATION: "TRANSLATION",
+  PICTURE: "WRITING_PICTURE",
+  SENTENCE: "SENTENCE",
+};
+
+/** The kind a form type is saved as (bilingualContent.writingKind on the backend). */
+export const writingKindOfForm = (formType: string) =>
+  formType === "TRANSLATION"
+    ? "TRANSLATION"
+    : formType === "SENTENCE"
+      ? "SENTENCE"
+      : formType === "WRITING_PICTURE"
+        ? "PICTURE"
+        : "EMAIL";
+
 /**
- * The form's "Dạng bài viết": a "Dịch câu" exercise is stored as WRITING_PICTURE,
- * so the form reads it from its sentences (owner 2026-11-14).
+ * The form's "Dạng bài viết": "Dịch câu", "Viết theo tranh" and "Viết câu"
+ * are all stored as WRITING_PICTURE. The backend's kind comes first: it is
+ * the kind saved with the exercise, so an empty "Viết câu" reopens as itself
+ * (QA 2026-11-22). Without it the form reads the sentences (owner 2026-11-14).
  */
 export const writingFormType = (
   type: string,
   questions: Array<{ content?: { taskType?: unknown; imageUrl?: unknown } | null }> = [],
-  /** The backend's kind: TRANSLATION comes from the topic, so it holds for an empty exercise too. */
   writingKind?: string | null,
 ) => {
   if (type !== "WRITING_PICTURE") return type;
-  if (writingKind === "TRANSLATION") return "TRANSLATION";
+  if (writingKind && FORM_TYPE_OF_KIND[writingKind]) return FORM_TYPE_OF_KIND[writingKind];
   const taskTypes = questions.map((q) => String(q.content?.taskType ?? "").toUpperCase());
   if (taskTypes.includes("SENTENCE_TRANSLATION")) return "TRANSLATION";
   // Plain sentences with no picture are "Viết câu".
@@ -312,6 +498,51 @@ export const writingFormType = (
     questions.every((q) => !q.content?.imageUrl);
   return plain ? "SENTENCE" : type;
 };
+
+/** Each Writing task type in Vietnamese, for the editor and the AI draft panel. */
+export const WRITING_TASK_LABEL: Record<string, string> = {
+  SENTENCE_TRANSLATION: "Dịch câu Việt → Anh",
+  SENTENCE: "Viết câu",
+  PICTURE_SENTENCE: "Viết câu theo tranh (2 từ gợi ý)",
+  DESCRIBE_PICTURE: "Mô tả tranh",
+  EMAIL: "Phản hồi email",
+  SHORT_MESSAGE: "Tin nhắn ngắn",
+  INVITATION: "Email mời",
+  REQUEST: "Email yêu cầu",
+  THANK_YOU: "Email cảm ơn",
+  STATUS_UPDATE: "Email cập nhật tình hình",
+  CUSTOMER_EMAIL: "Email chăm sóc khách hàng",
+  INFORMATION_REQUEST: "Email hỏi thông tin",
+  MEETING_FOLLOWUP: "Email theo dõi cuộc họp",
+  OPINION: "Bài luận nêu quan điểm",
+  PROPOSAL: "Bài viết đề xuất giải pháp",
+  ANALYTICAL_RESPONSE: "Bài phân tích",
+  ARGUMENT: "Bài lập luận",
+};
+
+/** A task type as an admin reads it; an unknown code is called "Bài viết", never shown raw. */
+export const writingTaskLabel = (taskType?: string | null) =>
+  WRITING_TASK_LABEL[String(taskType ?? "").trim().toUpperCase()] ?? "Bài viết";
+
+/** The Đọc question types, as the editor's select and the AI review name them. */
+export const READING_QUESTION_TYPE_LABEL: Record<string, string> = {
+  DETAIL: "Chi tiết",
+  PURPOSE: "Mục đích",
+  INFERENCE: "Suy luận",
+  MAIN_IDEA: "Ý chính",
+  PROMOTION: "Thông tin quảng bá",
+  VOCAB_IN_CONTEXT: "Từ vựng trong ngữ cảnh",
+};
+
+/** "detail" or "Main idea" in the stored form; anything else is MAIN_IDEA, the editor's default. */
+export const normalizeReadingQuestionType = (value?: unknown) => {
+  const type = String(value ?? "").trim().toUpperCase().replace(/[\s-]+/g, "_");
+  return READING_QUESTION_TYPE_LABEL[type] ? type : "MAIN_IDEA";
+};
+
+export const readingQuestionTypeLabel = (type?: unknown) =>
+  READING_QUESTION_TYPE_LABEL[String(type ?? "").trim().toUpperCase().replace(/[\s-]+/g, "_")] ??
+  "Trắc nghiệm đọc hiểu";
 
 /** "giáo viên = teacher" lines into hints; a line without both sides is dropped. */
 export function parseHintLines(text: string): Array<{ vi: string; en: string }> {
@@ -382,9 +613,63 @@ export function fullDraftQuestionFields(candidate: FullDraftCandidate) {
     explanationEn: String(candidate.explanationEn || ""),
     audioText:
       listeningExchangeText(candidate.turns) ?? String(candidate.audioText || "").trim(),
-    questionType: String(candidate.questionType || "MAIN_IDEA"),
+    questionType: normalizeReadingQuestionType(candidate.questionType),
   };
 }
+
+/** One candidate in the "Thêm câu hỏi bằng AI" review, as the admin edits it. */
+export type AiQuestionCandidate = {
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  explanationEn?: string;
+  /** "Nghe hiểu": the sentence, or the "A: …" / "B: …" exchange, the learner hears. */
+  audioText?: string;
+};
+
+/**
+ * "Thêm câu hỏi bằng AI" in a "Nghe hiểu" quiz drafts new items from the
+ * quiz's topic and level (POST listening/ai/full-draft, COMPREHENSION):
+ * each candidate brings its own sentence (QA 2026-11-22: the button asked
+ * for a transcript this form does not have).
+ */
+export const comprehensionCandidate = (question: FullDraftCandidate): AiQuestionCandidate => {
+  const fields = fullDraftQuestionFields(question);
+  return {
+    prompt: fields.prompt,
+    options: fields.options ? fields.options.split("\n") : [],
+    correctIndex: Number(fields.correctIndex),
+    explanation: fields.explanation,
+    explanationEn: fields.explanationEn,
+    audioText: fields.audioText,
+  };
+};
+
+/**
+ * The editor fields of a reviewed candidate: saved through the same payload
+ * as a hand-written question. A candidate without a sentence of its own
+ * asks about the quiz's dialogue.
+ */
+export const aiCandidateQuestionFields = (candidate: AiQuestionCandidate) => ({
+  type: "MULTIPLE_CHOICE",
+  prompt: candidate.prompt.trim(),
+  options: candidate.options.map((option) => option.trim()).join("\n"),
+  correctIndex: String(candidate.correctIndex),
+  explanation: candidate.explanation.trim(),
+  explanationEn: String(candidate.explanationEn ?? "").trim(),
+  audioText: String(candidate.audioText ?? "").trim(),
+});
+
+/** A candidate that can be added: a prompt, 4 options, a key, and in "Nghe hiểu" its sentence. */
+export const aiCandidateReady = (candidate: AiQuestionCandidate, needsAudioText: boolean) =>
+  Boolean(candidate.prompt.trim()) &&
+  candidate.options.length === 4 &&
+  candidate.options.every((option) => option.trim()) &&
+  Number.isInteger(candidate.correctIndex) &&
+  candidate.correctIndex >= 0 &&
+  candidate.correctIndex < 4 &&
+  (!needsAudioText || Boolean(String(candidate.audioText ?? "").trim()));
 
 /**
  * Whether a reviewed draft question can be applied: a prompt and 4 options,
