@@ -7,6 +7,7 @@ import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   ChevronDown,
@@ -53,8 +54,21 @@ import {
 import {
   countBy,
   describeValidationError,
+  referenceAudioWarning,
   speakingSetChecklist,
 } from "./speakingSetStatus";
+import {
+  addDraftExercises,
+  draftExerciseProblem,
+  draftFailureToast,
+  type DraftFailure,
+} from "./speakingDraftLogic";
+
+/**
+ * Drafted exercises the server refused, per set. A new set hands them over
+ * to the editor it opens next, so the page that lists them is the saved set.
+ */
+const draftFailuresKey = (setId?: string) => ["admin-speaking-draft-failures", setId];
 
 type SetForm = {
   title: string;
@@ -195,6 +209,14 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty, pendingExercises.length]);
 
+  // Filled only by saveMutation below; never fetched.
+  const { data: draftFailures = [] } = useQuery<DraftFailure[]>({
+    queryKey: draftFailuresKey(set?.id),
+    queryFn: () => [],
+    enabled: false,
+    staleTime: Infinity,
+  });
+
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-speaking-set", set?.id] });
     queryClient.invalidateQueries({
@@ -203,10 +225,13 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     queryClient.invalidateQueries({ queryKey: ["admin-speaking-sets"] });
   };
 
+  /** The set this page created, until the router opens its editor. */
+  const [createdId, setCreatedId] = useState<string | null>(null);
   const saveMutation = useMutation({
     mutationFn: async () => {
       const dto = setFormOf(form);
-      let setId = set?.id;
+      // A set created a moment ago is saved again, never created twice.
+      let setId = set?.id ?? createdId ?? undefined;
       let tagError: unknown = null;
       if (setId) {
         await axiosClient.patch(`/admin/skill-content/speaking/${setId}`, dto);
@@ -216,6 +241,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         );
         if (!created?.id) throw new Error("Không nhận được mã bộ luyện mới.");
         setId = created.id;
+        setCreatedId(created.id);
         // Creating a set takes no track: tag it with the draft's one. The set
         // exists either way, so a refusal here is reported, not thrown.
         if (draftTrack) {
@@ -228,24 +254,23 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           }
         }
       }
-      const base = exercises.length;
-      for (const [index, candidate] of pendingExercises.entries()) {
-        await axiosClient.post(
-          `/admin/skill-content/speaking/${setId}/exercises`,
-          {
-            title: candidate.title.trim(),
-            targetText: candidate.targetText.trim(),
-            taskType: candidate.taskType,
-            difficulty: candidate.difficulty,
-            order: base + index + 1,
-          },
-        );
-      }
-      return { setId, dto, tagError };
+      // The set exists from here on: a refused exercise is reported, not
+      // thrown, so the page moves to the saved set and cannot create it twice
+      // (QA 2026-11-22).
+      const failures = await addDraftExercises(
+        pendingExercises,
+        exercises.length,
+        (body) => axiosClient.post(`/admin/skill-content/speaking/${setId}/exercises`, body),
+        (error) => getApiErrorMessage(error, "Không thể thêm câu luyện này."),
+      );
+      return { setId, dto, tagError, failures };
     },
-    onSuccess: ({ setId, dto, tagError }) => {
+    onSuccess: ({ setId, dto, tagError, failures }) => {
       toast.success(set ? "Đã lưu bộ luyện." : "Đã tạo bộ luyện.");
       if (tagError) toast.error(getApiErrorMessage(tagError, TRACK_FIELD_COPY.saveError));
+      const failureToast = draftFailureToast(failures);
+      if (failureToast) toast.error(failureToast, { duration: 8000 });
+      queryClient.setQueryData<DraftFailure[]>(draftFailuresKey(setId), failures);
       setSavedForm(dto);
       setForm(dto);
       setPendingExercises([]);
@@ -421,6 +446,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const missingAudio = exercises
     .filter((exercise) => !exercise.audioUrl)
     .map((exercise) => exercise.id);
+  const audioWarning = set ? referenceAudioWarning(exercises) : null;
   const busy = saveMutation.isPending || publishMutation.isPending;
 
   return (
@@ -672,46 +698,64 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 </p>
               </div>
               <ul className="mt-3 space-y-2">
-                {fullDraft.exercises.map((candidate, index) => (
-                  <li
-                    key={`${candidate.title}-${index}`}
-                    className={`flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 ${candidate.excluded ? "opacity-50" : ""}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={!candidate.excluded}
-                      aria-label={`Dùng câu ${index + 1}`}
-                      onChange={() =>
-                        setFullDraft((current) =>
-                          current
-                            ? {
-                                ...current,
-                                exercises: current.exercises.map(
-                                  (item, itemIndex) =>
-                                    itemIndex === index
-                                      ? { ...item, excluded: !item.excluded }
-                                      : item,
-                                ),
-                              }
-                            : current,
-                        )
-                      }
-                      className="mt-1 size-4 flex-none"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-xs text-slate-600 dark:text-slate-400">
-                        {taskTypeLabel(candidate.taskType)} ·{" "}
-                        {difficultyLabel(candidate.difficulty)}
-                      </p>
-                      <p className="font-semibold text-slate-900">
-                        {candidate.title}
-                      </p>
-                      <p className="mt-0.5 text-sm text-slate-700">
-                        {candidate.targetText}
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                {fullDraft.exercises.map((candidate, index) => {
+                  // The server would refuse it: no checkbox, the reason instead.
+                  const problem = draftExerciseProblem(candidate);
+                  return (
+                    <li
+                      key={`${candidate.title}-${index}`}
+                      className={`flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 ${candidate.excluded && !problem ? "opacity-50" : ""}`}
+                    >
+                      {problem ? (
+                        <AlertTriangle
+                          size={16}
+                          strokeWidth={2}
+                          className="mt-1 flex-none text-amber-600"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <input
+                          type="checkbox"
+                          checked={!candidate.excluded}
+                          aria-label={`Dùng câu ${index + 1}`}
+                          onChange={() =>
+                            setFullDraft((current) =>
+                              current
+                                ? {
+                                    ...current,
+                                    exercises: current.exercises.map(
+                                      (item, itemIndex) =>
+                                        itemIndex === index
+                                          ? { ...item, excluded: !item.excluded }
+                                          : item,
+                                    ),
+                                  }
+                                : current,
+                            )
+                          }
+                          className="mt-1 size-4 flex-none"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-xs text-slate-600 dark:text-slate-400">
+                          {taskTypeLabel(candidate.taskType)} ·{" "}
+                          {difficultyLabel(candidate.difficulty)}
+                        </p>
+                        <p className="font-semibold text-slate-900">
+                          {candidate.title}
+                        </p>
+                        <p className="mt-0.5 text-sm text-slate-700">
+                          {candidate.targetText}
+                        </p>
+                        {problem && (
+                          <p className="mt-1 text-sm font-medium text-amber-800">
+                            Không thêm được: {problem}
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
               <div className="mt-3 flex gap-2">
                 <button
@@ -719,12 +763,10 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                   onClick={() => {
                     const chosen = fullDraft.exercises.filter(
                       (candidate) =>
-                        !candidate.excluded &&
-                        candidate.title.trim() &&
-                        candidate.targetText.trim(),
+                        !candidate.excluded && !draftExerciseProblem(candidate),
                     );
                     if (!chosen.length) {
-                      toast.error("Chọn ít nhất một câu.");
+                      toast.error("Chọn ít nhất một câu lưu được.");
                       return;
                     }
                     setForm(setFormOf(fullDraft.practiceSet));
@@ -802,24 +844,38 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 </li>
               ))}
             </ul>
-            {set && missingAudio.length > 0 && !published && (
-              <div className="mt-4 border-t border-slate-100 pt-3">
-                {audioBatch ? (
-                  <p className="inline-flex items-center gap-2 text-sm tabular-nums text-slate-700">
-                    <Loader2 size={14} className="animate-spin" /> Đang tạo
-                    audio mẫu {audioBatch.done + 1}/{audioBatch.total}
-                  </p>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => void makeMissingReferences(missingAudio)}
-                    title="Azure đọc câu mẫu của từng câu chưa có audio, lần lượt."
-                    className={BTN_SECONDARY}
-                  >
-                    <Volume2 size={16} /> Tạo audio mẫu cho{" "}
-                    {missingAudio.length} câu
-                  </button>
-                )}
+            {audioWarning && (
+              <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
+                {/* Optional help for learners: a warning, not a failed item. */}
+                <p className="flex items-center gap-2 text-sm text-amber-800">
+                  <AlertTriangle
+                    size={16}
+                    strokeWidth={2}
+                    className="flex-none text-amber-600"
+                    aria-hidden="true"
+                  />
+                  <span>
+                    {audioWarning}{" "}
+                    <span className="text-slate-600">(không chặn xuất bản)</span>
+                  </span>
+                </p>
+                {!published &&
+                  (audioBatch ? (
+                    <p className="inline-flex items-center gap-2 text-sm tabular-nums text-slate-700">
+                      <Loader2 size={14} className="animate-spin" /> Đang tạo
+                      audio mẫu {audioBatch.done + 1}/{audioBatch.total}
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => void makeMissingReferences(missingAudio)}
+                      title="Giọng đọc máy đọc câu mẫu của từng câu chưa có audio, lần lượt."
+                      className={BTN_SECONDARY}
+                    >
+                      <Volume2 size={16} /> Tạo audio mẫu cho{" "}
+                      {missingAudio.length} câu
+                    </button>
+                  ))}
               </div>
             )}
             {serverErrors.length > 0 && (
@@ -886,6 +942,38 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/40 p-3 text-sm text-slate-700">
               {pendingExercises.length} câu từ bản nháp AI sẽ được thêm khi bấm{" "}
               {set ? "Lưu" : "Tạo bộ luyện"}.
+            </div>
+          )}
+
+          {draftFailures.length > 0 && (
+            <div
+              role="alert"
+              className="mt-4 rounded-lg border border-rose-200 bg-rose-50/40 p-3 text-sm"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <p className="font-semibold text-rose-800">
+                  {draftFailures.length} câu từ bản nháp AI chưa được thêm
+                </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    queryClient.setQueryData<DraftFailure[]>(draftFailuresKey(set?.id), [])
+                  }
+                  className="cursor-pointer text-sm font-semibold text-slate-600 hover:text-slate-900"
+                >
+                  Ẩn
+                </button>
+              </div>
+              <ul className="mt-1 list-disc space-y-1 pl-5 text-rose-800">
+                {draftFailures.map((failure, index) => (
+                  <li key={`${failure.title}-${index}`}>
+                    “{failure.title}”: {failure.reason}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1 text-slate-600">
+                Bộ luyện đã được lưu. Thêm lại các câu này bằng “Thêm câu luyện”.
+              </p>
             </div>
           )}
 

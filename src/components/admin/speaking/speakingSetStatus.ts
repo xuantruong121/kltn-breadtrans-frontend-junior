@@ -18,7 +18,11 @@ type ExerciseLike = {
 
 const filled = (value?: string | null) => String(value ?? "").trim() !== "";
 
-/** What the set still lacks before learners see it. Advisory: publish runs the server checks. */
+/**
+ * What the set still lacks before learners see it: the same blocking checks
+ * the server runs at publish. Reference audio is not one of them (see
+ * referenceAudioWarning).
+ */
 export function speakingSetChecklist(set: {
   title: string;
   exercises: ExerciseLike[];
@@ -28,7 +32,6 @@ export function speakingSetChecklist(set: {
     { label: "Có ít nhất 1 câu luyện", done: set.exercises.length > 0 },
   ];
   if (!set.exercises.length) return items;
-  const withAudio = set.exercises.filter((e) => filled(e.audioUrl)).length;
   items.push(
     {
       label: "Mỗi câu có tiêu đề và câu mẫu",
@@ -46,12 +49,19 @@ export function speakingSetChecklist(set: {
         .filter((e) => e.taskType === "RESPOND_USING_INFORMATION")
         .every((e) => e.stimulusId != null),
     },
-    {
-      label: `Audio mẫu ${withAudio}/${set.exercises.length} câu`,
-      done: withAudio === set.exercises.length,
-    },
   );
   return items;
+}
+
+/**
+ * Reference audio is optional help: the learner page plays it from "Nghe câu
+ * mẫu" and shows "Audio mẫu chưa khả dụng" without it, and the server
+ * publishes a set without it. So a missing clip is a warning, never a failed
+ * checklist item (QA 2026-11-22: the checklist and the server disagreed).
+ */
+export function referenceAudioWarning(exercises: ExerciseLike[]): string | null {
+  const missing = exercises.filter((e) => !filled(e.audioUrl)).length;
+  return missing ? `Thiếu audio mẫu: ${missing} câu` : null;
 }
 
 /** Counts of one field, most frequent first. */
@@ -67,12 +77,12 @@ export function countBy(
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
 }
 
-/** "Exercise #42: …" from the server becomes "Câu 2: …" by the exercise's position. */
+/** "Câu #42: …" (older servers: "Exercise #42: …") becomes "Câu 2: …" by the exercise's position. */
 export function describeValidationError(
   error: string,
   exercises: Array<{ id?: number }>,
 ): string {
-  return error.replace(/^Exercise #(\d+)/, (match, id) => {
+  return error.replace(/^(?:Exercise|Câu) #(\d+)/, (match, id) => {
     const index = exercises.findIndex((e) => e.id === Number(id));
     return index < 0 ? match : `Câu ${index + 1}`;
   });
