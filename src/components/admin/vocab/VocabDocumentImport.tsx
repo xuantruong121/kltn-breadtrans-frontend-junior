@@ -126,15 +126,23 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <DocumentImportButton onText={setText} disabled={busy} />
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void suggest()}
-                  className={BTN_AI}
-                >
-                  {busy && <Loader2 size={15} className="animate-spin" />}
-                  Gợi ý các bộ từ
-                </button>
+                {/* QA 2026-11-22: before a file it answered "text should
+                    not be empty"; it shows once the document's text is in. */}
+                {text.trim() ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void suggest()}
+                    className={BTN_AI}
+                  >
+                    {busy && <Loader2 size={15} className="animate-spin" />}
+                    Gợi ý các bộ từ
+                  </button>
+                ) : (
+                  <p className="text-sm text-slate-600">
+                    Chọn tài liệu trước; nút gợi ý hiện khi đã đọc xong chữ trong tệp.
+                  </p>
+                )}
               </div>
             </>
           ) : (

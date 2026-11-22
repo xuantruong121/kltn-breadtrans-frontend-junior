@@ -7,6 +7,7 @@ import {
   GRAMMAR_PASTE_SAMPLE,
   OPTION_LETTERS,
   parseGrammarPaste,
+  pasteToAdd,
   rationaleCount,
   type GrammarDraft,
 } from "./grammarCms";
@@ -31,12 +32,14 @@ export default function GrammarPastePanel({
   const [adding, setAdding] = useState(false);
   const rows = parseGrammarPaste(text, existingPrompts);
   const valid = rows.filter((row) => !row.problems.length);
+  // A repeated prompt is skipped, as the vocab paste skips a known word.
+  const { add: toAdd, skippedDuplicates } = pasteToAdd(rows);
 
   const add = async () => {
     setAdding(true);
     try {
       const added = await onAdd(
-        valid.map((row) => ({
+        toAdd.map((row) => ({
           question: row.question,
           options: row.options,
           correctIndex: row.correctIndex,
@@ -99,13 +102,14 @@ export default function GrammarPastePanel({
         </div>
         <div className="min-w-0">
           {rows.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-600">
+            <p className="text-sm text-slate-600">
               Dán câu hỏi vào ô bên trái; từng câu sẽ được kiểm tra ở đây trước khi thêm.
             </p>
           ) : (
             <>
               <p className="text-sm tabular-nums text-slate-700">
                 {valid.length}/{rows.length} câu hợp lệ
+                {skippedDuplicates > 0 && ` · bỏ qua ${skippedDuplicates} câu trùng`}
               </p>
               <ol className="mt-2 max-h-96 space-y-2 overflow-y-auto pr-1">
                 {rows.map((row) => {
@@ -144,7 +148,7 @@ export default function GrammarPastePanel({
                         <p className="mt-1 text-rose-700">{row.problems.join(" · ")}</p>
                       )}
                       {row.duplicate && (
-                        <p className="mt-1 text-amber-800">Đề bài trùng một câu đã có.</p>
+                        <p className="mt-1 text-amber-800">Đề bài trùng một câu đã có, bỏ qua.</p>
                       )}
                     </li>
                   );
@@ -158,11 +162,18 @@ export default function GrammarPastePanel({
         type="button"
         disabled={adding}
         onClick={() => void add()}
-        className={`${BTN_PRIMARY} mt-3 ${valid.length ? "" : "invisible"}`}
+        className={`${BTN_PRIMARY} mt-3 ${toAdd.length ? "" : "invisible"}`}
       >
         {adding ? <Loader2 size={14} className="animate-spin" /> : <Plus size={16} />}
-        {addLabel(valid.length)}
+        {addLabel(toAdd.length)}
       </button>
+      {rows.length > 0 && !toAdd.length && (
+        <p className="mt-1 text-sm text-slate-600">
+          {skippedDuplicates
+            ? "Mọi câu hợp lệ đều trùng câu đã có, nên không có câu nào để thêm."
+            : "Chưa có câu hợp lệ để thêm. Sửa các lỗi ghi ở từng câu."}
+        </p>
+      )}
     </div>
   );
 }

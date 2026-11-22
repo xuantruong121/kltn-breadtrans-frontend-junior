@@ -20,6 +20,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   GRAMMAR_LEVELS,
   grammarLevelLabel,
+  grammarListBlocker,
 } from "@/components/admin/grammar/grammarCms";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
@@ -36,6 +37,8 @@ type TopicSummary = {
   /** Attempts by learners; content is locked once there is one. */
   learnerAttemptCount?: number;
   publicationStatus: "DRAFT" | "PUBLISHED";
+  /** What the server's publish would refuse, in the checklist's words. */
+  publishProblems?: string[];
 };
 
 const ICON_BTN =
@@ -144,6 +147,8 @@ export default function AdminGrammarPage() {
         <div className={ADMIN_CARD_GRID}>
           {visible.map((topic) => {
             const isPublished = topic.publicationStatus === "PUBLISHED";
+            // The editor's checklist: the icon shows only when publishing can run.
+            const blocker = grammarListBlocker(topic);
             return (
               <article
                 key={topic.id}
@@ -180,6 +185,11 @@ export default function AdminGrammarPage() {
                     {topic.description}
                   </p>
                 )}
+                {blocker && (
+                  <p className="mt-2 text-sm text-amber-800">
+                    Chưa xuất bản được. {blocker}
+                  </p>
+                )}
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
                     <span className="inline-flex items-center gap-1.5 tabular-nums">
@@ -195,15 +205,20 @@ export default function AdminGrammarPage() {
                       ) : null}
                     </span>
                     <div className="ml-auto flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setPendingLifecycle(topic)}
-                        aria-label={`${isPublished ? "Chuyển về bản nháp" : "Xuất bản"} ${topic.title}`}
-                        title={isPublished ? "Chuyển về bản nháp" : "Xuất bản"}
-                        className={ICON_BTN}
-                      >
-                        <Send size={15} />
-                      </button>
+                      {blocker ? (
+                        // Hidden, not faded; the card says why above.
+                        <span className="size-9" aria-hidden="true" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPendingLifecycle(topic)}
+                          aria-label={`${isPublished ? "Chuyển về bản nháp" : "Xuất bản"} ${topic.title}`}
+                          title={isPublished ? "Chuyển về bản nháp" : "Xuất bản"}
+                          className={ICON_BTN}
+                        >
+                          <Send size={15} />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => setPendingDelete(topic)}

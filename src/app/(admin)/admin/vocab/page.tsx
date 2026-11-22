@@ -16,7 +16,7 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { VOCAB_LEVELS } from "@/components/admin/vocab/vocabCms";
+import { VOCAB_LEVELS, vocabListBlocker } from "@/components/admin/vocab/vocabCms";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
@@ -33,6 +33,8 @@ type DeckSummary = {
   publicationStatus: "DRAFT" | "PUBLISHED";
   updatedAt?: string;
   _count?: { words?: number };
+  /** What the server's publish would refuse, in the checklist's words. */
+  publishProblems?: string[];
 };
 
 const ICON_BTN =
@@ -95,14 +97,20 @@ export default function AdminVocabPage() {
           maxCount={30}
           defaultCount={15}
           levels={VOCAB_LEVELS.map((level) => ({ value: level, label: level }))}
+          // QA 2026-11-22: the category was forced; the admin picks it, and
+          // the list's category filter, when one is on, fills it in.
+          category={{
+            options: categories,
+            initial: category === "ALL" ? "" : category,
+          }}
           onClose={() => setAiCreating(false)}
-          onCreate={async ({ name, level, count }) => {
+          onCreate={async ({ name, level, count, category: categoryName }) => {
             try {
               const created = (await axiosClient.post("/admin/vocab/topics", {
                 title: name,
                 description: "",
                 level,
-                categoryName: "600 TỪ VỰNG TOEIC",
+                categoryName,
                 isPro: false,
               })) as unknown as { id: number };
               refresh();
@@ -156,6 +164,8 @@ export default function AdminVocabPage() {
         <div className={ADMIN_CARD_GRID}>
           {visible.map((deck) => {
             const isPublished = deck.publicationStatus === "PUBLISHED";
+            // The deck editor's checklist: the icon shows only when publishing can run.
+            const blocker = vocabListBlocker({ ...deck, wordCount: wordCount(deck) });
             return (
               <article
                 key={deck.id}
@@ -184,19 +194,27 @@ export default function AdminVocabPage() {
                 {deck.description && (
                   <p className="mt-1 line-clamp-2 text-sm text-slate-600">{deck.description}</p>
                 )}
+                {blocker && (
+                  <p className="mt-2 text-sm text-amber-800">Chưa xuất bản được. {blocker}</p>
+                )}
                 <div className="mt-auto pt-4">
                   <div className="flex items-center gap-2 border-t border-slate-100 pt-3 text-sm text-slate-600">
                     <span className="tabular-nums">{wordCount(deck)} từ</span>
                     <div className="ml-auto flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setPendingLifecycle(deck)}
-                        aria-label={`${isPublished ? "Chuyển về bản nháp" : "Xuất bản"} ${deck.title}`}
-                        title={isPublished ? "Chuyển về bản nháp" : "Xuất bản"}
-                        className={ICON_BTN}
-                      >
-                        <Send size={15} />
-                      </button>
+                      {blocker ? (
+                        // Hidden, not faded; the card says why above.
+                        <span className="size-9" aria-hidden="true" />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPendingLifecycle(deck)}
+                          aria-label={`${isPublished ? "Chuyển về bản nháp" : "Xuất bản"} ${deck.title}`}
+                          title={isPublished ? "Chuyển về bản nháp" : "Xuất bản"}
+                          className={ICON_BTN}
+                        >
+                          <Send size={15} />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => setPendingDelete(deck)}

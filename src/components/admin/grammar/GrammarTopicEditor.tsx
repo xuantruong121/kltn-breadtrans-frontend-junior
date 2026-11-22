@@ -263,11 +263,14 @@ function TopicBody({ topic }: { topic: Topic | null }) {
     }
   };
 
-  /** Empty topic: AI writes the theory and the questions; otherwise it adds questions. */
-  const askAi = async (requested = aiCount) => {
+  /**
+   * Empty topic: AI writes the theory and the questions; otherwise it adds
+   * questions. True when the AI answered.
+   */
+  const askAi = async (requested = aiCount): Promise<boolean> => {
     if (!form.title.trim()) {
       toast.error("Cần tên chủ đề để AI biết viết về gì.");
-      return;
+      return false;
     }
     setBusy(true);
     const count = Math.min(requested, aiMax);
@@ -301,10 +304,23 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         setCandidates((data?.candidates ?? []).map((q: GrammarDraft) => ({ ...q, chosen: true })));
       }
       setEditingCandidate(null);
+      return true;
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể lấy gợi ý AI lúc này."));
+      return false;
     } finally {
       setBusy(false);
+    }
+  };
+
+  const removeEmptyDraft = async (topicId: number) => {
+    try {
+      await axiosClient.delete(`/grammar/topics/${topicId}`);
+      toast("AI chưa soạn được nên bản nháp trống đã được xoá. Hãy tạo lại từ danh sách.");
+      queryClient.invalidateQueries({ queryKey: ["admin-grammar-topics"] });
+      router.replace("/admin/grammar");
+    } catch {
+      toast.error("AI chưa soạn được. Bản nháp trống vẫn ở đây: soạn tay hoặc xoá ở danh sách.");
     }
   };
 
@@ -319,7 +335,12 @@ function TopicBody({ topic }: { topic: Topic | null }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the AI panel once when the page is reached with ?ai=
     setAiCount(count);
     setPanel("ai");
-    void askAi(count);
+    void askAi(count).then((answered) => {
+      // QA 2026-11-22: the list made this draft for the AI; when the AI
+      // fails it stays empty, so it goes and the admin is told.
+      if (!answered && !topic.questions.length && !topic.description?.trim())
+        void removeEmptyDraft(topic.id);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on arrival
   }, [topic]);
 
@@ -652,7 +673,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
 
           <ol className="mt-4 space-y-3">
             {topic && questions.length === 0 && (
-              <li className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+              <li className="text-sm text-slate-600">
                 Chưa có câu hỏi. Thêm từng câu, dán nhiều câu một lần, hoặc nhờ AI gợi ý.
               </li>
             )}
