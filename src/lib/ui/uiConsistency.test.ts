@@ -160,6 +160,26 @@ test("Phân loại Speaking is gone: Lĩnh vực replaces it", () => {
   assert.deepEqual(found, []);
 });
 
+// QA 2026-11-22: the speaking authoring screens mixed English into Vietnamese
+// text ("Tạo stimulus INFORMATION", "prompt cho câu Speaking"). Shown text
+// there says thông tin dùng chung, câu mẫu / nội dung câu, câu luyện, Nói.
+// The TOEIC composer keeps "Speaking": it is the name of the TOEIC section.
+test("speaking authoring copy has no English jargon in Vietnamese text", () => {
+  const AUTHORING = /^(components\/admin\/speaking\/|components\/admin\/ToeicSpeakingExamComposer\.tsx$|app\/\(admin\)\/admin\/speaking\/)/;
+  const JARGON = /\b(stimulus|Stimulus|prompt|Prompt|exercise|Exercise|taskType|INFORMATION|Azure|learner)\b/;
+  const found: string[] = [];
+  for (const f of FILES) {
+    if (!AUTHORING.test(f.rel)) continue;
+    const practice = !f.rel.includes("ToeicSpeakingExamComposer");
+    for (const { line, value } of displayText(f.text)) {
+      if (!/[À-ỹĐđ]/.test(value) || allowed(f.rel, "speaking jargon")) continue;
+      if (JARGON.test(value) || (practice && /\bSpeaking\b/.test(value)))
+        found.push(`${f.rel}:${line} ${value.trim().slice(0, 80)}`);
+    }
+  }
+  assert.deepEqual(found, []);
+});
+
 test("each thing is written one way (glossary.ts)", () => {
   const found: string[] = [];
   for (const f of FILES)
