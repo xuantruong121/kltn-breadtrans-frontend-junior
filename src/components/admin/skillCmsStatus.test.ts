@@ -13,6 +13,8 @@ import {
   WRITING_FORM_KINDS,
   writingDraftKind,
   writingDraftQuestion,
+  fullDraftQuestionFields,
+  fullDraftQuestionReady,
   parseHintLines,
   hintLines,
   writingUsesPictures, TRACK_FIELD_COPY } from "./skillCmsStatus.ts";
@@ -258,5 +260,45 @@ test("a picked AI task saves as a question of its kind", () => {
       grammarTip: "Số nhiều thêm s.",
     },
   );
+});
+
+test("a 'Nghe hiểu' draft question fills the same fields as one typed by hand", () => {
+  assert.deepEqual(
+    fullDraftQuestionFields({
+      audioText: "  The bank opens at eight thirty.  ",
+      prompt: "When does the bank open?",
+      options: ["At eight", "At eight thirty", "At nine", "At noon"],
+      correctIndex: 1,
+      explanation: "Người nói nói “eight thirty”.",
+      explanationEn: "The speaker says “eight thirty”.",
+    }),
+    {
+      type: "MULTIPLE_CHOICE",
+      prompt: "When does the bank open?",
+      options: "At eight\nAt eight thirty\nAt nine\nAt noon",
+      correctIndex: "1",
+      explanation: "Người nói nói “eight thirty”.",
+      explanationEn: "The speaker says “eight thirty”.",
+      // The comprehension editor's "Câu nghe": saved as content.audioText.
+      audioText: "The bank opens at eight thirty.",
+      questionType: "MAIN_IDEA",
+    },
+  );
+  // A dialogue or dictation question plays the shared source: no sentence of its own.
+  const dialogue = fullDraftQuestionFields({ prompt: "Who calls?", options: ["a", "b", "c", "d"], correctIndex: 0 });
+  assert.equal(dialogue.audioText, "");
+  assert.equal(dialogue.correctIndex, "0");
+  assert.equal(fullDraftQuestionFields({}).options, "");
+});
+
+test("a 'Nghe hiểu' draft question applies only with its sentence", () => {
+  const question = { prompt: "When does the bank open?", options: "a\nb\nc\nd", audioText: "The bank opens at eight." };
+  assert.equal(fullDraftQuestionReady(question, "COMPREHENSION"), true);
+  assert.equal(fullDraftQuestionReady({ ...question, audioText: "  " }, "COMPREHENSION"), false);
+  // The other forms play their shared source, so no sentence is needed.
+  assert.equal(fullDraftQuestionReady({ ...question, audioText: "" }, "DIALOGUE"), true);
+  assert.equal(fullDraftQuestionReady({ ...question, audioText: "" }), true);
+  assert.equal(fullDraftQuestionReady({ ...question, options: "a\nb\nc" }, "COMPREHENSION"), false);
+  assert.equal(fullDraftQuestionReady({ ...question, prompt: " " }, "DICTATION"), false);
 });
 

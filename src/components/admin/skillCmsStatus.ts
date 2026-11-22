@@ -351,6 +351,48 @@ export type WritingDraftTask = {
   grammarTip?: string;
 };
 
+/** One question from POST /admin/{listening,reading}/ai/full-draft. */
+export type FullDraftCandidate = {
+  prompt?: unknown;
+  options?: unknown;
+  correctIndex?: unknown;
+  explanation?: unknown;
+  explanationEn?: unknown;
+  questionType?: unknown;
+  /** "Nghe hiểu (câu ngắn)": the sentence the learner hears for this question. */
+  audioText?: unknown;
+};
+
+/**
+ * The editor fields an AI full-draft question fills. A "Nghe hiểu" question
+ * brings its own sentence in audioText, the field a hand-written one fills,
+ * so it saves the same way and its clip is made per question.
+ */
+export function fullDraftQuestionFields(candidate: FullDraftCandidate) {
+  return {
+    type: "MULTIPLE_CHOICE",
+    prompt: String(candidate.prompt || ""),
+    options: Array.isArray(candidate.options) ? candidate.options.join("\n") : "",
+    correctIndex: String(candidate.correctIndex ?? ""),
+    explanation: String(candidate.explanation || ""),
+    explanationEn: String(candidate.explanationEn || ""),
+    audioText: String(candidate.audioText || "").trim(),
+    questionType: String(candidate.questionType || "MAIN_IDEA"),
+  };
+}
+
+/**
+ * Whether a reviewed draft question can be applied: a prompt and 4 options,
+ * and in "Nghe hiểu" the sentence it plays.
+ */
+export const fullDraftQuestionReady = (
+  question: { prompt: string; options: string; audioText: string },
+  listeningMode?: string,
+) =>
+  Boolean(question.prompt.trim()) &&
+  question.options.split("\n").filter(Boolean).length === 4 &&
+  (listeningMode !== "COMPREHENSION" || Boolean(question.audioText.trim()));
+
 /** The body that saves a picked AI task as a question of the exercise. */
 export function writingDraftQuestion(task: WritingDraftTask, level?: string) {
   const translation = task.taskType === "SENTENCE_TRANSLATION";
