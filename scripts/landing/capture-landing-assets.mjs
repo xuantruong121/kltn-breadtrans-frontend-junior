@@ -3,8 +3,8 @@
 // Chỉ đọc: đăng nhập tài khoản test, mở trang, chụp. Không ghi dữ liệu nào vào database.
 // Ghi ảnh vào public/landing (WebP q82, rộng tối đa 1600) và in kích thước để cập nhật src/lib/landing/assets.ts.
 // Biến môi trường tuỳ chọn:
-//   CLEAN_SESSIONS_SCRIPT  đường dẫn clean-sessions-any.mjs, chạy cuối script để đăng xuất phiên test.
-import { execFileSync, spawnSync } from 'node:child_process';
+//   LANDING_BASE_URL (mặc định http://localhost:3000), LANDING_API_URL (mặc định http://127.0.0.1:3001).
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,6 +15,7 @@ import sharp from 'sharp';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = path.join(ROOT, 'public', 'landing');
 const BASE = process.env.LANDING_BASE_URL || 'http://localhost:3000';
+const API = process.env.LANDING_API_URL || 'http://127.0.0.1:3001';
 const EMAIL = 'student2@breadtrans.com';
 const PASSWORD = 'Password123!';
 const MAX_WIDTH = 1600;
@@ -122,6 +123,31 @@ async function recordVideo(browser) {
   fs.rmSync(tmp, { recursive: true, force: true });
 }
 
+// Đăng xuất các phiên headless do script tạo (UA HeadlessChrome/node/curl) qua API; phiên của chủ máy (Edge) giữ nguyên.
+// Chạy trong finally nên luôn chạy, không phụ thuộc biến môi trường.
+async function signOutTestSessions() {
+  const isTest = (ua) => !ua || ua.includes('HeadlessChrome') || ua.startsWith('node') || ua.startsWith('curl');
+  try {
+    const login = await (await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+    })).json();
+    const auth = { authorization: `Bearer ${login.data.access_token}` };
+    const sessions = (await (await fetch(`${API}/auth/sessions`, { headers: auth })).json()).data;
+    let removed = 0;
+    for (const s of sessions) {
+      if (s.current || !isTest(s.userAgent)) continue;
+      const r = await fetch(`${API}/auth/sessions/${encodeURIComponent(s.deviceId)}`, { method: 'DELETE', headers: auth });
+      if (r.ok) removed += 1;
+    }
+    await fetch(`${API}/auth/logout`, { method: 'POST', headers: auth });
+    console.log(`${EMAIL}: removed ${removed} test sessions, script session signed out`);
+  } catch (e) {
+    console.error('KHÔNG đăng xuất được phiên test, hãy chạy clean-sessions-any.mjs:', e.message);
+  }
+}
+
 fs.mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch();
 try {
@@ -142,14 +168,5 @@ try {
   await ctx.close();
 } finally {
   await browser.close();
-  const clean = process.env.CLEAN_SESSIONS_SCRIPT;
-  if (clean) {
-    spawnSync(process.execPath, [clean], {
-      cwd: path.dirname(clean),
-      env: { ...process.env, EMAILS: EMAIL },
-      stdio: 'inherit',
-    });
-  } else {
-    console.log('Nhớ đăng xuất phiên test: EMAILS=student2@breadtrans.com node clean-sessions-any.mjs');
-  }
+  await signOutTestSessions();
 }

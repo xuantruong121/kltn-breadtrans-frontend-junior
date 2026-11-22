@@ -59,7 +59,7 @@ export const LANDING_IMAGES: Record<LandingImageKey, LandingImage> = {
   // /dashboard (cuộn xuống): mức luyện tập đề xuất và lộ trình
   'path-goi-y': img('path-goi-y', 1600, 560, 'Mức luyện tập đề xuất và lộ trình từng bước theo kỹ năng'),
   // /speaking/137?submissionId=304: phản hồi sau bài Nói
-  'path-phan-hoi': img('path-phan-hoi', 1360, 1200, 'Phản hồi sau bài Nói: điểm, độ chính xác, độ trôi chảy và so sánh với lần trước'),
+  'path-phan-hoi': img('path-phan-hoi', 1360, 1200, 'Phản hồi sau bài Nói: điểm, độ chính xác, độ trôi chảy và độ hoàn thiện'),
   // /exams/2: cấu trúc đề và chế độ làm bài
   'path-luyen-de': img('path-luyen-de', 1600, 1013, 'Đề luyện TOEIC với cấu trúc Part 1 đến Part 7 và chế độ làm bài'),
 };
