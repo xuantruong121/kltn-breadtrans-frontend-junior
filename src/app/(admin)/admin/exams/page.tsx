@@ -24,7 +24,11 @@ import {
   type ExamCardQuestion,
   type Part1ReviewAction,
 } from "@/components/admin/exam/ExamGroupCard";
-import { examGroupLabel, type GroupAction } from "@/lib/examStudio/examGroupCard";
+import {
+  examGroupLabel,
+  partFilterAfterAdd,
+  type GroupAction,
+} from "@/lib/examStudio/examGroupCard";
 import AudioUploadField from "@/components/admin/AudioUploadField";
 import ToeicSpeakingExamComposer from "@/components/admin/ToeicSpeakingExamComposer";
 import ToeicWritingExamComposer from "@/components/admin/ToeicWritingExamComposer";
@@ -511,12 +515,16 @@ export default function AdminExamsPage() {
       }
       return axiosClient.post(`/admin/exams/${selectedExamId}/groups`, dto);
     },
-    onSuccess: () => {
+    onSuccess: (_data, dto) => {
       toast.success(
         editingGroup
           ? "Cập nhật nhóm câu hỏi thành công!"
           : "Thêm nhóm câu hỏi mới thành công!",
       );
+      // QA 2026-11-22: a new group of another Part stayed behind the Part
+      // filter ("Part này chưa có câu hỏi."); the filter follows it.
+      if (!editingGroup)
+        setActivePartFilter((current) => partFilterAfterAdd(current, dto.part));
       setIsGroupModalOpen(false);
       setEditingGroup(null);
       queryClient.invalidateQueries({
@@ -899,6 +907,11 @@ export default function AdminExamsPage() {
       activePartFilter === "all"
         ? groups
         : groups.filter((g) => g.part === activePartFilter);
+    // The Part of the group the question modal writes into.
+    const questionPart =
+      groups.find(
+        (g) => g.id === (targetGroupIdForQuestion ?? editingQuestion?.groupId),
+      )?.part ?? null;
 
     const isDraft = examDetail.publicationStatus === "DRAFT";
     const master = examDetail.listeningMaster;
@@ -1020,24 +1033,29 @@ export default function AdminExamsPage() {
                           : `Tìm ${examDetail.missingImageCount} ảnh còn thiếu`}
                       </button>
                     )}
-                    <button
-                      onClick={() => publishExamMutation.mutate(examDetail.id)}
-                      disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
-                      title={publishReadiness.helpText}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
-                    >
-                      {publishExamMutation.isPending ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <CheckCircle2 size={15} />
-                      )}{" "}
-                      {publishExamMutation.isPending
-                        ? "Đang dựng audio và xuất bản..."
-                        : publishReadiness.label}
-                    </button>
+                    {/* Hidden, never faded, when it cannot run; the text says why. */}
+                    {publishReadiness.canPublish && (
+                      <button
+                        onClick={() => publishExamMutation.mutate(examDetail.id)}
+                        disabled={publishExamMutation.isPending}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-wait"
+                      >
+                        {publishExamMutation.isPending ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={15} />
+                        )}{" "}
+                        {publishExamMutation.isPending
+                          ? "Đang dựng audio và xuất bản..."
+                          : publishReadiness.label}
+                      </button>
+                    )}
                     </div>
                     {!publishReadiness.canPublish && (
-                      <p className="max-w-[260px] text-right text-sm leading-4 text-slate-500">
+                      <p className="max-w-[260px] text-right text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800">
+                          {publishReadiness.label}.
+                        </span>{" "}
                         {publishReadiness.helpText}
                       </p>
                     )}
@@ -1274,9 +1292,9 @@ export default function AdminExamsPage() {
             )}
 
             {visibleGroups.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Part này chưa có câu hỏi.
-              </div>
+              </p>
             ) : (
               <div className="space-y-4">
                 {visibleGroups.map((group) => (
@@ -1522,9 +1540,9 @@ export default function AdminExamsPage() {
                   }}
                   className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 >
-                  <option value="easy">Dễ (Easy)</option>
-                  <option value="medium">Trung bình (Medium)</option>
-                  <option value="hard">Khó (Hard)</option>
+                  <option value="easy">Dễ</option>
+                  <option value="medium">Trung bình</option>
+                  <option value="hard">Khó</option>
                 </select>
               </div>
             </div>
@@ -1995,11 +2013,17 @@ export default function AdminExamsPage() {
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Câu hỏi (prompt)
+                      Câu hỏi
+                      {questionPart !== null && questionPart <= 2 && (
+                        <span className="font-normal text-slate-600">
+                          {" "}
+                          (Part {questionPart}: học viên chỉ nghe, có thể để trống)
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. What is the topic of the meeting?"
+                      placeholder="VD: What is the topic of the meeting?"
                       value={questionForm.text}
                       onChange={(e) =>
                         setQuestionForm({
@@ -2743,7 +2767,7 @@ export default function AdminExamsPage() {
                   onChange={(e) =>
                     setExamForm({ ...examForm, title: e.target.value })
                   }
-                  placeholder="VD: TOEIC Practice Test 01"
+                  placeholder="VD: TOEIC Listening & Reading — Đề luyện tập 01"
                   required
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                 />
@@ -2765,10 +2789,11 @@ export default function AdminExamsPage() {
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
                     <option value="TOEIC">TOEIC</option>
-                    <option value="IELTS" disabled>
-                      IELTS (Coming soon)
-                    </option>
                   </select>
+                  {/* An option that cannot be picked is left out, not greyed. */}
+                  <p className="mt-1 text-xs text-slate-600">
+                    Hiện mới soạn được đề TOEIC.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -2822,9 +2847,9 @@ export default function AdminExamsPage() {
                     }
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
-                    <option value="easy">Dễ (Easy)</option>
-                    <option value="medium">Trung bình (Medium)</option>
-                    <option value="hard">Khó (Hard)</option>
+                    <option value="easy">Dễ</option>
+                    <option value="medium">Trung bình</option>
+                    <option value="hard">Khó</option>
                   </select>
                 </div>
               </div>

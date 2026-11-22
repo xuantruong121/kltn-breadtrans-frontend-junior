@@ -188,17 +188,21 @@ export default function ExamStudioPage({
             )
           ) : (
             <div className="flex flex-col items-end gap-1">
-              <button
-                type="button"
-                onClick={() => publishMutation.mutate()}
-                disabled={publishMutation.isPending || !publishReadiness.canPublish}
-                title={publishReadiness.helpText}
-                className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 dark:bg-slate-100 dark:text-slate-900"
-              >
-                {publishReadiness.label}
-              </button>
-              {!publishReadiness.canPublish && (
+              {/* Hidden, never faded, when it cannot run; the text says why. */}
+              {publishReadiness.canPublish ? (
+                <button
+                  type="button"
+                  onClick={() => publishMutation.mutate()}
+                  disabled={publishMutation.isPending}
+                  className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-wait dark:bg-slate-100 dark:text-slate-900"
+                >
+                  {publishReadiness.label}
+                </button>
+              ) : (
                 <p className="max-w-[240px] text-right text-xs leading-4 text-slate-600 dark:text-slate-400">
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    {publishReadiness.label}.
+                  </span>{" "}
                   {publishReadiness.helpText}
                 </p>
               )}

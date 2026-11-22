@@ -11,7 +11,8 @@ test("readiness UI disables publishing until the learner-ready contract passes",
 
   assert.equal(blocked.canPublish, false);
   assert.equal(blocked.label, "Còn 6 mục cần hoàn thiện");
-  assert.match(blocked.helpText ?? "", /Kiểm tra tiền xuất bản/);
+  // The tab's own words (QA 2026-11-22: it said "tiền xuất bản").
+  assert.match(blocked.helpText ?? "", /"Kiểm tra trước xuất bản"/);
   assert.equal(ready.canPublish, true);
   assert.equal(ready.label, "Xuất bản đề thi");
 });

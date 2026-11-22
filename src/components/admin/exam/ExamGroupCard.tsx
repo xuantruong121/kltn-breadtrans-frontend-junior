@@ -17,7 +17,9 @@ import {
 } from "lucide-react";
 import { AdminImageThumb } from "@/components/admin/AdminImageThumb";
 import {
+  canBuildAudio,
   editContentLabel,
+  emptyGroupNote,
   examGroupLabel,
   groupActions,
   isFixedPrompt,
@@ -115,7 +117,7 @@ function GroupMenu<G extends ExamCardGroup>({
             role="menu"
             className="absolute right-0 z-40 mt-1 w-56 rounded-lg border border-slate-200 bg-white p-1 shadow-sm"
           >
-            {groupActions(group.part, Boolean(group.imageUrl)).map((action) => {
+            {groupActions(group.part, Boolean(group.imageUrl), group.questions.length).map((action) => {
               const { icon: Icon, label } = MENU[action];
               return (
                 <button
@@ -186,7 +188,9 @@ function MissingMedia<G extends ExamCardGroup>({
           {noPassage ? "Thêm đoạn văn" : "Tải ảnh lên"}
         </button>
       )}
-      {!readOnly && (noAudio || group.mediaMetadata?.audio?.stale) && (
+      {!readOnly &&
+        (noAudio || group.mediaMetadata?.audio?.stale) &&
+        canBuildAudio(group.part, group.questions.length) && (
         <button
           type="button"
           onClick={() => onAction("regenerateAudio", group)}
@@ -288,7 +292,9 @@ export function ExamGroupCard<G extends ExamCardGroup>({
       ))}
     </div>
   ) : (
-    <p className="text-sm text-slate-600">Nhóm này chưa có câu hỏi.</p>
+    <p className="text-sm text-slate-600">
+      {emptyGroupNote(group.part, Boolean(group.imageUrl), 0)}
+    </p>
   );
 
   return (

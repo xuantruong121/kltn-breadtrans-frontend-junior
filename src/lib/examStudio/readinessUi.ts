@@ -27,7 +27,7 @@ export function getPublishReadinessUi(
     label: canPublish ? "Xuất bản đề thi" : outstandingLabel,
     helpText: canPublish
       ? undefined
-      : 'Hoàn tất các mục trong "Kiểm tra tiền xuất bản" trước khi xuất bản.',
+      : 'Hoàn tất các mục trong "Kiểm tra trước xuất bản" trước khi xuất bản.',
   };
 }
 
