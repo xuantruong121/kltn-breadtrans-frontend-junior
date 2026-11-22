@@ -27,6 +27,8 @@ export type TrackUsage = {
   reading: number;
   writing: number;
   speaking: number;
+  /** Tags on a TOEIC quiz or on a quiz that is gone: no skill, but they still hold the track. */
+  other: number;
   learners: number;
 };
 

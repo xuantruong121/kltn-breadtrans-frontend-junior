@@ -12,7 +12,7 @@ import {
   trackStats,
 } from "./learningTracks.ts";
 
-const UNUSED = { listening: 0, reading: 0, writing: 0, speaking: 0, learners: 0 };
+const UNUSED = { listening: 0, reading: 0, writing: 0, speaking: 0, other: 0, learners: 0 };
 const track = (code: string, extra: Partial<{ isActive: boolean; isSystem: boolean; usage: typeof UNUSED }> = {}) => ({
   code,
   isActive: true,
@@ -74,6 +74,8 @@ test("each action has its button text", () => {
 test("isTrackInUse counts items of every skill and learners", () => {
   assert.equal(isTrackInUse(UNUSED), false);
   assert.equal(isTrackInUse({ ...UNUSED, speaking: 3 }), true);
+  // A tag on a TOEIC quiz, or on a quiz that is gone, still holds the track (owner 2026-11-22).
+  assert.equal(isTrackInUse({ ...UNUSED, other: 1 }), true);
 });
 
 test("movedTrackOrder sends every code with one row moved", () => {

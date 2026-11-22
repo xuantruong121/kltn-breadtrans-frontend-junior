@@ -46,6 +46,9 @@ const USAGE_COLUMNS: Array<{ key: keyof TrackUsage; label: string }> = [
   { key: "reading", label: TERMS.reading },
   { key: "writing", label: TERMS.writing },
   { key: "speaking", label: TERMS.speaking },
+  // Tags on TOEIC quizzes or on quizzes that are gone (owner 2026-11-22):
+  // they keep the track from being deleted, so the page shows them.
+  { key: "other", label: "Khác" },
   { key: "learners", label: "Học viên" },
 ];
 
