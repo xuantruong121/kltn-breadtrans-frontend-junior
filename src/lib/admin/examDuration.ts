@@ -37,9 +37,14 @@ export const PART_GROUP_LABEL: Record<PartGroup, string> = {
 const variantOf = (code: string): ExamVariant =>
   code === "TOEIC_SW" || code === "TOEIC_4_SKILLS" ? code : "TOEIC_LR";
 
-/** Part practice exists for Listening & Reading only. */
+/**
+ * A new exam is always a full test (owner 2026-11-22). Learners practise by
+ * Part inside an L&R full test, so no separate part-practice exam is made;
+ * an older one keeps its type.
+ */
 export function allowedExamTypes(variantCode: string): ExamType[] {
-  return variantOf(variantCode) === "TOEIC_LR" ? ["FULL_TEST", "PRACTICE_BY_PART"] : ["FULL_TEST"];
+  void variantCode;
+  return ["FULL_TEST"];
 }
 
 export function examTypeLabel(variantCode: string, type: ExamType): string {

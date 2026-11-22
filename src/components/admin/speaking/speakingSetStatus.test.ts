@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   countBy,
   describeValidationError,
+  referenceAudioWarning,
   speakingSetChecklist,
 } from "./speakingSetStatus.ts";
 
@@ -22,10 +23,9 @@ test("speakingSetChecklist: a complete set passes every item", () => {
     exercises: [exercise(), exercise({ id: 2 })],
   });
   assert.ok(items.every((item) => item.done));
-  assert.equal(items.at(-1)?.label, "Audio mẫu 2/2 câu");
 });
 
-test("speakingSetChecklist: flags a picture without image, information without stimulus and missing audio", () => {
+test("speakingSetChecklist: flags a picture without image and information without stimulus", () => {
   const items = speakingSetChecklist({
     title: "Office",
     exercises: [
@@ -36,8 +36,22 @@ test("speakingSetChecklist: flags a picture without image, information without s
   const done = Object.fromEntries(items.map((item) => [item.label, item.done]));
   assert.equal(done["Bài mô tả tranh có ảnh"], false);
   assert.equal(done["Bài dựa trên thông tin có thông tin dùng chung"], false);
-  assert.equal(done["Audio mẫu 1/2 câu"], false);
   assert.equal(done["Mỗi câu có tiêu đề và câu mẫu"], true);
+});
+
+// QA 2026-11-22: the server published a set where 4 of 5 exercises had no
+// reference audio while the checklist counted audio as a failed item.
+test("speakingSetChecklist: missing reference audio blocks nothing, as on the server", () => {
+  const exercises = [exercise(), ...[2, 3, 4, 5].map((id) => exercise({ id, audioUrl: null }))];
+  const items = speakingSetChecklist({ title: "Office", exercises });
+  assert.ok(items.every((item) => item.done));
+  assert.ok(!items.some((item) => /audio/i.test(item.label)));
+  assert.equal(referenceAudioWarning(exercises), "Thiếu audio mẫu: 4 câu");
+});
+
+test("referenceAudioWarning: nothing to say when every exercise has audio", () => {
+  assert.equal(referenceAudioWarning([exercise(), exercise({ id: 2 })]), null);
+  assert.equal(referenceAudioWarning([]), null);
 });
 
 test("speakingSetChecklist: an empty set needs a title and exercises", () => {
@@ -63,8 +77,9 @@ test("countBy groups and orders by count", () => {
 
 test("describeValidationError names the exercise by its position", () => {
   assert.equal(
-    describeValidationError("Exercise #42: thiếu ảnh", [{ id: 7 }, { id: 42 }]),
-    "Câu 2: thiếu ảnh",
+    describeValidationError("Câu #42: Câu mô tả tranh cần ảnh đã được kiểm duyệt.", [{ id: 7 }, { id: 42 }]),
+    "Câu 2: Câu mô tả tranh cần ảnh đã được kiểm duyệt.",
   );
+  assert.equal(describeValidationError("Exercise #42: thiếu ảnh", [{ id: 7 }, { id: 42 }]), "Câu 2: thiếu ảnh");
   assert.equal(describeValidationError("Thiếu tiêu đề", []), "Thiếu tiêu đề");
 });

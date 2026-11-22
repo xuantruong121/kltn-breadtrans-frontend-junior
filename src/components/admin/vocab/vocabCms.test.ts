@@ -5,6 +5,9 @@ import {
   parseVocabPaste,
   sharedEntryNote,
   vocabDeckChecklist,
+  vocabListBlocker,
+  vocabPublishBlocker,
+  vocabPublishConfirm,
   wordStageReadiness,
 } from "./vocabCms.ts";
 
@@ -44,6 +47,39 @@ test("vocabDeckChecklist reads the server counts", () => {
   assert.equal(done["Phiên âm 1/2 từ"], false);
   assert.equal(done["Câu ví dụ 2/2 từ"], true);
   assert.equal(done["Ít nhất 4 nghĩa khác nhau cho bước Trắc nghiệm"], false);
+});
+
+// QA 2026-11-22: "Kiểm tra & xuất bản" showed on an empty deck and at 2/5.
+test("vocabPublishBlocker: every checklist item blocks, in the server's words", () => {
+  const empty = vocabDeckChecklist({
+    title: "Họp",
+    stats: { total: 0, withIpa: 0, withExample: 0, distinctMeanings: 0 },
+  });
+  assert.equal(vocabPublishBlocker(empty, false), "Còn thiếu: có ít nhất 1 từ.");
+  const half = vocabDeckChecklist({
+    title: "Họp",
+    stats: { total: 3, withIpa: 1, withExample: 2, distinctMeanings: 3 },
+  });
+  // The same text the server's vocabDeckProblems gives.
+  assert.equal(
+    vocabPublishBlocker(half, false),
+    "Còn thiếu: phiên âm 1/3 từ; câu ví dụ 2/3 từ; ít nhất 4 nghĩa khác nhau cho bước Trắc nghiệm.",
+  );
+  const ready = vocabDeckChecklist({
+    title: "Họp",
+    stats: { total: 4, withIpa: 4, withExample: 4, distinctMeanings: 4 },
+  });
+  assert.equal(vocabPublishBlocker(ready, false), null);
+  assert.equal(vocabPublishBlocker(ready, true), "Lưu thay đổi trước khi xuất bản.");
+  assert.match(vocabPublishConfirm(ready), /^Đạt 5\/5 mục kiểm tra\./);
+});
+
+test("vocabListBlocker reads the server's problems, else title and words", () => {
+  const deck = { title: "Họp", wordCount: 0, publicationStatus: "DRAFT" };
+  assert.equal(vocabListBlocker(deck), "Còn thiếu: có ít nhất 1 từ.");
+  assert.equal(vocabListBlocker({ ...deck, wordCount: 2, publishProblems: ["phiên âm 1/2 từ"] }), "Còn thiếu: phiên âm 1/2 từ.");
+  assert.equal(vocabListBlocker({ ...deck, wordCount: 2, publishProblems: [] }), null);
+  assert.equal(vocabListBlocker({ ...deck, publicationStatus: "PUBLISHED" }), null);
 });
 
 test("parseVocabPaste refuses numbers", () => {

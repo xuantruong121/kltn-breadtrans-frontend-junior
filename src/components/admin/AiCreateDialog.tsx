@@ -8,7 +8,14 @@ import { BTN_AI, BTN_SECONDARY } from "@/components/admin/cmsButtons";
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900";
 
-export type AiCreateRequest = { name: string; level: string; count: number; kind?: string };
+export type AiCreateRequest = {
+  name: string;
+  level: string;
+  count: number;
+  kind?: string;
+  /** Vocab: the deck's category, picked or typed by the admin. */
+  category?: string;
+};
 
 /**
  * Starts a deck or a grammar topic from a subject. The draft opens in its
@@ -23,6 +30,7 @@ export function AiCreateDialog({
   defaultCount,
   levels,
   kinds,
+  category,
   onCreate,
   onClose,
 }: {
@@ -35,6 +43,8 @@ export function AiCreateDialog({
   levels: Array<{ value: string; label: string }>;
   /** Writing: which kind of exercise the AI drafts. Vocab and grammar leave it out. */
   kinds?: Array<{ value: string; label: string }>;
+  /** Vocab: a category field, with the existing ones to pick from. */
+  category?: { options: string[]; initial?: string };
   onCreate: (request: AiCreateRequest) => Promise<void>;
   onClose: () => void;
 }) {
@@ -42,14 +52,22 @@ export function AiCreateDialog({
   const [level, setLevel] = useState(levels[0]?.value ?? "");
   const [count, setCount] = useState(defaultCount);
   const [kind, setKind] = useState(kinds?.[0]?.value);
+  const [categoryName, setCategoryName] = useState(category?.initial ?? "");
   const [busy, setBusy] = useState(false);
+  const ready = Boolean(name.trim()) && (!category || Boolean(categoryName.trim()));
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!name.trim()) return;
+    if (!ready) return;
     setBusy(true);
     try {
-      await onCreate({ name: name.trim(), level, count, ...(kind ? { kind } : {}) });
+      await onCreate({
+        name: name.trim(),
+        level,
+        count,
+        ...(kind ? { kind } : {}),
+        ...(category ? { category: categoryName.trim() } : {}),
+      });
     } finally {
       setBusy(false);
     }
@@ -76,6 +94,24 @@ export function AiCreateDialog({
             className={FIELD}
           />
         </label>
+        {category && (
+          <label className="block text-sm font-semibold text-slate-800">
+            Chuyên mục
+            <input
+              required
+              list="ai-create-categories"
+              value={categoryName}
+              onChange={(event) => setCategoryName(event.target.value)}
+              placeholder="Chọn hoặc gõ chuyên mục mới"
+              className={FIELD}
+            />
+            <datalist id="ai-create-categories">
+              {category.options.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
+          </label>
+        )}
         {kinds && (
           <label className="block text-sm font-semibold text-slate-800">
             Dạng bài
@@ -114,11 +150,17 @@ export function AiCreateDialog({
         <p className="text-sm text-slate-600">
           Hệ thống tạo bản nháp rồi mở trang soạn. Bạn xem gợi ý của AI và chọn nội dung cần giữ.
         </p>
-        <div className="flex justify-end gap-2">
+        <div className="flex items-center justify-end gap-2">
+          {!ready && (
+            <p className="mr-auto text-sm text-slate-600">
+              Nhập {nameLabel.charAt(0).toLocaleLowerCase("vi") + nameLabel.slice(1)}
+              {category ? " và chuyên mục" : ""} để tạo.
+            </p>
+          )}
           <button type="button" onClick={onClose} disabled={busy} className={BTN_SECONDARY}>
             Hủy
           </button>
-          <button type="submit" disabled={busy} className={`${BTN_AI} ${name.trim() ? "" : "invisible"}`}>
+          <button type="submit" disabled={busy} className={`${BTN_AI} ${ready ? "" : "invisible"}`}>
             {busy && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
             Tạo bằng AI
           </button>

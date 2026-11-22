@@ -41,6 +41,8 @@ import {
   cefrToScaleLevel,
   parseVocabPaste,
   vocabDeckChecklist,
+  vocabPublishBlocker,
+  vocabPublishConfirm,
   type DeckStats,
 } from "./vocabCms";
 
@@ -215,6 +217,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   const pastedReady = pasted.filter((row) => !row.error && !row.duplicate);
   const checklist = vocabDeckChecklist({ title: form.title, stats });
   const doneCount = checklist.filter((item) => item.done).length;
+  // Every item is required; the server's publish checks the same.
+  const blocker = published ? null : vocabPublishBlocker(checklist, dirty);
   const previewWord =
     words.find((w) => w.id === previewId) ?? words[0] ?? null;
   // The quiz step draws distractors from the whole deck; the page plus the
@@ -265,6 +269,17 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     }
   };
 
+  const removeEmptyDeck = async (deckId: number) => {
+    try {
+      await axiosClient.delete(`/admin/vocab/topics/${deckId}`);
+      toast("AI chưa gợi ý được nên bộ từ trống đã được xoá. Hãy tạo lại từ danh sách.");
+      queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
+      router.replace("/admin/vocab");
+    } catch {
+      toast.error("AI chưa gợi ý được. Bộ từ trống vẫn ở đây: thêm từ tay hoặc xoá ở danh sách.");
+    }
+  };
+
   // "Tạo bằng AI" on the list opens the new deck with ?ai=<count>.
   const aiStarted = useRef(false);
   useEffect(() => {
@@ -276,7 +291,11 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the AI panel once when the page is reached with ?ai=
     setAiCount(count);
     setPanel("ai");
-    void askAi(count);
+    void askAi(count).then((answered) => {
+      // QA 2026-11-22: the list made this deck for the AI; when the AI
+      // fails it stays empty, so it goes and the admin is told.
+      if (!answered && !deck.stats.total) void removeEmptyDeck(deck.id);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on arrival
   }, [deck]);
 
@@ -315,11 +334,12 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     return added;
   };
 
-  const askAi = async (count = aiCount) => {
+  /** True when the AI answered. */
+  const askAi = async (count = aiCount): Promise<boolean> => {
     const topic = form.title.trim();
     if (!topic) {
       toast.error("Cần tên bộ từ để AI biết chủ đề.");
-      return;
+      return false;
     }
     setBusy(true);
     try {
@@ -346,8 +366,10 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           chosen: !known.has(String(w.word ?? "").toLowerCase()),
         })),
       );
+      return true;
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể lấy gợi ý AI lúc này."));
+      return false;
     } finally {
       setBusy(false);
     }
@@ -363,6 +385,36 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       refresh();
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể đổi thứ tự."));
+    }
+  };
+
+  /**
+   * "Kiểm tra & xuất bản": the checklist runs again on fresh counts from the
+   * server, then the result is shown, then the admin confirms (QA
+   * 2026-11-22: it opened a plain confirm on an empty deck).
+   */
+  const checkAndConfirm = async () => {
+    if (!deck) return;
+    if (published) {
+      setConfirmLifecycle(true);
+      return;
+    }
+    setBusy(true);
+    try {
+      const fresh = unwrap<Deck>(
+        await axiosClient.get(`/admin/vocab/topics/${deck.id}/summary`),
+      );
+      queryClient.setQueryData(["admin-vocab-topic-summary", deck.id], fresh);
+      const freshBlocker = vocabPublishBlocker(
+        vocabDeckChecklist({ title: form.title, stats: fresh.stats }),
+        dirty,
+      );
+      if (freshBlocker) toast.error(`Chưa xuất bản được. ${freshBlocker}`);
+      else setConfirmLifecycle(true);
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "Không kiểm tra được bộ từ lúc này."));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -404,25 +456,31 @@ function DeckBody({ deck }: { deck: Deck | null }) {
             {dirty && " · có thay đổi chưa lưu"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void saveDeck()}
-            disabled={busy}
-            className={BTN_SECONDARY}
-          >
-            <Save size={16} /> {deck ? "Lưu" : "Tạo bộ từ"}
-          </button>
-          {deck && !isSystem && (
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() => setConfirmLifecycle(true)}
+              onClick={() => void saveDeck()}
               disabled={busy}
-              className={BTN_SUCCESS}
+              className={BTN_SECONDARY}
             >
-              <Send size={16} />
-              {published ? "Chuyển về bản nháp" : "Kiểm tra & xuất bản"}
+              <Save size={16} /> {deck ? "Lưu" : "Tạo bộ từ"}
             </button>
+            {deck && !isSystem && !blocker && (
+              <button
+                type="button"
+                onClick={() => void checkAndConfirm()}
+                disabled={busy}
+                className={BTN_SUCCESS}
+              >
+                <Send size={16} />
+                {published ? "Chuyển về bản nháp" : "Kiểm tra & xuất bản"}
+              </button>
+            )}
+          </div>
+          {/* Hidden, not faded: the reason stays in view. */}
+          {deck && !isSystem && blocker && (
+            <p className="max-w-md text-right text-sm text-slate-600">{blocker}</p>
           )}
         </div>
       </header>
@@ -595,7 +653,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           </div>
 
           {!deck ? (
-            <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+            <p className="mt-4 text-sm text-slate-600">
               Tạo bộ từ trước, sau đó thêm từ ngay tại đây: từng từ, dán cả danh
               sách, hoặc nhờ AI gợi ý.
             </p>
@@ -891,7 +949,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
         description={
           published
             ? "Học viên sẽ không thấy bộ này cho đến khi xuất bản lại."
-            : "Bộ từ sẽ hiện trong Flashcard của học viên."
+            : vocabPublishConfirm(checklist)
         }
         confirmLabel={published ? "Chuyển về bản nháp" : "Xuất bản"}
         onConfirm={() => {

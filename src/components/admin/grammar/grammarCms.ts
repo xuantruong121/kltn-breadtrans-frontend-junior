@@ -1,4 +1,10 @@
 /** Pure helpers for the grammar topic editor. */
+import {
+  checklistBlocker,
+  listPublishBlocker,
+  missingItems,
+  type ChecklistEntry,
+} from "../publishBlocker.ts";
 
 export const GRAMMAR_LEVELS = [
   { value: "BEGINNER", label: "Cơ bản" },
@@ -66,12 +72,7 @@ export const rationaleCount = (q: GrammarDraft) =>
     (note, index) => index !== q.correctIndex && String(note ?? "").trim(),
   ).length;
 
-export type ChecklistItem = {
-  label: string;
-  done: boolean;
-  /** Advisory items never block publishing. */
-  optional?: boolean;
-};
+export type ChecklistItem = ChecklistEntry;
 
 const filled = (v?: string | null) => String(v ?? "").trim() !== "";
 
@@ -116,11 +117,42 @@ export function publishBlocker(
   checklist: ChecklistItem[],
   unsaved: boolean,
 ): string | null {
-  if (unsaved) return "Lưu thay đổi trước khi xuất bản.";
-  const missing = checklist.filter((item) => !item.optional && !item.done);
-  return missing.length
-    ? `Còn thiếu: ${missing.map((item) => item.label.toLowerCase()).join("; ")}.`
-    : null;
+  return checklistBlocker(checklist, unsaved);
+}
+
+/**
+ * A topic card's publish blocker on the list. The server sends what blocks
+ * each draft (grammarPublishProblems, the rule its publish runs); without it
+ * the card checks what it has, which matches the checklist's topic items.
+ */
+export function grammarListBlocker(topic: {
+  title: string;
+  description?: string | null;
+  totalQuestions?: number;
+  publicationStatus: string;
+  publishProblems?: string[] | null;
+}): string | null {
+  return listPublishBlocker(topic, () =>
+    missingItems(
+      grammarChecklist({
+        title: topic.title,
+        description: topic.description ?? "",
+        questions: [],
+      }).filter((item) => !(item.label === "Có ít nhất 1 câu hỏi" && topic.totalQuestions)),
+    ),
+  );
+}
+
+/**
+ * What a paste adds: the valid questions whose prompt is new. A repeated
+ * prompt is skipped, as the vocab paste skips a word already in the deck.
+ */
+export function pasteToAdd(rows: PastedQuestion[]) {
+  const valid = rows.filter((row) => !row.problems.length);
+  return {
+    add: valid.filter((row) => !row.duplicate),
+    skippedDuplicates: valid.filter((row) => row.duplicate).length,
+  };
 }
 
 export type PastedQuestion = GrammarDraft & {

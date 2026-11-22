@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -22,6 +22,7 @@ import {
   type SpeakingStimulus,
   type SpeakingTaskType,
 } from "./speakingCmsShared";
+import { takeOnce } from "./speakingDraftLogic";
 
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200";
@@ -142,9 +143,12 @@ export default function SpeakingExerciseForm({
   });
 
   // "Thêm câu luyện bằng AI" opens this form and asks for suggestions at once.
+  // Once per form: StrictMode runs this effect twice in development, which
+  // sent suggest-exercises twice per click (QA 2026-11-22).
   const { mutate: requestSuggestions } = suggestMutation;
+  const autoSuggested = useRef(false);
   useEffect(() => {
-    if (autoSuggest) requestSuggestions();
+    if (autoSuggest && takeOnce(autoSuggested)) requestSuggestions();
   }, [autoSuggest, requestSuggestions]);
 
   const createStimulusMutation = useMutation({

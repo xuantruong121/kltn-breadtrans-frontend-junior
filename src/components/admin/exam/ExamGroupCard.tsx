@@ -17,7 +17,10 @@ import {
 } from "lucide-react";
 import { AdminImageThumb } from "@/components/admin/AdminImageThumb";
 import {
+  canAddQuestion,
+  canBuildAudio,
   editContentLabel,
+  emptyGroupNote,
   examGroupLabel,
   groupActions,
   isFixedPrompt,
@@ -115,7 +118,7 @@ function GroupMenu<G extends ExamCardGroup>({
             role="menu"
             className="absolute right-0 z-40 mt-1 w-56 rounded-lg border border-slate-200 bg-white p-1 shadow-sm"
           >
-            {groupActions(group.part, Boolean(group.imageUrl)).map((action) => {
+            {groupActions(group.part, Boolean(group.imageUrl), group.questions.length).map((action) => {
               const { icon: Icon, label } = MENU[action];
               return (
                 <button
@@ -186,7 +189,9 @@ function MissingMedia<G extends ExamCardGroup>({
           {noPassage ? "Thêm đoạn văn" : "Tải ảnh lên"}
         </button>
       )}
-      {!readOnly && (noAudio || group.mediaMetadata?.audio?.stale) && (
+      {!readOnly &&
+        (noAudio || group.mediaMetadata?.audio?.stale) &&
+        canBuildAudio(group.part, group.questions.length) && (
         <button
           type="button"
           onClick={() => onAction("regenerateAudio", group)}
@@ -288,7 +293,23 @@ export function ExamGroupCard<G extends ExamCardGroup>({
       ))}
     </div>
   ) : (
-    <p className="text-sm text-slate-600">Nhóm này chưa có câu hỏi.</p>
+    <div className="flex flex-wrap items-center gap-3">
+      <p className="text-sm text-slate-600">
+        {emptyGroupNote(group.part, Boolean(group.imageUrl), 0)}
+      </p>
+      {/* The menu has it too; an empty group shows it where the admin looks. */}
+      {!readOnly && canAddQuestion(group.part, Boolean(group.imageUrl), 0) && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onAction("addQuestion", group)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          <Plus size={14} strokeWidth={2} aria-hidden />
+          Thêm câu hỏi
+        </button>
+      )}
+    </div>
   );
 
   return (

@@ -50,7 +50,15 @@ function displayText(text: string): Shown[] {
  * fine. jsxOnly: a string literal of this shape is a code ("PLUS" as a plan
  * code, "Reading" as a skill key), so only JSX text is checked.
  */
-type WordRule = { name: string; wrong: RegExp; right: string; allowIn?: RegExp; jsxOnly?: boolean };
+type WordRule = {
+  name: string;
+  wrong: RegExp;
+  right: string;
+  allowIn?: RegExp;
+  /** The rule holds in these files only (a word that is right elsewhere). */
+  onlyIn?: RegExp;
+  jsxOnly?: boolean;
+};
 
 const WORD_RULES: WordRule[] = [
   // Lowercase "bánh mì" is the food (ổ bánh mì, bánh mì que); the currency is "Bánh Mì".
@@ -97,6 +105,15 @@ const WORD_RULES: WordRule[] = [
   },
   { name: "English skill name in practice", wrong: /^\s*(Reading|Listening|Speaking|Writing)\s*$/, right: "Đọc / Nghe / Nói / Viết", allowIn: /toeic|exam|admin/i, jsxOnly: true },
   { name: "English skill suffix in practice", wrong: /\((Listening|Reading|Speaking|Writing)\)/, right: "Nghe / Nói / Đọc / Viết", allowIn: /toeic|exam|admin/i },
+  // QA 2026-11-22 (admin CMS): English left in Vietnamese screens.
+  { name: "coming soon", wrong: /\bComing soon\b/i, right: "chưa mở / sắp có, or leave the choice out" },
+  { name: "English level after Vietnamese", wrong: /\((Easy|Medium|Hard)\)/, right: "Dễ / Trung bình / Khó" },
+  { name: "code name in a label", wrong: /\((prompt|correctIndex)\)/, right: "Câu hỏi / đáp án đúng" },
+  { name: "practice test", wrong: /\bPractice Test\b/, right: "Đề luyện tập" },
+  // One name per screen part: the exam tab is "Kiểm tra trước xuất bản".
+  { name: "pre-publish check", wrong: /tiền xuất bản/, right: "Kiểm tra trước xuất bản" },
+  // The dictionary's REJECTED tab and badge say "Đã loại".
+  { name: "dictionary rejected", wrong: /bị từ chối/, right: "đã loại", onlyIn: /dictionary/i },
 ];
 
 /** Icons that must come from the glossary component, not be drawn directly. */
@@ -160,14 +177,80 @@ test("Phân loại Speaking is gone: Lĩnh vực replaces it", () => {
   assert.deepEqual(found, []);
 });
 
+// Owner 2026-11-22: a new exam is a full test, also when the AI drafts it. The AI
+// already drafts a whole exam in small checked batches and a weak Part is redone
+// inside the draft, so no screen offers "Sinh riêng một Part".
+test("no screen asks the AI for a separate one-Part exam", () => {
+  const found: string[] = [];
+  for (const f of FILES)
+    f.text.split("\n").forEach((line, i) => {
+      if (/Sinh riêng một Part|mode:\s*["']PART["']/.test(line))
+        found.push(`${f.rel}:${i + 1}: ${line.trim().slice(0, 90)}`);
+    });
+  assert.deepEqual(found, []);
+});
+
+// QA 2026-11-22: the speaking authoring screens mixed English into Vietnamese
+// text ("Tạo stimulus INFORMATION", "prompt cho câu Speaking"). Shown text
+// there says thông tin dùng chung, câu mẫu / nội dung câu, câu luyện, Nói.
+// The TOEIC composer keeps "Speaking": it is the name of the TOEIC section.
+test("speaking authoring copy has no English jargon in Vietnamese text", () => {
+  const AUTHORING = /^(components\/admin\/speaking\/|components\/admin\/ToeicSpeakingExamComposer\.tsx$|app\/\(admin\)\/admin\/speaking\/)/;
+  const JARGON = /\b(stimulus|Stimulus|prompt|Prompt|exercise|Exercise|taskType|INFORMATION|Azure|learner)\b/;
+  const found: string[] = [];
+  for (const f of FILES) {
+    if (!AUTHORING.test(f.rel)) continue;
+    const practice = !f.rel.includes("ToeicSpeakingExamComposer");
+    for (const { line, value } of displayText(f.text)) {
+      if (!/[À-ỹĐđ]/.test(value) || allowed(f.rel, "speaking jargon")) continue;
+      if (JARGON.test(value) || (practice && /\bSpeaking\b/.test(value)))
+        found.push(`${f.rel}:${line} ${value.trim().slice(0, 80)}`);
+    }
+  }
+  assert.deepEqual(found, []);
+});
+
 test("each thing is written one way (glossary.ts)", () => {
   const found: string[] = [];
   for (const f of FILES)
     for (const { line, value, jsx } of displayText(f.text))
       for (const rule of WORD_RULES) {
         if (rule.allowIn?.test(f.rel) || allowed(f.rel, rule.name) || (rule.jsxOnly && !jsx)) continue;
+        if (rule.onlyIn && !rule.onlyIn.test(f.rel)) continue;
         if (rule.wrong.test(value)) found.push(`${f.rel}:${line} [${rule.name} -> ${rule.right}] ${value.slice(0, 80)}`);
       }
+  assert.deepEqual(found, []);
+});
+
+// QA 2026-11-22: the Nghe, Đọc and Viết authoring screens mixed English into
+// their labels ("Task family", "Keywords", "audio artifact", "Áp dụng vào
+// form") and showed an uppercase letter-spaced eyebrow above dialog titles.
+const AUTHORING_FILES = /^components\/admin\/(SkillCmsWorkspace\.tsx|WritingAiDraftPanel\.tsx|skillCmsStatus\.ts)$/;
+const AUTHORING_ENGLISH = [
+  // A label that is only an English word.
+  /^\s*(Writing|Reading|Listening|Level|Keywords?|Sample sentences|Task family|Speaker|English text|Review)\s*$/,
+  // English authoring jargon, anywhere in shown text.
+  /\b(Task family|Sample sentences|constraints|instruction|Reading Passage|audio artifact|audio preview|Picture Task|Production audio|keywords?|Explanation in English|English text)\b/,
+  /^\s*e\.g\./,
+  // An English word inside a Vietnamese sentence.
+  /^(?=.*[À-ỹ]).*\b(form|Writing|Reading|Listening|Dialogue|Review|English)\b/,
+];
+
+test("the skill authoring screens are written in Vietnamese (QA 2026-11-22)", () => {
+  const found: string[] = [];
+  for (const f of FILES.filter((file) => AUTHORING_FILES.test(file.rel)))
+    for (const { line, value } of displayText(f.text))
+      if (AUTHORING_ENGLISH.some((rule) => rule.test(value)))
+        found.push(`${f.rel}:${line} ${value.trim().slice(0, 80)}`);
+  assert.deepEqual(found, []);
+});
+
+test("the skill authoring screens have no eyebrow above a title (owner rule)", () => {
+  const found: string[] = [];
+  for (const f of FILES.filter((file) => AUTHORING_FILES.test(file.rel)))
+    f.text.split("\n").forEach((line, i) => {
+      if (/\buppercase\b[^"]*\btracking-/.test(line)) found.push(`${f.rel}:${i + 1}: ${line.trim().slice(0, 90)}`);
+    });
   assert.deepEqual(found, []);
 });
 

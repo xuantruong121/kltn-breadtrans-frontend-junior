@@ -3,7 +3,9 @@ import assert from "node:assert/strict";
 import {
   GRAMMAR_PASTE_SAMPLE,
   grammarChecklist,
+  grammarListBlocker,
   parseGrammarPaste,
+  pasteToAdd,
   publishBlocker,
   questionProblems,
   youtubeIdFrom,
@@ -100,6 +102,38 @@ test("parseGrammarPaste reads spreadsheet rows and flags problems per block", ()
   assert.deepEqual(rows[1].problems, ["Chưa chọn đáp án đúng"]);
   assert.deepEqual(rows[2].problems, ["Cần đúng 4 đáp án (đang có 2)", "Chưa chọn đáp án đúng"]);
   assert.equal(rows[2].block, 3);
+});
+
+test("pasteToAdd skips a repeated prompt and counts it (QA 2026-11-22)", () => {
+  const rows = parseGrammarPaste(
+    "She ___ here.\tis\tare\tam\tbe\tA\n\nNew one ___.\n*A. a\nB. b\nC. c\nD. d\n\nBroken\nA. one",
+    ["she ___ here."],
+  );
+  const { add, skippedDuplicates } = pasteToAdd(rows);
+  assert.deepEqual(add.map((row) => row.question), ["New one ___."]);
+  assert.equal(skippedDuplicates, 1);
+});
+
+test("grammarListBlocker: the server's rule first, the card's fields as a fallback", () => {
+  const draft = { title: "Câu bị động", description: "", totalQuestions: 3, publicationStatus: "DRAFT" };
+  // QA 2026-11-22: a draft with questions but no theory had a publish icon.
+  assert.equal(grammarListBlocker(draft), "Còn thiếu: có phần lý thuyết.");
+  assert.equal(
+    grammarListBlocker({ ...draft, description: "Lý thuyết", totalQuestions: 0 }),
+    "Còn thiếu: có ít nhất 1 câu hỏi.",
+  );
+  assert.equal(grammarListBlocker({ ...draft, description: "Lý thuyết" }), null);
+  assert.equal(
+    grammarListBlocker({ ...draft, description: "Lý thuyết", publishProblems: ["mỗi câu có 4 phương án khác nhau và đáp án đúng"] }),
+    "Còn thiếu: mỗi câu có 4 phương án khác nhau và đáp án đúng.",
+  );
+  assert.equal(grammarListBlocker({ ...draft, publicationStatus: "PUBLISHED" }), null);
+});
+
+test("the list and the editor block with the same words", () => {
+  const editor = publishBlocker(grammarChecklist({ title: "T", description: "", questions: [] }), false);
+  const list = grammarListBlocker({ title: "T", description: "", totalQuestions: 0, publicationStatus: "DRAFT" });
+  assert.equal(list, editor);
 });
 
 test("parseGrammarPaste reports two marked answers", () => {

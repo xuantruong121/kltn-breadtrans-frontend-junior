@@ -24,18 +24,23 @@ import {
   type ExamCardQuestion,
   type Part1ReviewAction,
 } from "@/components/admin/exam/ExamGroupCard";
-import { examGroupLabel, type GroupAction } from "@/lib/examStudio/examGroupCard";
+import {
+  examGroupLabel,
+  partFilterAfterAdd,
+  type GroupAction,
+} from "@/lib/examStudio/examGroupCard";
 import AudioUploadField from "@/components/admin/AudioUploadField";
 import ToeicSpeakingExamComposer from "@/components/admin/ToeicSpeakingExamComposer";
 import ToeicWritingExamComposer from "@/components/admin/ToeicWritingExamComposer";
 import {
   getPublishReadinessUi,
   getReadinessIssueLabel,
+  missingImageNote,
+  partFromUrl,
 } from "@/lib/examStudio/readinessUi";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   PART_GROUP_LABEL,
-  allowedExamTypes,
   defaultExamMinutes,
   durationBreakdown,
   durationLocked,
@@ -236,7 +241,9 @@ export default function AdminExamsPage() {
     "structure" | "speaking" | "writing" | "preflight" | "info"
   >("structure");
   // An exam holds 103 groups: open one Part, not all of them.
-  const [activePartFilter, setActivePartFilter] = useState<number | "all">(1);
+  const [activePartFilter, setActivePartFilter] = useState<number | "all">(() =>
+    partFromUrl(searchParams.get("part")),
+  );
   const questionFromUrl = Number(searchParams.get("q"));
   const [pendingQuestion, setPendingQuestion] = useState<number | null>(
     Number.isInteger(questionFromUrl) && questionFromUrl > 0
@@ -511,12 +518,16 @@ export default function AdminExamsPage() {
       }
       return axiosClient.post(`/admin/exams/${selectedExamId}/groups`, dto);
     },
-    onSuccess: () => {
+    onSuccess: (_data, dto) => {
       toast.success(
         editingGroup
           ? "Cập nhật nhóm câu hỏi thành công!"
           : "Thêm nhóm câu hỏi mới thành công!",
       );
+      // QA 2026-11-22: a new group of another Part stayed behind the Part
+      // filter ("Part này chưa có câu hỏi."); the filter follows it.
+      if (!editingGroup)
+        setActivePartFilter((current) => partFilterAfterAdd(current, dto.part));
       setIsGroupModalOpen(false);
       setEditingGroup(null);
       queryClient.invalidateQueries({
@@ -899,6 +910,11 @@ export default function AdminExamsPage() {
       activePartFilter === "all"
         ? groups
         : groups.filter((g) => g.part === activePartFilter);
+    // The Part of the group the question modal writes into.
+    const questionPart =
+      groups.find(
+        (g) => g.id === (targetGroupIdForQuestion ?? editingQuestion?.groupId),
+      )?.part ?? null;
 
     const isDraft = examDetail.publicationStatus === "DRAFT";
     const master = examDetail.listeningMaster;
@@ -1020,24 +1036,29 @@ export default function AdminExamsPage() {
                           : `Tìm ${examDetail.missingImageCount} ảnh còn thiếu`}
                       </button>
                     )}
-                    <button
-                      onClick={() => publishExamMutation.mutate(examDetail.id)}
-                      disabled={publishExamMutation.isPending || !publishReadiness.canPublish}
-                      title={publishReadiness.helpText}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
-                    >
-                      {publishExamMutation.isPending ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <CheckCircle2 size={15} />
-                      )}{" "}
-                      {publishExamMutation.isPending
-                        ? "Đang dựng audio và xuất bản..."
-                        : publishReadiness.label}
-                    </button>
+                    {/* Hidden, never faded, when it cannot run; the text says why. */}
+                    {publishReadiness.canPublish && (
+                      <button
+                        onClick={() => publishExamMutation.mutate(examDetail.id)}
+                        disabled={publishExamMutation.isPending}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-800 disabled:cursor-wait"
+                      >
+                        {publishExamMutation.isPending ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <CheckCircle2 size={15} />
+                        )}{" "}
+                        {publishExamMutation.isPending
+                          ? "Đang dựng audio và xuất bản..."
+                          : publishReadiness.label}
+                      </button>
+                    )}
                     </div>
                     {!publishReadiness.canPublish && (
-                      <p className="max-w-[260px] text-right text-sm leading-4 text-slate-500">
+                      <p className="max-w-[260px] text-right text-sm text-slate-600">
+                        <span className="font-semibold text-slate-800">
+                          {publishReadiness.label}.
+                        </span>{" "}
                         {publishReadiness.helpText}
                       </p>
                     )}
@@ -1052,7 +1073,7 @@ export default function AdminExamsPage() {
             className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
           >
             <p className="font-semibold">
-              Còn thiếu {examDetail.missingImages?.length} ảnh. Câu hỏi và đáp án vẫn đầy đủ; đề xuất bản được khi đủ ảnh.
+              {missingImageNote(examDetail.missingImages?.length ?? 0, issues)}
             </p>
             <p className="mt-1">
               Bấm từng dòng để mở câu đó rồi tìm hoặc tải ảnh lên. Với Part 1, sau khi có ảnh hãy dùng &quot;Tạo lại câu từ ảnh&quot; để đáp án khớp ảnh.
@@ -1274,9 +1295,9 @@ export default function AdminExamsPage() {
             )}
 
             {visibleGroups.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 p-12 text-center text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
                 Part này chưa có câu hỏi.
-              </div>
+              </p>
             ) : (
               <div className="space-y-4">
                 {visibleGroups.map((group) => (
@@ -1485,24 +1506,32 @@ export default function AdminExamsPage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Định dạng đề
                 </label>
-                <select
-                  value={examDetail.type}
-                  onChange={(e) => {
-                    queryClient.setQueryData(
-                      ["admin-exam-detail", selectedExamId],
-                      {
-                        ...examDetail,
-                        type: e.target.value as any,
-                      },
-                    );
-                  }}
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
-                >
-                  <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
-                  <option value="FULL_TEST">
+                {/* Only an older part-practice exam can still change format
+                    (to a full test); a full test stays one. */}
+                {examDetail.type === "PRACTICE_BY_PART" ? (
+                  <select
+                    value={examDetail.type}
+                    onChange={(e) => {
+                      queryClient.setQueryData(
+                        ["admin-exam-detail", selectedExamId],
+                        {
+                          ...examDetail,
+                          type: e.target.value as any,
+                        },
+                      );
+                    }}
+                    className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
+                  >
+                    <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
+                    <option value="FULL_TEST">
+                      Full Test (200 câu TOEIC chuẩn)
+                    </option>
+                  </select>
+                ) : (
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm text-slate-600">
                     Full Test (200 câu TOEIC chuẩn)
-                  </option>
-                </select>
+                  </p>
+                )}
               </div>
 
               <div>
@@ -1522,9 +1551,9 @@ export default function AdminExamsPage() {
                   }}
                   className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
                 >
-                  <option value="easy">Dễ (Easy)</option>
-                  <option value="medium">Trung bình (Medium)</option>
-                  <option value="hard">Khó (Hard)</option>
+                  <option value="easy">Dễ</option>
+                  <option value="medium">Trung bình</option>
+                  <option value="hard">Khó</option>
                 </select>
               </div>
             </div>
@@ -1995,11 +2024,17 @@ export default function AdminExamsPage() {
                   </div>
                   <div className="col-span-2">
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Câu hỏi (prompt)
+                      Câu hỏi
+                      {questionPart !== null && questionPart <= 2 && (
+                        <span className="font-normal text-slate-600">
+                          {" "}
+                          (Part {questionPart}: học viên chỉ nghe, có thể để trống)
+                        </span>
+                      )}
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. What is the topic of the meeting?"
+                      placeholder="VD: What is the topic of the meeting?"
                       value={questionForm.text}
                       onChange={(e) =>
                         setQuestionForm({
@@ -2743,7 +2778,7 @@ export default function AdminExamsPage() {
                   onChange={(e) =>
                     setExamForm({ ...examForm, title: e.target.value })
                   }
-                  placeholder="VD: TOEIC Practice Test 01"
+                  placeholder="VD: TOEIC Listening & Reading — Đề luyện tập 01"
                   required
                   className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                 />
@@ -2765,10 +2800,11 @@ export default function AdminExamsPage() {
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
                     <option value="TOEIC">TOEIC</option>
-                    <option value="IELTS" disabled>
-                      IELTS (Coming soon)
-                    </option>
                   </select>
+                  {/* An option that cannot be picked is left out, not greyed. */}
+                  <p className="mt-1 text-xs text-slate-600">
+                    Hiện mới soạn được đề TOEIC.
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -2789,23 +2825,20 @@ export default function AdminExamsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                {/* A new exam is a full test: learners practise by Part inside an
+                    L&R full test, so there is no separate part-practice exam. */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <p className="block text-xs font-semibold text-slate-700 mb-1">
                     Loại đề
-                  </label>
-                  <select
-                    value={examForm.type}
-                    onChange={(e) =>
-                      reshapeExamForm({ type: e.target.value as ExamType })
-                    }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
-                  >
-                    {allowedExamTypes(examForm.variantCode).map((type) => (
-                      <option key={type} value={type}>
-                        {examTypeLabel(examForm.variantCode, type)}
-                      </option>
-                    ))}
-                  </select>
+                  </p>
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
+                    {examTypeLabel(examForm.variantCode, "FULL_TEST")}
+                  </p>
+                  {examForm.variantCode === "TOEIC_LR" && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Học viên luyện theo Part ngay trong đề này.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -2822,9 +2855,9 @@ export default function AdminExamsPage() {
                     }
                     className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
                   >
-                    <option value="easy">Dễ (Easy)</option>
-                    <option value="medium">Trung bình (Medium)</option>
-                    <option value="hard">Khó (Hard)</option>
+                    <option value="easy">Dễ</option>
+                    <option value="medium">Trung bình</option>
+                    <option value="hard">Khó</option>
                   </select>
                 </div>
               </div>

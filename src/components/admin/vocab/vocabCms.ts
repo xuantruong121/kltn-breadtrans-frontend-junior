@@ -3,6 +3,7 @@
  * checklist and how ready a word is for each of the 4 learner steps.
  */
 import { buildQuizOptions } from "../../../modules/vocab/utils/quizOptions.ts";
+import { checklistBlocker, listPublishBlocker, missingItems } from "../publishBlocker.ts";
 
 /** "10", "9:00", "3.5": flashcards teach words, not numbers. */
 export const isBareNumber = (word: string) => /^\d+([.,:]\d+)*$/.test(word.trim());
@@ -101,6 +102,35 @@ type WordLike = {
 export type ChecklistItem = { label: string; done: boolean };
 
 const filled = (v?: string | null) => String(v ?? "").trim() !== "";
+
+/**
+ * Why the deck cannot be published yet, or null. Every checklist item is
+ * required; the server's publish refuses the same (vocabDeckProblems).
+ */
+export const vocabPublishBlocker = (checklist: ChecklistItem[], unsaved: boolean) =>
+  checklistBlocker(checklist, unsaved);
+
+/** What the publish confirmation says once the check passed. */
+export const vocabPublishConfirm = (checklist: ChecklistItem[]) =>
+  `Đạt ${checklist.length}/${checklist.length} mục kiểm tra. Bộ từ sẽ hiện trong Flashcard của học viên.`;
+
+/**
+ * A deck card's publish blocker on the list: the server's rule for the
+ * page's drafts; without it the card checks what it has (title, words).
+ */
+export function vocabListBlocker(deck: {
+  title: string;
+  wordCount: number;
+  publicationStatus: string;
+  publishProblems?: string[] | null;
+}): string | null {
+  return listPublishBlocker(deck, () =>
+    missingItems([
+      { label: "Có tên bộ từ", done: filled(deck.title) },
+      { label: "Có ít nhất 1 từ", done: deck.wordCount > 0 },
+    ]),
+  );
+}
 
 export type DeckStats = {
   total: number;

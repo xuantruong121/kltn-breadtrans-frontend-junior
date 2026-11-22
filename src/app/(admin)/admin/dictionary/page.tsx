@@ -130,7 +130,7 @@ export default function AdminDictionaryPage() {
         title="Kho từ điển"
         stats={
           counts
-            ? `${allCount} mục · ${counts.APPROVED} đã duyệt · ${counts.PENDING_REVIEW} chờ duyệt · ${counts.REJECTED} bị từ chối`
+            ? `${allCount} mục · ${counts.APPROVED} đã duyệt · ${counts.PENDING_REVIEW} chờ duyệt · ${counts.REJECTED} đã loại`
             : undefined
         }
         description="Mỗi từ (theo loại từ) chỉ có một mục. Bộ flashcard, nút tra từ, luyện nói và Đấu trường đều đọc từ đây; sửa một mục là đổi ở mọi nơi dùng nó."

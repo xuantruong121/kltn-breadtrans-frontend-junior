@@ -73,7 +73,7 @@ export default function ToeicSpeakingExamComposer({ examId, readOnly = false, on
   }, [selectedSlot, source]);
 
   const save = async () => {
-    if (!form.title.trim() || !form.targetText.trim()) { toast.error("Cần nhập tiêu đề và prompt cho câu Speaking."); return; }
+    if (!form.title.trim() || !form.targetText.trim()) { toast.error("Cần nhập tiêu đề và nội dung câu."); return; }
     setIsSaving(true);
     try {
       const payload = { title: form.title.trim(), targetText: form.targetText.trim(), taskType: selectedType, difficulty: "INTERMEDIATE", order: selectedSlot, imageUrl: IMAGE_SLOTS.has(selectedSlot) ? form.imageUrl.trim() || null : null, stimulusId: INFORMATION_SLOTS.has(selectedSlot) ? Number(form.stimulusId) || null : null };
@@ -81,7 +81,7 @@ export default function ToeicSpeakingExamComposer({ examId, readOnly = false, on
       else await axiosClient.post(`/admin/exams/${examId}/speaking/exercises`, payload);
       toast.success(`Đã lưu câu ${selectedSlot}.`);
       await load(); onChanged?.();
-    } catch (error) { toast.error(getApiErrorMessage(error, "Không thể lưu câu Speaking.")); }
+    } catch (error) { toast.error(getApiErrorMessage(error, `Không thể lưu câu ${selectedSlot}.`)); }
     finally { setIsSaving(false); }
   };
 
@@ -92,8 +92,8 @@ export default function ToeicSpeakingExamComposer({ examId, readOnly = false, on
       const response: any = await axiosClient.post(`/admin/exams/${examId}/speaking/stimuli`, { kind: "INFORMATION", title: newStimulusTitle.trim() || undefined, content: newStimulusContent.trim() });
       const stimulus = unwrap<Stimulus>(response);
       setNewStimulusTitle(""); setNewStimulusContent(""); setForm((current) => ({ ...current, stimulusId: String(stimulus.id) }));
-      await load(); toast.success("Đã tạo stimulus INFORMATION.");
-    } catch (error) { toast.error(getApiErrorMessage(error, "Không thể tạo stimulus.")); }
+      await load(); toast.success("Đã tạo thông tin dùng chung và chọn cho câu này.");
+    } catch (error) { toast.error(getApiErrorMessage(error, "Không thể tạo thông tin dùng chung.")); }
     finally { setIsCreatingStimulus(false); }
   };
 
@@ -110,9 +110,9 @@ export default function ToeicSpeakingExamComposer({ examId, readOnly = false, on
       <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-slate-500">Câu {selectedSlot}</p><h3 className="mt-1 text-lg font-bold text-slate-950">{TASK_LABELS[selectedType]}</h3></div></div>
         <label className="block text-sm font-semibold text-slate-700">Tiêu đề câu<input className={inputClassName()} value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} aria-label={`Tiêu đề câu ${selectedSlot}`} /></label>
-        <label className="block text-sm font-semibold text-slate-700">Nội dung câu<textarea className={`${inputClassName()} min-h-28 resize-y`} value={form.targetText} onChange={(event) => setForm({ ...form, targetText: event.target.value })} aria-label={`Prompt câu ${selectedSlot}`} /></label>
+        <label className="block text-sm font-semibold text-slate-700">Nội dung câu<textarea className={`${inputClassName()} min-h-28 resize-y`} value={form.targetText} onChange={(event) => setForm({ ...form, targetText: event.target.value })} aria-label={`Nội dung câu ${selectedSlot}`} /></label>
         {IMAGE_SLOTS.has(selectedSlot) && <div className="space-y-2"><ImageUploadField label="Ảnh mô tả *" value={form.imageUrl} onChange={(imageUrl) => setForm({ ...form, imageUrl })} helperText="Dùng ảnh PNG, JPG hoặc WEBP cho câu mô tả hình." />{!form.imageUrl.trim() && <RequiredMediaNotice />}</div>}
-        {!readOnly && INFORMATION_SLOTS.has(selectedSlot) && <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3"><label className="block text-sm font-semibold text-slate-700">Stimulus INFORMATION dùng chung Q8–Q10<select className={inputClassName()} value={form.stimulusId} onChange={(event) => setForm({ ...form, stimulusId: event.target.value })} aria-label={`Stimulus câu ${selectedSlot}`}><option value="">Chọn stimulus</option>{stimuli.filter((stimulus) => stimulus.kind === "INFORMATION").map((stimulus) => <option key={stimulus.id} value={stimulus.id}>{stimulus.title || `Stimulus #${stimulus.id}`}</option>)}</select></label><input className={inputClassName()} value={newStimulusTitle} onChange={(event) => setNewStimulusTitle(event.target.value)} placeholder="Tên lịch / bảng thông tin mới" aria-label="Tên stimulus mới" /><textarea className={`${inputClassName()} min-h-20 resize-y`} value={newStimulusContent} onChange={(event) => setNewStimulusContent(event.target.value)} placeholder="Nội dung lịch hội thảo, sự kiện hoặc thông tin dịch vụ..." aria-label="Nội dung stimulus mới" /><button type="button" onClick={() => void createStimulus()} disabled={isCreatingStimulus} className={`inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 disabled:cursor-wait ${!newStimulusContent.trim() ? "invisible" : ""}`}>{isCreatingStimulus ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Tạo stimulus INFORMATION</button></div>}
+        {!readOnly && INFORMATION_SLOTS.has(selectedSlot) && <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50/70 p-3"><label className="block text-sm font-semibold text-slate-700">Thông tin dùng chung cho câu 8–10<select className={inputClassName()} value={form.stimulusId} onChange={(event) => setForm({ ...form, stimulusId: event.target.value })} aria-label={`Thông tin dùng chung của câu ${selectedSlot}`}><option value="">Chọn thông tin</option>{stimuli.filter((stimulus) => stimulus.kind === "INFORMATION").map((stimulus) => <option key={stimulus.id} value={stimulus.id}>{stimulus.title || `Thông tin #${stimulus.id}`}</option>)}</select></label><input className={inputClassName()} value={newStimulusTitle} onChange={(event) => setNewStimulusTitle(event.target.value)} placeholder="Tên lịch / bảng thông tin mới" aria-label="Tên thông tin mới" /><textarea className={`${inputClassName()} min-h-20 resize-y`} value={newStimulusContent} onChange={(event) => setNewStimulusContent(event.target.value)} placeholder="Nội dung lịch hội thảo, sự kiện hoặc thông tin dịch vụ..." aria-label="Nội dung thông tin mới" /><button type="button" onClick={() => void createStimulus()} disabled={isCreatingStimulus} className={`inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-semibold text-amber-800 transition hover:bg-amber-100 disabled:cursor-wait ${!newStimulusContent.trim() ? "invisible" : ""}`}>{isCreatingStimulus ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Tạo thông tin dùng chung</button></div>}
         <div className="flex justify-end border-t border-slate-200 pt-3"><button type="button" onClick={() => void save()} disabled={isSaving} className={`inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-wait ${readOnly ? "invisible" : ""}`}>{isSaving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Lưu câu {selectedSlot}</button></div>
       </div>
     </div>

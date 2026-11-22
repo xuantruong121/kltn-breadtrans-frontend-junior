@@ -26,9 +26,10 @@ test("only L&R part practice has an editable length", () => {
   assert.equal(durationLocked("TOEIC_SW", "FULL_TEST"), true);
 });
 
-test("Speaking & Writing and 4 skills offer a full test only", () => {
-  assert.deepEqual(allowedExamTypes("TOEIC_LR"), ["FULL_TEST", "PRACTICE_BY_PART"]);
+test("every new exam is a full test; L&R part practice lives inside it", () => {
+  assert.deepEqual(allowedExamTypes("TOEIC_LR"), ["FULL_TEST"]);
   assert.deepEqual(allowedExamTypes("TOEIC_SW"), ["FULL_TEST"]);
+  assert.deepEqual(allowedExamTypes("TOEIC_4_SKILLS"), ["FULL_TEST"]);
   assert.equal(examTypeFor("TOEIC_4_SKILLS", "PRACTICE_BY_PART"), "FULL_TEST");
   assert.equal(examTypeLabel("TOEIC_SW", "FULL_TEST"), "Full Test (11 câu nói, 8 câu viết)");
 });
