@@ -428,6 +428,37 @@ test("audioBadgeFor: comprehension and dictation count clips per question", () =
   );
 });
 
+// Review 2026-11-22: a hand-made dialogue keeps its clip on the transcript holder.
+test("audioBadgeFor: a dialogue whose holder has a clip and no recording is ready", () => {
+  const dialogue = { bilingualContent: { mode: "DIALOGUE" }, _count: { questions: 3 } };
+  assert.deepEqual(audioBadgeFor({ ...dialogue, dialogueAudio: true }), {
+    label: "Audio lời thoại · đang dùng",
+    tone: "ok",
+  });
+  assert.equal(audioBadgeFor({ ...dialogue, dialogueAudio: false }).tone, "none");
+  // A shared recording, when there is one, decides.
+  assert.deepEqual(
+    audioBadgeFor({
+      ...dialogue,
+      dialogueAudio: true,
+      listeningAudioArtifacts: [{ version: 2, status: "PREVIEW_READY" }],
+    }),
+    { label: "Audio v2 · chờ duyệt", tone: "pending" },
+  );
+  // Only a dialogue quiz reads its holder.
+  assert.equal(
+    audioBadgeFor({ bilingualContent: { mode: "COMPREHENSION" }, dialogueAudio: true }).tone,
+    "none",
+  );
+  // The list's audio filter follows the same badge.
+  const items = [
+    { id: 1, title: "Hội thoại B1 — A", ...dialogue, dialogueAudio: true },
+    { id: 2, title: "Hội thoại B1 — B", ...dialogue, dialogueAudio: false },
+  ];
+  const ok = { query: "", status: "ALL", level: "ALL", audio: "ok", sort: "NEWEST" } as const;
+  assert.deepEqual(filterSkillContent(items, ok).map((item) => item.id), [1]);
+});
+
 test("publishChecklist: per-question audio for dictation", () => {
   const items = publishChecklist({
     domain: "listening",

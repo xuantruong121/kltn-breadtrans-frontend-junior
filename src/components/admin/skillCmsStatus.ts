@@ -46,6 +46,8 @@ const PER_QUESTION_MODES = ["COMPREHENSION", "DICTATION"];
 export function audioBadgeFor(item: {
   bilingualContent?: unknown;
   questionsWithAudio?: number;
+  /** A hand-made dialogue's transcript holder has an active clip (list API). */
+  dialogueAudio?: boolean;
   _count?: { questions?: number };
   questions?: unknown[];
   listeningAudioArtifacts?: Array<{ version: number; status: string }>;
@@ -53,6 +55,10 @@ export function audioBadgeFor(item: {
   const mode = (item.bilingualContent as { mode?: string } | null)?.mode;
   const clips = item.questionsWithAudio ?? 0;
   const latest = item.listeningAudioArtifacts?.[0];
+  // A hand-made dialogue plays the clip on its transcript holder when it has
+  // no shared recording (review 2026-11-22: it read "Chưa có audio").
+  if (mode === "DIALOGUE" && !latest && item.dialogueAudio)
+    return { label: "Audio lời thoại · đang dùng", tone: "ok" };
   // A dialogue may play a clip on each question instead of one recording.
   if ((mode && PER_QUESTION_MODES.includes(mode)) || (!latest && clips > 0))
     return questionAudioBadge(
@@ -345,6 +351,7 @@ type ListItem = {
   listeningAudioArtifacts?: Array<{ version: number; status: string }>;
   bilingualContent?: unknown;
   questionsWithAudio?: number;
+  dialogueAudio?: boolean;
 };
 
 export const contentLevel = (item: ListItem) =>
