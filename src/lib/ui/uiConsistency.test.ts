@@ -177,6 +177,19 @@ test("Phân loại Speaking is gone: Lĩnh vực replaces it", () => {
   assert.deepEqual(found, []);
 });
 
+// Owner 2026-11-22: a new exam is a full test, also when the AI drafts it. The AI
+// already drafts a whole exam in small checked batches and a weak Part is redone
+// inside the draft, so no screen offers "Sinh riêng một Part".
+test("no screen asks the AI for a separate one-Part exam", () => {
+  const found: string[] = [];
+  for (const f of FILES)
+    f.text.split("\n").forEach((line, i) => {
+      if (/Sinh riêng một Part|mode:\s*["']PART["']/.test(line))
+        found.push(`${f.rel}:${i + 1}: ${line.trim().slice(0, 90)}`);
+    });
+  assert.deepEqual(found, []);
+});
+
 // QA 2026-11-22: the speaking authoring screens mixed English into Vietnamese
 // text ("Tạo stimulus INFORMATION", "prompt cho câu Speaking"). Shown text
 // there says thông tin dùng chung, câu mẫu / nội dung câu, câu luyện, Nói.

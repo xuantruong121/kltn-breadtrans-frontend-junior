@@ -51,8 +51,6 @@ function NewExamPageBody() {
   const [authoringMode, setAuthoringMode] = useState<"MANUAL" | "AI">(() =>
     searchParams.get("mode") === "ai" ? "AI" : "MANUAL",
   );
-  const [generationMode, setGenerationMode] = useState<"FULL_EXAM" | "PART">("FULL_EXAM");
-  const [part, setPart] = useState("5");
   const [topic, setTopic] = useState("");
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [aiJob, setAiJob] = useState<any>(null);
@@ -116,8 +114,9 @@ function NewExamPageBody() {
         const result: any = await axiosClient.post("/admin/exams/ai/generate", {
           familyCode: "TOEIC",
           variantCode,
-          mode: generationMode,
-          part: generationMode === "PART" ? Number(part) : undefined,
+          // A whole exam only (owner 2026-11-22): it is already drafted in small
+          // checked batches, and a weak Part is redone inside the draft.
+          mode: "FULL_EXAM",
           topic: topic.trim() || undefined,
           difficulty,
         }, { headers: { "Idempotency-Key": generationIdempotencyKey.current } });
@@ -199,9 +198,6 @@ function NewExamPageBody() {
                     onClick={() => {
                       setVariantCode(option.variantCode);
                       setTypedTitle(null);
-                      if (option.variantCode !== "TOEIC_LR" && generationMode === "PART") {
-                        setGenerationMode("FULL_EXAM");
-                      }
                     }}
                     className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${selected ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-white text-slate-900 hover:border-slate-400"}`}
                   >
@@ -249,15 +245,6 @@ function NewExamPageBody() {
           {authoringMode === "AI" && (
             <section className="space-y-4 rounded-xl border border-amber-200 bg-amber-50/60 p-4">
               <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-semibold text-slate-800">Chế độ tạo
-                  <select value={generationMode} onChange={(event) => setGenerationMode(event.target.value as "FULL_EXAM" | "PART")} className={fieldClass}>
-                    <option value="FULL_EXAM">Đề hoàn chỉnh</option>
-                    <option value="PART" disabled={variantCode !== "TOEIC_LR"}>Sinh riêng một Part</option>
-                  </select>
-                </label>
-                {generationMode === "PART" && <label className="text-sm font-semibold text-slate-800">Part
-                  <select value={part} onChange={(event) => setPart(event.target.value)} className={fieldClass}>{[1,2,3,4,5,6,7].map((value) => <option key={value} value={value}>Part {value}</option>)}</select>
-                </label>}
                 <label className="text-sm font-semibold text-slate-800 sm:col-span-2">Chủ đề ưu tiên <span className="font-medium text-slate-600">(không bắt buộc)</span>
                   <input value={topic} onChange={(event) => setTopic(event.target.value)} className={fieldClass} placeholder="Ví dụ: giao tiếp nơi làm việc" />
                 </label>
