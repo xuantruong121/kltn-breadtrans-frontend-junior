@@ -5,6 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
+import { useLearningTracks } from "@/lib/learning-path/useLearningTracks";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
@@ -12,10 +13,8 @@ import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "../cmsButtons";
 import {
   EXERCISE_LEVELS,
   TASK_TYPES,
-  categoryLabel,
   difficultyLabel,
   unwrap,
-  type SpeakingCategory,
   type SpeakingExercise,
   type SpeakingExerciseForm as ExerciseFormState,
   type SpeakingExerciseSuggestion,
@@ -34,41 +33,35 @@ const FIELD =
 export default function SpeakingExerciseForm({
   set,
   exercise,
-  categories,
   stimuli,
-  defaultCategory,
   autoSuggest = false,
   onDone,
 }: {
   set: SpeakingPracticeSet;
   exercise: SpeakingExercise | null;
-  categories: SpeakingCategory[];
   stimuli: SpeakingStimulus[];
-  defaultCategory: string;
   autoSuggest?: boolean;
   onDone: () => void;
 }) {
   const queryClient = useQueryClient();
-  const setCategory = set.category || defaultCategory;
   const [form, setForm] = useState<ExerciseFormState>(() => ({
     title: exercise?.title ?? "",
     targetText: exercise?.targetText ?? "",
     imageUrl: exercise?.imageUrl ?? "",
-    category: exercise?.category || setCategory,
     difficulty: exercise?.difficulty || "BEGINNER",
     taskType: exercise?.taskType || "READ_ALOUD",
     stimulusId: exercise?.stimulusId ?? null,
-    categoryOverride: Boolean(
-      exercise?.categoryId && exercise.categoryId !== set.categoryId,
-    ),
   }));
   const [suggestions, setSuggestions] = useState<SpeakingExerciseSuggestion[]>(
     [],
   );
   const [newStimulusTitle, setNewStimulusTitle] = useState("");
   const [newStimulusContent, setNewStimulusContent] = useState("");
-  const exerciseCategories = categories.filter(
-    (category) => category.isActive && category.allowExercise,
+  // AI suggestions are written for the set's first Lĩnh vực that is still on;
+  // the API refuses a turned-off one.
+  const { data: activeTracks = [] } = useLearningTracks();
+  const aiTrack = set.tracks?.find((code) =>
+    activeTracks.some((track) => track.code === code),
   );
 
   const refresh = () => {
@@ -84,7 +77,6 @@ export default function SpeakingExerciseForm({
       const dto = {
         title: form.title,
         targetText: form.targetText,
-        category: form.categoryOverride ? form.category : null,
         difficulty: form.difficulty,
         taskType: form.taskType,
         stimulusId: form.stimulusId,
@@ -133,7 +125,7 @@ export default function SpeakingExerciseForm({
         practiceSetTitle: set.title,
         practiceSetDescription: set.description || undefined,
         level: set.level || "BEGINNER",
-        category: setCategory,
+        track: aiTrack,
         currentTitle: form.title || undefined,
         currentTargetText: form.targetText || undefined,
         taskType: form.taskType,
@@ -408,47 +400,6 @@ export default function SpeakingExerciseForm({
             </details>
           </div>
         )}
-
-        <div className="text-sm font-medium text-slate-800 md:col-span-2">
-          Chủ đề
-          {form.categoryOverride ? (
-            <select
-              value={form.category}
-              onChange={(event) =>
-                setForm({ ...form, category: event.target.value })
-              }
-              className={FIELD}
-            >
-              {exerciseCategories.map((category) => (
-                <option key={category.code} value={category.code}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <p className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-medium text-slate-700">
-              {categoryLabel(categories, setCategory)}
-              <span className="text-slate-600 dark:text-slate-400"> · theo bộ luyện</span>
-            </p>
-          )}
-          <label className="mt-2 flex items-center gap-2 font-medium text-slate-600">
-            <input
-              type="checkbox"
-              checked={form.categoryOverride}
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  categoryOverride: event.target.checked,
-                  category: event.target.checked
-                    ? exerciseCategories[0]?.code || setCategory
-                    : setCategory,
-                })
-              }
-              className="size-4 rounded border-slate-300"
-            />
-            Dùng chủ đề riêng cho câu này
-          </label>
-        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">

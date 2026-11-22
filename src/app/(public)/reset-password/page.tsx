@@ -8,6 +8,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { PASSWORD_HINT, PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { resetLinkProblem } from "@/lib/auth/resetLink";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -18,14 +19,13 @@ function ResetPasswordForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  // A link that cannot work: no form, a new link instead (owner 2026-11-21).
+  const [expired, setExpired] = useState<string | null>(null);
+  const linkProblem = resetLinkProblem(token) ?? expired;
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
-    if (!token) {
-      setError("Liên kết đặt lại mật khẩu không hợp lệ.");
-      return;
-    }
     const problem = newPasswordProblem(password);
     if (problem) {
       setError(problem);
@@ -43,8 +43,11 @@ function ResetPasswordForm() {
         newPassword: password,
       });
       setCompleted(true);
-    } catch (requestError: any) {
-      setError(getApiErrorMessage(requestError, "Liên kết đã hết hạn hoặc không hợp lệ."));
+    } catch (requestError: unknown) {
+      const status = (requestError as { response?: { status?: number } } | null)?.response?.status;
+      const linkError = resetLinkProblem(token, status);
+      if (linkError) setExpired(linkError);
+      else setError(getApiErrorMessage(requestError, "Chưa đặt lại được mật khẩu. Vui lòng thử lại."));
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +71,19 @@ function ResetPasswordForm() {
           </div>
           <Link href="/login" className="btn-tactile-primary flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-md transition-all hover:bg-amber-700 sm:text-base">
             Đăng nhập ngay <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+        </div>
+      ) : linkProblem ? (
+        <div className="mt-6 space-y-4">
+          <div role="alert" className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm leading-6 text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
+            <CircleAlert size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <span>{linkProblem}</span>
+          </div>
+          <Link href="/forgot-password" className="btn-tactile-primary flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 text-sm font-bold text-white shadow-md transition-all hover:bg-amber-700 sm:text-base">
+            Gửi lại liên kết <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+          <Link href="/login" className="block text-center text-sm font-semibold text-amber-700 hover:underline dark:text-amber-400">
+            Quay lại đăng nhập
           </Link>
         </div>
       ) : (

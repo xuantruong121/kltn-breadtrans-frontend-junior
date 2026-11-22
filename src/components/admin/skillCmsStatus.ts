@@ -2,6 +2,7 @@
  * Pure status helpers for the skill CMS screens: the audio badge on a list
  * card and the checklist beside the editor. No I/O, so they are unit-tested.
  */
+import { TERMS } from "../../lib/ui/terms.ts";
 
 export type AudioBadge = {
   label: string;
@@ -60,35 +61,18 @@ export function audioBadgeFor(item: {
   return latestAudioBadge(latest);
 }
 
-/** Career tracks, as the recommender reads them. */
-export const CONTENT_TRACKS = [
-  { value: "GENERAL", label: "Tổng quát" },
-  { value: "IT_SOFTWARE", label: "Công nghệ thông tin" },
-  { value: "OFFICE_BUSINESS", label: "Văn phòng – Kinh doanh" },
-  { value: "SALES_CUSTOMER_SERVICE", label: "Bán hàng – CSKH" },
-  { value: "HOSPITALITY_TOURISM", label: "Nhà hàng – Khách sạn – Du lịch" },
-  { value: "STUDENT_ACADEMIC", label: "Sinh viên – Học thuật" },
-];
-
 /**
  * Admin copy for career tracks. The learner's onboarding asks "Bạn làm việc
- * hoặc học trong lĩnh vực nào?", so the admin says "lĩnh vực" too.
+ * hoặc học trong lĩnh vực nào?", so the admin says "lĩnh vực" too. The
+ * tracks themselves come from the API (lib/learning-path/tracks.ts).
  */
 export const TRACK_FIELD_COPY = {
-  label: "Lĩnh vực",
+  label: TERMS.track,
   hint: "Bài được ưu tiên đề xuất cho học viên chọn lĩnh vực này. Tự lưu khi bấm.",
   lockedHint: "Lưu bài trước, sau đó chọn lĩnh vực.",
   untagged: "Chưa gắn lĩnh vực",
   saveError: "Chưa lưu được lĩnh vực",
 } as const;
-
-/** A list card's track line. */
-export function trackNames(tracks?: string[]): string {
-  const names = CONTENT_TRACKS.filter((t) => tracks?.includes(t.value)).map(
-    (t) => t.label,
-  );
-  return names.length ? names.join(", ") : TRACK_FIELD_COPY.untagged;
-}
 
 export type ChecklistItem = { label: string; done: boolean };
 

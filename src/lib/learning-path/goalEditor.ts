@@ -1,12 +1,12 @@
 /**
  * The learning goal after onboarding: what the learner chose (goal, career
  * track, minutes a day, target day), shown as one line and edited in place.
- * Labels come from the onboarding option lists. No React, no I/O.
+ * Goal labels come from the onboarding option lists, the track's name from
+ * the API. No React, no I/O.
  */
 import {
   GOAL_OPTIONS,
   MINUTE_OPTIONS,
-  TRACK_OPTIONS,
   type LearnerProfile,
   type LearningGoal,
   type LearningTrack,
@@ -14,7 +14,7 @@ import {
 
 const VN_OFFSET_MS = 7 * 60 * 60 * 1000;
 
-type GoalFields = Pick<LearnerProfile, "goal" | "track" | "minutesPerDay" | "targetDate">;
+type GoalFields = Pick<LearnerProfile, "goal" | "track" | "trackName" | "minutesPerDay" | "targetDate">;
 
 /** The form state: `targetDate` is a date input value ("2026-12-20") or "". */
 export type GoalDraft = {
@@ -50,15 +50,19 @@ export function goalDraft(profile: GoalFields): GoalDraft {
 }
 
 const goalLabel = (goal: LearningGoal) => GOAL_OPTIONS.find((o) => o.value === goal)?.label ?? goal;
-const trackLabel = (track: LearningTrack) =>
-  track === "GENERAL" ? "Chưa xác định lĩnh vực" : (TRACK_OPTIONS.find((o) => o.value === track)?.label ?? track);
+/**
+ * The name admins gave the track, as the profile sends it. GENERAL is still
+ * the default code; its name ("Chung") comes from the API like any other.
+ * The code stands in only if a profile arrives without a name.
+ */
+const trackLabel = ({ track, trackName }: Pick<GoalFields, "track" | "trackName">) => trackName || track;
 
-/** "Đạt điểm TOEIC · Văn phòng – Kinh doanh · 30 phút mỗi ngày · Ngày mục tiêu 20/12/2026" */
+/** "Đạt điểm TOEIC · Công nghệ thông tin · 30 phút mỗi ngày · Ngày mục tiêu 20/12/2026" */
 export function goalSummary(profile: GoalFields): string {
   const day = formatGoalDate(profile.targetDate);
   return [
     goalLabel(profile.goal),
-    trackLabel(profile.track),
+    trackLabel(profile),
     `${profile.minutesPerDay} phút mỗi ngày`,
     day ? `Ngày mục tiêu ${day}` : "Chưa đặt ngày mục tiêu",
   ].join(" · ");

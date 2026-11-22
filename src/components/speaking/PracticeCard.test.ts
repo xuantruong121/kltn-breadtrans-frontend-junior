@@ -57,7 +57,6 @@ test("PracticeCard Format Tag: resolves format badge accurately", () => {
     title: "Read Aloud — Office Announcement",
     targetText: "Secret prompt sentence that should not leak",
     difficulty: "BEGINNER",
-    category: "TOEIC",
   };
   assert.equal(resolveFormatTag(readAloudEx), "Đọc thành tiếng");
 
@@ -66,7 +65,6 @@ test("PracticeCard Format Tag: resolves format badge accurately", () => {
     title: "Question Response 1",
     targetText: "Another prompt sentence",
     difficulty: "INTERMEDIATE",
-    category: "GENERAL",
   };
   assert.equal(resolveFormatTag(questionEx), "Phản hồi câu hỏi");
 
@@ -75,7 +73,6 @@ test("PracticeCard Format Tag: resolves format badge accurately", () => {
     title: "Express an Opinion",
     targetText: "Another secret prompt",
     difficulty: "ADVANCED",
-    category: "TOEIC",
   };
   assert.equal(resolveFormatTag(opinionEx), "Bày tỏ quan điểm");
 
@@ -84,7 +81,6 @@ test("PracticeCard Format Tag: resolves format badge accurately", () => {
     title: "Pronunciation Foundations",
     targetText: "Another secret prompt",
     difficulty: "BEGINNER",
-    category: "GENERAL",
   };
   assert.equal(resolveFormatTag(pronunciationEx), "Âm vị học");
 
@@ -93,13 +89,11 @@ test("PracticeCard Format Tag: resolves format badge accurately", () => {
     title: "Luyện nhiệm vụ TOEIC Speaking",
     targetText: "Another secret prompt",
     difficulty: "INTERMEDIATE",
-    category: "TOEIC",
     practiceSet: {
       key: "toeic-speaking-practice",
       title: "Luyện nhiệm vụ TOEIC Speaking",
       description:
         "Luyện theo nhóm nhiệm vụ đọc thành tiếng, mô tả và phản hồi trong TOEIC Speaking.",
-      category: "TOEIC",
       exerciseCount: 4,
       completedCount: 0,
       exerciseIds: [25, 26, 27, 28],
@@ -119,7 +113,6 @@ test("PracticeCard Pedagogical Description: produces concise objective without c
     title: "Read Aloud — Store Return Policy",
     targetText: secretSentence,
     difficulty: "BEGINNER",
-    category: "TOEIC",
   };
 
   const desc = resolvePedagogicalDescription(exercise);
@@ -146,7 +139,6 @@ test("PracticeCard Skill Tags: resolves high-level skills without vocabulary or 
     title: "Read Aloud — Presentation Schedule",
     targetText: secretSentence,
     difficulty: "INTERMEDIATE",
-    category: "BUSINESS",
   };
 
   const tags = resolveSkillTags(exercise);
@@ -158,6 +150,34 @@ test("PracticeCard Skill Tags: resolves high-level skills without vocabulary or 
   assert.equal(tags.includes("presentation"), false);
   // Verify no raw phoneme slashes leaked
   assert.ok(tags.every((t) => !t.includes("/")));
+});
+
+test("PracticeCard Skill Tags: office tags come from the set's Lĩnh vực, not the old Phân loại (owner 2026-11-22)", () => {
+  const setOf = (code: string) => ({
+    key: `set-${code}`,
+    title: "Trao đổi với khách hàng",
+    description: "Luyện nói theo tình huống.",
+    tracks: [{ code, name: code, sortOrder: 10 }],
+    exerciseCount: 3,
+    completedCount: 0,
+    exerciseIds: [1, 2, 3],
+    difficultyLabel: "Trung cấp",
+    position: 1,
+    isCompleted: false,
+  });
+  const office: PracticeExerciseItem = {
+    id: 21,
+    title: "Trao đổi với khách hàng",
+    difficulty: "INTERMEDIATE",
+    practiceSet: setOf("OFFICE_BUSINESS"),
+  };
+  assert.deepEqual(resolveSkillTags(office), ["Từ vựng công sở", "Ngữ điệu chuẩn"]);
+  assert.deepEqual(
+    resolveSkillTags({ ...office, practiceSet: setOf("HOSPITALITY_TOURISM") }),
+    ["Phát âm chuẩn", "Độ lưu loát"],
+  );
+  // A standalone exercise has no Lĩnh vực: the generic format badge.
+  assert.equal(resolveFormatTag({ id: 22, title: "Trao đổi", difficulty: "BASIC" }), "LUYỆN NÓI");
 });
 
 test("Difficulty Filter: matches single and composite/hybrid difficulty tags accurately", () => {

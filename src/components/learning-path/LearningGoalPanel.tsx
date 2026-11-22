@@ -15,7 +15,10 @@ import {
   toDateInput,
   type GoalDraft,
 } from "@/lib/learning-path/goalEditor";
-import { GOAL_OPTIONS, TRACK_OPTIONS, type LearnerProfile } from "@/lib/learning-path/onboarding";
+import { GOAL_OPTIONS, type LearnerProfile } from "@/lib/learning-path/onboarding";
+import { trackChoices } from "@/lib/learning-path/tracks";
+import { useLearningTracks } from "@/lib/learning-path/useLearningTracks";
+import { TERMS } from "@/lib/ui/terms";
 
 const fieldClass =
   "mt-1.5 min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-base text-slate-900 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100";
@@ -43,6 +46,7 @@ export function LearningGoalPanel({
     queryFn: learningPathService.getProfile,
     staleTime: 60_000,
   });
+  const { data: activeTracks = [] } = useLearningTracks();
   const [draft, setDraft] = useState<GoalDraft | null>(null);
 
   const save = useMutation({
@@ -121,15 +125,16 @@ export function LearningGoalPanel({
           </select>
         </label>
         <label className="block">
-          <span className={labelClass}>Lĩnh vực</span>
+          <span className={labelClass}>{TERMS.track}</span>
           <select
             value={draft.track}
-            onChange={(e) => set({ track: e.target.value as GoalDraft["track"] })}
+            onChange={(e) => set({ track: e.target.value })}
             className={fieldClass}
           >
-            {TRACK_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
+            {/* A track admins turned off stays offered while it is the learner's own. */}
+            {trackChoices(activeTracks, profile.track, [{ code: profile.track, name: profile.trackName }]).map((o) => (
+              <option key={o.code} value={o.code}>
+                {o.name}
               </option>
             ))}
           </select>

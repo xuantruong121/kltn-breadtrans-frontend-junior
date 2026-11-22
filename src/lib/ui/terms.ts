@@ -39,6 +39,8 @@ export const TERMS = {
   help: "FAQ",
   /** The entry assessment, as the report names it. */
   diagnostic: "Bài đánh giá đầu vào",
+  /** A career or study track learners choose and admins manage. */
+  track: "Lĩnh vực",
 } as const;
 
 export type Concept = keyof typeof TERMS;

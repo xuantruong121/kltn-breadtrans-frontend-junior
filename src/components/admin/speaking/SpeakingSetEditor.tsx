@@ -32,17 +32,18 @@ import {
   BTN_SUCCESS,
 } from "../cmsButtons";
 import { TrackTagField } from "../TrackTagField";
+import { TRACK_FIELD_COPY } from "../skillCmsStatus";
+import { ADMIN_LEARNING_TRACKS_KEY, useLearningTracks } from "@/lib/learning-path/useLearningTracks";
+import { TERMS } from "@/lib/ui/terms";
 import SpeakingExerciseForm from "./SpeakingExerciseForm";
 import {
   EXERCISE_LEVELS,
   LEVELS,
   STATUS_LABELS,
   TASK_TYPES,
-  categoryLabel,
   difficultyLabel,
   levelLabel,
   unwrap,
-  type SpeakingCategory,
   type SpeakingExerciseSuggestion,
   type SpeakingFullDraft,
   type SpeakingPracticeSet,
@@ -58,9 +59,11 @@ import {
 type SetForm = {
   title: string;
   description: string;
-  category: string;
   level: string;
 };
+
+/** The set fields of an AI suggestion or draft; its track is kept apart. */
+const setFormOf = ({ title, description, level }: SetForm): SetForm => ({ title, description, level });
 
 const FIELD =
   "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 disabled:cursor-not-allowed disabled:bg-slate-50";
@@ -116,15 +119,9 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     if (aiStart) document.getElementById("speaking-set-title")?.focus();
   }, [aiStart]);
 
-  const { data: categories = [] } = useQuery<SpeakingCategory[]>({
-    queryKey: ["admin-speaking-categories"],
-    queryFn: async () =>
-      unwrap<SpeakingCategory[]>(
-        await axiosClient.get(
-          "/admin/skill-content/speaking/categories?includeInactive=true",
-        ),
-      ) || [],
-  });
+  // Lĩnh vực replaces Phân loại (2026-11-21): the AI drafts for an active
+  // track, and a set created from such a draft is tagged with it.
+  const { data: activeTracks = [] } = useLearningTracks();
   const { data: stimuli = [] } = useQuery<SpeakingStimulus[]>({
     queryKey: ["admin-speaking-stimuli"],
     queryFn: async () =>
@@ -145,10 +142,6 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     },
   );
 
-  const practiceSetCategories = categories.filter(
-    (category) => category.isActive && category.allowPracticeSet,
-  );
-  const defaultCategory = practiceSetCategories[0]?.code || "";
   const exercises = (set?.exercises ?? [])
     .slice()
     .sort(
@@ -161,7 +154,6 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const initialForm: SetForm = {
     title: set?.title ?? "",
     description: set?.description ?? "",
-    category: set?.category ?? "",
     level: set?.level ?? "A1-A2",
   };
   const [savedForm, setSavedForm] = useState<SetForm>(initialForm);
@@ -176,8 +168,11 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const [pendingExercises, setPendingExercises] = useState<
     SpeakingExerciseSuggestion[]
   >([]);
-  const [inlineCategoryOpen, setInlineCategoryOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
+  /** The track the AI writes for; "" is "Không chọn". */
+  const [aiTrack, setAiTrack] = useState("");
+  /** The track of the AI suggestion or draft in the form, tagged when the new set is created. */
+  const [draftTrack, setDraftTrack] = useState<string | null>(null);
+  const trackName = (code: string) => activeTracks.find((track) => track.code === code)?.name ?? code;
   const [confirmLifecycle, setConfirmLifecycle] = useState(false);
   const [playing, setPlaying] = useState<{ id: number; url: string } | null>(
     null,
@@ -210,8 +205,9 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const dto = { ...form, category: form.category || defaultCategory };
+      const dto = setFormOf(form);
       let setId = set?.id;
+      let tagError: unknown = null;
       if (setId) {
         await axiosClient.patch(`/admin/skill-content/speaking/${setId}`, dto);
       } else {
@@ -220,6 +216,17 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         );
         if (!created?.id) throw new Error("Không nhận được mã bộ luyện mới.");
         setId = created.id;
+        // Creating a set takes no track: tag it with the draft's one. The set
+        // exists either way, so a refusal here is reported, not thrown.
+        if (draftTrack) {
+          try {
+            await axiosClient.put(`/admin/skill-content/speaking/${setId}/tracks`, {
+              tracks: [draftTrack],
+            });
+          } catch (error) {
+            tagError = error;
+          }
+        }
       }
       const base = exercises.length;
       for (const [index, candidate] of pendingExercises.entries()) {
@@ -234,14 +241,18 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           },
         );
       }
-      return { setId, dto };
+      return { setId, dto, tagError };
     },
-    onSuccess: ({ setId, dto }) => {
+    onSuccess: ({ setId, dto, tagError }) => {
       toast.success(set ? "Đã lưu bộ luyện." : "Đã tạo bộ luyện.");
+      if (tagError) toast.error(getApiErrorMessage(tagError, TRACK_FIELD_COPY.saveError));
       setSavedForm(dto);
       setForm(dto);
       setPendingExercises([]);
+      setDraftTrack(null);
       refresh();
+      // The Lĩnh vực page counts the sets tagged with each track.
+      if (!set && draftTrack) queryClient.invalidateQueries({ queryKey: ADMIN_LEARNING_TRACKS_KEY });
       if (!set) router.replace(`/admin/speaking/${setId}`);
     },
     onError: (err: any) => {
@@ -348,17 +359,17 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   };
 
   const suggestSetMutation = useMutation({
-    mutationFn: async () =>
-      axiosClient.post("/admin/speaking/ai/suggest-practice-set", {
-        topic:
-          form.title.trim() ||
-          form.description.trim() ||
-          categoryLabel(categories, form.category || defaultCategory),
+    mutationFn: async () => {
+      const topic = form.title.trim() || form.description.trim() || (aiTrack ? trackName(aiTrack) : "");
+      if (!topic) throw new Error("Nhập tên, mô tả hoặc chọn lĩnh vực trước.");
+      return axiosClient.post("/admin/speaking/ai/suggest-practice-set", {
+        topic,
         level: form.level,
-        category: form.category || defaultCategory,
+        track: aiTrack || undefined,
         currentTitle: form.title || undefined,
         currentDescription: form.description || undefined,
-      }),
+      });
+    },
     onSuccess: (result: any) => setSetSuggestion(unwrap(result)),
     onError: (err: any) => {
       toast.error(getApiErrorMessage(err, "Không thể lấy gợi ý AI lúc này."));
@@ -374,7 +385,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         await axiosClient.post("/admin/speaking/ai/full-draft", {
           topic,
           level: form.level,
-          category: form.category || defaultCategory,
+          track: aiTrack || undefined,
           objective: form.description.trim() || undefined,
           count: fullDraftCount,
           sourceText: documentText || undefined,
@@ -398,29 +409,6 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           ? err.message
           : getApiErrorMessage(err, "Không thể soạn bản nháp lúc này."),
       );
-    },
-  });
-
-  const createCategoryMutation = useMutation({
-    mutationFn: async () =>
-      unwrap<SpeakingCategory>(
-        await axiosClient.post("/admin/skill-content/speaking/categories", {
-          name: newCategoryName.trim(),
-          allowPracticeSet: true,
-          allowExercise: false,
-        }),
-      ),
-    onSuccess: (category) => {
-      queryClient.invalidateQueries({
-        queryKey: ["admin-speaking-categories"],
-      });
-      setForm((current) => ({ ...current, category: category.code }));
-      setNewCategoryName("");
-      setInlineCategoryOpen(false);
-      toast.success("Đã tạo và chọn phân loại.");
-    },
-    onError: (err: any) => {
-      toast.error(getApiErrorMessage(err, "Không thể tạo phân loại."));
     },
   });
 
@@ -509,7 +497,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 type="button"
                 onClick={() => suggestSetMutation.mutate()}
                 disabled={suggestSetMutation.isPending}
-                title="AI gợi ý tên, mô tả, trình độ và phân loại; bạn xem lại trước khi dùng."
+                title="AI gợi ý tên, mô tả và trình độ; bạn xem lại trước khi dùng."
                 className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
               >
                 {suggestSetMutation.isPending && (
@@ -517,6 +505,24 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 )}
                 Gợi ý tên & mô tả
               </button>
+              {!published && (
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                  {TERMS.track}
+                  <select
+                    aria-label="Lĩnh vực cho gợi ý và bản nháp AI"
+                    value={aiTrack}
+                    onChange={(event) => setAiTrack(event.target.value)}
+                    className="min-h-10 max-w-56 rounded-lg border border-slate-300 bg-white px-2 text-sm font-medium text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                  >
+                    <option value="">Không chọn</option>
+                    {activeTracks.map((track) => (
+                      <option key={track.code} value={track.code}>
+                        {track.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               {!draftLocked && (
                 <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
                   Số câu
@@ -578,14 +584,15 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 {setSuggestion.description}
               </p>
               <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                {levelLabel(setSuggestion.level)} ·{" "}
-                {categoryLabel(categories, setSuggestion.category)}
+                {levelLabel(setSuggestion.level)}
+                {setSuggestion.track && ` · ${trackName(setSuggestion.track)}`}
               </p>
               <div className="mt-3 flex gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    setForm({ ...setSuggestion });
+                    setForm(setFormOf(setSuggestion));
+                    setDraftTrack(setSuggestion.track ?? null);
                     setSetSuggestion(null);
                   }}
                   className={BTN_SECONDARY}
@@ -634,52 +641,11 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                 ))}
               </select>
             </label>
-            <div className="text-sm font-medium text-slate-800 md:col-span-2">
-              <label htmlFor="speaking-set-category">Phân loại</label>
-              <div className="mt-1 flex gap-2">
-                <select
-                  id="speaking-set-category"
-                  value={form.category || defaultCategory}
-                  disabled={published}
-                  onChange={(event) =>
-                    setForm({ ...form, category: event.target.value })
-                  }
-                  className={`${FIELD} mt-0 min-w-0 flex-1`}
-                >
-                  {practiceSetCategories.map((category) => (
-                    <option key={category.code} value={category.code}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setInlineCategoryOpen((open) => !open)}
-                  className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
-                >
-                  <Plus size={14} /> Phân loại mới
-                </button>
-              </div>
-              {inlineCategoryOpen && (
-                <div className="mt-2 flex gap-2">
-                  <input
-                    value={newCategoryName}
-                    onChange={(event) => setNewCategoryName(event.target.value)}
-                    placeholder="Tên phân loại"
-                    aria-label="Tên phân loại mới"
-                    className={`${FIELD} mt-0 min-w-0 flex-1`}
-                  />
-                  <button
-                    type="button"
-                    disabled={createCategoryMutation.isPending}
-                    onClick={() => createCategoryMutation.mutate()}
-                    className={`${BTN_SECONDARY} ${!newCategoryName.trim() ? "invisible" : ""}`}
-                  >
-                    Tạo và chọn
-                  </button>
-                </div>
-              )}
-            </div>
+            {!set && draftTrack && (
+              <p className="text-sm text-slate-600 md:col-span-2">
+                Khi tạo, bộ luyện được gắn lĩnh vực {trackName(draftTrack)} như bản nháp AI.
+              </p>
+            )}
             <label className="text-sm font-medium text-slate-800 md:col-span-2">
               Mô tả
               <textarea
@@ -761,7 +727,8 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                       toast.error("Chọn ít nhất một câu.");
                       return;
                     }
-                    setForm({ ...fullDraft.practiceSet });
+                    setForm(setFormOf(fullDraft.practiceSet));
+                    setDraftTrack(fullDraft.practiceSet.track ?? null);
                     setPendingExercises(chosen);
                     setFullDraft(null);
                   }}
@@ -1075,9 +1042,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                         <SpeakingExerciseForm
                           set={set}
                           exercise={exercise}
-                          categories={categories}
                           stimuli={stimuli}
-                          defaultCategory={defaultCategory}
                           onDone={() => setEditingId(null)}
                         />
                       )}
@@ -1092,9 +1057,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                     <SpeakingExerciseForm
                       set={set}
                       exercise={null}
-                      categories={categories}
                       stimuli={stimuli}
-                      defaultCategory={defaultCategory}
                       autoSuggest={autoSuggest}
                       onDone={() => {
                         setEditingId(null);

@@ -1,13 +1,18 @@
 "use client";
 
-import { ADMIN_CARD, ADMIN_CARD_GRID, ADMIN_SELECT } from "@/components/admin/cmsStyles";
+import { ADMIN_CARD, ADMIN_CARD_GRID } from "@/components/admin/cmsStyles";
 import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminListToolbar } from "@/components/admin/AdminListToolbar";
+import type {
+  AdminListSort,
+  PublicationFilter,
+} from "@/components/admin/adminListToolbarLogic";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { grammarDisplayTitle } from "@/lib/catalog/displayTitles";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Loader2, Lock, Search, Send, Trash2 } from "lucide-react";
+import { ArrowRight, Loader2, Lock, Send, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -33,7 +38,6 @@ type TopicSummary = {
   publicationStatus: "DRAFT" | "PUBLISHED";
 };
 
-const SELECT = ADMIN_SELECT;
 const ICON_BTN =
   "inline-flex size-9 cursor-pointer items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
 
@@ -43,10 +47,8 @@ export default function AdminGrammarPage() {
   const [aiCreating, setAiCreating] = useState(false);
   const [query, setQuery] = useState("");
   const [level, setLevel] = useState("ALL");
-  const [status, setStatus] = useState<"ALL" | "DRAFT" | "PUBLISHED">("ALL");
-  const [sort, setSort] = useState<"NEWEST" | "TITLE" | "LEVEL" | "FEWEST">(
-    "NEWEST",
-  );
+  const [status, setStatus] = useState<PublicationFilter>("ALL");
+  const [sort, setSort] = useState<AdminListSort>("NEWEST");
   const [pendingDelete, setPendingDelete] = useState<TopicSummary | null>(null);
   const [pendingLifecycle, setPendingLifecycle] =
     useState<TopicSummary | null>(null);
@@ -73,6 +75,7 @@ export default function AdminGrammarPage() {
     <div className="space-y-6 p-6">
       <AdminPageHeader
         title="Ngữ pháp"
+        description="Học viên xem trong trang Đọc, tab Ngữ pháp."
         stats={
           <>
             {totalTopics} chủ đề · {published} đã xuất bản · {totalTopics - published} bản nháp
@@ -109,77 +112,28 @@ export default function AdminGrammarPage() {
         />
       )}
 
-      <div className="space-y-3">
-        <label className="relative block">
-          <span className="sr-only">Tìm chủ đề</span>
-          <Search
-            size={18}
-            aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
-          />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Tìm theo tên, lý thuyết, công thức..."
-            className="min-h-11 w-full rounded-lg border border-slate-200 bg-white py-2 pl-10 pr-3 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
-          />
-        </label>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trạng thái
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as typeof status)}
-              className={SELECT}
-            >
-              <option value="ALL">Tất cả</option>
-              <option value="DRAFT">Bản nháp</option>
-              <option value="PUBLISHED">Đã xuất bản</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Trình độ
-            <select value={level} onChange={(e) => setLevel(e.target.value)} className={SELECT}>
-              <option value="ALL">Tất cả</option>
-              {GRAMMAR_LEVELS.map((value) => (
-                <option key={value.value} value={value.value}>
-                  {value.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 text-sm text-slate-600">
-            Sắp xếp
-            <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} className={SELECT}>
-              <option value="NEWEST">Mới tạo trước</option>
-              <option value="LEVEL">Trình độ thấp → cao</option>
-              <option value="TITLE">Tên A → Z</option>
-              <option value="FEWEST">Ít câu hỏi trước</option>
-            </select>
-          </label>
-          <div className="ml-auto flex items-center gap-3 text-sm text-slate-600">
-            <span className="tabular-nums">
-              {list.total === totalTopics
-                ? `${list.total} chủ đề`
-                : `Khớp ${list.total}/${totalTopics}`}
-              {list.isFetching && !isLoading ? " · đang tải" : ""}
-            </span>
-            {filtersActive && (
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery("");
-                  setLevel("ALL");
-                  setStatus("ALL");
-                }}
-                className="cursor-pointer font-semibold text-slate-900 underline-offset-4 hover:underline"
-              >
-                Xóa bộ lọc
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <AdminListToolbar
+        content="grammar"
+        searchLabel="Tìm chủ đề"
+        search={query}
+        onSearchChange={setQuery}
+        status={{ value: status, onChange: setStatus }}
+        level={{
+          value: level,
+          onChange: setLevel,
+          options: GRAMMAR_LEVELS.map(({ value, label }) => ({ value, label })),
+        }}
+        sort={{ value: sort, onChange: setSort }}
+        total={list.facets?.total}
+        matched={list.total}
+        fetching={list.isFetching}
+        filtersActive={filtersActive}
+        onClearFilters={() => {
+          setQuery("");
+          setLevel("ALL");
+          setStatus("ALL");
+        }}
+      />
 
       {isLoading ? (
         <div className="flex justify-center py-20">
@@ -272,7 +226,7 @@ export default function AdminGrammarPage() {
             );
           })}
           {!visible.length && (
-            <p className="col-span-full rounded-xl border border-dashed border-slate-300 p-10 text-center text-sm text-slate-600">
+            <p className="col-span-full text-sm text-slate-600">
               {totalTopics
                 ? "Không có chủ đề nào khớp bộ lọc."
                 : "Chưa có chủ đề nào. Bấm “Tạo chủ đề” để bắt đầu."}

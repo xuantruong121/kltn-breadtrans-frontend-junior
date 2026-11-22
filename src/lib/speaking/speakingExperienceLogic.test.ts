@@ -3,9 +3,12 @@ import test from "node:test";
 import { findPreviousCompletedAttempt, formatSpeakingScore, presentSpeakingProgress, resolveSpeakingMode, scoreDelta } from "./speakingExperienceLogic.ts";
 
 test("resolves learner-friendly speaking modes from existing metadata", () => {
-  assert.equal(resolveSpeakingMode({ title: "Read Aloud A1", category: "GENERAL" }).id, "READ_ALOUD");
-  assert.equal(resolveSpeakingMode({ title: "Opinion B1", category: "GENERAL" }).id, "OPINION");
-  assert.equal(resolveSpeakingMode({ title: "TOEIC Speaking — Describe Office Scene", category: "TOEIC" }).id, "DESCRIBE");
+  assert.equal(resolveSpeakingMode({ title: "Read Aloud A1" }).id, "READ_ALOUD");
+  assert.equal(resolveSpeakingMode({ title: "Opinion B1" }).id, "OPINION");
+  assert.equal(resolveSpeakingMode({ title: "TOEIC Speaking — Describe Office Scene" }).id, "DESCRIBE");
+  // The task type wins over the title.
+  assert.equal(resolveSpeakingMode({ title: "Opinion B1", taskType: "READ_ALOUD" }).id, "READ_ALOUD");
+  assert.equal(resolveSpeakingMode({ title: "" }).id, "LISTEN_REPEAT");
 });
 
 test("compares only compatible completed attempts", () => {

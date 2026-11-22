@@ -5,13 +5,19 @@ import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import axiosClient from "@/lib/api/axiosClient";
+import { tagChoices } from "@/lib/learning-path/tracks";
+import { ADMIN_LEARNING_TRACKS_KEY, useAdminLearningTracks } from "@/lib/learning-path/useLearningTracks";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { CONTENT_TRACKS, TRACK_FIELD_COPY } from "./skillCmsStatus";
+import { TRACK_FIELD_COPY } from "./skillCmsStatus";
 
 /**
  * The learner-facing fields (lĩnh vực) of one item. Recommendations read them,
  * so each click saves. Before the item is saved there is nothing to tag yet,
  * so the buttons stay locked with a note.
+ *
+ * The tracks come from the API in the admins' order. A track admins turned
+ * off shows, marked "(đã tắt)", only while the item still has it: it can be
+ * removed, not added (the API refuses that too).
  *
  * `card` is a panel of its own (Speaking editor side column); `inline` sits
  * among the other fields of a form, next to Tiêu đề and Trình độ.
@@ -31,6 +37,7 @@ export function TrackTagField({
   variant?: "card" | "inline";
 }) {
   const queryClient = useQueryClient();
+  const trackList = useAdminLearningTracks();
   const [selected, setSelected] = useState(tracks);
   const [saving, setSaving] = useState(false);
   const locked = id === undefined || id === null || id === "";
@@ -48,6 +55,8 @@ export function TrackTagField({
         tracks: next,
       });
       void queryClient.invalidateQueries({ queryKey: [listKey] });
+      // The Lĩnh vực page counts tagged items; a used track cannot be deleted.
+      void queryClient.invalidateQueries({ queryKey: ADMIN_LEARNING_TRACKS_KEY });
     } catch (error) {
       setSelected(previous);
       toast.error(getApiErrorMessage(error, TRACK_FIELD_COPY.saveError));
@@ -56,27 +65,30 @@ export function TrackTagField({
     }
   };
 
-  const buttons = (
+  const buttons = trackList.isLoading ? (
+    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Đang tải...</p>
+  ) : trackList.isError ? (
+    <p className="mt-2 text-sm text-rose-700 dark:text-rose-400">
+      {getApiErrorMessage(trackList.error, "Chưa tải được danh sách lĩnh vực.")}
+    </p>
+  ) : (
     <div className="mt-2 flex flex-wrap gap-2">
-      {CONTENT_TRACKS.map(({ value, label }) => {
-        const active = selected.includes(value);
-        return (
-          <button
-            key={value}
-            type="button"
-            aria-pressed={active}
-            disabled={saving}
-            onClick={() => void toggle(value)}
-            className={`min-h-10 cursor-pointer rounded-lg border px-3 text-sm font-medium transition disabled:cursor-not-allowed ${
-              active
-                ? "border-blue-600 bg-blue-50 text-blue-800"
-                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-            } ${locked ? "invisible" : ""}`}
-          >
-            {label}
-          </button>
-        );
-      })}
+      {tagChoices(trackList.data ?? [], selected).map(({ code, label, selected: active }) => (
+        <button
+          key={code}
+          type="button"
+          aria-pressed={active}
+          disabled={saving}
+          onClick={() => void toggle(code)}
+          className={`min-h-10 cursor-pointer rounded-lg border px-3 text-sm font-medium transition disabled:cursor-not-allowed ${
+            active
+              ? "border-blue-600 bg-blue-50 text-blue-800"
+              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+          } ${locked ? "invisible" : ""}`}
+        >
+          {label}
+        </button>
+      ))}
     </div>
   );
   const hint = (

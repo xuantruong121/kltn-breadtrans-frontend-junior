@@ -6,10 +6,6 @@ export interface SpeakingExercise {
   targetText: string;
   taskType?: SpeakingTaskType | null;
   stimulusId?: number | null;
-  category?: string | null;
-  categoryId?: number | null;
-  categoryTaxonomy?: SpeakingCategory | null;
-  categoryLabel?: string | null;
   difficulty?: string | null;
   imageUrl?: string | null;
   audioUrl?: string | null;
@@ -40,25 +36,10 @@ export interface SpeakingPracticeSet {
   title: string;
   description?: string | null;
   level?: string | null;
-  category?: string | null;
-  categoryId?: number;
-  categoryTaxonomy?: SpeakingCategory | null;
   publicationStatus: "DRAFT" | "PUBLISHED";
   exercises: SpeakingExercise[];
   createdAt?: string;
   updatedAt?: string;
-}
-
-export interface SpeakingCategory {
-  id: number;
-  code: string;
-  name: string;
-  description?: string | null;
-  isActive: boolean;
-  sortOrder: number;
-  allowPracticeSet: boolean;
-  allowExercise: boolean;
-  _count?: { practiceSets: number; exercises: number };
 }
 
 // Levels inside one learner-facing group (Cơ bản / Trung cấp / Nâng cao), as the
@@ -97,26 +78,19 @@ export const difficultyLabel = (difficulty?: string | null) =>
   ] ||
   difficulty ||
   "Chưa phân loại";
-export const categoryLabel = (categories: SpeakingCategory[], code?: string | null) =>
-  categories.find((category) => category.code === code)?.name ||
-  code ||
-  "Chưa phân loại";
 
 export type SpeakingExerciseForm = {
   title: string;
   targetText: string;
   imageUrl: string;
-  category: string;
   difficulty: string;
   taskType: SpeakingTaskType;
   stimulusId: number | null;
-  categoryOverride: boolean;
 };
 
 export type SpeakingExercisePayload = {
   title: string;
   targetText: string;
-  category?: string | null;
   difficulty?: string;
   taskType: SpeakingTaskType;
   stimulusId?: number | null;
@@ -127,8 +101,9 @@ export type SpeakingExercisePayload = {
 export type SpeakingPracticeSetSuggestion = {
   title: string;
   description: string;
-  category: string;
   level: string;
+  /** The Lĩnh vực the draft was written for (the request's track), or null. */
+  track?: string | null;
 };
 
 export type SpeakingExerciseSuggestion = {

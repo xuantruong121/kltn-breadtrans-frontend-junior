@@ -223,6 +223,31 @@ describe("Admin IA and Messaging UX Invariants", () => {
       }
     });
 
+    it("puts Ngữ pháp directly under Đọc in NỘI DUNG HỌC", () => {
+      const contentGroup = ADMIN_NAV_GROUPS.find((g) => g.id === "content-group")!;
+      const ids = contentGroup.items.map((item) => item.id);
+      assert.equal(ids.indexOf("grammar"), ids.indexOf("reading") + 1);
+      assert.deepEqual(
+        contentGroup.items.map((item) => item.label),
+        ["Nghe", "Nói", "Đọc", "Ngữ pháp", "Viết", "Từ vựng & Flashcard", "Kho từ điển", "Luyện đề", "Lĩnh vực"],
+      );
+    });
+
+    it("ends NỘI DUNG HỌC with Lĩnh vực, drawn with the Tags icon", () => {
+      const contentGroup = ADMIN_NAV_GROUPS.find((g) => g.id === "content-group")!;
+      assert.deepEqual(contentGroup.items.at(-1), {
+        id: "learning-tracks",
+        href: "/admin/learning-tracks",
+        label: "Lĩnh vực",
+        iconName: "Tags",
+      });
+      // Imported from lucide-react and in the icon map, not the fallback icon.
+      assert.match(layout, /import \{[^}]*\bTags,[^}]*\} from "lucide-react"/);
+      assert.match(layout, /const NAV_ICONS[^}]*\bTags,/);
+      const hrefs = ADMIN_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
+      assert.equal(hrefs.filter((href) => href === "/admin/learning-tracks").length, 1);
+    });
+
     it("keeps authoring inside the tabs instead of separate entries", () => {
       const hrefs = ADMIN_NAV_GROUPS.flatMap((g) => g.items.map((i) => i.href));
       assert.ok(hrefs.includes("/admin/dictionary"));

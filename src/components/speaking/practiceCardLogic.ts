@@ -223,8 +223,16 @@ export function resolveFormatTag(exercise: PracticeExerciseItem): string {
   if (exercise.practiceSet) {
     return "Mô phỏng TOEIC";
   }
-  return exercise.categoryLabel || exercise.category || "LUYỆN NÓI";
+  // The old Phân loại is gone (owner 2026-11-22); a set's Lĩnh vực is a
+  // topic, not a format, so it never stands in for the format badge.
+  return "LUYỆN NÓI";
 }
+
+/**
+ * Lĩnh vực codes whose sets practise office speech: the sets the old
+ * BUSINESS Phân loại held are tagged with these.
+ */
+const WORKPLACE_TRACKS = new Set(["OFFICE_BUSINESS", "SALES_CUSTOMER_SERVICE", "IT_SOFTWARE"]);
 
 /**
  * Resolves concise pedagogical description summarizing the topic objective.
@@ -280,11 +288,11 @@ export function resolveSkillTags(
     exercise.title ||
     ""
   ).toLowerCase();
-  const cat = (
-    exercise.practiceSet?.category ||
-    exercise.category ||
-    ""
-  ).toUpperCase();
+  // Workplace sets: tagged with an office or sales Lĩnh vực, or TOEIC tasks
+  // (they were the TOEIC and BUSINESS Phân loại before 2026-11-22).
+  const workplace =
+    (exercise.practiceSet?.tracks ?? []).some((track) => WORKPLACE_TRACKS.has(track.code)) ||
+    title.includes("toeic");
 
   if (title.includes("read aloud") || title.includes("đọc")) {
     return ["Ngữ điệu câu", "Nối âm tự nhiên"];
@@ -298,7 +306,7 @@ export function resolveSkillTags(
   if (title.includes("pronunciation") || title.includes("phát âm")) {
     return ["Âm cuối & Trọng âm", "Ngữ điệu câu"];
   }
-  if (cat === "TOEIC" || cat === "BUSINESS") {
+  if (workplace) {
     return ["Từ vựng công sở", "Ngữ điệu chuẩn"];
   }
   return ["Phát âm chuẩn", "Độ lưu loát"];
