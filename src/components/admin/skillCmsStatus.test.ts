@@ -59,21 +59,31 @@ const mcq = (explanation: unknown, options = ["a", "b", "c", "d"], correctIndex 
   content: { options, correctIndex, explanation },
 });
 
+const twoSpeakers = [
+  { speaker: "A", text: "Hi." },
+  { speaker: "B", text: "Hello." },
+];
+const withTurns = <T extends { content: Record<string, unknown> }>(question: T, turns: unknown[] = twoSpeakers) => ({
+  ...question,
+  content: { ...question.content, transcriptSegments: turns },
+});
+
 test("publishChecklist: a complete listening quiz passes every item", () => {
   const items = publishChecklist({
     domain: "listening",
     title: "A Visit",
     levelTagged: true,
     listeningMode: "DIALOGUE",
-    questions: [mcq({ vi: "Vì…", en: "Because…" }), ],
+    questions: [withTurns(mcq({ vi: "Vì…", en: "Because…" }))],
     audioPublished: false,
   }).map((item) => [item.label, item.done]);
-  // The question has no clip and shares no recording: only its audio is missing.
+  // The question has no clip and no recording is published: only its audio is missing.
   assert.deepEqual(items, [
     ["Có tiêu đề", true],
     ["Có trình độ", true],
     ["Có ít nhất 1 câu hỏi", true],
     ["Câu trắc nghiệm đủ đáp án", true],
+    ["Lời thoại có ít nhất 2 lượt của 2 người nói", true],
     ["Audio đã xuất bản cho học viên", false],
   ]);
   const shared = publishChecklist({
@@ -81,10 +91,36 @@ test("publishChecklist: a complete listening quiz passes every item", () => {
     title: "A Visit",
     levelTagged: true,
     listeningMode: "DIALOGUE",
-    questions: [{ ...mcq("x"), content: { ...mcq("x").content, transcriptSegments: [{ speaker: "A", text: "Hi" }] } }],
+    questions: [withTurns(mcq("x"))],
     audioPublished: true,
   });
   assert.ok(shared.every((item) => item.done));
+});
+
+// The server checks the conversation the questions carry (dialogueQuizIssues).
+test("publishChecklist: a Hội thoại quiz needs 2 turns by 2 speakers in its questions", () => {
+  const turnsItem = (questions: Array<{ type: string; content: Record<string, unknown> }>) =>
+    publishChecklist({
+      domain: "listening",
+      title: "A Visit",
+      levelTagged: true,
+      listeningMode: "DIALOGUE",
+      questions,
+      audioPublished: true,
+    }).find((item) => item.label === "Lời thoại có ít nhất 2 lượt của 2 người nói")?.done;
+  assert.equal(turnsItem([mcq("x")]), false);
+  assert.equal(turnsItem([]), false);
+  assert.equal(turnsItem([withTurns(mcq("x"), [twoSpeakers[0], { speaker: "A", text: "Again." }])]), false);
+  assert.equal(turnsItem([withTurns(mcq("x")), withTurns(mcq("y"))]), true);
+  // The other forms have no conversation item.
+  const comprehension = publishChecklist({
+    domain: "listening",
+    title: "T",
+    levelTagged: true,
+    listeningMode: "COMPREHENSION",
+    questions: [mcq("x")],
+  });
+  assert.equal(comprehension.some((item) => item.label.startsWith("Lời thoại")), false);
 });
 
 test("a dialogue with a clip on every question has its audio", () => {
@@ -92,6 +128,7 @@ test("a dialogue with a clip on every question has its audio", () => {
     options: ["a", "b"],
     correctIndex: 0,
     explanation: { vi: "x", en: "y" },
+    transcriptSegments: twoSpeakers,
   };
   const questions = [1, 2].map(() => ({
     type: "MULTIPLE_CHOICE",
@@ -284,17 +321,9 @@ test("audioStepsDone: nothing is done before the transcript is checked", () => {
   assert.equal(audioStepsDone("PUBLISHED", false), 4);
 });
 
-// QA 2026-11-22: turns alone failed with "Cần nhập đề bài hoặc lời thoại".
-test("questionSaveProblem: turns are enough for a Hội thoại turns question", () => {
-  const turns = [
-    { speaker: "A", text: "Hi." },
-    { speaker: "B", text: "Hello." },
-  ];
-  assert.equal(questionSaveProblem("listening", { type: "DIALOGUE", prompt: "", segments: turns }), null);
-  assert.match(
-    String(questionSaveProblem("listening", { type: "DIALOGUE", prompt: "Đề", segments: [turns[0], { speaker: "A", text: "Again." }] })),
-    /2 người nói/,
-  );
+// The "Hội thoại" turns are checked by the conversation editor (listeningDialogue.test.ts).
+test("questionSaveProblem: each question needs its prompt or sentence", () => {
+  assert.equal(questionSaveProblem("listening", { type: "MULTIPLE_CHOICE", prompt: "Who calls?" }), null);
   assert.equal(questionSaveProblem("listening", { type: "DICTATION", prompt: " " }), "Cần nhập câu cần chép.");
   assert.equal(questionSaveProblem("reading", { type: "MULTIPLE_CHOICE", prompt: "" }), "Cần nhập đề bài.");
   assert.equal(questionSaveProblem("writing", { type: "WRITING", prompt: "Viết email." }), null);

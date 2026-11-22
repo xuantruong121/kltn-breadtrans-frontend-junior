@@ -90,9 +90,11 @@ type ChecklistQuestion = {
 };
 
 /**
- * A hand-made "Hội thoại" keeps its turns in a DIALOGUE question: the
+ * A hand-made "Hội thoại" used to keep its turns in a DIALOGUE question: the
  * transcript, not a question a learner answers. AI-made dialogue quizzes have
- * none, so counts leave it out and both read the same (QA 2026-11-22).
+ * none, so counts leave it out and both read the same (QA 2026-11-22). The
+ * editor now copies the turns into every question and deletes the holder on
+ * save (listeningDialogue.ts); older quizzes may still have one.
  */
 export const isTranscriptHolder = (question: { type?: string }) => question.type === "DIALOGUE";
 
@@ -217,9 +219,17 @@ export function publishChecklist(input: {
         ),
       });
     if (input.listeningMode !== "DICTATION" || choices.length) items.push(choiceItem);
+    // A legacy holder is checked itself; otherwise the conversation the
+    // questions carry, the one the recording is made from (the server's rule).
     const holders = input.questions.filter(isTranscriptHolder);
-    if (holders.length)
-      items.push({ label: "Lời thoại có ít nhất 2 lượt của 2 người nói", done: holders.every((q) => validTurns(q.content)) });
+    const carrier = input.questions.find(
+      (q) => Array.isArray(q.content?.transcriptSegments) && q.content.transcriptSegments.length > 0,
+    );
+    if (holders.length || input.listeningMode === "DIALOGUE")
+      items.push({
+        label: "Lời thoại có ít nhất 2 lượt của 2 người nói",
+        done: holders.length ? holders.every((q) => validTurns(q.content)) : validTurns(carrier?.content),
+      });
     // A learner hears the question's own clip, or the published recording
     // when the question shares the conversation (the server's rule).
     const playable = (q: ChecklistQuestion) =>
@@ -269,19 +279,14 @@ export function audioStepsDone(artifactStatus: string | undefined, transcriptChe
 }
 
 /**
- * Why a question cannot be saved yet, or null. A "Hội thoại" turns question
- * needs its turns, not a prompt (QA 2026-11-22: turns alone were refused).
+ * Why a question cannot be saved yet, or null. A "Hội thoại" quiz's turns
+ * are not a question: the conversation editor checks them
+ * (listeningDialogue.ts, dialogueTurnsProblem).
  */
 export function questionSaveProblem(
   domain: string,
-  question: { type: string; prompt: string; segments?: Array<{ speaker: string; text: string }> },
+  question: { type: string; prompt: string },
 ): string | null {
-  if (domain === "listening" && question.type === "DIALOGUE") {
-    const turns = (question.segments ?? []).filter((turn) => turn.speaker.trim() && turn.text.trim());
-    return turns.length >= 2 && new Set(turns.map((turn) => turn.speaker.trim())).size >= 2
-      ? null
-      : "Lời thoại cần ít nhất 2 lượt lời của 2 người nói.";
-  }
   if (question.prompt.trim()) return null;
   return domain === "listening" && question.type === "DICTATION" ? "Cần nhập câu cần chép." : "Cần nhập đề bài.";
 }
