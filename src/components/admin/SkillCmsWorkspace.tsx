@@ -2977,11 +2977,10 @@ export default function SkillCmsWorkspace({
 
           <div className="mt-4 space-y-3">
             {questions.length === 0 && (
-              <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
+              <p className="text-sm text-slate-600">
                 Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
-                tiên cho nội dung{" "}
-                {isListening ? "Listening" : isWriting ? "Writing" : "Reading"}.
-              </div>
+                tiên cho bài {isListening ? "nghe" : isWriting ? "viết" : "đọc"}.
+              </p>
             )}
             {questions.map((current: any, index: number) => (
               <div
@@ -3275,12 +3274,12 @@ export default function SkillCmsWorkspace({
                   id="cms-full-draft-title"
                   className="text-base font-bold text-slate-900"
                 >
-                  Xem lại bản nháp{" "}
-                  {fullDraft.domain === "reading" ? "Reading" : "Listening"}
+                  Xem lại bản nháp bài{" "}
+                  {fullDraft.domain === "reading" ? "đọc" : "nghe"}
                 </h3>
                 <p className="mt-1 text-sm leading-5 text-slate-600 dark:text-slate-400">
-                  Xem lại, sửa hoặc bỏ bớt câu đề xuất trước khi áp dụng. Chưa ghi
-                  database; CMS Save vẫn bắt buộc.
+                  Xem lại, sửa hoặc bỏ bớt câu đề xuất trước khi áp dụng. Bản nháp
+                  chưa được lưu: áp dụng xong, bấm Lưu để lưu bài.
                 </p>
               </div>
               <button
@@ -3379,15 +3378,17 @@ export default function SkillCmsWorkspace({
               )}
               {fullDraft.sourceQuestion && (
                 <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-5 text-amber-900">
-                  Full draft sẽ lưu transcript nguồn thành một câu{" "}
-                  {fullDraft.sourceQuestion.type}; các câu hỏi bên dưới được lưu
-                  thành candidate riêng. Không tạo audio.
+                  Lời thoại nguồn được lưu thành một câu{" "}
+                  {fullDraft.sourceQuestion.type === "DICTATION"
+                    ? "nghe chép"
+                    : "lời thoại"}
+                  , mỗi câu hỏi bên dưới thành một câu riêng. Audio chưa được tạo.
                 </p>
               )}
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">
-                    Question candidates (
+                    Câu hỏi đề xuất (
                     {
                       fullDraft.questions.filter(
                         (candidate: any) => !candidate.excluded,
@@ -3396,7 +3397,7 @@ export default function SkillCmsWorkspace({
                     )
                   </h4>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    Có thể chỉnh sửa hoặc khôi phục candidate đã loại.
+                    Có thể sửa từng câu, hoặc khôi phục câu đã loại.
                   </p>
                 </div>
               </div>
@@ -3429,7 +3430,7 @@ export default function SkillCmsWorkspace({
                         }
                         className="text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 dark:text-slate-400"
                       >
-                        {candidate.excluded ? "Khôi phục" : "Loại candidate"}
+                        {candidate.excluded ? "Khôi phục" : "Loại câu này"}
                       </button>
                     </div>
                     {fullDraft.listeningMode === "COMPREHENSION" && (
@@ -3630,7 +3631,7 @@ export default function SkillCmsWorkspace({
                       !fullDraft.sourceQuestion.prompt.trim())
                   ) {
                     toast.error(
-                      "Full draft cần tiêu đề, nguồn nội dung và ít nhất một câu hợp lệ.",
+                      "Bản nháp cần tiêu đề, nội dung nguồn và ít nhất một câu hợp lệ.",
                     );
                     return;
                   }
@@ -3696,10 +3697,10 @@ export default function SkillCmsWorkspace({
             </div>
             <div className="mt-4 flex-1 overflow-y-auto">
               {!listeningContentAiSuggestion ? (
-                <div className="rounded-xl border border-dashed border-slate-200 p-10 text-center text-sm text-slate-600 dark:text-slate-400">
-                  Nhấn “Tạo gợi ý” để tạo transcript theo loại {listeningMode()}
-                  .
-                </div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Nhấn “Tạo gợi ý” để AI viết lời thoại theo dạng{" "}
+                  {LISTENING_MODE_LABEL[listeningMode()]}.
+                </p>
               ) : listeningContentAiSuggestion.mode === "DICTATION" ? (
                 <label className="text-sm font-semibold text-slate-700">
                   Câu nghe chép
@@ -3877,8 +3878,8 @@ export default function SkillCmsWorkspace({
                   AI gợi ý câu hỏi nghe nháp
                 </h3>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                  Câu hỏi được tạo từ lời thoại hiện tại, không tự thêm vào
-                  database.
+                  Câu hỏi được tạo từ lời thoại hiện tại, chưa được thêm vào
+                  bài.
                 </p>
               </div>
               <button
