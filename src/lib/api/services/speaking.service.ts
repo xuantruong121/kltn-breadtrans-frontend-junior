@@ -22,9 +22,6 @@ export interface SpeakingExercise {
   audioUrlUk?: string | null;
   difficulty: string;
   order?: number | null;
-  category: string;
-  categoryLabel?: string;
-  categoryId?: number | null;
   translation?: string;
   description?: string;
   isCompleted?: boolean;
@@ -55,8 +52,6 @@ export interface SpeakingPracticeSetSummary {
   key: string;
   title: string;
   description: string;
-  category: string;
-  categoryLabel?: string;
   /** The set's Lĩnh vực: active tracks only, in the admins' order (Phân loại folded into it). */
   tracks?: SetTrack[];
   exerciseCount: number;
