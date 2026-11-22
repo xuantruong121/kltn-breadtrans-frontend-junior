@@ -41,7 +41,6 @@ import {
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   PART_GROUP_LABEL,
-  allowedExamTypes,
   defaultExamMinutes,
   durationBreakdown,
   durationLocked,
@@ -1507,24 +1506,32 @@ export default function AdminExamsPage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Định dạng đề
                 </label>
-                <select
-                  value={examDetail.type}
-                  onChange={(e) => {
-                    queryClient.setQueryData(
-                      ["admin-exam-detail", selectedExamId],
-                      {
-                        ...examDetail,
-                        type: e.target.value as any,
-                      },
-                    );
-                  }}
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
-                >
-                  <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
-                  <option value="FULL_TEST">
+                {/* Only an older part-practice exam can still change format
+                    (to a full test); a full test stays one. */}
+                {examDetail.type === "PRACTICE_BY_PART" ? (
+                  <select
+                    value={examDetail.type}
+                    onChange={(e) => {
+                      queryClient.setQueryData(
+                        ["admin-exam-detail", selectedExamId],
+                        {
+                          ...examDetail,
+                          type: e.target.value as any,
+                        },
+                      );
+                    }}
+                    className="w-full rounded-lg border border-slate-200 px-3.5 py-2 text-sm text-slate-800 outline-none focus:border-slate-400"
+                  >
+                    <option value="PRACTICE_BY_PART">Luyện tập theo Part</option>
+                    <option value="FULL_TEST">
+                      Full Test (200 câu TOEIC chuẩn)
+                    </option>
+                  </select>
+                ) : (
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm text-slate-600">
                     Full Test (200 câu TOEIC chuẩn)
-                  </option>
-                </select>
+                  </p>
+                )}
               </div>
 
               <div>
@@ -2818,23 +2825,20 @@ export default function AdminExamsPage() {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
+                {/* A new exam is a full test: learners practise by Part inside an
+                    L&R full test, so there is no separate part-practice exam. */}
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <p className="block text-xs font-semibold text-slate-700 mb-1">
                     Loại đề
-                  </label>
-                  <select
-                    value={examForm.type}
-                    onChange={(e) =>
-                      reshapeExamForm({ type: e.target.value as ExamType })
-                    }
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-slate-800 outline-none focus:border-slate-400"
-                  >
-                    {allowedExamTypes(examForm.variantCode).map((type) => (
-                      <option key={type} value={type}>
-                        {examTypeLabel(examForm.variantCode, type)}
-                      </option>
-                    ))}
-                  </select>
+                  </p>
+                  <p className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
+                    {examTypeLabel(examForm.variantCode, "FULL_TEST")}
+                  </p>
+                  {examForm.variantCode === "TOEIC_LR" && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Học viên luyện theo Part ngay trong đề này.
+                    </p>
+                  )}
                 </div>
 
                 <div>
