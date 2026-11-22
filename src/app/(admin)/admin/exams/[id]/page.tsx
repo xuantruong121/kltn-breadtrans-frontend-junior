@@ -274,7 +274,7 @@ export default function ExamStudioPage({
                   điều hướng và cho biết tình trạng.
                 </p>
                 <a
-                  href={`/admin/exams?exam=${exam.id}`}
+                  href={`/admin/exams?exam=${exam.id}&part=${selectedPart}`}
                   className="mt-3 inline-block rounded-md border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200"
                 >
                   Mở trình soạn Part {selectedPart}

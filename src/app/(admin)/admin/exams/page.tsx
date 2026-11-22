@@ -35,6 +35,8 @@ import ToeicWritingExamComposer from "@/components/admin/ToeicWritingExamCompose
 import {
   getPublishReadinessUi,
   getReadinessIssueLabel,
+  missingImageNote,
+  partFromUrl,
 } from "@/lib/examStudio/readinessUi";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
@@ -240,7 +242,9 @@ export default function AdminExamsPage() {
     "structure" | "speaking" | "writing" | "preflight" | "info"
   >("structure");
   // An exam holds 103 groups: open one Part, not all of them.
-  const [activePartFilter, setActivePartFilter] = useState<number | "all">(1);
+  const [activePartFilter, setActivePartFilter] = useState<number | "all">(() =>
+    partFromUrl(searchParams.get("part")),
+  );
   const questionFromUrl = Number(searchParams.get("q"));
   const [pendingQuestion, setPendingQuestion] = useState<number | null>(
     Number.isInteger(questionFromUrl) && questionFromUrl > 0
@@ -1070,7 +1074,7 @@ export default function AdminExamsPage() {
             className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
           >
             <p className="font-semibold">
-              Còn thiếu {examDetail.missingImages?.length} ảnh. Câu hỏi và đáp án vẫn đầy đủ; đề xuất bản được khi đủ ảnh.
+              {missingImageNote(examDetail.missingImages?.length ?? 0, issues)}
             </p>
             <p className="mt-1">
               Bấm từng dòng để mở câu đó rồi tìm hoặc tải ảnh lên. Với Part 1, sau khi có ảnh hãy dùng &quot;Tạo lại câu từ ảnh&quot; để đáp án khớp ảnh.

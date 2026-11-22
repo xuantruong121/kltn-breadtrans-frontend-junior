@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { AdminImageThumb } from "@/components/admin/AdminImageThumb";
 import {
+  canAddQuestion,
   canBuildAudio,
   editContentLabel,
   emptyGroupNote,
@@ -292,9 +293,23 @@ export function ExamGroupCard<G extends ExamCardGroup>({
       ))}
     </div>
   ) : (
-    <p className="text-sm text-slate-600">
-      {emptyGroupNote(group.part, Boolean(group.imageUrl), 0)}
-    </p>
+    <div className="flex flex-wrap items-center gap-3">
+      <p className="text-sm text-slate-600">
+        {emptyGroupNote(group.part, Boolean(group.imageUrl), 0)}
+      </p>
+      {/* The menu has it too; an empty group shows it where the admin looks. */}
+      {!readOnly && canAddQuestion(group.part, Boolean(group.imageUrl), 0) && (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onAction("addQuestion", group)}
+          className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        >
+          <Plus size={14} strokeWidth={2} aria-hidden />
+          Thêm câu hỏi
+        </button>
+      )}
+    </div>
   );
 
   return (
