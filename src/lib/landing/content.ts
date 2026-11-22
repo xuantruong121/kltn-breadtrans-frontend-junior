@@ -149,9 +149,10 @@ export const CROPS: Partial<Record<LandingImageKey, FramedCrop>> = {
     x: 0, y: 0, w: 800, h: 447,
     alt: "Phòng luyện Viết với các bài đề xuất ở mức Cơ bản, mỗi bài khoảng 15 phút",
   },
+  // Only the TOEIC chip and tabs: the chip row goes on to formats BreadTrans does not offer.
   "skill-luyen-de": {
-    x: 0, y: 0, w: 848, h: 500,
-    alt: "Trang luyện đề thi chứng chỉ: TOEIC Practice có sẵn, các định dạng khác ghi Dự kiến, cùng các mục TOEIC L&R, S&W và 4 kỹ năng",
+    x: 0, y: 262, w: 356, h: 242,
+    alt: "Trang luyện đề với định dạng TOEIC Practice có sẵn và các mục TOEIC L&R, TOEIC S&W",
   },
   "skill-flashcard": {
     x: 0, y: 380, w: 793, h: 370,

@@ -104,6 +104,25 @@ test("every picture shown has a crop inside its image, with an alt for that crop
   assert.ok(inside(VIDEO_CROP, LANDING_VIDEO.width, LANDING_VIDEO.height), "video crop inside");
 });
 
+test("the landing shows TOEIC only: no other certificate in words or in the exam-page crop", () => {
+  const OTHER_CERTIFICATES = /IELTS|VSTEP|TOEFL|Cambridge|FCE|CAE/i;
+  const strings = [
+    SKILLS_TITLE,
+    HABITS_TITLE,
+    HABITS_LEAD,
+    PATH_TITLE,
+    ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
+    ...Object.values(CROPS).map((crop) => crop?.alt ?? ""),
+  ];
+  for (const s of strings) assert.doesNotMatch(s, OTHER_CERTIFICATES);
+  // skill-luyen-de.webp: the "IELTS Academic Dự kiến" chip starts at x 361 (row y 317-363),
+  // then VSTEP, TOEFL and Cambridge. A crop that reaches that row must stop left of it.
+  const crop = CROPS["skill-luyen-de"];
+  assert.ok(crop);
+  const reachesChipRow = crop.y < 363 && crop.y + crop.h > 317;
+  assert.ok(!reachesChipRow || crop.x + crop.w <= 360, "exam-page crop stops before the IELTS chip");
+});
+
 test("cropMedia places the whole image so the crop fills its box", () => {
   assert.deepEqual(cropMedia({ width: 1600, height: 588 }, { x: 0, y: 215, w: 800, h: 373 }), {
     width: "200%",
