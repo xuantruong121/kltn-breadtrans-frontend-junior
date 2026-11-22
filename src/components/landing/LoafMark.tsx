@@ -1,22 +1,83 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { revealProps } from "@/lib/landing/motion";
+import { REVEAL_EASE } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
 
-// Stub (Task 2). Task 5 builds the BreadTrans mark from loaf blocks, above AppFooter (spec 6.4.7).
+/**
+ * Block heights in % of a row: 60-100, no two neighbours alike, like the cuts
+ * when a sentence is scored. Bottoms share one line, so the letters share a
+ * baseline.
+ */
+const BLOCKS: Array<{ letter: string; height: number }> = [
+  { letter: "B", height: 100 },
+  { letter: "r", height: 72 },
+  { letter: "e", height: 86 },
+  { letter: "a", height: 64 },
+  { letter: "d", height: 94 },
+  { letter: "T", height: 100 },
+  { letter: "r", height: 68 },
+  { letter: "a", height: 82 },
+  { letter: "n", height: 62 },
+  { letter: "s", height: 90 },
+];
+
+/** Letters of a one-word heading rise one after another, 40ms apart (motion.md: 20-40ms). */
+const LETTER_STEP_S = 0.04;
+
+function blockMotion(reduced: boolean, index: number) {
+  // data-reveal: the landing.css and no-script guards pin it to its final state.
+  if (reduced) return { initial: false as const, "data-reveal": true as const };
+  return {
+    initial: { opacity: 0, y: 32 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true as const, amount: 0.4 },
+    transition: { duration: 0.8, delay: index * LETTER_STEP_S, ease: REVEAL_EASE },
+    "data-reveal": true as const,
+  };
+}
+
+/**
+ * The close of the landing (spec 6.4.7, blueprint "The mark, built large"):
+ * BreadTrans built from loaves stood on end, one letter in each, on a flat
+ * band that meets AppFooter below it. AppFooter stays as it is.
+ *
+ * Sizes are container units (cqi) of the band's content width, so the
+ * construction keeps its proportions at every width: one row of ten from 640px,
+ * "Bread" over "Trans" on a phone.
+ */
 export function LoafMark({ actions }: { actions: LandingActions }) {
-  void actions; // used once Task 5 fills the section
+  void actions; // the mark carries no action; AppFooter below holds the links
   const reduced = Boolean(useReducedMotion());
   return (
-    <section aria-labelledby="landing-mark-title" className="landing-container">
-      <motion.h2
-        id="landing-mark-title"
-        className="landing-display landing-section-title"
-        {...revealProps(reduced, 0)}
-      >
-        BreadTrans
-      </motion.h2>
+    // The negative margin takes back the section gap .landing-stack leaves after
+    // the last section, so the band meets AppFooter.
+    <section
+      aria-labelledby="landing-mark-title"
+      className="mb-[calc(var(--section-gap)*-1)] bg-(--surface-2) py-12 lg:py-16"
+    >
+      <div className="landing-container">
+        <h2 id="landing-mark-title" aria-label="BreadTrans" className="@container landing-display">
+          <span className="grid grid-cols-5 items-end gap-1 sm:grid-cols-10">
+            {BLOCKS.map((block, index) => (
+              <motion.span
+                key={index}
+                aria-hidden="true"
+                style={{ "--block": block.height / 100 } as CSSProperties}
+                className="flex h-[calc(40cqi*var(--block))] items-end justify-center rounded-full bg-(--loaf) pb-[4cqi] text-[length:13cqi] leading-none text-(--on-loaf) sm:h-[calc(22cqi*var(--block))] sm:pb-[2cqi] sm:text-[length:7cqi]"
+                {...blockMotion(reduced, index)}
+              >
+                {block.letter}
+              </motion.span>
+            ))}
+          </span>
+        </h2>
+        {/* Credits slot (spec 6.4.7): a found picture used on the landing (none yet)
+            is credited here, at 13px or more, e.g.
+            <p className="landing-small landing-muted mt-8">Ảnh: <author>, <source>, <licence>.</p>
+            Write no credit for a picture the page does not show. */}
+      </div>
     </section>
   );
 }
