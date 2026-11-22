@@ -3,6 +3,7 @@
  * card and the checklist beside the editor. No I/O, so they are unit-tested.
  */
 import { TERMS } from "../../lib/ui/terms.ts";
+import { listeningExchangeText } from "../../lib/listening/listeningExchange.ts";
 
 export type AudioBadge = {
   label: string;
@@ -361,12 +362,15 @@ export type FullDraftCandidate = {
   questionType?: unknown;
   /** "Nghe hiểu (câu ngắn)": the sentence the learner hears for this question. */
   audioText?: unknown;
+  /** "Nghe hiểu (câu ngắn)", an exchange: 2-3 turns of speakers A and B. */
+  turns?: unknown;
 };
 
 /**
  * The editor fields an AI full-draft question fills. A "Nghe hiểu" question
  * brings its own sentence in audioText, the field a hand-written one fills,
- * so it saves the same way and its clip is made per question.
+ * so it saves the same way and its clip is made per question. An exchange
+ * fills that field as "A: …" / "B: …" lines, which save as its turns.
  */
 export function fullDraftQuestionFields(candidate: FullDraftCandidate) {
   return {
@@ -376,7 +380,8 @@ export function fullDraftQuestionFields(candidate: FullDraftCandidate) {
     correctIndex: String(candidate.correctIndex ?? ""),
     explanation: String(candidate.explanation || ""),
     explanationEn: String(candidate.explanationEn || ""),
-    audioText: String(candidate.audioText || "").trim(),
+    audioText:
+      listeningExchangeText(candidate.turns) ?? String(candidate.audioText || "").trim(),
     questionType: String(candidate.questionType || "MAIN_IDEA"),
   };
 }

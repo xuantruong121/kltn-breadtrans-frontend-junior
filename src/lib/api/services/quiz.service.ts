@@ -88,6 +88,8 @@ export interface Quiz {
     skillLabel?: string;
     sections?: string[];
     durationMinutes?: number;
+    /** Listening form: COMPREHENSION, DICTATION or DIALOGUE. */
+    mode?: string;
   };
   questions?: Question[];
   _count?: {
@@ -205,6 +207,8 @@ export interface CheckPracticeQuestionResult {
   remainingErrors?: number;
   explanation: QuestionExplanation | null;
   translation: string | null;
+  /** "Nghe hiểu" written as an exchange: its turns, sent once answered. */
+  transcriptSegments?: Array<{ speaker: string; text: string; translation?: string }>;
   /** True when the user chose to skip this question without a correct answer */
   skipped?: boolean;
   verifiedPrefix?: string;

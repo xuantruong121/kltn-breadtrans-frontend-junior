@@ -51,6 +51,10 @@ import {
 import { TrackTagField } from "./TrackTagField";
 import { trackNames } from "@/lib/learning-path/tracks";
 import { useAdminLearningTracks } from "@/lib/learning-path/useLearningTracks";
+import {
+  comprehensionSpokenContent,
+  listeningExchangeText,
+} from "@/lib/listening/listeningExchange";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "./useAdminList";
 import { ADMIN_PAGE_SIZES } from "./adminList";
@@ -143,6 +147,10 @@ const AUDIO_FILTER_OPTIONS: Array<{ value: ListFilters["audio"]; label: string }
 
 /** What a dictation item shows the learner; the sentence itself is the answer. */
 const DICTATION_INSTRUCTION = "Nghe và chép lại câu bạn vừa nghe.";
+
+/** Under each "Câu nghe" field: how to write a two-voice exchange. */
+const EXCHANGE_HINT =
+  "Hai người nói: viết mỗi lượt một dòng, bắt đầu bằng A: hoặc B: (hoặc Nam:, Nữ:).";
 
 /** How each listening form is named in the editor. */
 const LISTENING_MODE_LABEL: Record<ListeningMode, string> = {
@@ -273,7 +281,11 @@ function questionToDraft(question: any): QuestionDraft {
       typeof content.explanation === "object"
         ? String(content.explanation?.en ?? "")
         : "",
-    audioText: String(content.audioText ?? ""),
+    // A comprehension exchange loads back as its "A: …" / "B: …" lines.
+    audioText:
+      (question?.type === "MULTIPLE_CHOICE"
+        ? listeningExchangeText(content.transcriptSegments)
+        : null) ?? String(content.audioText ?? ""),
     questionType: String(content.questionType ?? "MAIN_IDEA"),
     segments: Array.isArray(content.transcriptSegments)
       ? content.transcriptSegments.map((segment: any) => ({
@@ -609,7 +621,11 @@ export default function SkillCmsWorkspace({
         !listening.transcript.length &&
         draft.audioText.trim()
       ) {
-        content.audioText = draft.audioText.trim();
+        // An exchange also stores its turns; a sentence saves as before.
+        Object.assign(
+          content,
+          comprehensionSpokenContent(draft.audioText, draft.segments),
+        );
         content.level = form.level;
         content.skill = "LISTENING";
         if (draft.imageUrl.trim()) content.imageUrl = draft.imageUrl.trim();
@@ -2196,6 +2212,9 @@ export default function SkillCmsWorkspace({
                     className={`${inputClassName()} min-h-16`}
                   />
                   <span className="mt-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
+                    {EXCHANGE_HINT}
+                  </span>
+                  <span className="mt-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
                     Đổi câu nghe thì audio cũ ngừng dùng; tạo lại audio sau khi lưu.
                   </span>
                 </label>
@@ -3462,7 +3481,7 @@ export default function SkillCmsWorkspace({
                         Câu nghe (học viên nghe câu này)
                         <textarea
                           disabled={candidate.excluded}
-                          rows={2}
+                          rows={Math.max(2, candidate.audioText.split("\n").length)}
                           value={candidate.audioText}
                           onChange={(event) =>
                             setFullDraft((current) =>
@@ -3484,6 +3503,9 @@ export default function SkillCmsWorkspace({
                           }
                           className={`${inputClassName()} min-h-16 disabled:cursor-not-allowed`}
                         />
+                        <span className="mt-1 block font-medium text-slate-600">
+                          {EXCHANGE_HINT}
+                        </span>
                       </label>
                     )}
                     <label className="mt-3 block text-xs font-semibold text-slate-700">

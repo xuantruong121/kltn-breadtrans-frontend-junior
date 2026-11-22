@@ -19,6 +19,7 @@ import {
   parseHintLines,
   hintLines,
   writingUsesPictures, TRACK_FIELD_COPY } from "./skillCmsStatus.ts";
+import { comprehensionSpokenContent } from "../../lib/listening/listeningExchange.ts";
 
 test("latestAudioBadge: no recording reads as none", () => {
   assert.deepEqual(latestAudioBadge(undefined), {
@@ -290,6 +291,33 @@ test("a 'Nghe hiểu' draft question fills the same fields as one typed by hand"
   assert.equal(dialogue.audioText, "");
   assert.equal(dialogue.correctIndex, "0");
   assert.equal(fullDraftQuestionFields({}).options, "");
+});
+
+test("a 'Nghe hiểu' draft exchange fills the field with A:/B: lines, which save as its turns", () => {
+  const fields = fullDraftQuestionFields({
+    audioText: "Is this seat free? Yes, go ahead.",
+    turns: [
+      { speaker: "A", text: "Is this seat free?" },
+      { speaker: "B", text: "Yes, go ahead." },
+    ],
+    prompt: "Where are they?",
+    options: ["a", "b", "c", "d"],
+    correctIndex: 0,
+  });
+  assert.equal(fields.audioText, "A: Is this seat free?\nB: Yes, go ahead.");
+  assert.deepEqual(comprehensionSpokenContent(fields.audioText), {
+    audioText: "Is this seat free? Yes, go ahead.",
+    transcriptSegments: [
+      { speaker: "A", text: "Is this seat free?" },
+      { speaker: "B", text: "Yes, go ahead." },
+    ],
+  });
+  assert.equal(fullDraftQuestionReady(fields, "COMPREHENSION"), true);
+  // Turns that make no exchange fall back to the sentence.
+  assert.equal(
+    fullDraftQuestionFields({ audioText: "One sentence.", turns: [{ speaker: "A", text: "x" }] }).audioText,
+    "One sentence.",
+  );
 });
 
 test("a 'Nghe hiểu' draft question applies only with its sentence", () => {

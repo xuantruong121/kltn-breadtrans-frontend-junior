@@ -34,6 +34,7 @@ import {
 } from "@/lib/api/services/quiz.service";
 import { ListeningAudioPlayer } from "./ListeningAudioPlayer";
 import { parseQuestionExplanation } from "./listeningExplanationUtils";
+import { exchangeTurnsOf, listeningExchangeText } from "@/lib/listening/listeningExchange";
 import { PracticeLoadingScreen } from "@/components/practice/PracticeLoadingScreen";
 import { PracticeExitConfirmDialog } from "@/components/practice/PracticeExitConfirmDialog";
 import { PracticeHeader } from "@/components/practice/PracticeHeader";
@@ -1131,7 +1132,17 @@ export function ListeningComprehensionWorkspace({
         typeof segment.translation === "string" &&
         segment.translation.trim().length > 0,
     );
-  const isDialogue = transcriptSegments.length > 0;
+  // "Nghe hiểu" written as an exchange is shown turn by turn once answered,
+  // from the check result. Admins also get its turns in the quiz; they must
+  // not turn it into a dialogue shown before answering.
+  const listeningMode = quiz?.bilingualContent?.mode;
+  const isComprehensionExchange =
+    currentQuestion.type === "MULTIPLE_CHOICE" &&
+    listeningMode !== "DICTATION" &&
+    listeningMode !== "DIALOGUE" &&
+    listeningExchangeText(transcriptSegments) !== null;
+  const checkedExchangeTurns = exchangeTurnsOf(currentCheck?.transcriptSegments);
+  const isDialogue = transcriptSegments.length > 0 && !isComprehensionExchange;
   const isDictation = currentQuestion.type === "DICTATION";
   const dictationDiff: DictationDiffToken[] =
     isDictation && currentCheck
@@ -1572,7 +1583,23 @@ export function ListeningComprehensionWorkspace({
                         <Volume2 size={13} className="text-sky-600 dark:text-sky-400" aria-hidden="true" />
                         Lời thoại tiếng Anh:
                       </p>
-                      {audioTranscriptText ? (
+                      {checkedExchangeTurns.length > 0 ? (
+                        <ol className="space-y-2.5" aria-label="Lời thoại hai người nói">
+                          {checkedExchangeTurns.map((segment, index) => (
+                            <li key={`exchange-${currentQuestion.id}-${index}`} className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3 sm:p-4">
+                              <p className="text-sm font-semibold leading-6 text-slate-900 dark:text-slate-100 sm:text-base">
+                                <span className="font-extrabold text-sky-700 dark:text-sky-400">{getDialogueSpeakerLabel(segment.speaker)}:</span>{" "}
+                                {segment.text}
+                              </p>
+                              {isBilingual && segment.translation && (
+                                <p className="mt-1.5 text-sm leading-6 text-slate-600 dark:text-slate-400 sm:text-base">
+                                  {segment.translation}
+                                </p>
+                              )}
+                            </li>
+                          ))}
+                        </ol>
+                      ) : audioTranscriptText ? (
                         <blockquote className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 p-3.5 text-sm sm:text-base font-medium text-slate-900 dark:text-slate-100 italic leading-relaxed">
                           &ldquo;{audioTranscriptText}&rdquo;
                         </blockquote>
