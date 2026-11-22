@@ -15,6 +15,7 @@ import {
   writingDraftQuestion,
   fullDraftQuestionFields,
   fullDraftQuestionReady,
+  listeningFormLocked,
   parseHintLines,
   hintLines,
   writingUsesPictures, TRACK_FIELD_COPY } from "./skillCmsStatus.ts";
@@ -300,5 +301,12 @@ test("a 'Nghe hiểu' draft question applies only with its sentence", () => {
   assert.equal(fullDraftQuestionReady({ ...question, audioText: "" }), true);
   assert.equal(fullDraftQuestionReady({ ...question, options: "a\nb\nc" }, "COMPREHENSION"), false);
   assert.equal(fullDraftQuestionReady({ ...question, prompt: " " }, "DICTATION"), false);
+});
+
+test("the listening form locks with saved questions or an applied draft (owner 2026-11-22)", () => {
+  assert.equal(listeningFormLocked(0, 0), false);
+  assert.equal(listeningFormLocked(3, 0), true);
+  // Applied from an AI draft, not saved yet: Lưu stores them in the chosen form.
+  assert.equal(listeningFormLocked(0, 3), true);
 });
 

@@ -393,6 +393,14 @@ export const fullDraftQuestionReady = (
   question.options.split("\n").filter(Boolean).length === 4 &&
   (listeningMode !== "COMPREHENSION" || Boolean(question.audioText.trim()));
 
+/**
+ * The listening form ("Dạng bài") is fixed once the quiz has questions: saved
+ * ones, or ones applied from an AI draft and waiting for Lưu, which are saved
+ * in the form chosen when Lưu is pressed (owner 2026-11-22).
+ */
+export const listeningFormLocked = (savedQuestions: number, pendingDraftQuestions: number) =>
+  savedQuestions > 0 || pendingDraftQuestions > 0;
+
 /** The body that saves a picked AI task as a question of the exercise. */
 export function writingDraftQuestion(task: WritingDraftTask, level?: string) {
   const translation = task.taskType === "SENTENCE_TRANSLATION";

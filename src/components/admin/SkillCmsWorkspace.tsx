@@ -32,6 +32,7 @@ import {
   writingUsesPictures,
   fullDraftQuestionFields,
   fullDraftQuestionReady,
+  listeningFormLocked,
   type ListFilters,
 } from "./skillCmsStatus";
 import { AdminImageThumb } from "./AdminImageThumb";
@@ -1888,6 +1889,12 @@ export default function SkillCmsWorkspace({
   // quiz has no questions; after that its form is fixed.
   const draftLocked =
     (isListening || domain === "reading") && questions.length > 0;
+  // An applied AI draft waits for Lưu and is saved in the form chosen then:
+  // the form is fixed from the moment it is applied (owner 2026-11-22).
+  const pendingDraft = pendingFullDraftQuestions.length > 0;
+  const modeLocked =
+    isListening &&
+    listeningFormLocked(questions.length, pendingFullDraftQuestions.length);
   const listeningTypeOptions = (
     [
       ["MULTIPLE_CHOICE", "Trắc nghiệm"],
@@ -1934,7 +1941,7 @@ export default function SkillCmsWorkspace({
               onChange={(event) => {
                 const nextType = event.target.value;
                 setQuestion({ ...question, type: nextType });
-                if (isListening && !draftLocked) {
+                if (isListening && !modeLocked) {
                   setSelectedListeningMode(
                     nextType === "DICTATION" || nextType === "DIALOGUE"
                       ? nextType
@@ -2492,7 +2499,7 @@ export default function SkillCmsWorkspace({
             {(isListening || domain === "reading") && (
               <div className="flex flex-wrap items-center gap-2">
                 {isListening &&
-                  (draftLocked ? (
+                  (modeLocked ? (
                     <span className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
                       Dạng bài
                       <span className="font-semibold text-slate-900">
@@ -2566,6 +2573,23 @@ export default function SkillCmsWorkspace({
           {draftLocked && (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
+            </p>
+          )}
+          {isListening && pendingDraft && !draftLocked && (
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              {/* A dialogue source is not saved as a question of its own. */}
+              Đã áp dụng{" "}
+              {pendingFullDraftQuestions.filter((draft) => draft.type !== "DIALOGUE").length}{" "}
+              câu từ bản nháp AI, dạng{" "}
+              {LISTENING_MODE_LABEL[selectedListeningMode]}. Bấm Lưu để lưu bài, hoặc{" "}
+              <button
+                type="button"
+                onClick={() => setPendingFullDraftQuestions([])}
+                className="cursor-pointer rounded-md font-semibold text-slate-900 underline underline-offset-4 hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
+              >
+                bỏ bản nháp
+              </button>{" "}
+              để đổi dạng bài.
             </p>
           )}
           <div className="mt-4 grid gap-4 md:grid-cols-2">
