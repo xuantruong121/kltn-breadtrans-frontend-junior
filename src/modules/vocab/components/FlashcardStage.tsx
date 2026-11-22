@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Volume2, RotateCw, Check, Bookmark, BookmarkCheck } from "lucide-react";
 import { VocabWord } from "@/lib/api/services/vocab.service";
 import { ReportIssueButton } from "@/components/issue-report";
+import { formatIpa } from "../utils/phonetic";
 
 interface FlashcardStageProps {
   word: VocabWord;
@@ -30,13 +31,9 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
   saveBusy = false,
   onToggleSave,
 }) => {
-  // Format phonetics
-  const ipaUsText = word.ipaUs
-    ? `/${word.ipaUs.replace(/^\/|\/$/g, "")}/`
-    : "/US/";
-  const ipaUkText = word.ipaUk
-    ? `/${word.ipaUk.replace(/^\/|\/$/g, "")}/`
-    : "/UK/";
+  // A missing phonetic shows the accent's name, never an IPA-like placeholder.
+  const ipaUsText = formatIpa(word.ipaUs);
+  const ipaUkText = formatIpa(word.ipaUk);
 
   return (
     <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6 short:space-y-3">
@@ -116,7 +113,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                   aria-label="Nghe phát âm Mỹ"
                 >
                   <Volume2 size={18} className="text-blue-600 dark:text-blue-400" />
-                  <span>{ipaUsText}</span>
+                  <span className={ipaUsText ? undefined : "font-semibold"}>{ipaUsText ?? "Giọng Mỹ"}</span>
                 </button>
 
                 {/* UK Audio Button (Red) */}
@@ -128,7 +125,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
                   aria-label="Nghe phát âm Anh"
                 >
                   <Volume2 size={18} className="text-rose-600 dark:text-rose-400" />
-                  <span>{ipaUkText}</span>
+                  <span className={ipaUkText ? undefined : "font-semibold"}>{ipaUkText ?? "Giọng Anh"}</span>
                 </button>
               </div>
             </div>
