@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+    // The /api rewrite proxy gives up after 30 s by default and answers a
+    // bare "500 Internal Server Error". An AI draft can take longer: the API
+    // waits up to 30 s per Gemini key and tries up to 3 keys, then answers a
+    // 502 with a Vietnamese message. Wait for that answer (QA 2026-11-22).
+    proxyTimeout: 120_000,
   },
   // Production: the browser calls /api on this domain and Next.js forwards it
   // to the API (API_ORIGIN), so the refresh cookie is first-party and works
