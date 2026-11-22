@@ -191,6 +191,38 @@ test("each thing is written one way (glossary.ts)", () => {
   assert.deepEqual(found, []);
 });
 
+// QA 2026-11-22: the Nghe, Đọc and Viết authoring screens mixed English into
+// their labels ("Task family", "Keywords", "audio artifact", "Áp dụng vào
+// form") and showed an uppercase letter-spaced eyebrow above dialog titles.
+const AUTHORING_FILES = /^components\/admin\/(SkillCmsWorkspace\.tsx|WritingAiDraftPanel\.tsx|skillCmsStatus\.ts)$/;
+const AUTHORING_ENGLISH = [
+  // A label that is only an English word.
+  /^\s*(Writing|Reading|Listening|Level|Keywords?|Sample sentences|Task family|Speaker|English text|Review)\s*$/,
+  // English authoring jargon, anywhere in shown text.
+  /\b(Task family|Sample sentences|constraints|instruction|Reading Passage|audio artifact|audio preview|Picture Task|Production audio|keywords?|Explanation in English|English text)\b/,
+  /^\s*e\.g\./,
+  // An English word inside a Vietnamese sentence.
+  /^(?=.*[À-ỹ]).*\b(form|Writing|Reading|Listening|Dialogue|Review|English)\b/,
+];
+
+test("the skill authoring screens are written in Vietnamese (QA 2026-11-22)", () => {
+  const found: string[] = [];
+  for (const f of FILES.filter((file) => AUTHORING_FILES.test(file.rel)))
+    for (const { line, value } of displayText(f.text))
+      if (AUTHORING_ENGLISH.some((rule) => rule.test(value)))
+        found.push(`${f.rel}:${line} ${value.trim().slice(0, 80)}`);
+  assert.deepEqual(found, []);
+});
+
+test("the skill authoring screens have no eyebrow above a title (owner rule)", () => {
+  const found: string[] = [];
+  for (const f of FILES.filter((file) => AUTHORING_FILES.test(file.rel)))
+    f.text.split("\n").forEach((line, i) => {
+      if (/\buppercase\b[^"]*\btracking-/.test(line)) found.push(`${f.rel}:${i + 1}: ${line.trim().slice(0, 90)}`);
+    });
+  assert.deepEqual(found, []);
+});
+
 test("shared icons are drawn by their glossary component only", () => {
   const found: string[] = [];
   for (const f of FILES)
