@@ -95,11 +95,13 @@ const LOAF_BOX =
 
 /** From 1024px: the four values that place the controls and the cut row as one group. */
 const GROUP = [
-  // Cut height: 196px holds the longest run ("Friday from eight") at 21px with 5px to spare.
+  // Cut height: 196px holds the longest run ("Friday from eight") at 21px with 5px to spare; it grows
+  // with the loaf (14vw) only to 240px, so at 1920 the words stay close under the controls.
   "lg:[--cut-h:clamp(196px,14vw,240px)]",
   // Left edge of the group in the loaf box: 184px at 1024, 261px at 1920, the middle of the visible orange.
   "lg:[--col-l:calc(96px_+_8.6vw)]",
-  // Width of the controls column; the cut tops span the same width under it.
+  // Width of the controls column (the cut tops span the same width under it): 31vw keeps a 35px right
+  // margin at 1024; 34rem (544px) is where the legend fits on one line (536px).
   "lg:[--col-w:min(31vw,34rem)]",
   // Top of the highest cut against the loaf's centre line: 42px below at 1024 (the controls are
   // tallest there), 61px above at 1920 (the cut row is the taller half), so the group stays centred.
@@ -111,7 +113,8 @@ const GROUP = [
 // Cut row: padding of `.landing-loaf__cuts` (% of the loaf width); each cut's
 // width (% of the row), height (% of the loaf) and shift down (% of the cut).
 // From 1024px the row spans the controls column, each cut's top 0.22 of its height
-// (tan 24deg / 2, the lean) right of its box, and the cut keeps a 5.2:1 shape.
+// (tan 24deg / 2, the lean) right of its box, and the cut keeps a 5.2:1 shape
+// (38px wide at 1024, as wide as before this change).
 // translate-y 50% puts the cut's top on the loaf's centre line, then --seam moves it.
 const LOAF_SHAPE = String.raw`h-full aspect-auto
   [&_.landing-loaf\_\_cuts]:px-[17%]
