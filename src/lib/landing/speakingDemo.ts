@@ -119,3 +119,18 @@ export function litChunks(currentTime: number, duration: number, chunks: WordChu
   }
   return lit;
 }
+
+/**
+ * The words that share the lowest score, in sentence order. The hero shows
+ * them at rest: "Thấp nhất: The 91 · ten 91 · night. 91".
+ */
+export function lowestWords(words: DemoWord[]): DemoWord[] {
+  if (words.length === 0) return [];
+  const lowest = Math.min(...words.map((w) => w.score));
+  return words.filter((w) => w.score === lowest);
+}
+
+/** Words with their scores on one line: "university 100 · library 97 · is 97". */
+export function scoreLine(words: DemoWord[]): string {
+  return words.map((w) => `${w.word} ${w.score}`).join(" · ");
+}

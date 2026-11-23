@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { motion, useAnimate, useInView } from "framer-motion";
 import { LANDING_IMAGES, LANDING_VIDEO } from "@/lib/landing/assets";
 import {
@@ -13,6 +13,7 @@ import {
   cropRatio,
   fitWidth,
   stepIndex,
+  type Crop,
 } from "@/lib/landing/content";
 import { REVEAL_EASE, revealProps } from "@/lib/landing/motion";
 import { Loaf } from "./Loaf";
@@ -33,7 +34,12 @@ const VIDEO_INDEX = SKILLS.findIndex((skill) => skill.key === STAGE_VIDEO_KEY);
  * Section 1 (spec 6.4.1, blueprint "Object on a disc" with the loaf for the
  * disc). The names are toggle buttons; the loaf is the stage and holds a real
  * screen of the chosen part, crossfading in 300ms. Nói plays the recording of
- * the speaking result.
+ * the speaking result. Name, picture and sentence read as one unit: the
+ * sentence sits right under the stage, on the left edge of its screen.
+ *
+ * Each picture is a tight crop, so its UI text shows at about the size it has
+ * in the app; under 768px the stage shows the tighter phone crop, and on a
+ * phone the loaf runs past both screen edges to give the screen more room.
  */
 export function SkillsShowcase({ actions }: { actions: LandingActions }) {
   void actions; // this section only shows the product
@@ -104,8 +110,8 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
   };
 
   return (
-    <section aria-labelledby="landing-skills-title" className="landing-container">
-      <div className="grid gap-y-8 lg:grid-cols-[5fr_7fr] lg:grid-rows-[1fr_auto_auto] lg:gap-x-(--gutter) lg:gap-y-6 lg:[grid-template-areas:'title_stage'_'names_stage'_'._fact']">
+    <section aria-labelledby="landing-skills-title" className="landing-container overflow-x-clip">
+      <div className="grid gap-y-6 lg:grid-cols-[4fr_8fr] lg:grid-rows-[1fr_auto_auto] lg:gap-x-(--gutter) lg:gap-y-2 lg:[grid-template-areas:'title_stage'_'names_stage'_'._fact']">
         <motion.h2
           id="landing-skills-title"
           className="landing-display landing-section-title lg:self-end lg:[grid-area:title]"
@@ -114,11 +120,11 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
           {SKILLS_TITLE}
         </motion.h2>
 
-        {/* Phone: the names wrap under the loaf (a row cut at the screen edge reads
+        {/* Phone: the names wrap above the loaf (a row cut at the screen edge reads
             as clipped). Desktop: a column ending level with the loaf. */}
         <motion.ul
           aria-label="Chọn phần để xem màn hình"
-          className="order-3 flex flex-wrap gap-x-6 py-2 lg:order-none lg:flex-col lg:flex-nowrap lg:gap-0 lg:p-0 lg:[grid-area:names]"
+          className="order-2 flex flex-wrap gap-x-6 lg:order-none lg:mt-4 lg:flex-col lg:flex-nowrap lg:gap-0 lg:[grid-area:names]"
           {...revealProps(reduced, 1)}
         >
           {SKILLS.map((skill, index) => {
@@ -149,7 +155,11 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
           })}
         </motion.ul>
 
-        <div ref={frame} className="order-2 lg:order-none lg:self-center lg:[grid-area:stage]">
+        {/* On a phone the frame is 120vw wide, centred: the loaf runs past both edges. */}
+        <div
+          ref={frame}
+          className="order-3 max-sm:-mx-[calc(10vw+var(--gutter))] lg:order-none lg:self-center lg:[grid-area:stage]"
+        >
           {/* The padding keeps the turned loaf inside the clip box of the shutter. */}
           <div ref={stage} className="py-[4%]">
             <Loaf cuts={0} className="aspect-[2/1]">
@@ -163,8 +173,7 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                     const on = index === active;
                     const isVideo = skill.key === STAGE_VIDEO_KEY;
                     const framed = CROPS[skill.key];
-                    const crop = isVideo ? VIDEO_CROP : framed;
-                    if (!crop) return null;
+                    if (!isVideo && !framed) return null;
                     const image = LANDING_IMAGES[skill.key];
                     return (
                       <div
@@ -174,15 +183,12 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                           on ? "opacity-100" : "opacity-0"
                         }`}
                       >
-                        <div
-                          className="relative overflow-hidden"
-                          style={{ width: fitWidth(crop), aspectRatio: cropRatio(crop) }}
-                        >
-                          {isVideo ? (
+                        {isVideo ? (
+                          <CropBox crop={VIDEO_CROP}>
                             <video
                               ref={videoRef}
                               className="absolute"
-                              style={{ ...cropMedia(LANDING_VIDEO, crop), maxWidth: "none" }}
+                              style={{ ...cropMedia(LANDING_VIDEO, VIDEO_CROP), maxWidth: "none" }}
                               width={LANDING_VIDEO.width}
                               height={LANDING_VIDEO.height}
                               poster={LANDING_VIDEO.poster}
@@ -196,19 +202,27 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                             >
                               <source src={LANDING_VIDEO.src} type="video/webm" />
                             </video>
-                          ) : (
-                            <img
-                              src={image.src}
-                              alt={framed?.alt ?? image.alt}
-                              width={image.width}
-                              height={image.height}
-                              loading="lazy"
-                              decoding="async"
-                              className="absolute"
-                              style={{ ...cropMedia(image, crop), maxWidth: "none" }}
-                            />
-                          )}
-                        </div>
+                          </CropBox>
+                        ) : framed ? (
+                          // Two crops of one file: the browser loads it once.
+                          ([
+                            [framed.phone ?? framed, "md:hidden"],
+                            [framed, "max-md:hidden"],
+                          ] as const).map(([crop, hide]) => (
+                            <CropBox key={hide} crop={crop} className={hide}>
+                              <img
+                                src={image.src}
+                                alt={framed.alt}
+                                width={image.width}
+                                height={image.height}
+                                loading="lazy"
+                                decoding="async"
+                                className="absolute"
+                                style={{ ...cropMedia(image, crop), maxWidth: "none" }}
+                              />
+                            </CropBox>
+                          ))
+                        ) : null}
                       </div>
                     );
                   })}
@@ -218,11 +232,13 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
           </div>
         </div>
 
+        {/* Right under the stage, on the left edge of its screen (the screen starts
+            14% into the loaf), so it reads with the picture above it. */}
         <motion.div
-          className="order-4 lg:order-none lg:justify-self-end lg:[grid-area:fact]"
+          className="order-4 -mt-2 lg:order-none lg:mt-0 lg:pl-[14%] lg:[grid-area:fact]"
           {...revealProps(reduced, 3)}
         >
-          <p aria-live="polite" className="landing-body min-h-[4.8em] max-w-[38ch]">
+          <p aria-live="polite" className="landing-lead min-h-[5.8em] max-w-[40ch] lg:min-h-[4.35em]">
             {SKILLS[active].fact}
           </p>
           {/* Kept in the layout when hidden, so the page below does not jump. */}
@@ -236,5 +252,17 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
         </motion.div>
       </div>
     </section>
+  );
+}
+
+/** A box with the crop's aspect ratio, as large as fits the stage's screen; the picture inside is placed by cropMedia. */
+function CropBox({ crop, className = "", children }: { crop: Crop; className?: string; children: ReactNode }) {
+  return (
+    <div
+      className={`relative overflow-hidden [grid-area:1/1] ${className}`}
+      style={{ width: fitWidth(crop), aspectRatio: cropRatio(crop) }}
+    >
+      {children}
+    </div>
   );
 }

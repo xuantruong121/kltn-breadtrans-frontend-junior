@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Play, Square } from "lucide-react";
 import { revealProps } from "@/lib/landing/motion";
-import { DEMO, chunkWords, litChunks, type WordChunk } from "@/lib/landing/speakingDemo";
+import { DEMO, chunkWords, litChunks, lowestWords, scoreLine, type WordChunk } from "@/lib/landing/speakingDemo";
 import { Loaf } from "./Loaf";
 import type { LandingActions } from "./types";
 import { useLandingReducedMotion } from "./useLandingReducedMotion";
@@ -15,6 +15,8 @@ const ALL_LIT = CHUNKS.length;
 
 const OVERALL = String(DEMO.overall).replace(".", ",");
 const SPOKEN_SCORES = DEMO.words.map((w) => `${w.word} ${w.score}`).join(", ");
+/** The score line at rest, without JavaScript and under reduced motion. */
+const LOWEST_LINE = `Thấp nhất: ${scoreLine(lowestWords(DEMO.words))}`;
 
 /** Slow settle for the loaf as it slides in (expo out). */
 const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -99,6 +101,9 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
 
   // Kept to one line on a 360px phone: the controls grow upward on the loaf.
   const status = failed ? "Chưa phát được, hãy thử lại sau." : playing ? "Đang phát câu mẫu." : "";
+  // While the cuts sweep, the score line reads the run just lit; otherwise the lowest words.
+  const sweeping = playing && !reduced;
+  const scores = sweeping ? scoreLine(CHUNKS[Math.max(0, lit - 1)].words) : LOWEST_LINE;
 
   return (
     <section
@@ -198,7 +203,10 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
                 </strong>
               </p>
             </div>
-            <p className="landing-small mt-2 text-pretty">Câu mẫu và điểm từng từ từ một lượt nộp trong BreadTrans.</p>
+            {/* The scores read across, one line from 640px; two lines are kept free on a
+                phone so the button does not move while the line changes. */}
+            <p className="landing-body mt-3 min-h-[2.8em] font-medium leading-[1.4] tabular-nums sm:min-h-[1.4em]">{scores}</p>
+            <p className="landing-small mt-1 text-pretty">Điểm thật của một lượt luyện nói trên BreadTrans.</p>
             <p aria-live="polite" className={failed ? "landing-small mt-1 font-medium" : "sr-only"}>
               {status}
             </p>
@@ -213,25 +221,19 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
 }
 
 /**
- * The words of one run and their scores, written along the cut (it leans 66deg
- * inside the loaf). Centred by position, not by the cut's grid, which would
- * start-align text longer than the cut is wide. Under 1024px a cut is too short
- * for one line, so each score sits under its word. Shown only while the cut is
- * lit; screen readers get the same data from the caption.
+ * The words of one run, written along the cut (it leans 66deg inside the loaf).
+ * Centred by position, not by the cut's grid, which would start-align text
+ * longer than the cut is wide. Shown only while the cut is lit. The scores sit
+ * on their own line in the caption; screen readers get every score there too.
  */
 function CutWords({ chunk, on }: { chunk: WordChunk; on: boolean }) {
   return (
     <span
       aria-hidden="true"
       data-on={on}
-      className="absolute top-1/2 left-1/2 flex w-max -translate-1/2 -rotate-66 gap-x-[0.35em] leading-none text-(--on-lit) text-(length:--type-small) opacity-0 transition-opacity duration-240 ease-out data-[on=true]:opacity-100 motion-reduce:transition-none sm:text-(length:--type-body) lg:gap-x-[0.55em] lg:text-(length:--type-small) xl:text-(length:--type-body)"
+      className="absolute top-1/2 left-1/2 w-max -translate-1/2 -rotate-66 font-medium leading-none whitespace-nowrap text-(--on-lit) text-(length:--type-small) opacity-0 transition-opacity duration-240 ease-out data-[on=true]:opacity-100 motion-reduce:transition-none sm:text-(length:--type-body)"
     >
-      {chunk.words.map((w, i) => (
-        <span key={i} className="flex flex-col items-center gap-y-[0.15em] lg:flex-row lg:items-baseline lg:gap-x-[0.3em]">
-          <span className="font-medium">{w.word}</span>
-          <span className="font-bold tabular-nums">{w.score}</span>
-        </span>
-      ))}
+      {chunk.words.map((w) => w.word).join(" ")}
     </span>
   );
 }

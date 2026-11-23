@@ -58,16 +58,16 @@ export const SKILLS: LandingItem[] = [
 /** This item's stage plays LANDING_VIDEO (the same speaking result, recorded) instead of its picture. */
 export const STAGE_VIDEO_KEY: LandingImageKey = "skill-noi";
 
-// ---- Thứ giữ người học quay lại ------------------------------------------
+// ---- Lý do quay lại mỗi ngày ---------------------------------------------
 
-export const HABITS_TITLE = "Thứ giữ người học quay lại";
+export const HABITS_TITLE = "Lý do quay lại mỗi ngày";
 
 export const HABITS_LEAD =
-  "Hoàn thành bài luyện để nhận Bánh Mì. Bánh Mì nuôi thú ảo, đổi vật phẩm trong Cửa hàng và đặt cược ở Đấu trường.";
+  "Mỗi bài luyện xong đều được thưởng Bánh Mì. Dùng Bánh Mì để chăm thú ảo, đổi huy hiệu trong Cửa hàng và thử sức với bạn học ở Đấu trường.";
 
 /**
- * Five tiles in this order; the second is the double-width tile. habit-cua-hang
- * is left out: it is the same /market screen as habit-banh-mi.
+ * Five tiles in this order; the second is the double-width tile. No caption
+ * and no crop speaks of stakes or betting: the arena tile shows the duel itself.
  */
 export const HABITS: LandingItem[] = [
   {
@@ -88,7 +88,7 @@ export const HABITS: LandingItem[] = [
   {
     key: "habit-dau-truong",
     name: "Đấu trường",
-    fact: "Song đấu 10 câu từ vựng với một học viên khác; ai đúng nhiều và nhanh hơn lấy cả hai phần cược.",
+    fact: "Song đấu 10 câu từ vựng với một bạn học; ai trả lời đúng nhiều và nhanh hơn thì thắng trận.",
   },
   {
     key: "habit-xep-hang",
@@ -101,25 +101,24 @@ export const HABITS: LandingItem[] = [
 
 export const PATH_TITLE = "Lộ trình học";
 
+/** A step of the path: words only, the section draws one loaf cut for each. */
+export type PathStep = { name: string; fact: string };
+
 /** The clause (name) opens with its order word; the fact keeps ROADMAP_STEPS' wording. */
-export const PATH: LandingItem[] = [
+export const PATH: PathStep[] = [
   {
-    key: "path-danh-gia",
     name: "Trước hết, làm bài đánh giá đầu vào.",
     fact: "Trả lời bộ câu hỏi đầu vào để thấy kỹ năng nào đang mạnh, kỹ năng nào cần luyện thêm. Kết quả là ước lượng nội bộ để gợi ý bài luyện, không phải chứng chỉ hay cấp độ CEFR.",
   },
   {
-    key: "path-goi-y",
     name: "Rồi nhận gợi ý bài luyện.",
     fact: "Từ những câu bạn làm sai, hệ thống gợi ý bài luyện cho kỹ năng còn yếu. Bạn vẫn có thể chọn bất kỳ bài nào trong thư viện.",
   },
   {
-    key: "path-phan-hoi",
     name: "Sau đó luyện và nhận phản hồi.",
     fact: "Bài Nghe và Đọc được chấm ngay sau khi nộp. Bài Nói được chấm phát âm từng từ, bài Viết nhận nhận xét tự động theo tiêu chí.",
   },
   {
-    key: "path-luyen-de",
     name: "Cuối cùng, luyện đề TOEIC.",
     fact: "Làm đề Nghe & Đọc 200 câu trong 120 phút có đồng hồ, rồi xem lại đáp án và giải thích. Đề do BreadTrans biên soạn; điểm là chỉ số luyện tập, không phải điểm thi chính thức.",
   },
@@ -127,35 +126,50 @@ export const PATH: LandingItem[] = [
 
 // ---- Crops ---------------------------------------------------------------
 
-/** A crop and the alt text for what that crop shows (the full image's alt may name parts cut away). */
-export type FramedCrop = Crop & { alt: string };
+/**
+ * A crop and the alt text for what that crop shows (the full image's alt may
+ * name parts cut away). `phone` is a tighter part of the same crop for the
+ * skills stage under 768px, where the stage is too small for the whole crop.
+ */
+export type FramedCrop = Crop & { alt: string; phone?: Crop };
 
 /**
- * The part of each picture the page shows. Several captures end mid-row or
- * touch their edges; each crop ends in blank space between rows or cards so no
- * cut text shows, and the section puts a padding of page colour around it.
+ * The part of each picture the page shows. Each crop ends in blank space
+ * between rows or cards so no cut text shows, and the section puts a padding
+ * of page colour around it.
+ *
+ * Skills stage: the crops are tight enough that the UI text shows at about
+ * its size in the app (12 px or more) on a 1440px screen, and the phone crops
+ * do the same at 390px. The captures are 1.18 to 1.3 image px per CSS px
+ * (skill-noi 2), so a 790px crop is about 670 CSS px of the app.
  */
 export const CROPS: Partial<Record<LandingImageKey, FramedCrop>> = {
-  // Skills stage: the recommended list with two cards, or the page head.
+  // Skills stage: the recommended list with two cards; on a phone the first card.
   "skill-nghe": {
-    x: 0, y: 215, w: 800, h: 373,
+    x: 12, y: 245, w: 790, h: 343,
+    phone: { x: 25, y: 338, w: 378, h: 178 },
     alt: "Bài Nghe đề xuất cho bạn, xếp theo mức luyện tập, hướng nghề và kết quả các bài đã làm",
   },
   "skill-doc": {
-    x: 0, y: 215, w: 800, h: 351,
+    x: 12, y: 245, w: 790, h: 318,
+    phone: { x: 25, y: 338, w: 378, h: 140 },
     alt: "Bài Đọc đề xuất cho bạn ở mức Mất gốc, mỗi bài khoảng 10 phút",
   },
   "skill-viet": {
-    x: 0, y: 0, w: 800, h: 447,
-    alt: "Phòng luyện Viết với các bài đề xuất ở mức Cơ bản, mỗi bài khoảng 15 phút",
+    x: 12, y: 98, w: 790, h: 345,
+    phone: { x: 25, y: 190, w: 378, h: 140 },
+    alt: "Bài Viết đề xuất ở mức Cơ bản: dịch câu, viết câu theo tình huống và theo tranh",
   },
-  // Only the TOEIC chip and tabs: the chip row goes on to formats BreadTrans does not offer.
+  // The TOEIC exam page: the Listening parts of the structure, below the
+  // description line (which names the exam board to say the test is not theirs).
   "skill-luyen-de": {
-    x: 0, y: 262, w: 356, h: 242,
-    alt: "Trang luyện đề với định dạng TOEIC Practice có sẵn và các mục TOEIC L&R, TOEIC S&W",
+    x: 22, y: 338, w: 1023, h: 378,
+    phone: { x: 48, y: 440, w: 480, h: 252 },
+    alt: "Cấu trúc đề luyện TOEIC: phần Nghe gồm Part 1 đến Part 4 và số câu của từng phần",
   },
   "skill-flashcard": {
-    x: 0, y: 380, w: 793, h: 370,
+    x: 0, y: 388, w: 790, h: 357,
+    phone: { x: 0, y: 388, w: 382, h: 180 },
     alt: "Hai bộ Flashcard theo chủ đề với số từ và tiến độ đã thuộc",
   },
   // Habit tiles: one object each.
@@ -168,35 +182,19 @@ export const CROPS: Partial<Record<LandingImageKey, FramedCrop>> = {
     x: 950, y: 36, w: 620, h: 469,
     alt: "Chuỗi học 3 ngày, điểm tuần 135 XP và số dư Bánh Mì trên trang chủ học viên",
   },
+  // The duel panel only: the rest of the arena screen shows the Bánh Mì stakes.
   "habit-dau-truong": {
-    x: 335, y: 4, w: 872, h: 691,
-    alt: "Song Đấu Từ Vựng với ba mức cược Bánh Mì và hai nhân vật đối đầu",
+    x: 792, y: 42, w: 378, h: 612,
+    alt: "Song Đấu Từ Vựng: hai nhân vật bánh mì đối đầu",
   },
   "habit-xep-hang": {
     x: 0, y: 0, w: 760, h: 552,
     alt: "Đại sảnh danh vọng: người nhiều XP nhất và người có chuỗi dài nhất",
   },
-  // Path: the part of the screen that belongs to the step.
-  "path-danh-gia": {
-    x: 40, y: 40, w: 885, h: 385,
-    alt: "Kết quả bài đánh giá đầu vào với điểm tổng 60,9 trên 100",
-  },
-  "path-goi-y": {
-    x: 0, y: 8, w: 620, h: 494,
-    alt: "Mức luyện tập đề xuất Trung cấp và lộ trình từng bước theo kỹ năng",
-  },
-  "path-phan-hoi": {
-    x: 40, y: 125, w: 1300, h: 1065,
-    alt: "Phản hồi sau bài Nói: điểm 7,8 trên 10, độ chính xác, độ trôi chảy và độ hoàn thiện",
-  },
-  "path-luyen-de": {
-    x: 0, y: 10, w: 1066, h: 990,
-    alt: "Đề luyện TOEIC Nghe và Đọc do BreadTrans biên soạn, với cấu trúc Part 1 đến Part 7",
-  },
 };
 
-/** LANDING_VIDEO without the cut-off labels at the bottom of its right panel. */
-export const VIDEO_CROP: Crop = { x: 0, y: 0, w: 1440, h: 615 };
+/** LANDING_VIDEO, the word chips only (1 px per CSS px): readable on the stage at any width. */
+export const VIDEO_CROP: Crop = { x: 70, y: 112, w: 580, h: 330 };
 
 const pct = (n: number) => `${Number(n.toFixed(4))}%`;
 

@@ -10,7 +10,7 @@ const fileOf = (src: string) => path.join(publicDir, src.replace(/^\//, ''));
 
 test('every landing image exists in public/landing with matching size', async () => {
   const keys = Object.keys(LANDING_IMAGES);
-  assert.equal(keys.length, 16);
+  assert.equal(keys.length, 11);
   for (const key of keys) {
     const img = LANDING_IMAGES[key as keyof typeof LANDING_IMAGES];
     assert.equal(img.src, `/landing/${key}.webp`);

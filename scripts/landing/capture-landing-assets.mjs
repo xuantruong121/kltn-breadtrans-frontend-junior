@@ -26,18 +26,14 @@ const SHOTS = [
   { key: 'skill-nghe', route: '/listening', clip: { x: 40, y: 110, width: 1360, height: 500 } },
   { key: 'skill-doc', route: '/reading', clip: { x: 40, y: 110, width: 1360, height: 500 } },
   { key: 'skill-viet', route: '/writing', clip: { x: 40, y: 300, width: 1360, height: 390 } },
-  { key: 'skill-luyen-de', route: '/exams', clip: { x: 104, y: 100, width: 1232, height: 395 } },
+  // Trang đề TOEIC, không phải /exams: hàng chip định dạng ở /exams có các chứng chỉ BreadTrans không cung cấp.
+  { key: 'skill-luyen-de', route: '/exams/2', clip: { x: 104, y: 100, width: 1232, height: 780 } },
   { key: 'skill-flashcard', route: '/flashcard', clip: { x: 80, y: 100, width: 1280, height: 600 } },
   { key: 'habit-banh-mi', route: '/market', clip: { x: 144, y: 100, width: 1152, height: 630 } },
   { key: 'habit-thu-ao', route: '/pet', clip: { x: 144, y: 100, width: 1152, height: 780 } },
   { key: 'habit-chuoi-ngay', route: '/dashboard', clip: { x: 120, y: 110, width: 1200, height: 500 } },
   { key: 'habit-dau-truong', route: '/arena', clip: { x: 30, y: 95, width: 1370, height: 600 } },
   { key: 'habit-xep-hang', route: '/ranking', clip: { x: 1020, y: 340, width: 380, height: 370 } },
-  { key: 'habit-cua-hang', route: '/market', clip: { x: 144, y: 340, width: 1152, height: 390 } },
-  { key: 'path-danh-gia', route: '/diagnostic', clip: { x: 120, y: 205, width: 1200, height: 580 } },
-  { key: 'path-goi-y', route: '/dashboard', full: true, clip: { x: 120, y: 630, width: 1200, height: 420 } },
-  { key: 'path-phan-hoi', route: '/speaking/137?submissionId=304', clip: { x: 735, y: 80, width: 680, height: 600 } },
-  { key: 'path-luyen-de', route: '/exams/2', clip: { x: 104, y: 100, width: 1232, height: 780 } },
 ];
 
 const HIDE_DEV_BADGE = 'nextjs-portal { display: none !important; }';

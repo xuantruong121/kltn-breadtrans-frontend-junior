@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEMO, chunkWords, litChunks } from "./speakingDemo.ts";
+import { DEMO, chunkWords, litChunks, lowestWords, scoreLine } from "./speakingDemo.ts";
 
 const EXPECTED_WORDS: [string, number][] = [
   ["The", 91],
@@ -118,4 +118,20 @@ test("litChunks lights nothing when the duration is unknown", () => {
   assert.equal(litChunks(5, Number.POSITIVE_INFINITY, chunks), 0);
   assert.equal(litChunks(-1, 9, chunks), 0);
   assert.equal(litChunks(5, 9, []), 0);
+});
+
+test("lowestWords gives every word that ties for the lowest score, in sentence order", () => {
+  assert.deepEqual(
+    lowestWords(DEMO.words).map((w) => `${w.word} ${w.score}`),
+    ["The 91", "ten 91", "night. 91"],
+  );
+  assert.deepEqual(lowestWords([{ word: "a", score: 80 }, { word: "b", score: 70 }]), [{ word: "b", score: 70 }]);
+  assert.deepEqual(lowestWords([]), []);
+});
+
+test("scoreLine writes the words and their scores on one line", () => {
+  assert.equal(scoreLine(lowestWords(DEMO.words)), "The 91 · ten 91 · night. 91");
+  const chunks = chunkWords(DEMO.words, 6);
+  assert.equal(scoreLine(chunks[1].words), "library 97 · is 97 · open 94");
+  assert.equal(scoreLine([]), "");
 });

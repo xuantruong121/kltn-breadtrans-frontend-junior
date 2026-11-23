@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { LANDING_IMAGES, LANDING_VIDEO, type LandingImageKey } from "./assets.ts";
+import { FAQ } from "./faq.ts";
 import {
   CROPS,
   HABITS,
@@ -34,10 +35,7 @@ test("SKILLS lists the six parts in order, Nói first", () => {
 });
 
 test("PATH has four steps in order and keeps the old roadmap's caveats", () => {
-  assert.deepEqual(
-    PATH.map((p) => p.key),
-    ["path-danh-gia", "path-goi-y", "path-phan-hoi", "path-luyen-de"],
-  );
+  assert.equal(PATH.length, 4);
   const phrases = ["bài đánh giá đầu vào", "gợi ý bài luyện", "luyện và nhận phản hồi", "luyện đề TOEIC"];
   PATH.forEach((step, i) => assert.ok(step.name.includes(phrases[i]), `${step.name} names "${phrases[i]}"`));
   assert.ok(PATH[0].fact.includes(CEFR_NEGATION));
@@ -50,18 +48,31 @@ test("HABITS has five or six tiles and shows the /market screen once", () => {
   for (const h of HABITS) assert.match(h.key, /^habit-/);
   const keys = HABITS.map((h) => h.key);
   assert.equal(new Set(keys).size, keys.length);
-  assert.ok(!(keys.includes("habit-banh-mi") && keys.includes("habit-cua-hang")), "banh-mi and cua-hang are the same screen");
   const names = HABITS.map((h) => h.name);
   assert.ok(names.includes("Bánh Mì"));
   assert.ok(names.includes("Thú ảo"));
 });
 
 test("every key is a landing image and every item has words", () => {
-  for (const item of [...SKILLS, ...HABITS, ...PATH]) {
+  for (const step of PATH) assert.ok(step.name.trim().length > 0 && step.fact.trim().length > 0, step.name);
+  for (const item of [...SKILLS, ...HABITS]) {
     assert.ok(item.key in LANDING_IMAGES, `${item.key} in LANDING_IMAGES`);
     assert.ok(item.name.trim().length > 0, `${item.key} name`);
     assert.ok(item.fact.trim().length > 0, `${item.key} fact`);
   }
+});
+
+test("no word on the page speaks of stakes or betting", () => {
+  const strings = [
+    HABITS_TITLE,
+    HABITS_LEAD,
+    ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
+    ...Object.values(CROPS).map((crop) => crop?.alt ?? ""),
+    ...Object.values(LANDING_IMAGES).map((image) => image.alt),
+    ...FAQ.flatMap((entry) => [entry.q, entry.a]),
+  ];
+  for (const s of strings) assert.doesNotMatch(s, /cược|cá độ|đặt cửa/i, s);
+  assert.equal(HABITS_TITLE, "Lý do quay lại mỗi ngày");
 });
 
 test("no copy claims more than the product, apart from the CEFR negation of step one", () => {
@@ -91,7 +102,6 @@ test("every picture shown has a crop inside its image, with an alt for that crop
   const shown: LandingImageKey[] = [
     ...SKILLS.filter((s) => s.key !== STAGE_VIDEO_KEY).map((s) => s.key),
     ...HABITS.map((h) => h.key),
-    ...PATH.map((p) => p.key),
   ];
   const inside = (c: { x: number; y: number; w: number; h: number }, width: number, height: number) =>
     c.x >= 0 && c.y >= 0 && c.w > 0 && c.h > 0 && c.x + c.w <= width && c.y + c.h <= height;
@@ -100,7 +110,13 @@ test("every picture shown has a crop inside its image, with an alt for that crop
     assert.ok(crop, `${key} has a crop`);
     assert.ok(inside(crop, LANDING_IMAGES[key].width, LANDING_IMAGES[key].height), `${key} crop inside`);
     assert.ok(crop.alt.trim().length > 0, `${key} crop has its own alt`);
+    if (crop.phone) {
+      const p = crop.phone;
+      assert.ok(inside(p, LANDING_IMAGES[key].width, LANDING_IMAGES[key].height), `${key} phone crop inside`);
+      assert.ok(p.x >= crop.x && p.y >= crop.y && p.x + p.w <= crop.x + crop.w && p.y + p.h <= crop.y + crop.h, `${key} phone crop is part of the crop`);
+    }
   }
+  for (const skill of SKILLS.filter((s) => s.key !== STAGE_VIDEO_KEY)) assert.ok(CROPS[skill.key]?.phone, `${skill.key} has a phone crop`);
   assert.ok(inside(VIDEO_CROP, LANDING_VIDEO.width, LANDING_VIDEO.height), "video crop inside");
 });
 
@@ -115,12 +131,12 @@ test("the landing shows TOEIC only: no other certificate in words or in the exam
     ...Object.values(CROPS).map((crop) => crop?.alt ?? ""),
   ];
   for (const s of strings) assert.doesNotMatch(s, OTHER_CERTIFICATES);
-  // skill-luyen-de.webp: the "IELTS Academic Dự kiến" chip starts at x 361 (row y 317-363),
-  // then VSTEP, TOEFL and Cambridge. A crop that reaches that row must stop left of it.
+  // skill-luyen-de.webp is the TOEIC exam page (/exams/2), which has no format chips. Its
+  // description, y 190-300, names the exam board to say the test is not theirs; both crops
+  // start below it, at the structure of the test.
   const crop = CROPS["skill-luyen-de"];
-  assert.ok(crop);
-  const reachesChipRow = crop.y < 363 && crop.y + crop.h > 317;
-  assert.ok(!reachesChipRow || crop.x + crop.w <= 360, "exam-page crop stops before the IELTS chip");
+  assert.ok(crop?.phone);
+  assert.ok(crop.y >= 310 && crop.phone.y >= 310, "exam-page crops start below the description line");
 });
 
 test("cropMedia places the whole image so the crop fills its box", () => {
