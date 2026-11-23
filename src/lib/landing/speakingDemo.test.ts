@@ -1,6 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEMO, chunkWords, litChunks, lowestWords, scoreBand } from "./speakingDemo.ts";
+import {
+  DEMO,
+  SCORE_BAND_LABEL,
+  chipBandLabel,
+  chipText,
+  chunkWords,
+  litChunks,
+  readingRun,
+  runOfEachWord,
+  scoreBand,
+} from "./speakingDemo.ts";
 
 const EXPECTED_WORDS: [string, number][] = [
   ["The", 91],
@@ -120,13 +130,63 @@ test("litChunks lights nothing when the duration is unknown", () => {
   assert.equal(litChunks(5, 9, []), 0);
 });
 
-test("lowestWords gives every word that ties for the lowest score, in sentence order", () => {
-  assert.deepEqual(
-    lowestWords(DEMO.words).map((w) => `${w.word} ${w.score}`),
-    ["The 91", "ten 91", "night. 91"],
-  );
-  assert.deepEqual(lowestWords([{ word: "a", score: 80 }, { word: "b", score: 70 }]), [{ word: "b", score: 70 }]);
-  assert.deepEqual(lowestWords([]), []);
+test("runOfEachWord maps each of the 18 words to its run, in order", () => {
+  const chunks = chunkWords(DEMO.words, 6);
+  const runs = runOfEachWord(chunks);
+  assert.equal(runs.length, 18);
+  assert.equal(runs[0], 0);
+  assert.equal(runs[17], 5);
+  for (let i = 1; i < runs.length; i++) assert.ok(runs[i] - runs[i - 1] === 0 || runs[i] - runs[i - 1] === 1);
+  for (let run = 0; run < chunks.length; run++) {
+    assert.deepEqual(
+      DEMO.words.filter((_, i) => runs[i] === run),
+      chunks[run].words,
+    );
+  }
+  assert.deepEqual(runOfEachWord([]), []);
+});
+
+test("readingRun is the last lit run, and nothing before the first run lights", () => {
+  assert.equal(readingRun(0, 6), -1);
+  assert.equal(readingRun(1, 6), 0);
+  assert.equal(readingRun(3, 6), 2);
+  assert.equal(readingRun(6, 6), 5);
+  assert.equal(readingRun(7, 6), -1);
+  assert.equal(readingRun(-1, 6), -1);
+  assert.equal(readingRun(2.5, 6), -1);
+  assert.equal(readingRun(Number.NaN, 6), -1);
+  assert.equal(readingRun(1, 0), -1);
+});
+
+test("the highlighted chips follow the clip: none while the duration is unknown, the last run at the end", () => {
+  const chunks = chunkWords(DEMO.words, 6);
+  const runs = runOfEachWord(chunks);
+  const highlighted = (t: number, duration: number) => {
+    const run = readingRun(litChunks(t, duration, chunks), chunks.length);
+    return DEMO.words.filter((_, i) => runs[i] === run).map(chipText);
+  };
+  assert.deepEqual(highlighted(0, 9), []);
+  assert.deepEqual(highlighted(5, 0), []);
+  assert.deepEqual(highlighted(5, Number.NaN), []);
+  assert.deepEqual(highlighted(Number.NaN, 9), []);
+  assert.deepEqual(highlighted(0.001, 9), chunks[0].words.map(chipText));
+  assert.deepEqual(highlighted(9, 9), ["until", "ten", "at", "night"]);
+  assert.deepEqual(highlighted(12, 9), ["until", "ten", "at", "night"]);
+  // While the clip plays, exactly one run's chips are highlighted at a time.
+  for (let t = 0.05; t < 9; t += 0.25) {
+    const run = readingRun(litChunks(t, 9, chunks), chunks.length);
+    assert.ok(run >= 0 && run < 6, `run ${run} at ${t}`);
+  }
+});
+
+test("a chip shows the word without closing punctuation; its title carries band and score", () => {
+  assert.deepEqual(DEMO.words.map(chipText).slice(-2), ["at", "night"]);
+  assert.equal(chipText({ word: "Monday", score: 100 }), "Monday");
+  assert.ok(DEMO.words.map(chipText).every((t) => !/\d/.test(t)));
+  assert.equal(chipBandLabel({ word: "night.", score: 91 }), "Đạt chuẩn (91%)");
+  assert.equal(chipBandLabel({ word: "x", score: 79 }), "Cần chỉnh lại (79%)");
+  assert.equal(chipBandLabel({ word: "x", score: 59 }), "Chưa đạt (59%)");
+  assert.deepEqual(SCORE_BAND_LABEL, { pass: "Đạt chuẩn", fix: "Cần chỉnh lại", fail: "Chưa đạt" });
 });
 
 test("scoreBand follows the product's thresholds at every boundary", () => {

@@ -120,14 +120,19 @@ export function litChunks(currentTime: number, duration: number, chunks: WordChu
   return lit;
 }
 
+/** For each word, in sentence order, the index of the run it belongs to (the hero's chip to cut map). */
+export function runOfEachWord(chunks: WordChunk[]): number[] {
+  return chunks.flatMap((chunk, run) => chunk.words.map(() => run));
+}
+
 /**
- * The words that share the lowest score, in sentence order. The hero shows
- * them at rest: "Thấp nhất: The 91 · ten 91 · night. 91".
+ * The run being read when `lit` of `runs` runs are lit: the last lit one, whose
+ * chips the hero highlights. -1 (nothing highlighted) when no run is lit yet or
+ * `lit` is not a whole count from 1 to `runs`.
  */
-export function lowestWords(words: DemoWord[]): DemoWord[] {
-  if (words.length === 0) return [];
-  const lowest = Math.min(...words.map((w) => w.score));
-  return words.filter((w) => w.score === lowest);
+export function readingRun(lit: number, runs: number): number {
+  if (!Number.isInteger(lit) || lit < 1 || lit > runs) return -1;
+  return lit - 1;
 }
 
 /** The three score bands of the speaking result screen (src/lib/speaking/speakingPracticeLogic.ts, getAccuracyTier). */
@@ -141,4 +146,24 @@ export function scoreBand(score: number): ScoreBand {
   if (score >= 80) return "pass";
   if (score >= 60) return "fix";
   return "fail";
+}
+
+/** The band names of the speaking result screen's legend. */
+export const SCORE_BAND_LABEL: Record<ScoreBand, string> = {
+  pass: "Đạt chuẩn",
+  fix: "Cần chỉnh lại",
+  fail: "Chưa đạt",
+};
+
+/** A word as its chip shows it: without the sentence's closing punctuation. */
+export function chipText(word: DemoWord): string {
+  return word.word.replace(/[.,!?;:]+$/, "");
+}
+
+/**
+ * What a chip's title and screen-reader text add, since the chip itself shows
+ * no digits: the band and the score, as the speaking result fragment does.
+ */
+export function chipBandLabel(word: DemoWord): string {
+  return `${SCORE_BAND_LABEL[scoreBand(word.score)]} (${word.score}%)`;
 }
