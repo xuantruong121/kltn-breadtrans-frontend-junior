@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEMO, chunkWords, litChunks, lowestWords, scoreLine } from "./speakingDemo.ts";
+import { DEMO, chunkWords, litChunks, lowestWords, scoreBand } from "./speakingDemo.ts";
 
 const EXPECTED_WORDS: [string, number][] = [
   ["The", 91],
@@ -129,11 +129,15 @@ test("lowestWords gives every word that ties for the lowest score, in sentence o
   assert.deepEqual(lowestWords([]), []);
 });
 
-test("scoreLine writes the words and their scores on one line, breaking only after a dot", () => {
-  const line = scoreLine(lowestWords(DEMO.words));
-  assert.equal(line.replace(/ /g, " "), "The 91 · ten 91 · night. 91");
-  assert.equal(line, "The 91 · ten 91 · night. 91");
-  const chunks = chunkWords(DEMO.words, 6);
-  assert.equal(scoreLine(chunks[1].words).replace(/ /g, " "), "library 97 · is 97 · open 94");
-  assert.equal(scoreLine([]), "");
+test("scoreBand follows the product's thresholds at every boundary", () => {
+  assert.equal(scoreBand(0), "fail");
+  assert.equal(scoreBand(59), "fail");
+  assert.equal(scoreBand(60), "fix");
+  assert.equal(scoreBand(79), "fix");
+  assert.equal(scoreBand(80), "pass");
+  assert.equal(scoreBand(100), "pass");
+});
+
+test("every word of submission 309 is in the pass band, so the hero can say 18/18", () => {
+  assert.equal(DEMO.words.filter((w) => scoreBand(w.score) === "pass").length, 18);
 });

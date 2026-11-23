@@ -4,7 +4,16 @@ import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Play, Square } from "lucide-react";
 import { revealProps } from "@/lib/landing/motion";
-import { DEMO, chunkWords, litChunks, lowestWords, scoreLine, type WordChunk } from "@/lib/landing/speakingDemo";
+import {
+  DEMO,
+  chunkWords,
+  litChunks,
+  lowestWords,
+  scoreBand,
+  type DemoWord,
+  type ScoreBand,
+  type WordChunk,
+} from "@/lib/landing/speakingDemo";
 import { Loaf } from "./Loaf";
 import type { LandingActions } from "./types";
 import { useLandingReducedMotion } from "./useLandingReducedMotion";
@@ -15,8 +24,42 @@ const ALL_LIT = CHUNKS.length;
 
 const OVERALL = String(DEMO.overall).replace(".", ",");
 const SPOKEN_SCORES = DEMO.words.map((w) => `${w.word} ${w.score}`).join(", ");
-/** The score line at rest, without JavaScript and under reduced motion. */
-const LOWEST_LINE = `Thấp nhất: ${scoreLine(lowestWords(DEMO.words))}`;
+/** At rest, without JavaScript and under reduced motion: how many words passed, then the lowest ones. */
+const PASSED = DEMO.words.filter((w) => scoreBand(w.score) === "pass").length;
+const REST_LABEL = `${PASSED}/${DEMO.words.length} từ đạt chuẩn. Thấp nhất:`;
+const LOWEST = lowestWords(DEMO.words);
+
+/**
+ * The word bands of the speaking result screen: its thresholds (scoreBand,
+ * from getAccuracyTier), its legend words and its chip colours (the word chips
+ * and the legend of src/app/(student)/speaking/[id]/page.tsx). The amber chip is
+ * solid here (amber-100, not /80) so nothing of the orange shows through. The
+ * chips keep these light colours in dark mode too: they sit on a white panel.
+ */
+const BANDS: Record<ScoreBand, { label: string; range: string; chip: string; dot: string; text: string }> = {
+  pass: {
+    label: "Đạt chuẩn",
+    range: "≥ 80",
+    chip: "border-emerald-300 bg-emerald-50 text-emerald-800",
+    dot: "bg-emerald-500",
+    text: "text-emerald-800",
+  },
+  fix: {
+    label: "Cần chỉnh lại",
+    range: "60–79",
+    chip: "border-amber-300 bg-amber-100 text-amber-900",
+    dot: "bg-amber-500",
+    text: "text-amber-900",
+  },
+  fail: {
+    label: "Chưa đạt",
+    range: "< 60",
+    chip: "border-rose-300 bg-rose-50 text-rose-800",
+    dot: "bg-rose-500",
+    text: "text-rose-800",
+  },
+};
+const BAND_ORDER: ScoreBand[] = ["pass", "fix", "fail"];
 
 /** Slow settle for the loaf as it slides in (expo out). */
 const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
@@ -27,15 +70,16 @@ const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
  * the numbers were checked against the stadium outline from 360 to 2560px.
  *
  * - Phone: the loaf sits under the copy, 130vw wide, cropped left, right and
- *   bottom; the controls ride on its upper band, above the cuts. The top
- *   padding, the gap above the loaf and the cut shift are kept small so that at
- *   390x844 the scored words end above MobileBottomNav on the first screen.
- * - 640-1023: the same, at 116vw.
+ *   bottom, with the cut row in the middle of its visible part; the controls
+ *   (button, score panel, caption) follow under the loaf, on the page, because
+ *   the panel does not fit the loaf's band at this width. At 390x844 the words
+ *   on the cuts end above MobileBottomNav on the first screen.
+ * - 640-1023: the controls ride on the loaf's upper band, above the cuts; 116vw.
  * - 1024 and up: the loaf enters from the right at 47vw, centred on the
  *   section's height; the six cuts sit on its visible left half.
  *
- * The cut row is moved down (translate on each cut) to free the band above it
- * for the controls. The Loaf internals are reached by class (`landing-loaf__…`),
+ * From 640px the cut row is made shorter and moved down (translate on each cut)
+ * to free the band above it for the controls. The Loaf internals are reached by class (`landing-loaf__…`),
  * the only way to size them without editing Loaf.tsx or landing.css.
  */
 const LOAF_BOX =
@@ -50,14 +94,15 @@ const LOAF_BOX =
 const LOAF_SHAPE = String.raw`h-full aspect-auto
   [&_.landing-loaf\_\_cuts]:px-[17%]
   lg:[&_.landing-loaf\_\_cuts]:pl-[10%] lg:[&_.landing-loaf\_\_cuts]:pr-[50%]
-  [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[40%]
-  sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[38%] sm:[&_.landing-loaf\_\_cut]:translate-y-[39.5%]
-  lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[42%] lg:[&_.landing-loaf\_\_cut]:translate-y-[21.4%]`;
+  [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[-10%]
+  sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[32%] sm:[&_.landing-loaf\_\_cut]:translate-y-[62%]
+  lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[34%] lg:[&_.landing-loaf\_\_cut]:translate-y-[52%]`;
 
+/** The controls on the loaf, from 640px; on a phone they follow the loaf instead. */
 const CONTROLS =
-  "absolute left-[20.8%] w-[66%] bottom-[60.8%] " +
-  "sm:left-[17.2%] sm:w-1/2 sm:bottom-[61.3%] " +
-  "lg:left-[19%] lg:w-[30%] lg:bottom-[64.5%]";
+  "absolute max-sm:hidden " +
+  "sm:left-[17.2%] sm:w-1/2 sm:bottom-[55%] " +
+  "lg:left-[19%] lg:w-[32%] lg:bottom-[49%]";
 
 export function LandingHero({ actions }: { actions: LandingActions }) {
   const reduced = useLandingReducedMotion();
@@ -99,11 +144,11 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
     return () => audio?.pause();
   }, []);
 
-  // Kept to one line on a 360px phone: the controls grow upward on the loaf.
   const status = failed ? "Chưa phát được, hãy thử lại sau." : playing ? "Đang phát câu mẫu." : "";
-  // While the cuts sweep, the score line reads the run just lit; otherwise the lowest words.
+  // While the cuts sweep, the chips are the run just lit; otherwise the lowest words.
   const sweeping = playing && !reduced;
-  const scores = sweeping ? scoreLine(CHUNKS[Math.max(0, lit - 1)].words) : LOWEST_LINE;
+  const chips = sweeping ? CHUNKS[Math.max(0, lit - 1)].words : LOWEST;
+  const controls = { playing, failed, status, chips, resting: !sweeping, onToggle: toggle };
 
   return (
     <section
@@ -150,7 +195,7 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
         </div>
       </div>
 
-      <div className="relative mt-2 h-[100vw] sm:mt-10 sm:h-[72vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto">
+      <div className="relative mt-2 h-[78vw] sm:mt-10 sm:h-[72vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto">
         <motion.figure
           className={LOAF_BOX}
           data-reveal
@@ -183,43 +228,99 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
           {/* Text on the loaf uses --on-lit (dark in both themes): white on this
               orange is under 4.5:1 for text this size. */}
           <figcaption className={`${CONTROLS} text-(--on-lit)`}>
-            <div className="flex items-center gap-x-4">
-              <button
-                type="button"
-                onClick={toggle}
-                className="landing-small inline-flex min-h-11 flex-none items-center gap-2 rounded-full bg-(--on-lit) px-5 font-bold text-(--on-loaf) transition-[background-color,scale] duration-150 ease-out hover:bg-(--crust) focus-visible:outline-(--on-lit) active:scale-[0.97]"
-              >
-                {playing ? (
-                  <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
-                ) : (
-                  <Play aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
-                )}
-                {playing ? "Dừng" : "Nghe câu mẫu"}
-              </button>
-              <p className="leading-tight">
-                <span className="landing-small block">Điểm tổng</span>
-                <strong className="landing-display block text-(length:--type-lead) text-(--on-lit)">
-                  {OVERALL}/10
-                </strong>
-              </p>
-            </div>
-            {/* The scores read across on one line from 380px; where the longest line wraps
-                (under 380px, and 1024-1279px) two lines are kept free, so the button
-                does not move when the line changes. */}
-            <p className="landing-body mt-2 min-h-[1.4em] font-medium leading-[1.4] tabular-nums max-[379px]:min-h-[2.8em] sm:mt-3 lg:max-xl:min-h-[2.8em]">
-              {scores}
-            </p>
-            <p className="landing-small mt-1 text-pretty">Điểm thật của một lượt luyện nói trên BreadTrans.</p>
-            <p aria-live="polite" className={failed ? "landing-small mt-1 font-medium" : "sr-only"}>
-              {status}
-            </p>
-            <p className="sr-only">
-              {`Câu mẫu: ${DEMO.sentence} Điểm từng từ, thang 100: ${SPOKEN_SCORES}.`}
-            </p>
+            <DemoControls {...controls} onLoaf />
           </figcaption>
         </motion.figure>
       </div>
+
+      {/* Phone: the same controls under the loaf, on the page. display: none from 640px. */}
+      <div className="landing-container relative z-[1] mt-6 sm:hidden">
+        <DemoControls {...controls} onLoaf={false} />
+      </div>
     </section>
+  );
+}
+
+type DemoControlsProps = {
+  playing: boolean;
+  failed: boolean;
+  status: string;
+  /** The words shown as chips: the run just lit, or the lowest words at rest. */
+  chips: DemoWord[];
+  resting: boolean;
+  onToggle: () => void;
+  /** On the orange loaf (dark text, dark button) or on the page (the page's ink). */
+  onLoaf: boolean;
+};
+
+/**
+ * Play button and overall score, the word chips on a white panel with the
+ * three-band legend under them, and the caption. Rendered on the loaf from
+ * 640px and under it on a phone; the other copy is display: none, so a screen
+ * reader meets one.
+ */
+function DemoControls({ playing, failed, status, chips, resting, onToggle, onLoaf }: DemoControlsProps) {
+  const button = onLoaf
+    ? "bg-(--on-lit) text-(--on-loaf) focus-visible:outline-(--on-lit)"
+    : "bg-(--ink) text-(--bg)";
+  return (
+    <>
+      <div className="flex items-center gap-x-4">
+        <button
+          type="button"
+          onClick={onToggle}
+          className={`landing-small inline-flex min-h-11 flex-none items-center gap-2 rounded-full px-5 font-bold transition-[background-color,scale] duration-150 ease-out hover:bg-(--crust) hover:text-(--on-loaf) active:scale-[0.97] ${button}`}
+        >
+          {playing ? (
+            <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
+          ) : (
+            <Play aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
+          )}
+          {playing ? "Dừng" : "Nghe câu mẫu"}
+        </button>
+        <p className="leading-tight">
+          <span className="landing-small block">Điểm tổng</span>
+          <strong className="landing-display block text-inherit text-(length:--type-lead)">{OVERALL}/10</strong>
+        </p>
+      </div>
+
+      {/* A white panel: the chips and the legend keep the speaking screen's own colours,
+          which do not read on orange. */}
+      <div className="mt-3 rounded-2xl bg-white px-3 py-2.5 text-[#1c1917]">
+        <p className="landing-small font-medium">{resting ? REST_LABEL : "Cụm đang đọc:"}</p>
+        <p className="mt-1.5 flex flex-wrap gap-1.5">
+          {chips.map((w, i) => {
+            const band = BANDS[scoreBand(w.score)];
+            return (
+              <span
+                key={i}
+                className={`landing-small inline-flex items-baseline gap-1 rounded-full border px-2.5 py-0.5 font-bold leading-snug whitespace-nowrap tabular-nums ${band.chip}`}
+              >
+                {w.word.replace(/[.,!?;:]+$/, "")} {w.score}
+              </span>
+            );
+          })}
+        </p>
+        <p
+          role="note"
+          aria-label="Chú thích màu điểm từng từ"
+          className="landing-small mt-2 flex flex-wrap gap-x-3 gap-y-0.5 font-medium"
+        >
+          {BAND_ORDER.map((key) => (
+            <span key={key} className={`inline-flex items-center gap-1.5 whitespace-nowrap ${BANDS[key].text}`}>
+              <span aria-hidden="true" className={`size-2.5 rounded-full ${BANDS[key].dot}`} />
+              {BANDS[key].label} {BANDS[key].range}
+            </span>
+          ))}
+        </p>
+      </div>
+
+      <p className="landing-small mt-2 text-pretty">Điểm thật của một lượt luyện nói trên BreadTrans.</p>
+      <p aria-live="polite" className={failed ? "landing-small mt-1 font-medium" : "sr-only"}>
+        {status}
+      </p>
+      <p className="sr-only">{`Câu mẫu: ${DEMO.sentence} Điểm từng từ, thang 100: ${SPOKEN_SCORES}.`}</p>
+    </>
   );
 }
 

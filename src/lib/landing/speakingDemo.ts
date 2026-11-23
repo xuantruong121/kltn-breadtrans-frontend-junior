@@ -130,11 +130,15 @@ export function lowestWords(words: DemoWord[]): DemoWord[] {
   return words.filter((w) => w.score === lowest);
 }
 
+/** The three score bands of the speaking result screen (src/lib/speaking/speakingPracticeLogic.ts, getAccuracyTier). */
+export type ScoreBand = "pass" | "fix" | "fail";
+
 /**
- * Words with their scores on one line: "university 100 · library 97 · is 97".
- * The spaces inside a pair and before each dot do not break (U+00A0), so a
- * narrow line wraps only after a dot, never between a word and its score.
+ * The band of a word score out of 100, by the product's thresholds:
+ * 80 and up "Đạt chuẩn", 60-79 "Cần chỉnh lại", under 60 "Chưa đạt".
  */
-export function scoreLine(words: DemoWord[]): string {
-  return words.map((w) => `${w.word} ${w.score}`).join(" · ");
+export function scoreBand(score: number): ScoreBand {
+  if (score >= 80) return "pass";
+  if (score >= 60) return "fix";
+  return "fail";
 }
