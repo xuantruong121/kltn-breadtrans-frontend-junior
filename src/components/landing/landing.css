@@ -117,11 +117,6 @@
     font-size: var(--type-section);
   }
 
-  .landing-lead {
-    font-size: var(--type-lead);
-    line-height: 1.45;
-  }
-
   .landing-body {
     font-size: var(--type-body);
     line-height: 1.6;
@@ -242,21 +237,6 @@
     transform: rotate(-8deg);
   }
 
-  /* Children are clipped to the loaf and shown upright: the inner layer turns
-     back 8deg and overscans, which covers any loaf from about 1.1:1 to 3.6:1. */
-  .landing-loaf__mask {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    border-radius: inherit;
-  }
-
-  .landing-loaf__upright {
-    position: absolute;
-    inset: -25% -6%;
-    transform: rotate(8deg);
-  }
-
   .landing-loaf__cuts {
     position: absolute;
     inset: 0;
@@ -290,17 +270,6 @@
 
   .landing-loaf__cut[data-lit="true"]::after {
     opacity: 1;
-  }
-
-  /* What renderCut returns: upright again, centred on the cut, free to overflow it. */
-  .landing-loaf__cut-content {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    transform: skewX(24deg);
-    pointer-events: auto;
   }
 
   /* ---- Reveal guard (src/lib/landing/motion.ts) ----------------------- */

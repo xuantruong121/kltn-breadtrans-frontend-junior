@@ -78,10 +78,6 @@ export function LoafMark({ actions }: { actions: LandingActions }) {
             ))}
           </span>
         </h2>
-        {/* Credits slot (spec 6.4.7): a found picture used on the landing (none yet)
-            is credited here, at 13px or more, e.g.
-            <p className="landing-small landing-muted mt-8">Ảnh: <author>, <source>, <licence>.</p>
-            Write no credit for a picture the page does not show. */}
       </div>
     </section>
   );
