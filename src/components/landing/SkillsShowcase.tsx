@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ComponentType, type KeyboardEvent } from "react";
-import { motion, useAnimate, useInView } from "framer-motion";
+import { animate, motion, useInView } from "framer-motion";
 import { SKILLS, SKILLS_TITLE, stepIndex, type SkillKey } from "@/lib/landing/content";
 import { REVEAL_EASE, revealProps } from "@/lib/landing/motion";
 import { FragDoc } from "./fragments/FragDoc";
@@ -63,7 +63,11 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
 
   // The clip box is animated; the observer watches its unclipped parent.
-  const [stage, animate] = useAnimate<HTMLDivElement>();
+  // framer's standalone animate(), not useAnimate(): that hook reads framer's
+  // own reduced-motion setting on every render, which logs a dev warning on a
+  // reduced-motion device. This section handles reduced motion itself.
+  const stage = useRef<HTMLDivElement>(null);
+  const zoom = useRef<HTMLDivElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const entered = useInView(frame, { once: true, amount: 0.3 });
   const armed = useRef(false);
@@ -73,20 +77,30 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
   // stage has been seen it never closes again: `entered` comes from
   // useInView({ once: true }). `reduced` is still false in the hydration
   // commit, so the media query is read directly as well. No `armed` guard on
-  // entry: StrictMode's fake unmount makes useAnimate stop the pending close,
-  // and the second run must close again.
+  // entry: under StrictMode the effect runs twice, and each run must close.
   useEffect(() => {
-    if (reduced || prefersReducedMotion() || entered) return;
+    if (reduced || prefersReducedMotion() || entered || !stage.current || !zoom.current) return;
     armed.current = true;
     animate(stage.current, { clipPath: SHUTTER_CLOSED }, { duration: 0 });
-    animate("[data-shutter-zoom]", { scale: 1.12 }, { duration: 0 });
-  }, [reduced, entered, animate, stage]);
+    animate(zoom.current, { scale: 1.12 }, { duration: 0 });
+  }, [reduced, entered]);
 
   useEffect(() => {
-    if (!entered || !armed.current) return;
-    animate(stage.current, { clipPath: SHUTTER_OPEN }, { duration: 1.1, delay: 0.15, ease: SHUTTER_EASE });
-    animate("[data-shutter-zoom]", { scale: 1 }, { duration: 1.5, delay: 0.15, ease: REVEAL_EASE });
-  }, [entered, animate, stage]);
+    const box = stage.current;
+    const card = zoom.current;
+    if (!entered || !armed.current || !box || !card) return;
+    if (reduced || prefersReducedMotion()) {
+      // Reduced motion came on after the stage closed: the final state at once, without framer.
+      box.style.clipPath = SHUTTER_OPEN;
+      card.style.transform = "none";
+      return;
+    }
+    const opening = [
+      animate(box, { clipPath: SHUTTER_OPEN }, { duration: 1.1, delay: 0.15, ease: SHUTTER_EASE }),
+      animate(card, { scale: 1 }, { duration: 1.5, delay: 0.15, ease: REVEAL_EASE }),
+    ];
+    return () => opening.forEach((controls) => controls.stop());
+  }, [entered, reduced]);
 
   const onNameKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const next = stepIndex(event.key, index, SKILLS.length);
@@ -158,7 +172,7 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                   under it and the page below never move; from md, where that height leaves
                   the most room, a shorter fragment sits centred in its card. From lg the
                   card hugs its fragment, centred on the loaf. */}
-              <div data-shutter-zoom className="relative grid lg:w-[min(540px,80%)]">
+              <div ref={zoom} data-shutter-zoom className="relative grid lg:w-[min(540px,80%)]">
                 {SKILLS.map((skill, index) => {
                   const on = index === active;
                   const Fragment = FRAGMENTS[skill.key];

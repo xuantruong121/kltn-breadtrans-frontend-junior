@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MotionConfig } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/authStore";
 import { AuthGateModal } from "@/components/auth/AuthGateModal";
@@ -75,16 +76,22 @@ export function LandingPage({ className = "" }: { className?: string }) {
         <noscript>
           <style>{NO_SCRIPT_REVEAL}</style>
         </noscript>
-        <div className="landing-stack">
-          <LandingHero actions={actions} />
-          <SkillsShowcase actions={actions} />
-          <HabitTiles actions={actions} />
-          <PathFields actions={actions} />
-          <PlanPicker actions={actions} />
-          <FaqTiles actions={actions} />
-          <ActionTile actions={actions} />
-          <LoafMark actions={actions} />
-        </div>
+        {/* The sections handle reduced motion themselves (useLandingReducedMotion,
+            revealProps and the landing.css guard show the final state), so framer's
+            own reduction is off here; with it on, framer logs a dev warning on a
+            reduced-motion device. AppHeader, AppFooter and the modals are outside. */}
+        <MotionConfig reducedMotion="never">
+          <div className="landing-stack">
+            <LandingHero actions={actions} />
+            <SkillsShowcase actions={actions} />
+            <HabitTiles actions={actions} />
+            <PathFields actions={actions} />
+            <PlanPicker actions={actions} />
+            <FaqTiles actions={actions} />
+            <ActionTile actions={actions} />
+            <LoafMark actions={actions} />
+          </div>
+        </MotionConfig>
       </div>
 
       {/* The modals stay outside .landing, so they keep the app's tokens and font. */}
