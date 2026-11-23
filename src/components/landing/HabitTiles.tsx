@@ -41,7 +41,7 @@ export function HabitTiles({ actions }: { actions: LandingActions }) {
           <motion.h2 id="landing-habits-title" className="landing-display landing-section-title" {...revealProps(reduced, 0)}>
             {HABITS_TITLE}
           </motion.h2>
-          <motion.p className="max-w-[620px] text-[18px] leading-normal lg:text-[22px] lg:leading-[1.45]" {...revealProps(reduced, 1)}>
+          <motion.p className="landing-body max-w-[620px] lg:text-(length:--type-lead) lg:leading-[1.45]" {...revealProps(reduced, 1)}>
             {HABITS_LEAD}
           </motion.p>
         </div>
@@ -61,8 +61,8 @@ export function HabitTiles({ actions }: { actions: LandingActions }) {
                   <Fragment />
                 </div>
                 <div className="flex flex-col gap-1 px-1 lg:px-0">
-                  <h3 className="text-[20px] font-semibold leading-snug lg:text-[22px]">{habit.name}</h3>
-                  <p className="text-[16px] leading-[1.55] text-(--muted) lg:text-[17px]">{habit.fact}</p>
+                  <h3 className="text-[20px] font-semibold leading-snug lg:text-(length:--type-lead)">{habit.name}</h3>
+                  <p className="landing-small landing-muted lg:text-(length:--type-body) lg:leading-[1.55]">{habit.fact}</p>
                 </div>
               </motion.li>
             );
