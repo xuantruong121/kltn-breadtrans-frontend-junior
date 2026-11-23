@@ -401,3 +401,47 @@ select {
 @media (prefers-reduced-motion: reduce) {
   .dungeon-sprite-frame { animation: none; }
 }
+
+/* Listening seek bar (components/listening/AudioScrubber.tsx). The component draws the grey
+   track and the orange played part; the native track is transparent and only the 14px thumb
+   is styled here (SCRUBBER_THUMB_PX in lib/listening/audioScrubber.ts). amber-500 = #f59e0b. */
+.audio-scrubber::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+.audio-scrubber::-moz-range-track,
+.audio-scrubber::-moz-range-progress {
+  background: transparent;
+}
+.audio-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  /* Centres the thumb in the 20px-tall input (h-5). */
+  margin-top: 3px;
+  border: 0;
+  border-radius: 9999px;
+  background: #f59e0b;
+  transition: transform 150ms ease-out;
+}
+.audio-scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 0;
+  border-radius: 9999px;
+  background: #f59e0b;
+  transition: transform 150ms ease-out;
+}
+.audio-scrubber:hover:not(:disabled)::-webkit-slider-thumb { transform: scale(1.2); }
+.audio-scrubber:hover:not(:disabled)::-moz-range-thumb { transform: scale(1.2); }
+.audio-scrubber:focus-visible { outline: none; }
+.audio-scrubber:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rgb(245 158 11 / 0.35); }
+.audio-scrubber:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px rgb(245 158 11 / 0.35); }
+.audio-scrubber:disabled::-webkit-slider-thumb { background: #94a3b8; }
+.audio-scrubber:disabled::-moz-range-thumb { background: #94a3b8; }
+/* Separate rules: a list mixing -webkit- and -moz- pseudo-elements is dropped whole. */
+@media (prefers-reduced-motion: reduce) {
+  .audio-scrubber::-webkit-slider-thumb { transition: none; }
+  .audio-scrubber::-moz-range-thumb { transition: none; }
+}

@@ -68,6 +68,7 @@ import {
   type ListeningPlaybackOwner,
 } from "./listeningPlaybackOwnership";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
+import { AudioScrubber } from "./AudioScrubber";
 
 export interface DictationAttemptMetrics {
   attemptCount: number;
@@ -1507,16 +1508,13 @@ export function DailyDictationWorkspace({
                 </span>
 
                 {/* Range Scrubber Bar */}
-                <input
-                  type="range"
-                  min={0}
-                  max={duration || 100}
-                  step={0.1}
+                <AudioScrubber
                   value={currentTime}
+                  max={duration}
                   onChange={handleSeek}
                   disabled={audioLoading || duration === 0}
-                  aria-label="Thanh thời gian nghe"
-                  className="flex-1 h-2 bg-slate-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+                  ariaLabel="Thanh thời gian nghe"
+                  valueText={`${formatTime(currentTime)} / ${formatTime(duration)}`}
                 />
 
                 {/* Volume control: mute toggle + accessible volume slider */}
@@ -2157,16 +2155,15 @@ export function DailyDictationWorkspace({
                   </span>
 
                   {/* Range Scrubber Bar */}
-                  <input
-                    type="range"
-                    min={0}
-                    max={duration || 100}
-                    step={0.1}
+                  <AudioScrubber
                     value={currentTime}
+                    max={duration}
                     onChange={handleSeek}
                     disabled={audioLoading || duration === 0}
-                    aria-label="Thanh thời gian nghe"
-                    className="flex-1 min-w-[70px] h-1.5 bg-stone-200 dark:bg-slate-700 rounded-full appearance-none cursor-pointer accent-amber-500 focus:outline-none"
+                    ariaLabel="Thanh thời gian nghe"
+                    valueText={`${formatTime(currentTime)} / ${formatTime(duration)}`}
+                    size="sm"
+                    className="min-w-[70px]"
                   />
 
                   {/* Volume control */}
