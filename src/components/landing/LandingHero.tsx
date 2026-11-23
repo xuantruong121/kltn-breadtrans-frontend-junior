@@ -55,7 +55,7 @@ const LOAF_SHAPE = String.raw`h-full aspect-auto
   lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[42%] lg:[&_.landing-loaf\_\_cut]:translate-y-[21.4%]`;
 
 const CONTROLS =
-  "absolute left-[20.8%] w-[58.5%] bottom-[60.8%] " +
+  "absolute left-[20.8%] w-[66%] bottom-[60.8%] " +
   "sm:left-[17.2%] sm:w-1/2 sm:bottom-[61.3%] " +
   "lg:left-[19%] lg:w-[30%] lg:bottom-[64.5%]";
 
@@ -203,9 +203,12 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
                 </strong>
               </p>
             </div>
-            {/* The scores read across, one line from 640px; two lines are kept free on a
-                phone so the button does not move while the line changes. */}
-            <p className="landing-body mt-3 min-h-[2.8em] font-medium leading-[1.4] tabular-nums sm:min-h-[1.4em]">{scores}</p>
+            {/* The scores read across on one line from 380px; where the longest line wraps
+                (under 380px, and 1024-1279px) two lines are kept free, so the button
+                does not move when the line changes. */}
+            <p className="landing-body mt-2 min-h-[1.4em] font-medium leading-[1.4] tabular-nums max-[379px]:min-h-[2.8em] sm:mt-3 lg:max-xl:min-h-[2.8em]">
+              {scores}
+            </p>
             <p className="landing-small mt-1 text-pretty">Điểm thật của một lượt luyện nói trên BreadTrans.</p>
             <p aria-live="polite" className={failed ? "landing-small mt-1 font-medium" : "sr-only"}>
               {status}

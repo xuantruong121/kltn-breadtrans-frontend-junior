@@ -129,9 +129,11 @@ test("lowestWords gives every word that ties for the lowest score, in sentence o
   assert.deepEqual(lowestWords([]), []);
 });
 
-test("scoreLine writes the words and their scores on one line", () => {
-  assert.equal(scoreLine(lowestWords(DEMO.words)), "The 91 · ten 91 · night. 91");
+test("scoreLine writes the words and their scores on one line, breaking only after a dot", () => {
+  const line = scoreLine(lowestWords(DEMO.words));
+  assert.equal(line.replace(/ /g, " "), "The 91 · ten 91 · night. 91");
+  assert.equal(line, "The 91 · ten 91 · night. 91");
   const chunks = chunkWords(DEMO.words, 6);
-  assert.equal(scoreLine(chunks[1].words), "library 97 · is 97 · open 94");
+  assert.equal(scoreLine(chunks[1].words).replace(/ /g, " "), "library 97 · is 97 · open 94");
   assert.equal(scoreLine([]), "");
 });

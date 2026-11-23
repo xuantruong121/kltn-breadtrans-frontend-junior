@@ -130,7 +130,11 @@ export function lowestWords(words: DemoWord[]): DemoWord[] {
   return words.filter((w) => w.score === lowest);
 }
 
-/** Words with their scores on one line: "university 100 · library 97 · is 97". */
+/**
+ * Words with their scores on one line: "university 100 · library 97 · is 97".
+ * The spaces inside a pair and before each dot do not break (U+00A0), so a
+ * narrow line wraps only after a dot, never between a word and its score.
+ */
 export function scoreLine(words: DemoWord[]): string {
-  return words.map((w) => `${w.word} ${w.score}`).join(" · ");
+  return words.map((w) => `${w.word} ${w.score}`).join(" · ");
 }

@@ -51,11 +51,11 @@ export function PathFields({ actions }: { actions: LandingActions }) {
 
             <motion.div
               aria-hidden="true"
-              className="flex h-28 items-end md:row-start-2 md:h-44 xl:h-56"
+              className="flex h-32 items-end md:row-start-2 md:h-44 xl:h-56"
               {...revealProps(reduced, index + 1)}
             >
               <span
-                className="block w-9 origin-bottom-left skew-x-[-24deg] rounded-full bg-(--crust) md:w-11 xl:w-12"
+                className="block w-7 origin-bottom-left skew-x-[-24deg] rounded-full bg-(--crust) md:w-11 xl:w-12"
                 style={{ height: CUT_HEIGHTS[index] }}
               />
             </motion.div>
