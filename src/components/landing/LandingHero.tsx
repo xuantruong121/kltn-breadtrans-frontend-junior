@@ -103,18 +103,20 @@ const LOAF_BOX =
 
 /** From 1024px: the four values that place the controls and the cut row as one group. */
 const GROUP = [
-  // Cut height: no words to hold now, so the cuts are a short strip under the panel; 104px at 1024,
-  // growing with the loaf (10vw) to 160px.
-  "lg:[--cut-h:clamp(104px,10vw,160px)]",
-  // Left edge of the group in the loaf box: 133px at 1024 and 213px at 1920, so the group's middle
-  // sits on the middle of the visible orange.
+  // Cut height: no words to hold now, so the cuts are a short strip under the panel: 72px at 1024,
+  // all the room the panel leaves there, growing to 160px from 1575px.
+  "lg:[--cut-h:clamp(72px,16vw_-_92px,160px)]",
+  // Left edge of the group in the loaf box: 133px at 1024, as far left as the button's corner stays on
+  // the orange, and 213px at 1920; the group's middle lands 22-54px right of the visible orange's.
   "lg:[--col-l:calc(42px_+_8.93vw)]",
   // Width of the button and panel column: 37vw keeps a 31px right margin at 1024; 40rem (640px) is
   // where the 18 chips fit in three rows.
   "lg:[--col-w:min(37vw,40rem)]",
-  // Top of the highest cut against the loaf's centre line, below it: 138px at 1024, where the panel
-  // is tallest, down to 60px at 1920, so the group's middle stays on the centre line.
-  "lg:[--seam:clamp(60px,230px_-_9vw,138px)]",
+  // Top of the highest cut, below the loaf's centre line. 1024-1279: 175px down to 130px, where the
+  // panel is tallest and the button's top-left corner meets the loaf's curve. From 1280, where the
+  // chips fit in fewer rows: 130px down to 34px from 1600px, so the group's middle sits on the line.
+  "lg:[--seam:clamp(130px,355px_-_17.6vw,175px)]",
+  "xl:[--seam:clamp(34px,530px_-_31.25vw,130px)]",
 ].join(" ");
 
 // String.raw keeps `\_` (an escaped underscore for Tailwind) in the runtime
@@ -338,8 +340,9 @@ function ScorePanel({ failed, status, reading, className = "" }: ScorePanelProps
       </div>
 
       {/* The chips show the words only; the title and the screen-reader text carry the band
-          and the score, as the speaking result fragment does. */}
-      <p role="group" aria-label="Câu mẫu, tô màu theo điểm từng từ" lang="en" className="mt-3 flex flex-wrap gap-1.5">
+          and the score, as the speaking result fragment does. px-2 and a 4px gap fit the
+          18 chips in four rows of the 347px panel at 1024. */}
+      <p role="group" aria-label="Câu mẫu, tô màu theo điểm từng từ" lang="en" className="mt-3 flex flex-wrap gap-1">
         {DEMO.words.map((w, i) => {
           const band = BANDS[scoreBand(w.score)];
           const on = RUN_OF_WORD[i] === reading;
@@ -348,7 +351,7 @@ function ScorePanel({ failed, status, reading, className = "" }: ScorePanelProps
               key={i}
               title={`${chipText(w)}: ${chipBandLabel(w)}`}
               data-reading={on || undefined}
-              className={`inline-block rounded-full border px-2.5 py-0.5 text-[length:1.25rem] font-bold leading-snug whitespace-nowrap ${on ? band.reading : band.chip}`}
+              className={`inline-block rounded-full border px-2 py-0.5 text-[length:1.25rem] font-bold leading-tight whitespace-nowrap ${on ? band.reading : band.chip}`}
             >
               {chipText(w)}
               <span className="sr-only" lang="vi">{`, ${chipBandLabel(w)}`}</span>
