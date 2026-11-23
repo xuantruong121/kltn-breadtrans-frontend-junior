@@ -101,7 +101,7 @@ const LOAF_BOX =
   // The top is half that height above the centre, so the loaf stays centred.
   "lg:left-[47vw] lg:top-[calc(50%_-_clamp(29vw,50%,34vw))] lg:w-[100vw] lg:h-[clamp(58vw,100%,68vw)]";
 
-/** From 1024px: the four values that place the controls and the cut row as one group. */
+/** From 1024px: the four values that place the controls and the cut row as one group (the seam in two ranges). */
 const GROUP = [
   // Cut height: no words to hold now, so the cuts are a short strip under the panel: 72px at 1024,
   // all the room the panel leaves there, growing to 160px from 1575px.
@@ -329,6 +329,8 @@ type ScorePanelProps = {
 function ScorePanel({ failed, status, reading, className = "" }: ScorePanelProps) {
   // Sizes, one step up from the 18px body step: 19px (1.1875rem) for the label, the
   // pass count and the legend, 20px (1.25rem) for the chips, 32px (2rem) for the score.
+  // Spacing scaled up with them from Task 8's 12px panel: 16px sides, 14px top and
+  // bottom, 12px between the rows.
   return (
     <div className={`rounded-2xl bg-white px-4 py-3.5 text-[#1c1917] ${className}`}>
       <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
