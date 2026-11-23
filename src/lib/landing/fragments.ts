@@ -75,10 +75,15 @@ export const WORD_LEGEND: { band: WordBand; label: string }[] = [
   { band: "omit", label: "Bỏ sót" },
 ];
 
+/** The band of a word in words, with its score unless it was omitted: "Chưa đạt (38%)", "Bỏ sót". */
+export function wordBandLabel(word: SpeakingWord): string {
+  const band = bandOf(word);
+  return band === "omit" ? BAND_NAMES.omit : `${BAND_NAMES[band]} (${word.accuracy}%)`;
+}
+
 /** A chip shows no number; its title says the band and the score: "open: Chưa đạt (38%)", "The: Bỏ sót". */
 export function wordTitle(word: SpeakingWord): string {
-  const band = bandOf(word);
-  return band === "omit" ? `${word.text}: ${BAND_NAMES.omit}` : `${word.text}: ${BAND_NAMES[band]} (${word.accuracy}%)`;
+  return `${word.text}: ${wordBandLabel(word)}`;
 }
 
 // ---- Nghe, Đọc, Viết -----------------------------------------------------

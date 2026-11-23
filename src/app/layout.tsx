@@ -12,6 +12,8 @@ import { AuthSyncProvider } from "@/components/auth/AuthSyncProvider";
 import { ConsentGate } from "@/components/auth/ConsentGate";
 import { Suspense } from "react";
 
+// body takes both the class (the app's font) and the variable: the landing sets
+// Be Vietnam Pro, and its coded app fragments use var(--font-quicksand) to read as the app.
 const quicksand = Quicksand({
   variable: "--font-quicksand",
   subsets: ["latin", "vietnamese"],
@@ -74,7 +76,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${quicksand.className} min-h-dvh overflow-x-clip antialiased bg-background text-foreground transition-colors duration-150`}
+        className={`${quicksand.className} ${quicksand.variable} min-h-dvh overflow-x-clip antialiased bg-background text-foreground transition-colors duration-150`}
         suppressHydrationWarning
       >
         <Script

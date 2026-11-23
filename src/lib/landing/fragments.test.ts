@@ -29,6 +29,7 @@ import {
   rankByPoints,
   sectionTotal,
   weekdayIndex,
+  wordBandLabel,
   wordTitle,
 } from "./fragments.ts";
 
@@ -109,6 +110,8 @@ test("the legend has the product's four items, and a chip title carries the band
   assert.equal(wordTitle(is), "is: Đạt chuẩn (80%)");
   assert.equal(wordTitle(open), "open: Chưa đạt (38%)");
   assert.equal(wordTitle({ text: "x", accuracy: 70, errorType: "None" }), "x: Cần chỉnh lại (70%)");
+  assert.equal(wordBandLabel(the), "Bỏ sót");
+  assert.equal(wordBandLabel(open), "Chưa đạt (38%)");
 });
 
 // ---- Nghe, Đọc, Viết ------------------------------------------------------

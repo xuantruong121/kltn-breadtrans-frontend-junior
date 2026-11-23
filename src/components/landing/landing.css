@@ -21,6 +21,8 @@
     --bg: #f4efe8;
     --ink: #1c1917;
     --muted: #57534e;
+    /* A name not chosen in a list (skills names): lighter than --muted, still 4:1 on --bg. */
+    --quiet: #78716c;
     --loaf: #d97706;
     --crust: #b45309;
     --lit: #fde68a;
@@ -82,6 +84,7 @@
     --bg: #1a1714;
     --ink: #f4efe8;
     --muted: #b0a79d;
+    --quiet: #8f877e;
     --loaf: #d97706;
     --crust: #b45309;
     --lit: #fde68a;

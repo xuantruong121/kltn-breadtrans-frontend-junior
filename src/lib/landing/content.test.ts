@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { LANDING_IMAGES, LANDING_VIDEO, type LandingImageKey } from "./assets.ts";
+import { LANDING_IMAGES, type LandingImageKey } from "./assets.ts";
 import { FAQ } from "./faq.ts";
 import {
   CROPS,
@@ -11,8 +11,6 @@ import {
   PATH_TITLE,
   SKILLS,
   SKILLS_TITLE,
-  STAGE_VIDEO_KEY,
-  VIDEO_CROP,
   cropMedia,
   cropRatio,
   fitWidth,
@@ -31,7 +29,25 @@ test("SKILLS lists the six parts in order, Nói first", () => {
     SKILLS.map((s) => s.key),
     ["skill-noi", "skill-nghe", "skill-doc", "skill-viet", "skill-luyen-de", "skill-flashcard"],
   );
-  assert.equal(STAGE_VIDEO_KEY, "skill-noi");
+});
+
+test("each skills fact says exactly what its fragment shows (owner feedback #3)", () => {
+  assert.deepEqual(
+    SKILLS.map((s) => [s.name, s.fact]),
+    [
+      ["Nói", "Đọc to câu mẫu rồi xem điểm từng từ: xanh là đạt chuẩn, vàng cần chỉnh lại, đỏ chưa đạt, từ gạch ngang là bị bỏ sót."],
+      ["Nghe", "Nghe đoạn ghi âm rồi chọn đáp án. Bài được chấm ngay khi nộp và hiện đáp án đúng."],
+      ["Đọc", "Đọc thông báo, tin nhắn hay email rồi trả lời. Mỗi câu có giải thích vì sao đáp án đúng."],
+      ["Viết", "Mỗi đề Viết nêu rõ tình huống và số từ cần viết. Bài nộp được nhận xét theo tiêu chí."],
+      [
+        "Luyện đề TOEIC",
+        "Đề Nghe & Đọc theo cấu trúc TOEIC do BreadTrans biên soạn: 200 câu trong 120 phút, hoặc chọn từng Part để luyện.",
+      ],
+      ["Flashcard", "Mỗi thẻ có phiên âm, nghĩa và câu ví dụ. Lật thẻ để xem mặt sau."],
+    ],
+  );
+  const toeic = SKILLS.find((s) => s.name === "Luyện đề TOEIC");
+  assert.ok(toeic?.fact.includes("do BreadTrans biên soạn"));
 });
 
 test("PATH has four steps in order and keeps the old roadmap's caveats", () => {
@@ -91,18 +107,8 @@ test("no copy claims more than the product, apart from the CEFR negation of step
   }
 });
 
-test("the writing picture is the practice list, so its caption claims no feedback", () => {
-  const viet = SKILLS.find((s) => s.key === "skill-viet");
-  assert.ok(viet);
-  assert.ok(viet.fact.includes("theo trình độ"));
-  assert.doesNotMatch(viet.fact, /nhận xét|chấm|phản hồi/);
-});
-
 test("every picture shown has a crop inside its image, with an alt for that crop", () => {
-  const shown: LandingImageKey[] = [
-    ...SKILLS.filter((s) => s.key !== STAGE_VIDEO_KEY).map((s) => s.key),
-    ...HABITS.map((h) => h.key),
-  ];
+  const shown: LandingImageKey[] = HABITS.map((h) => h.key);
   const inside = (c: { x: number; y: number; w: number; h: number }, width: number, height: number) =>
     c.x >= 0 && c.y >= 0 && c.w > 0 && c.h > 0 && c.x + c.w <= width && c.y + c.h <= height;
   for (const key of shown) {
@@ -110,17 +116,10 @@ test("every picture shown has a crop inside its image, with an alt for that crop
     assert.ok(crop, `${key} has a crop`);
     assert.ok(inside(crop, LANDING_IMAGES[key].width, LANDING_IMAGES[key].height), `${key} crop inside`);
     assert.ok(crop.alt.trim().length > 0, `${key} crop has its own alt`);
-    if (crop.phone) {
-      const p = crop.phone;
-      assert.ok(inside(p, LANDING_IMAGES[key].width, LANDING_IMAGES[key].height), `${key} phone crop inside`);
-      assert.ok(p.x >= crop.x && p.y >= crop.y && p.x + p.w <= crop.x + crop.w && p.y + p.h <= crop.y + crop.h, `${key} phone crop is part of the crop`);
-    }
   }
-  for (const skill of SKILLS.filter((s) => s.key !== STAGE_VIDEO_KEY)) assert.ok(CROPS[skill.key]?.phone, `${skill.key} has a phone crop`);
-  assert.ok(inside(VIDEO_CROP, LANDING_VIDEO.width, LANDING_VIDEO.height), "video crop inside");
 });
 
-test("the landing shows TOEIC only: no other certificate in words or in the exam-page crop", () => {
+test("the landing shows TOEIC only: no other certificate in words", () => {
   const OTHER_CERTIFICATES = /IELTS|VSTEP|TOEFL|Cambridge|FCE|CAE/i;
   const strings = [
     SKILLS_TITLE,
@@ -131,12 +130,6 @@ test("the landing shows TOEIC only: no other certificate in words or in the exam
     ...Object.values(CROPS).map((crop) => crop?.alt ?? ""),
   ];
   for (const s of strings) assert.doesNotMatch(s, OTHER_CERTIFICATES);
-  // skill-luyen-de.webp is the TOEIC exam page (/exams/2), which has no format chips. Its
-  // description, y 190-300, names the exam board to say the test is not theirs; both crops
-  // start below it, at the structure of the test.
-  const crop = CROPS["skill-luyen-de"];
-  assert.ok(crop?.phone);
-  assert.ok(crop.y >= 310 && crop.phone.y >= 310, "exam-page crops start below the description line");
 });
 
 test("cropMedia places the whole image so the crop fills its box", () => {
