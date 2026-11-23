@@ -1,9 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { LANDING_IMAGES, type LandingImageKey } from "./assets.ts";
 import { FAQ } from "./faq.ts";
 import {
-  CROPS,
   HABITS,
   HABITS_LEAD,
   HABITS_TITLE,
@@ -11,9 +9,6 @@ import {
   PATH_TITLE,
   SKILLS,
   SKILLS_TITLE,
-  cropMedia,
-  cropRatio,
-  fitWidth,
   stepIndex,
 } from "./content.ts";
 
@@ -78,10 +73,11 @@ test("HABITS has the five tiles of owner feedback #4, with their names and facts
   assert.equal(new Set(keys).size, keys.length);
 });
 
-test("every key is a landing image and every item has words", () => {
+test("every item has a unique key and words", () => {
   for (const step of PATH) assert.ok(step.name.trim().length > 0 && step.fact.trim().length > 0, step.name);
+  const keys = [...SKILLS, ...HABITS].map((item) => item.key);
+  assert.equal(new Set(keys).size, keys.length);
   for (const item of [...SKILLS, ...HABITS]) {
-    assert.ok(item.key in LANDING_IMAGES, `${item.key} in LANDING_IMAGES`);
     assert.ok(item.name.trim().length > 0, `${item.key} name`);
     assert.ok(item.fact.trim().length > 0, `${item.key} fact`);
   }
@@ -92,8 +88,6 @@ test("no word on the page speaks of stakes or betting", () => {
     HABITS_TITLE,
     HABITS_LEAD,
     ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
-    ...Object.values(CROPS).map((crop) => crop?.alt ?? ""),
-    ...Object.values(LANDING_IMAGES).map((image) => image.alt),
     ...FAQ.flatMap((entry) => [entry.q, entry.a]),
   ];
   for (const s of strings) assert.doesNotMatch(s, /cược|cá độ|đặt cửa/i, s);
@@ -107,24 +101,11 @@ test("no copy claims more than the product, apart from the CEFR negation of step
     HABITS_LEAD,
     PATH_TITLE,
     ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
-    ...Object.values(CROPS).map((crop) => crop?.alt ?? ""),
   ];
   const checked = strings.map((s) => (s === PATH[0].fact ? s.replace(CEFR_NEGATION, "") : s));
   for (const s of checked) {
     assert.doesNotMatch(s, OVERCLAIM);
     assert.doesNotMatch(s, /CEFR/, "CEFR appears only in the negation of step one");
-  }
-});
-
-test("every picture shown has a crop inside its image, with an alt for that crop", () => {
-  const shown: LandingImageKey[] = HABITS.map((h) => h.key);
-  const inside = (c: { x: number; y: number; w: number; h: number }, width: number, height: number) =>
-    c.x >= 0 && c.y >= 0 && c.w > 0 && c.h > 0 && c.x + c.w <= width && c.y + c.h <= height;
-  for (const key of shown) {
-    const crop = CROPS[key];
-    assert.ok(crop, `${key} has a crop`);
-    assert.ok(inside(crop, LANDING_IMAGES[key].width, LANDING_IMAGES[key].height), `${key} crop inside`);
-    assert.ok(crop.alt.trim().length > 0, `${key} crop has its own alt`);
   }
 });
 
@@ -136,33 +117,8 @@ test("the landing shows TOEIC only: no other certificate in words", () => {
     HABITS_LEAD,
     PATH_TITLE,
     ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
-    ...Object.values(CROPS).map((crop) => crop?.alt ?? ""),
   ];
   for (const s of strings) assert.doesNotMatch(s, OTHER_CERTIFICATES);
-});
-
-test("cropMedia places the whole image so the crop fills its box", () => {
-  assert.deepEqual(cropMedia({ width: 1600, height: 588 }, { x: 0, y: 215, w: 800, h: 373 }), {
-    width: "200%",
-    height: "157.6408%",
-    left: "0%",
-    top: "-57.6408%",
-  });
-  assert.deepEqual(cropMedia({ width: 1000, height: 500 }, { x: 250, y: 100, w: 500, h: 250 }), {
-    width: "200%",
-    height: "200%",
-    left: "-50%",
-    top: "-40%",
-  });
-  assert.equal(cropRatio({ x: 0, y: 0, w: 800, h: 373 }), "800 / 373");
-});
-
-test("fitWidth keeps the crop inside its container, less a margin", () => {
-  assert.equal(fitWidth({ x: 0, y: 0, w: 800, h: 400 }), "min(calc(100cqw - 2 * 0px), calc((100cqh - 2 * 0px) * 2))");
-  assert.equal(
-    fitWidth({ x: 0, y: 0, w: 300, h: 400 }, "3cqmin"),
-    "min(calc(100cqw - 2 * 3cqmin), calc((100cqh - 2 * 3cqmin) * 0.75))",
-  );
 });
 
 test("arrow keys move through the list and wrap, Home and End jump", () => {

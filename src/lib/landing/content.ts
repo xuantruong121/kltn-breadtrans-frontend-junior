@@ -1,24 +1,19 @@
 /**
- * Copy deck and picture crops for three landing sections (spec 6.4.1-6.4.3):
- * the skills showcase, the habit tiles and the learning path.
+ * Copy deck for three landing sections (spec 6.4.1-6.4.3): the skills
+ * showcase, the habit tiles and the learning path. The first two show coded
+ * app fragments (src/components/landing/fragments, data in fragments.ts).
  *
- * Every sentence says only what the product does and what its fragment or
- * screenshot shows.
+ * Every sentence says only what the product does and what its fragment shows.
  * No learner counts, no testimonials, no exam-board or CEFR claim: the path
  * keeps the caveats of the old page's roadmap (ROADMAP_STEPS), including
  * "không phải chứng chỉ hay cấp độ CEFR". content.test.ts checks this.
  *
  * No React and no I/O, so the tests run under the Node test runner.
  */
-import type { LandingImageKey } from "./assets";
-
-export type LandingItem<K extends string = LandingImageKey> = { key: K; name: string; fact: string };
+export type LandingItem<K extends string = string> = { key: K; name: string; fact: string };
 
 /** The six parts of the skills stage; each has a coded fragment (src/components/landing/fragments). */
 export type SkillKey = "skill-noi" | "skill-nghe" | "skill-doc" | "skill-viet" | "skill-luyen-de" | "skill-flashcard";
-
-/** A rectangle of a picture in its own pixels (public/landing, same size as LANDING_IMAGES). */
-export type Crop = { x: number; y: number; w: number; h: number };
 
 // ---- Bốn kỹ năng và luyện đề --------------------------------------------
 
@@ -125,69 +120,6 @@ export const PATH: PathStep[] = [
     fact: "Làm đề Nghe & Đọc 200 câu trong 120 phút có đồng hồ, rồi xem lại đáp án và giải thích. Đề do BreadTrans biên soạn; điểm là chỉ số luyện tập, không phải điểm thi chính thức.",
   },
 ];
-
-// ---- Crops ---------------------------------------------------------------
-
-/** A crop and the alt text for what that crop shows (the full image's alt may name parts cut away). */
-export type FramedCrop = Crop & { alt: string };
-
-/**
- * The part of each picture the page shows. Each crop ends in blank space
- * between rows or cards so no cut text shows, and the section puts a padding
- * of page colour around it. The skills stage shows coded fragments instead
- * (src/components/landing/fragments).
- */
-export const CROPS: Partial<Record<LandingImageKey, FramedCrop>> = {
-  // Habit tiles: one object each.
-  "habit-thu-ao": { x: 200, y: 360, w: 540, h: 505, alt: "Thú ảo Cáo Phim Ảnh đang sẵn sàng" },
-  "habit-banh-mi": {
-    x: 0, y: 0, w: 1600, h: 875,
-    alt: "Cửa hàng Bánh Mì với số dư và các vật phẩm có thể đổi",
-  },
-  "habit-chuoi-ngay": {
-    x: 950, y: 36, w: 620, h: 469,
-    alt: "Chuỗi học 3 ngày, điểm tuần 135 XP và số dư Bánh Mì trên trang chủ học viên",
-  },
-  // The duel panel only: the rest of the arena screen shows the Bánh Mì stakes.
-  "habit-dau-truong": {
-    x: 792, y: 42, w: 378, h: 612,
-    alt: "Song Đấu Từ Vựng: hai nhân vật bánh mì đối đầu",
-  },
-  "habit-xep-hang": {
-    x: 0, y: 0, w: 760, h: 552,
-    alt: "Đại sảnh danh vọng: người nhiều XP nhất và người có chuỗi dài nhất",
-  },
-};
-
-const pct = (n: number) => `${Number(n.toFixed(4))}%`;
-
-/**
- * Size and offset of the whole picture inside a box that has the crop's aspect
- * ratio (cropRatio), so exactly the crop shows. Use with position: absolute,
- * max-width: none and overflow: hidden on the box.
- */
-export function cropMedia(size: { width: number; height: number }, crop: Crop) {
-  return {
-    width: pct((size.width / crop.w) * 100),
-    height: pct((size.height / crop.h) * 100),
-    left: pct((-crop.x / crop.w) * 100),
-    top: pct((-crop.y / crop.h) * 100),
-  };
-}
-
-/** CSS aspect-ratio of a crop. */
-export function cropRatio(crop: Crop): string {
-  return `${crop.w} / ${crop.h}`;
-}
-
-/**
- * Width of the crop's box when it must fit inside the nearest size container
- * (container-type: size), keeping `margin` free on every side.
- */
-export function fitWidth(crop: Crop, margin = "0px"): string {
-  const ratio = Number((crop.w / crop.h).toFixed(4));
-  return `min(calc(100cqw - 2 * ${margin}), calc((100cqh - 2 * ${margin}) * ${ratio}))`;
-}
 
 /** Next selected index for a key in a list of `count` items; null when the key does nothing. */
 export function stepIndex(key: string, index: number, count: number): number | null {
