@@ -35,7 +35,7 @@ export function TileRank() {
                 {row.rank}
               </span>
               <span className="flex min-w-0 flex-1 flex-col gap-px">
-                <span className="truncate text-[15px] font-bold">{row.name}</span>
+                <span className="text-[15px] font-bold leading-snug">{row.name}</span>
                 <span className={`text-[13px] font-bold ${TIER_TEXT[row.tier] ?? "text-slate-600 dark:text-slate-300"}`}>{row.tier}</span>
               </span>
               <span className="flex-none text-[16px] font-bold">

@@ -49,18 +49,22 @@ export function HabitTiles({ actions }: { actions: LandingActions }) {
         <ul className="grid grid-cols-1 gap-y-10 md:grid-cols-2 md:gap-x-6 lg:grid-cols-3 lg:gap-y-12">
           {HABITS.map((habit, index) => {
             const { Fragment, tone, place = "" } = TILES[habit.key];
+            // Two rows of the list's grid (subgrid): the panels of one row share a
+            // height and the names under them start level, however long a fact is.
             return (
-              <li key={habit.key} className={`flex ${place}`}>
-                <motion.div className="flex w-full flex-col gap-3.5 lg:gap-[18px]" {...revealProps(reduced, index + 2)}>
-                  <div className={`flex flex-1 items-center rounded-(--radius-tile) p-3.5 md:p-5 lg:p-7 ${tone}`}>
-                    <Fragment />
-                  </div>
-                  <div className="flex flex-col gap-1 px-1 lg:px-0">
-                    <h3 className="text-[20px] font-semibold leading-snug lg:text-[22px]">{habit.name}</h3>
-                    <p className="text-[16px] leading-[1.55] text-(--muted) lg:text-[17px]">{habit.fact}</p>
-                  </div>
-                </motion.div>
-              </li>
+              <motion.li
+                key={habit.key}
+                className={`row-span-2 grid grid-rows-subgrid gap-y-3.5 lg:gap-y-[18px] ${place}`}
+                {...revealProps(reduced, index + 2)}
+              >
+                <div className={`flex items-center rounded-(--radius-tile) p-3.5 md:p-5 lg:p-7 ${tone}`}>
+                  <Fragment />
+                </div>
+                <div className="flex flex-col gap-1 px-1 lg:px-0">
+                  <h3 className="text-[20px] font-semibold leading-snug lg:text-[22px]">{habit.name}</h3>
+                  <p className="text-[16px] leading-[1.55] text-(--muted) lg:text-[17px]">{habit.fact}</p>
+                </div>
+              </motion.li>
             );
           })}
         </ul>
