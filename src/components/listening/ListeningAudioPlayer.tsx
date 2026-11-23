@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Pause, Play, Rewind, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { quizService } from "@/lib/api/services/quiz.service";
+import { AudioScrubber } from "./AudioScrubber";
 import { audioTrackKey, shouldAutoPlay } from "./listeningAutoPlay";
 
 interface ListeningAudioPlayerProps {
@@ -358,16 +359,13 @@ export function ListeningAudioPlayer({
               <span className="w-10 text-xs font-bold font-mono text-slate-600 dark:text-slate-400">
                 {formatTime(currentTime)}
               </span>
-              <input
-                type="range"
-                min={0}
-                max={duration || 100}
-                step={0.1}
+              <AudioScrubber
                 value={currentTime}
+                max={duration}
                 onChange={handleSeek}
                 disabled={isLoading || duration === 0}
-                aria-label="Thanh thời gian âm thanh"
-                className="h-2 flex-1 cursor-pointer appearance-none rounded-full bg-slate-200 dark:bg-slate-700 accent-amber-500 focus:outline-hidden"
+                ariaLabel="Thanh thời gian âm thanh"
+                valueText={`${formatTime(currentTime)} / ${formatTime(duration)}`}
               />
               <span className="w-10 text-right text-xs font-bold font-mono text-slate-600 dark:text-slate-400">
                 {formatTime(duration)}

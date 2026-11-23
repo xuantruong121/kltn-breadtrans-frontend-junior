@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
+import { displayText } from "./displayText.ts";
 
 const SRC = path.resolve(import.meta.dirname, "../..");
 
@@ -28,22 +29,6 @@ const FILES = sourceFiles(SRC).map((file) => ({
   rel: path.relative(SRC, file).split(path.sep).join("/"),
   text: fs.readFileSync(file, "utf8"),
 }));
-
-/** Text a person reads: string literals and JSX text, with their line numbers. */
-type Shown = { line: number; value: string; jsx: boolean };
-function displayText(text: string): Shown[] {
-  const out: Shown[] = [];
-  const lineOf = (index: number) => text.slice(0, index).split("\n").length;
-  const literal = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/g;
-  for (const m of text.matchAll(literal))
-    // A ${...} inside a template is code, not text.
-    out.push({ line: lineOf(m.index!), value: m[0].slice(1, -1).replace(/\$\{[^}]*\}/g, " "), jsx: false });
-  // A /* comment */ between two tags is not text; blank it but keep the line breaks.
-  const code = text.replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, " "));
-  const jsx = />([^<>{}=;]*[A-Za-zÀ-ỹ][^<>{}=;]*)</g;
-  for (const m of code.matchAll(jsx)) out.push({ line: lineOf(m.index!), value: m[1], jsx: true });
-  return out;
-}
 
 /**
  * A word list rule: the wrong way, the right way, and where the wrong way is
