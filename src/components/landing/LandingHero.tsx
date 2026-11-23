@@ -72,14 +72,14 @@ const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
  * - Phone: the loaf sits under the copy, 130vw wide, cropped left, right and
  *   bottom, with the cut row in the middle of its visible part; the controls
  *   (button, score panel, caption) follow under the loaf, on the page, because
- *   the panel does not fit the loaf's band at this width. At 390x844 the words
+ *   the panel does not fit the loaf's band under 1024px. At 390x844 the words
  *   on the cuts end above MobileBottomNav on the first screen.
- * - 640-1023: the controls ride on the loaf's upper band, above the cuts; 116vw.
+ * - 640-1023: the same, at 116vw.
  * - 1024 and up: the loaf enters from the right at 47vw, centred on the
- *   section's height; the six cuts sit on its visible left half.
- *
- * From 640px the cut row is made shorter and moved down (translate on each cut)
- * to free the band above it for the controls. The Loaf internals are reached by class (`landing-loaf__…`),
+ *   section's height; the six cuts sit on its visible left half, made shorter
+ *   and moved down (translate on each cut) so the controls ride on the band
+ *   above them. Checked from 1024x768 to 1920x1080: the controls stay on the
+ *   orange and clear of the cuts. The Loaf internals are reached by class (`landing-loaf__…`),
  * the only way to size them without editing Loaf.tsx or landing.css.
  */
 const LOAF_BOX =
@@ -95,14 +95,11 @@ const LOAF_SHAPE = String.raw`h-full aspect-auto
   [&_.landing-loaf\_\_cuts]:px-[17%]
   lg:[&_.landing-loaf\_\_cuts]:pl-[10%] lg:[&_.landing-loaf\_\_cuts]:pr-[50%]
   [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[-10%]
-  sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[32%] sm:[&_.landing-loaf\_\_cut]:translate-y-[62%]
-  lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[34%] lg:[&_.landing-loaf\_\_cut]:translate-y-[52%]`;
+  sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[38%] sm:[&_.landing-loaf\_\_cut]:translate-y-0
+  lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[32%] lg:[&_.landing-loaf\_\_cut]:translate-y-[64%]`;
 
-/** The controls on the loaf, from 640px; on a phone they follow the loaf instead. */
-const CONTROLS =
-  "absolute max-sm:hidden " +
-  "sm:left-[17.2%] sm:w-1/2 sm:bottom-[55%] " +
-  "lg:left-[19%] lg:w-[32%] lg:bottom-[49%]";
+/** The controls on the loaf, from 1024px; under that they follow the loaf instead. */
+const CONTROLS = "absolute max-lg:hidden lg:left-[19%] lg:w-[32%] lg:bottom-[49%]";
 
 export function LandingHero({ actions }: { actions: LandingActions }) {
   const reduced = useLandingReducedMotion();
@@ -195,7 +192,7 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
         </div>
       </div>
 
-      <div className="relative mt-2 h-[78vw] sm:mt-10 sm:h-[72vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto">
+      <div className="relative mt-2 h-[78vw] sm:mt-10 sm:h-[62vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto">
         <motion.figure
           className={LOAF_BOX}
           data-reveal
@@ -233,8 +230,8 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
         </motion.figure>
       </div>
 
-      {/* Phone: the same controls under the loaf, on the page. display: none from 640px. */}
-      <div className="landing-container relative z-[1] mt-6 sm:hidden">
+      {/* Under 1024px: the same controls under the loaf, on the page. display: none from 1024px. */}
+      <div className="landing-container relative z-[1] mt-6 lg:hidden">
         <DemoControls {...controls} onLoaf={false} />
       </div>
     </section>
@@ -256,7 +253,7 @@ type DemoControlsProps = {
 /**
  * Play button and overall score, the word chips on a white panel with the
  * three-band legend under them, and the caption. Rendered on the loaf from
- * 640px and under it on a phone; the other copy is display: none, so a screen
+ * 1024px and under it below that; the other copy is display: none, so a screen
  * reader meets one.
  */
 function DemoControls({ playing, failed, status, chips, resting, onToggle, onLoaf }: DemoControlsProps) {
