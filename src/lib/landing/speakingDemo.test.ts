@@ -7,6 +7,7 @@ import {
   chipText,
   chunkWords,
   litChunks,
+  passesStandard,
   readingRun,
   runOfEachWord,
   scoreBand,
@@ -33,13 +34,18 @@ const EXPECTED_WORDS: [string, number][] = [
   ["night.", 91],
 ];
 
-test("the demo keeps the 18 words of submission 309 in order, with their scores", () => {
+test("the demo keeps the 18 words of submission 309 in order, with their scores and error types", () => {
   assert.equal(DEMO.words.length, 18);
   assert.deepEqual(
     DEMO.words.map((w) => [w.word, w.score]),
     EXPECTED_WORDS,
   );
   assert.equal(DEMO.words.map((w) => w.word).join(" "), DEMO.sentence);
+  // Read from kltn_db (read-only) on 23/11/2026: every word of submission 309 has errorType "None".
+  assert.deepEqual(
+    DEMO.words.map((w) => w.errorType),
+    Array.from({ length: 18 }, () => "None"),
+  );
 });
 
 test("the demo names its source and its overall scores", () => {
@@ -198,6 +204,11 @@ test("scoreBand follows the product's thresholds at every boundary", () => {
   assert.equal(scoreBand(100), "pass");
 });
 
-test("every word of submission 309 is in the pass band, so the hero can say 18/18", () => {
-  assert.equal(DEMO.words.filter((w) => scoreBand(w.score) === "pass").length, 18);
+test("18/18 words of submission 309 pass under the result screen's rule: 80 or more and errorType None", () => {
+  assert.equal(DEMO.words.filter(passesStandard).length, 18);
+  // The rule needs both: a high score with an error, or a clean word under 80, does not pass.
+  assert.equal(passesStandard({ score: 80, errorType: "None" }), true);
+  assert.equal(passesStandard({ score: 79, errorType: "None" }), false);
+  assert.equal(passesStandard({ score: 95, errorType: "Mispronunciation" }), false);
+  assert.equal(passesStandard({ score: 100, errorType: "Omission" }), false);
 });

@@ -6,12 +6,16 @@
  * - exercise 137, from the A1 set "Borrowing Books from the University Library";
  * - submission 309, made by a test learner account;
  * - audioSrc is that exercise's public reference clip on R2 (about 92 KB).
+ * Each word's errorType was read from kltn_db (read-only) on 23/11/2026: all 18 are "None".
  *
  * The clip stores no per-word timings, so the hero lights each run of words
  * by its share of the characters (litChunks), not by when the word is spoken.
  */
 
-export type DemoWord = { word: string; score: number };
+/** A word's error type as the speaking scores store it. */
+export type WordError = "None" | "Omission" | "Mispronunciation";
+
+export type DemoWord = { word: string; score: number; errorType: WordError };
 
 export type SpeakingDemo = {
   exerciseId: 137;
@@ -37,24 +41,24 @@ export const DEMO: SpeakingDemo = {
   fluency: 94,
   completeness: 100,
   words: [
-    { word: "The", score: 91 },
-    { word: "university", score: 100 },
-    { word: "library", score: 97 },
-    { word: "is", score: 97 },
-    { word: "open", score: 94 },
-    { word: "from", score: 100 },
-    { word: "Monday", score: 100 },
-    { word: "to", score: 97 },
-    { word: "Friday", score: 97 },
-    { word: "from", score: 97 },
-    { word: "eight", score: 97 },
-    { word: "in", score: 97 },
-    { word: "the", score: 94 },
-    { word: "morning", score: 97 },
-    { word: "until", score: 97 },
-    { word: "ten", score: 91 },
-    { word: "at", score: 97 },
-    { word: "night.", score: 91 },
+    { word: "The", score: 91, errorType: "None" },
+    { word: "university", score: 100, errorType: "None" },
+    { word: "library", score: 97, errorType: "None" },
+    { word: "is", score: 97, errorType: "None" },
+    { word: "open", score: 94, errorType: "None" },
+    { word: "from", score: 100, errorType: "None" },
+    { word: "Monday", score: 100, errorType: "None" },
+    { word: "to", score: 97, errorType: "None" },
+    { word: "Friday", score: 97, errorType: "None" },
+    { word: "from", score: 97, errorType: "None" },
+    { word: "eight", score: 97, errorType: "None" },
+    { word: "in", score: 97, errorType: "None" },
+    { word: "the", score: 94, errorType: "None" },
+    { word: "morning", score: 97, errorType: "None" },
+    { word: "until", score: 97, errorType: "None" },
+    { word: "ten", score: 91, errorType: "None" },
+    { word: "at", score: 97, errorType: "None" },
+    { word: "night.", score: 91, errorType: "None" },
   ],
 };
 
@@ -155,8 +159,18 @@ export const SCORE_BAND_LABEL: Record<ScoreBand, string> = {
   fail: "Chưa đạt",
 };
 
+/**
+ * Whether a word counts as "Đạt chuẩn", as the result screen counts it
+ * (src/app/(student)/speaking/[id]/page.tsx): a score of 80 or more and
+ * errorType "None". The screen also needs isCorrect; the words read from
+ * kltn_db carry none, so this helper does not model it.
+ */
+export function passesStandard(word: Pick<DemoWord, "score" | "errorType">): boolean {
+  return scoreBand(word.score) === "pass" && word.errorType === "None";
+}
+
 /** A word as its chip shows it: without the sentence's closing punctuation. */
-export function chipText(word: DemoWord): string {
+export function chipText(word: Pick<DemoWord, "word" | "score">): string {
   return word.word.replace(/[.,!?;:]+$/, "");
 }
 
@@ -164,6 +178,6 @@ export function chipText(word: DemoWord): string {
  * What a chip's title and screen-reader text add, since the chip itself shows
  * no digits: the band and the score, as the speaking result fragment does.
  */
-export function chipBandLabel(word: DemoWord): string {
+export function chipBandLabel(word: Pick<DemoWord, "word" | "score">): string {
   return `${SCORE_BAND_LABEL[scoreBand(word.score)]} (${word.score}%)`;
 }

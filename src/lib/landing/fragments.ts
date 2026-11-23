@@ -11,11 +11,10 @@
  * No React and no I/O, so the tests run under the Node test runner.
  */
 import { resolveWritingPlaceholder } from "../writing/writingExperienceLogic.ts";
-import { scoreBand, type ScoreBand } from "./speakingDemo.ts";
+import { scoreBand, type ScoreBand, type WordError } from "./speakingDemo.ts";
 
 // ---- Nói: speaking submission 304 ----------------------------------------
 
-export type WordError = "None" | "Omission" | "Mispronunciation";
 export type SpeakingWord = { text: string; accuracy: number; errorType: WordError };
 
 /** The product's three score bands, plus an omitted word ("Bỏ sót"). */

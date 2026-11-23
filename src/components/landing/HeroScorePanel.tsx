@@ -1,7 +1,16 @@
-import { DEMO, SCORE_BAND_LABEL, chipBandLabel, chipText, scoreBand, type ScoreBand } from "@/lib/landing/speakingDemo";
+import {
+  DEMO,
+  SCORE_BAND_LABEL,
+  chipBandLabel,
+  chipText,
+  passesStandard,
+  scoreBand,
+  type ScoreBand,
+} from "@/lib/landing/speakingDemo";
 
 const OVERALL = String(DEMO.overall).replace(".", ",");
-const PASSED = DEMO.words.filter((w) => scoreBand(w.score) === "pass").length;
+/** "Đạt chuẩn" as the result screen counts it: 80 or more and errorType "None". */
+const PASSED = DEMO.words.filter(passesStandard).length;
 const PASS_LABEL = `${PASSED}/${DEMO.words.length} từ đạt chuẩn`;
 
 /**
