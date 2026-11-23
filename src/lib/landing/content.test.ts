@@ -43,9 +43,10 @@ function sourceFiles(dir: string, deep: boolean): string[] {
  * The landing's sources, tests excluded: the page with its title and meta
  * description, the section components, the coded fragments, and the copy and
  * data in src/lib/landing (content, faq, plans, fragments, speakingDemo).
- * displayText reads the source text, so it also sees
- * quoted text inside a comment (a comment that quotes a guarded word fails
- * here), and it does not see text that arrives at runtime: the plan
+ * displayText reads the source text, so it also scans comments: whatever a
+ * comment holds between two apostrophes or two backticks becomes a scanned
+ * string, and a guarded word there fails here with its file and line. It
+ * does not see text that arrives at runtime: the plan
  * descriptions GET /plans/catalog may send are not checked.
  */
 const LANDING_FILES = [

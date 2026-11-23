@@ -172,8 +172,9 @@ export const SCORE_BAND_LEGEND: Record<ScoreBand, string> = {
 /**
  * Whether a word counts as "Đạt chuẩn", as the result screen counts it
  * (src/app/(student)/speaking/[id]/page.tsx): a score of 80 or more and
- * errorType "None". The screen also needs isCorrect; the words read from
- * kltn_db carry none, so this helper does not model it.
+ * errorType "None". The screen also checks isCorrect, which DEMO does not
+ * store, so this helper does not model it. For submission 309 all 18 words
+ * have errorType "None" (kltn_db, read-only, 23/11).
  */
 export function passesStandard(word: Pick<DemoWord, "score" | "errorType">): boolean {
   return scoreBand(word.score) === "pass" && word.errorType === "None";

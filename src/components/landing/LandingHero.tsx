@@ -58,14 +58,15 @@ const GROUP = [
   // all the room the panel leaves there, growing to 160px from 1575px.
   "lg:[--cut-h:clamp(72px,16vw_-_92px,160px)]",
   // Left edge of the group in the loaf box: 133px at 1024, as far left as the button's corner stays on
-  // the orange, and 213px at 1920; the group's middle lands 22-54px right of the visible orange's.
+  // the orange, and 213px at 1920; the middle of the group lands 21-65px right of the middle of the
+  // visible orange (65px at 1280).
   "lg:[--col-l:calc(42px_+_8.93vw)]",
   // Width of the button and panel column: 37vw keeps a 31px right margin at 1024; 40rem (640px) is
   // where the 18 chips fit in three rows.
   "lg:[--col-w:min(37vw,40rem)]",
-  // From 1280 at least 500px (22px right margin at 1280), so the legend's first two items (461px at
-  // 20px) share a row up to 1351, where 37vw passes 500px: a third legend row would lift the button
-  // off the loaf's curve at 1280.
+  // From 1280 at least 500px (22px right margin at 1280), up to 1351 where 37vw passes 500px. At the
+  // old 474px the chips wrapped to a fourth row and the legend to a third, which lifted the button off
+  // the curve of the loaf at 1280; at 500px the legend keeps two rows with about 18px to spare.
   "xl:[--col-w:max(min(37vw,40rem),31.25rem)]",
   // Top of the highest cut, below the loaf's centre line. 1024-1279: 180px, since the panel is its
   // tallest (339px: four chip rows and a three-row legend) at every width there, and less lifts the
