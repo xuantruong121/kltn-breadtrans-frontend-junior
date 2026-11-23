@@ -1,5 +1,5 @@
 import { Check, Play } from "lucide-react";
-import { LISTENING_QUESTION, OPTION_LETTERS } from "@/lib/landing/fragments";
+import { LISTENING_QUESTION, OPTION_LETTERS, titleWithoutSetCode } from "@/lib/landing/fragments";
 import { TERMS } from "@/lib/ui/terms";
 import { FragmentCard, FragmentHeader } from "./FragmentCard";
 
@@ -12,7 +12,7 @@ export function FragNghe() {
   const q = LISTENING_QUESTION;
   return (
     <FragmentCard ui="listening-question" className="gap-4 p-6">
-      <FragmentHeader title={q.quiz} meta="Câu 1" lang="en" />
+      <FragmentHeader title={titleWithoutSetCode(q.quiz)} meta="Câu 1" lang="en" />
 
       <div className="flex items-center gap-3.5 rounded-[18px] bg-blue-50 py-2.5 pr-3.5 pl-2.5 dark:bg-blue-950/40">
         <span aria-hidden="true" className="grid size-11 flex-none place-items-center rounded-full bg-blue-600 text-white">

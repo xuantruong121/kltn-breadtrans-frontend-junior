@@ -52,7 +52,7 @@ export function FragToeic() {
 
       <div className="flex flex-wrap gap-2.5">
         <span className="inline-flex min-h-12 flex-[1_1_160px] items-center justify-center rounded-2xl bg-blue-600 px-3 text-[15px] font-bold text-white">
-          Làm cả đề
+          {exam.fullTest}
         </span>
         <span className="inline-flex min-h-12 flex-[1_1_160px] items-center justify-center rounded-2xl border-[1.5px] border-blue-200 bg-white px-3 text-[15px] font-bold text-blue-800 dark:border-blue-800 dark:bg-slate-900 dark:text-blue-300">
           {exam.pickParts}

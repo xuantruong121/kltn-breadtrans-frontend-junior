@@ -1,5 +1,6 @@
 import {
   SPEAKING_RESULT,
+  SPEAKING_SCORE_LABELS,
   WORD_LEGEND,
   bandOf,
   formatDecimal,
@@ -30,24 +31,21 @@ const LEGEND: Record<WordBand, { dot: string; text: string }> = {
 };
 
 const SUB_SCORES = [
-  { label: "Chính xác", value: SPEAKING_RESULT.accuracy },
-  { label: "Trôi chảy", value: SPEAKING_RESULT.fluency },
-  { label: "Đầy đủ", value: SPEAKING_RESULT.completeness },
+  { label: SPEAKING_SCORE_LABELS.accuracy, value: SPEAKING_RESULT.accuracy },
+  { label: SPEAKING_SCORE_LABELS.fluency, value: SPEAKING_RESULT.fluency },
+  { label: SPEAKING_SCORE_LABELS.completeness, value: SPEAKING_RESULT.completeness },
 ];
 
 export function FragNoi() {
   const r = SPEAKING_RESULT;
   return (
     <FragmentCard ui="speaking-result" className="gap-[18px] p-6">
-      <FragmentHeader title={r.title} meta={`${r.setLevel} · Kết quả chấm`} lang="en" />
+      <FragmentHeader title={r.title} meta="Kết quả chấm" lang="en" />
 
       <dl className="grid grid-cols-2 gap-2 @md:grid-cols-4">
         <div className="flex flex-col gap-0.5 rounded-[14px] bg-amber-50 px-3 py-2.5 dark:bg-amber-950/40">
-          <dt className="text-[13px] font-bold text-amber-800 dark:text-amber-300">Tổng</dt>
-          <dd className="text-[24px] font-bold leading-[1.1] text-amber-900 dark:text-amber-200">
-            {formatDecimal(r.overall)}
-            <span className="text-[14px] text-amber-800 dark:text-amber-300">/10</span>
-          </dd>
+          <dt className="text-[13px] font-bold text-amber-800 dark:text-amber-300">{SPEAKING_SCORE_LABELS.overall}</dt>
+          <dd className="text-[24px] font-bold leading-[1.1] text-amber-900 dark:text-amber-200">{formatDecimal(r.overall)}</dd>
         </div>
         {SUB_SCORES.map((s) => (
           <div key={s.label} className="flex flex-col gap-0.5 rounded-[14px] bg-slate-50 px-3 py-2.5 dark:bg-slate-800/60">

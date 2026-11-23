@@ -31,7 +31,8 @@ export function TilePet() {
   return (
     <FragmentCard ui="pet-card" className="gap-3.5 p-5">
       <div className="flex items-center gap-3.5">
-        <div className="grid size-28 flex-none place-items-center rounded-[20px] bg-orange-50 dark:bg-orange-950/40">
+        {/* Decorative: the component's own label reads the raw id "foxy"; the names are the text beside it. */}
+        <div aria-hidden="true" className="grid size-28 flex-none place-items-center rounded-[20px] bg-orange-50 dark:bg-orange-950/40">
           <CompanionPet2D speciesId={PET.speciesId} level={PET.level} className="size-full [&>div]:size-full" />
         </div>
         <div className="flex min-w-0 flex-col gap-1">

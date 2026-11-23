@@ -15,10 +15,12 @@ import {
   SHOP_ITEMS,
   SHOP_TYPE_LABELS,
   SPEAKING_RESULT,
+  SPEAKING_SCORE_LABELS,
   STREAK_RULES,
   TOEIC_EXAM,
   WEEK_DAYS,
   WORD_LEGEND,
+  WRITING_PLACEHOLDER,
   WRITING_PROMPT,
   bandOf,
   examMinutes,
@@ -28,10 +30,14 @@ import {
   rangeLabel,
   rankByPoints,
   sectionTotal,
+  titleWithoutSetCode,
   weekdayIndex,
   wordBandLabel,
   wordTitle,
+  writingCounter,
+  writingTarget,
 } from "./fragments.ts";
+import { resolveWritingPlaceholder } from "../writing/writingExperienceLogic.ts";
 
 const SRC = path.resolve(import.meta.dirname, "../..");
 
@@ -41,6 +47,7 @@ test("the speaking result is submission 304 with its scores", () => {
   assert.equal(SPEAKING_RESULT.submissionId, 304);
   assert.equal(SPEAKING_RESULT.exerciseId, 137);
   assert.equal(SPEAKING_RESULT.title, "Borrowing Books from the University Library");
+  // The set code is kept as stored; the landing never shows it (see the last test).
   assert.equal(SPEAKING_RESULT.setLevel, "A1");
   assert.equal(
     SPEAKING_RESULT.sentence,
@@ -51,6 +58,13 @@ test("the speaking result is submission 304 with its scores", () => {
   assert.equal(SPEAKING_RESULT.fluency, 94);
   assert.equal(SPEAKING_RESULT.completeness, 78);
   assert.equal(formatDecimal(SPEAKING_RESULT.overall), "7,8");
+  // The result screen's own labels (PronunciationReportCard.tsx).
+  assert.deepEqual(SPEAKING_SCORE_LABELS, {
+    overall: "Điểm / 10",
+    accuracy: "Độ chính xác",
+    fluency: "Độ trôi chảy",
+    completeness: "Độ hoàn thiện",
+  });
 });
 
 test("the speaking words are the 18 words of the sentence with their scores", () => {
@@ -93,6 +107,9 @@ test("every Nói word falls in its band: three omitted, open not passed, the res
   assert.equal(bandOf({ text: "x", accuracy: 60, errorType: "None" }), "fix");
   assert.equal(bandOf({ text: "x", accuracy: 59, errorType: "Mispronunciation" }), "fail");
   assert.equal(bandOf({ text: "x", accuracy: 95, errorType: "Omission" }), "omit");
+  // The screen's "Đạt chuẩn" also needs errorType "None" (and isCorrect, not in this data):
+  // every word of this submission scored 80 or more has errorType "None".
+  for (const w of SPEAKING_RESULT.words.filter((word) => word.accuracy >= 80)) assert.equal(w.errorType, "None", w.text);
 });
 
 test("the legend has the product's four items, and a chip title carries the band and the %", () => {
@@ -119,6 +136,7 @@ test("the legend has the product's four items, and a chip title carries the band
 test("the listening question is quiz 1, question 1, answer C", () => {
   assert.equal(LISTENING_QUESTION.quizId, 1);
   assert.equal(LISTENING_QUESTION.quiz, "Listening A2 — Everyday Communication");
+  assert.equal(titleWithoutSetCode(LISTENING_QUESTION.quiz), "Listening — Everyday Communication");
   assert.equal(LISTENING_QUESTION.spoken, "The dentist can see you at two thirty on Thursday afternoon.");
   assert.equal(LISTENING_QUESTION.question, "When is the appointment?");
   assert.deepEqual(LISTENING_QUESTION.options, [
@@ -134,6 +152,7 @@ test("the listening question is quiz 1, question 1, answer C", () => {
 test("the reading question is quiz 2, question 1, a DETAIL question with its explanation", () => {
   assert.equal(READING_QUESTION.quizId, 2);
   assert.equal(READING_QUESTION.quiz, "Reading A2 — Notices & Messages");
+  assert.equal(titleWithoutSetCode(READING_QUESTION.quiz), "Reading — Notices & Messages");
   assert.equal(
     READING_QUESTION.passage,
     "NOTICE: The library will close at 5 P.M. this Friday for electrical maintenance. It will reopen at 9 A.M. on Saturday.",
@@ -154,6 +173,7 @@ test("the reading question is quiz 2, question 1, a DETAIL question with its exp
 test("the writing prompt is quiz 4, an EMAIL of 100–130 words", () => {
   assert.equal(WRITING_PROMPT.quizId, 4);
   assert.equal(WRITING_PROMPT.quiz, "Writing B1 — Professional Email");
+  assert.equal(titleWithoutSetCode(WRITING_PROMPT.quiz), "Writing — Professional Email");
   assert.equal(WRITING_PROMPT.taskType, "EMAIL");
   assert.deepEqual(WRITING_PROMPT.wordRange, [100, 130]);
   assert.equal(
@@ -161,6 +181,18 @@ test("the writing prompt is quiz 4, an EMAIL of 100–130 words", () => {
     "Bạn đã đăng ký một workshop vào thứ Sáu nhưng không thể tham dự. Viết email 100–130 từ cho ban tổ chức để xin chuyển sang buổi thứ Hai. Nêu lý do ngắn gọn và yêu cầu xác nhận.",
   );
   assert.equal(rangeLabel(WRITING_PROMPT.wordRange), "100–130");
+  // The writing page's own counter, target line and EMAIL placeholder.
+  assert.equal(writingCounter(0, WRITING_PROMPT.wordRange), "0 / 130 từ");
+  assert.equal(writingTarget(WRITING_PROMPT.wordRange), "Mục tiêu 100–130 từ.");
+  assert.equal(WRITING_PLACEHOLDER, resolveWritingPlaceholder({ taskType: "EMAIL" }));
+  assert.equal(WRITING_PLACEHOLDER, "Dear Mr. Smith, I am writing to update you on our project status...");
+});
+
+test("a quiz title loses only its set code", () => {
+  assert.equal(titleWithoutSetCode("Listening C2 — Long Talks"), "Listening — Long Talks");
+  assert.equal(titleWithoutSetCode("B2 Reading"), "Reading");
+  assert.equal(titleWithoutSetCode("Borrowing Books from the University Library"), "Borrowing Books from the University Library");
+  assert.equal(titleWithoutSetCode("TOEIC 2 Skills: Listening & Reading — Đề luyện tập 01"), "TOEIC 2 Skills: Listening & Reading — Đề luyện tập 01");
 });
 
 // ---- Luyện đề TOEIC: exam 2 -----------------------------------------------
@@ -193,6 +225,7 @@ test("the TOEIC exam is exam 2: 200 questions in 120 minutes, and the parts sum 
   assert.equal(sectionTotal(TOEIC_EXAM, "reading"), 100);
   assert.ok(TOEIC_EXAM.source.includes("do BreadTrans biên soạn"));
   assert.equal(TOEIC_EXAM.pickParts, "Chọn Part muốn luyện");
+  assert.equal(TOEIC_EXAM.fullTest, "Làm Full Test");
 });
 
 // ---- Flashcard ------------------------------------------------------------
@@ -296,12 +329,18 @@ test("the leaderboard lists the three test accounts, ordered by points", () => {
 // ---- Every string -----------------------------------------------------------
 
 test("no fragment speaks of stakes, another certificate, an official score or a CEFR level", () => {
+  // What the fragments show: the stored set code is never shown, quiz titles go through titleWithoutSetCode.
+  const shown = <T extends { quiz: string }>(q: T) => ({ ...q, quiz: titleWithoutSetCode(q.quiz) });
   const strings = JSON.stringify([
-    SPEAKING_RESULT,
+    { ...SPEAKING_RESULT, setLevel: undefined },
+    SPEAKING_SCORE_LABELS,
     WORD_LEGEND,
-    LISTENING_QUESTION,
-    READING_QUESTION,
-    WRITING_PROMPT,
+    shown(LISTENING_QUESTION),
+    shown(READING_QUESTION),
+    shown(WRITING_PROMPT),
+    WRITING_PLACEHOLDER,
+    writingCounter(0, WRITING_PROMPT.wordRange),
+    writingTarget(WRITING_PROMPT.wordRange),
     TOEIC_EXAM,
     FLASHCARD,
     PET,
@@ -314,4 +353,15 @@ test("no fragment speaks of stakes, another certificate, an official score or a 
   assert.doesNotMatch(strings, /cược|cá độ|đặt cửa/i);
   assert.doesNotMatch(strings, /IELTS|VSTEP|TOEFL|Cambridge/i);
   assert.doesNotMatch(strings, /\bETS\b|CEFR|chứng chỉ|điểm thi/);
+  assert.doesNotMatch(strings, /\b[ABC][12]\b/, "no CEFR-like set code");
+
+  // And the fragment components show only that: no set code, no raw quiz title.
+  const dir = path.join(SRC, "components/landing/fragments");
+  for (const file of fs.readdirSync(dir)) {
+    const source = fs.readFileSync(path.join(dir, file), "utf8");
+    assert.doesNotMatch(source, /setLevel/, `${file} shows no set code`);
+    const titles = source.match(/\.quiz\b/g)?.length ?? 0;
+    const wrapped = source.match(/titleWithoutSetCode\(\w+\.quiz\)/g)?.length ?? 0;
+    assert.equal(wrapped, titles, `${file}: every quiz title goes through titleWithoutSetCode`);
+  }
 });

@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { OPTION_LETTERS, QUESTION_TYPE_LABELS, READING_QUESTION } from "@/lib/landing/fragments";
+import { OPTION_LETTERS, QUESTION_TYPE_LABELS, READING_QUESTION, titleWithoutSetCode } from "@/lib/landing/fragments";
 import { FragmentCard, FragmentHeader } from "./FragmentCard";
 
 /** "NOTICE: The library…" shows its lead word in bold, as the passage does in the app. */
@@ -15,7 +15,7 @@ export function FragDoc() {
   const letter = OPTION_LETTERS[q.correctIndex];
   return (
     <FragmentCard ui="reading-question" className="gap-3.5 p-6">
-      <FragmentHeader title={q.quiz} meta={`Câu 1 · ${QUESTION_TYPE_LABELS[q.questionType]}`} lang="en" />
+      <FragmentHeader title={titleWithoutSetCode(q.quiz)} meta={`Câu 1 · ${QUESTION_TYPE_LABELS[q.questionType]}`} lang="en" />
 
       <p lang="en" className="rounded-2xl bg-slate-50 px-4 py-3.5 text-[15px] font-semibold leading-[1.55] text-slate-700 dark:bg-slate-800/60 dark:text-slate-200">
         {lead ? <strong className="font-bold text-slate-800 dark:text-slate-100">{lead}</strong> : null} {rest}

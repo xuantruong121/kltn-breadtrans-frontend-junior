@@ -10,6 +10,7 @@
  *
  * No React and no I/O, so the tests run under the Node test runner.
  */
+import { resolveWritingPlaceholder } from "../writing/writingExperienceLogic.ts";
 import { scoreBand, type ScoreBand } from "./speakingDemo.ts";
 
 // ---- Nói: speaking submission 304 ----------------------------------------
@@ -20,7 +21,11 @@ export type SpeakingWord = { text: string; accuracy: number; errorType: WordErro
 /** The product's three score bands, plus an omitted word ("Bỏ sót"). */
 export type WordBand = ScoreBand | "omit";
 
-/** Submission 304 (a test account) of exercise 137, from the A1 set "Borrowing Books from the University Library". */
+/**
+ * Submission 304 (a test account) of exercise 137, from the set "Borrowing
+ * Books from the University Library". `setLevel` is the set's code as stored;
+ * the landing never shows it (no CEFR-like code on the page).
+ */
 export const SPEAKING_RESULT = {
   submissionId: 304,
   exerciseId: 137,
@@ -54,11 +59,25 @@ export const SPEAKING_RESULT = {
   ] as SpeakingWord[],
 };
 
-/** The band of a word as the result screen colours it: an omitted word is "Bỏ sót", the rest go by scoreBand. */
+/**
+ * The band of a word: an omitted word is "Bỏ sót", the rest go by scoreBand.
+ * The result screen's "Đạt chuẩn" also needs errorType "None" and isCorrect;
+ * the words read from kltn_db carry no isCorrect, so this helper does not
+ * model it. fragments.test.ts checks that every word of submission 304 at 80
+ * or more has errorType "None", so the two agree on this data.
+ */
 export function bandOf(word: SpeakingWord): WordBand {
   if (word.errorType === "Omission") return "omit";
   return scoreBand(word.accuracy);
 }
+
+/** The score labels of the result screen (src/components/speaking/PronunciationReportCard.tsx). */
+export const SPEAKING_SCORE_LABELS = {
+  overall: "Điểm / 10",
+  accuracy: "Độ chính xác",
+  fluency: "Độ trôi chảy",
+  completeness: "Độ hoàn thiện",
+};
 
 const BAND_NAMES: Record<WordBand, string> = {
   pass: "Đạt chuẩn",
@@ -89,6 +108,15 @@ export function wordTitle(word: SpeakingWord): string {
 // ---- Nghe, Đọc, Viết -----------------------------------------------------
 
 export const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
+
+/**
+ * A quiz title as the landing shows it: without the set code (A1-C2) the
+ * stored title carries, so no code reads as a CEFR level.
+ * "Listening A2 — Everyday Communication" becomes "Listening — Everyday Communication".
+ */
+export function titleWithoutSetCode(title: string): string {
+  return title.replace(/\s*\b[ABC][12]\b/g, "").replace(/\s{2,}/g, " ").trim();
+}
 
 /** Quiz 1, first question, as the learner sees it after answering. */
 export const LISTENING_QUESTION = {
@@ -126,6 +154,19 @@ export const WRITING_PROMPT = {
     "Bạn đã đăng ký một workshop vào thứ Sáu nhưng không thể tham dự. Viết email 100–130 từ cho ban tổ chức để xin chuyển sang buổi thứ Hai. Nêu lý do ngắn gọn và yêu cầu xác nhận.",
 };
 
+/** The answer box's placeholder, from the writing page's own helper for an EMAIL task. */
+export const WRITING_PLACEHOLDER = resolveWritingPlaceholder({ taskType: WRITING_PROMPT.taskType });
+
+/** The writing page's word counter: "0 / 130 từ" (src/app/(student)/writing/[id]/page.tsx). */
+export function writingCounter(words: number, [, high]: [number, number]): string {
+  return `${words} / ${high} từ`;
+}
+
+/** The writing page's target line under the answer box: "Mục tiêu 100–130 từ." */
+export function writingTarget(range: [number, number]): string {
+  return `Mục tiêu ${rangeLabel(range)} từ.`;
+}
+
 /** "100–130", with the en dash the writing page uses. */
 export function rangeLabel([low, high]: [number, number]): string {
   return `${low}–${high}`;
@@ -144,6 +185,8 @@ export const TOEIC_EXAM = {
   source: "Theo cấu trúc TOEIC, do BreadTrans biên soạn",
   totalQuestions: 200,
   durationSeconds: 7200,
+  /** The two ways to take it, in the app's words (src/modules/toeic/ToeicLrExamDetail.tsx). */
+  fullTest: "Làm Full Test",
   pickParts: "Chọn Part muốn luyện",
   parts: [
     { part: 1, section: "listening", questions: 6 },
