@@ -192,7 +192,9 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
         </div>
       </div>
 
-      <div className="relative mt-2 h-[78vw] sm:mt-10 sm:h-[62vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto">
+      {/* Under 1024px this box crops the loaf at its bottom edge, so the loaf does not
+          run on under the controls that follow it. */}
+      <div className="relative mt-2 h-[78vw] overflow-clip sm:mt-10 sm:h-[62vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto lg:overflow-visible">
         <motion.figure
           className={LOAF_BOX}
           data-reveal
