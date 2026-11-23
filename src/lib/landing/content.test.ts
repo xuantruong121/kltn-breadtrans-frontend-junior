@@ -1,19 +1,65 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
+import { displayText } from "../ui/displayText.ts";
 import { FAQ } from "./faq.ts";
-import {
-  HABITS,
-  HABITS_LEAD,
-  HABITS_TITLE,
-  PATH,
-  PATH_TITLE,
-  SKILLS,
-  SKILLS_TITLE,
-  stepIndex,
-} from "./content.ts";
+import { LISTENING_QUESTION, READING_QUESTION, SPEAKING_RESULT, WRITING_PROMPT } from "./fragments.ts";
+import { HABITS, HABITS_LEAD, HABITS_TITLE, PATH, SKILLS, stepIndex } from "./content.ts";
 
-const CEFR_NEGATION = "không phải chứng chỉ hay cấp độ CEFR";
-const OVERCLAIM = /ETS|CEFR [A-C][12]|học viên đã|\d+\s*(nghìn|k)\+? học viên/i;
+/** Step one's caveat and the FAQ's disclaimer: the only sentences on the landing that may name CEFR or ETS. */
+const CEFR_NEGATION = "Kết quả là ước lượng nội bộ để gợi ý bài luyện, không phải chứng chỉ hay cấp độ CEFR.";
+const ETS_DISCLAIMER =
+  "BreadTrans không liên kết với ETS và không cấp chứng chỉ; điểm hiển thị chỉ dùng để theo dõi tiến bộ khi luyện tập.";
+const OVERCLAIM = /\bETS\b|CEFR|học viên đã|\d+\s*(nghìn|k)\+? học viên/i;
+
+/**
+ * The stored values that carry a CEFR-like set code. The fragments never show
+ * them raw: setLevel is not rendered and every quiz title goes through
+ * titleWithoutSetCode (fragments.test.ts checks both in the components).
+ */
+const STORED_SET_CODES = [
+  "A1",
+  "Listening A2 — Everyday Communication",
+  "Reading A2 — Notices & Messages",
+  "Writing B1 — Professional Email",
+];
+
+// ---- What the guards scan ---------------------------------------------------
+
+const SRC = path.resolve(import.meta.dirname, "../..");
+const SCOPE = "every string literal and JSX text in src/components/landing/** and src/lib/landing/*.ts";
+
+function sourceFiles(dir: string, deep: boolean): string[] {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return deep ? sourceFiles(full, deep) : [];
+    return /\.(ts|tsx)$/.test(entry.name) && !/\.test\.ts$/.test(entry.name) ? [full] : [];
+  });
+}
+
+/**
+ * The landing's sources, tests excluded: the section components, the coded
+ * fragments, and the copy and data in src/lib/landing (content, faq, plans,
+ * fragments, speakingDemo). displayText reads the source text, so it also sees
+ * quoted text inside a comment (a comment that quotes a guarded word fails
+ * here), and it does not see text that arrives at runtime: the plan
+ * descriptions GET /plans/catalog may send are not checked.
+ */
+const LANDING_FILES = [
+  ...sourceFiles(path.join(SRC, "components/landing"), true),
+  ...sourceFiles(path.join(SRC, "lib/landing"), false),
+].map((file) => ({ rel: path.relative(SRC, file).split(path.sep).join("/"), text: fs.readFileSync(file, "utf8") }));
+
+const SHOWN = LANDING_FILES.flatMap((f) => displayText(f.text).map((s) => ({ where: `${f.rel}:${s.line}`, value: s.value })));
+
+/** `value` with every exact copy of the `allowed` sentences taken out. */
+const without = (value: string, allowed: string[]) => allowed.reduce((s, sentence) => s.split(sentence).join(" "), value);
+
+/** Every scanned string matching `pattern` once the exact `allowed` sentences are taken out. */
+function offenders(pattern: RegExp, allowed: string[] = []): string[] {
+  return SHOWN.filter(({ value }) => pattern.test(without(value, allowed))).map(({ where, value }) => `${where} ${value.slice(0, 100)}`);
+}
 
 test("SKILLS lists the six parts in order, Nói first", () => {
   assert.deepEqual(
@@ -71,6 +117,7 @@ test("HABITS has the five tiles of owner feedback #4, with their names and facts
   );
   const keys = HABITS.map((h) => h.key);
   assert.equal(new Set(keys).size, keys.length);
+  assert.equal(HABITS_TITLE, "Lý do quay lại mỗi ngày");
 });
 
 test("every item has a unique key and words", () => {
@@ -83,42 +130,67 @@ test("every item has a unique key and words", () => {
   }
 });
 
-test("no word on the page speaks of stakes or betting", () => {
-  const strings = [
-    HABITS_TITLE,
-    HABITS_LEAD,
-    ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
-    ...FAQ.flatMap((entry) => [entry.q, entry.a]),
-  ];
-  for (const s of strings) assert.doesNotMatch(s, /cược|cá độ|đặt cửa/i, s);
-  assert.equal(HABITS_TITLE, "Lý do quay lại mỗi ngày");
+test(`the guards below scan ${SCOPE}`, () => {
+  const files = LANDING_FILES.map((f) => f.rel);
+  for (const expected of [
+    "components/landing/LandingHero.tsx",
+    "components/landing/HeroScorePanel.tsx",
+    "components/landing/PlanPicker.tsx",
+    "components/landing/ActionTile.tsx",
+    "components/landing/FaqTiles.tsx",
+    "components/landing/LoafMark.tsx",
+    "components/landing/fragments/FragNoi.tsx",
+    "components/landing/fragments/TileArena.tsx",
+    "lib/landing/content.ts",
+    "lib/landing/faq.ts",
+    "lib/landing/plans.ts",
+    "lib/landing/fragments.ts",
+    "lib/landing/speakingDemo.ts",
+  ])
+    assert.ok(files.includes(expected), `${expected} is scanned`);
+  assert.ok(!files.some((f) => f.endsWith(".test.ts")), "tests are not scanned");
+  // The scan reaches the JSX text of the sections and the strings of the data files.
+  const values = SHOWN.map((s) => s.value);
+  assert.ok(values.some((v) => v.includes("Bắt đầu học miễn phí")), "LandingHero's JSX text");
+  assert.ok(values.some((v) => v.includes("Gói học và giá")), "PlanPicker's JSX text");
+  assert.ok(values.some((v) => v.includes("AI chấm 30 bài mỗi ngày")), "plans.ts summaries");
+  // Each allowed sentence is on the page once, so the allow-list cannot go stale unnoticed.
+  assert.equal(values.filter((v) => v.includes(CEFR_NEGATION)).length, 1, "the CEFR negation, once");
+  assert.equal(values.filter((v) => v.includes(ETS_DISCLAIMER)).length, 1, "the ETS disclaimer, once");
+  assert.ok(PATH[0].fact.includes(CEFR_NEGATION));
+  assert.ok(FAQ.some((entry) => entry.a.includes(ETS_DISCLAIMER)));
 });
 
-test("no copy claims more than the product, apart from the CEFR negation of step one", () => {
-  const strings = [
-    SKILLS_TITLE,
-    HABITS_TITLE,
-    HABITS_LEAD,
-    PATH_TITLE,
-    ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
-  ];
-  const checked = strings.map((s) => (s === PATH[0].fact ? s.replace(CEFR_NEGATION, "") : s));
-  for (const s of checked) {
-    assert.doesNotMatch(s, OVERCLAIM);
-    assert.doesNotMatch(s, /CEFR/, "CEFR appears only in the negation of step one");
-  }
+test(`no word of stakes or betting (cược, cá độ, đặt cửa) in ${SCOPE}`, () => {
+  assert.deepEqual(offenders(/cược|cá độ|đặt cửa/i), []);
 });
 
-test("the landing shows TOEIC only: no other certificate in words", () => {
-  const OTHER_CERTIFICATES = /IELTS|VSTEP|TOEFL|Cambridge|FCE|CAE/i;
-  const strings = [
-    SKILLS_TITLE,
-    HABITS_TITLE,
-    HABITS_LEAD,
-    PATH_TITLE,
-    ...[...SKILLS, ...HABITS, ...PATH].flatMap((item) => [item.name, item.fact]),
-  ];
-  for (const s of strings) assert.doesNotMatch(s, OTHER_CERTIFICATES);
+test(`TOEIC only: no other certificate (IELTS, VSTEP, TOEFL, Cambridge, FCE, CAE) in ${SCOPE}`, () => {
+  assert.deepEqual(offenders(/IELTS|VSTEP|TOEFL|Cambridge|FCE|CAE/i), []);
+});
+
+test(`no ETS, CEFR or learner-count claim in ${SCOPE}, apart from the FAQ's ETS disclaimer and step one's CEFR negation`, () => {
+  const allowed = [CEFR_NEGATION, ETS_DISCLAIMER];
+  assert.deepEqual(offenders(OVERCLAIM, allowed), []);
+  // Only the exact sentences are allowed: change a word and the same text fails.
+  assert.doesNotMatch(without(`${CEFR_NEGATION} ${ETS_DISCLAIMER}`, allowed), OVERCLAIM);
+  assert.match(without(CEFR_NEGATION.replace("không phải", "là"), allowed), OVERCLAIM);
+  assert.match(without(ETS_DISCLAIMER.replace("không liên kết", "liên kết"), allowed), OVERCLAIM);
+});
+
+test(`no CEFR-like set code (A1-C2) in ${SCOPE}, apart from the four stored values the fragments never show raw`, () => {
+  assert.deepEqual(
+    [SPEAKING_RESULT.setLevel, LISTENING_QUESTION.quiz, READING_QUESTION.quiz, WRITING_PROMPT.quiz],
+    STORED_SET_CODES,
+  );
+  // Allowed only as those exact literals in fragments.ts, where the data is kept.
+  const isStored = ({ where, value }: { where: string; value: string }) =>
+    where.startsWith("lib/landing/fragments.ts:") && STORED_SET_CODES.includes(value);
+  assert.equal(SHOWN.filter(isStored).length, STORED_SET_CODES.length, "each stored value is scanned, once");
+  assert.deepEqual(
+    SHOWN.filter((s) => /\b[ABC][12]\b/.test(s.value) && !isStored(s)).map(({ where, value }) => `${where} ${value.slice(0, 100)}`),
+    [],
+  );
 });
 
 test("arrow keys move through the list and wrap, Home and End jump", () => {

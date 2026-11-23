@@ -111,8 +111,9 @@ export const OPTION_LETTERS = ["A", "B", "C", "D"] as const;
 
 /**
  * A quiz title as the landing shows it: without the set code (A1-C2) the
- * stored title carries, so no code reads as a CEFR level.
- * "Listening A2 — Everyday Communication" becomes "Listening — Everyday Communication".
+ * stored title carries, so no code reads as a CEFR level: the stored title
+ * Listening A2 — Everyday Communication becomes Listening — Everyday Communication.
+ * (No quote marks here: content.test.ts reads quoted text, comments included.)
  */
 export function titleWithoutSetCode(title: string): string {
   return title.replace(/\s*\b[ABC][12]\b/g, "").replace(/\s{2,}/g, " ").trim();
