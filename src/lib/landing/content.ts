@@ -62,13 +62,16 @@ export const SKILLS: LandingItem<SkillKey>[] = [
 export const HABITS_TITLE = "Lý do quay lại mỗi ngày";
 
 export const HABITS_LEAD =
-  "Mỗi bài luyện xong đều được thưởng Bánh Mì. Dùng Bánh Mì để chăm thú ảo, đổi huy hiệu trong Cửa hàng và thử sức với bạn học ở Đấu trường.";
+  "Mỗi bài luyện xong đều được thưởng Bánh Mì. Dùng Bánh Mì để chăm thú ảo và đổi vật phẩm trong Cửa hàng.";
+
+/** The five habit tiles; each has a coded fragment (src/components/landing/fragments). */
+export type HabitKey = "habit-thu-ao" | "habit-banh-mi" | "habit-chuoi-ngay" | "habit-dau-truong" | "habit-xep-hang";
 
 /**
  * Five tiles in this order; the second is the double-width tile. No caption
- * and no crop speaks of stakes or betting: the arena tile shows the duel itself.
+ * and no tile speaks of stakes or betting: the arena tile shows the duel itself.
  */
-export const HABITS: LandingItem[] = [
+export const HABITS: LandingItem<HabitKey>[] = [
   {
     key: "habit-thu-ao",
     name: "Thú ảo",
@@ -76,7 +79,7 @@ export const HABITS: LandingItem[] = [
   },
   {
     key: "habit-banh-mi",
-    name: "Bánh Mì",
+    name: "Bánh Mì và Cửa hàng",
     fact: "Đổi Bánh Mì lấy huy hiệu, khung avatar hay khiên giữ chuỗi trong Cửa hàng.",
   },
   {
@@ -87,12 +90,12 @@ export const HABITS: LandingItem[] = [
   {
     key: "habit-dau-truong",
     name: "Đấu trường",
-    fact: "Song đấu 10 câu từ vựng với một bạn học; ai trả lời đúng nhiều và nhanh hơn thì thắng trận.",
+    fact: "Song đấu 10 câu từ vựng với một học viên khác, 12 giây mỗi câu.",
   },
   {
     key: "habit-xep-hang",
     name: "Bảng xếp hạng",
-    fact: "Đại sảnh danh vọng ghi tên người nhiều XP nhất và người giữ chuỗi dài nhất.",
+    fact: "Bảng xếp hạng theo điểm tích luỹ và hạng thành viên.",
   },
 ];
 

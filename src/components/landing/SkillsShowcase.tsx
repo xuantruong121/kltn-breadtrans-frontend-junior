@@ -170,7 +170,7 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
 
           <motion.p
             aria-live="polite"
-            className="min-h-[4.8em] max-w-[40rem] text-[17px] leading-[1.6] text-(--muted) lg:min-h-[3.2em] lg:pl-[14%] lg:text-[18px]"
+            className="min-h-[4.8em] max-w-[40rem] text-[17px] leading-[1.6] text-(--muted) lg:min-h-[3.2em] lg:max-w-[46rem] lg:pl-[14%] lg:text-[18px]"
             {...revealProps(reduced, 3)}
           >
             {SKILLS[active].fact}

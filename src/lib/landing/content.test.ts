@@ -59,14 +59,23 @@ test("PATH has four steps in order and keeps the old roadmap's caveats", () => {
   assert.ok(PATH[3].fact.includes("không phải điểm thi chính thức"));
 });
 
-test("HABITS has five or six tiles and shows the /market screen once", () => {
-  assert.ok(HABITS.length >= 5 && HABITS.length <= 6, `${HABITS.length} tiles`);
-  for (const h of HABITS) assert.match(h.key, /^habit-/);
+test("HABITS has the five tiles of owner feedback #4, with their names and facts", () => {
+  assert.equal(
+    HABITS_LEAD,
+    "Mỗi bài luyện xong đều được thưởng Bánh Mì. Dùng Bánh Mì để chăm thú ảo và đổi vật phẩm trong Cửa hàng.",
+  );
+  assert.deepEqual(
+    HABITS.map((h) => [h.name, h.fact]),
+    [
+      ["Thú ảo", "Cho thú ảo ăn bằng Bánh Mì và chăm nó mỗi ngày."],
+      ["Bánh Mì và Cửa hàng", "Đổi Bánh Mì lấy huy hiệu, khung avatar hay khiên giữ chuỗi trong Cửa hàng."],
+      ["Chuỗi ngày học", "Học mỗi ngày để giữ chuỗi; khiên giữ chuỗi đỡ cho một ngày lỡ học."],
+      ["Đấu trường", "Song đấu 10 câu từ vựng với một học viên khác, 12 giây mỗi câu."],
+      ["Bảng xếp hạng", "Bảng xếp hạng theo điểm tích luỹ và hạng thành viên."],
+    ],
+  );
   const keys = HABITS.map((h) => h.key);
   assert.equal(new Set(keys).size, keys.length);
-  const names = HABITS.map((h) => h.name);
-  assert.ok(names.includes("Bánh Mì"));
-  assert.ok(names.includes("Thú ảo"));
 });
 
 test("every key is a landing image and every item has words", () => {
