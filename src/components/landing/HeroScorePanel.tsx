@@ -63,8 +63,9 @@ type HeroScorePanelProps = {
  */
 export function HeroScorePanel({ runOfWord, failed, status, reading, className = "" }: HeroScorePanelProps) {
   // Sizes on the page's steps: 20px (1.25rem), the play button's step from 1024px, for the
-  // label, the pass count, the chips, the legend and the status; 28px (1.75rem), the
-  // skills names' step from 1024px, for the score.
+  // label, the pass count, the chips, the legend and the status. The score takes the section
+  // step under 1024px (32px on a phone, as the section titles) and from 1024px 28px (1.75rem),
+  // the skills names' step there.
   // Spacing scaled up with them from Task 8's 12px panel: 16px sides, 14px top and
   // bottom, 12px between the rows.
   return (
@@ -72,7 +73,7 @@ export function HeroScorePanel({ runOfWord, failed, status, reading, className =
       <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
         <p className="leading-none">
           <span className="block text-[length:1.25rem] font-medium leading-tight">Điểm tổng</span>
-          <strong className="landing-display mt-1 block text-inherit text-[length:1.75rem]">{OVERALL}/10</strong>
+          <strong className="landing-display mt-1 block text-inherit text-(length:--type-section) lg:text-[length:1.75rem]">{OVERALL}/10</strong>
         </p>
         <p className="text-[length:1.25rem] leading-tight font-medium">{PASS_LABEL}</p>
       </div>
