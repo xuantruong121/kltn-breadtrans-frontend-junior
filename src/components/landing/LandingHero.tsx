@@ -67,11 +67,13 @@ const GROUP = [
   // 20px) share a row up to 1351, where 37vw passes 500px: a third legend row would lift the button
   // off the loaf's curve at 1280.
   "xl:[--col-w:max(min(37vw,40rem),31.25rem)]",
-  // Top of the highest cut, below the loaf's centre line. 1024-1279: 175px down to 130px, where the
-  // panel is tallest and the button's top-left corner meets the loaf's curve. From 1280, where the
-  // chips fit in fewer rows: 130px down to 34px from 1600px, so the group's middle sits on the line.
-  "lg:[--seam:clamp(130px,355px_-_17.6vw,175px)]",
-  "xl:[--seam:clamp(34px,530px_-_31.25vw,130px)]",
+  // Top of the highest cut, below the loaf's centre line. 1024-1279: 180px, since the panel is its
+  // tallest (339px: four chip rows and a three-row legend) at every width there, and less lifts the
+  // button's top-left corner off the loaf's curve (measured: 1/84 ring points off at 1065 and 1152
+  // with 175px). From 1280, where the panel is 272px: 130px down to 50px from 1536px, so the group's
+  // middle sits on the line and its top stays on the orange in a 650px-tall window at 1920.
+  "lg:[--seam:180px]",
+  "xl:[--seam:clamp(50px,530px_-_31.25vw,130px)]",
 ].join(" ");
 
 // String.raw keeps `\_` (an escaped underscore for Tailwind) in the runtime
