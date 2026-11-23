@@ -51,6 +51,10 @@ const PHONE_CUTS =
  * app card on it, holding a coded fragment of the chosen part with real data.
  * The fact sentence under the stage says what that fragment shows.
  *
+ * Keyboard: as in PlanPicker, every name is its own Tab stop with
+ * aria-pressed, so a keyboard user meets all six; Enter and Space select.
+ * The arrow keys, Home and End also move the choice and the focus.
+ *
  * Desktop: the names run down the left; the card sits centred on the loaf.
  * Under lg: the names wrap into pills; a loaf band sits behind the top of the
  * card. All six fragments stay in the card's grid cell, so switching fades
@@ -134,7 +138,6 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                     }}
                     type="button"
                     aria-pressed={on}
-                    tabIndex={on ? 0 : -1}
                     onClick={() => setActive(index)}
                     onKeyDown={(event) => onNameKey(event, index)}
                     className={`flex min-h-11 cursor-pointer items-center whitespace-nowrap rounded-full px-4 text-(length:--type-small) font-semibold leading-tight transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.98] lg:min-h-14 lg:gap-[18px] lg:rounded-none lg:bg-transparent lg:px-0 lg:text-left lg:text-[28px] lg:tracking-[-0.01em] ${
