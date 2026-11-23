@@ -77,30 +77,54 @@ const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
  *   the first screen.
  * - 640-1023: the same, at 116vw.
  * - 1024 and up: the loaf enters from the right at 47vw, centred on the
- *   section's height; the six cuts sit on its visible left half, made shorter
- *   and moved down (translate on each cut) so the controls ride on the band
- *   above them. Checked from 1024x768 to 1920x1080: the controls stay on the
- *   orange and clear of the cuts. The Loaf internals are reached by class (`landing-loaf__…`),
- * the only way to size them without editing Loaf.tsx or landing.css.
+ *   section's height. The controls sit straight above the six cuts, one group
+ *   in the middle of the visible orange (owner feedback #5). The text is in px
+ *   and the loaf in vw, so GROUP places the group with px and vw together.
+ *   Checked at 1024x768, 1280x800, 1366x768, 1440x900, 1536x864 and
+ *   1920x1080/950: the controls stay on the orange, every cut stays on the
+ *   loaf and every word inside its cut. The Loaf internals are reached by
+ *   class (`landing-loaf__…`), the only way to size them without editing
+ *   Loaf.tsx or landing.css.
  */
 const LOAF_BOX =
   "absolute top-0 m-0 left-[-15vw] w-[130vw] h-[102vw] " +
   "sm:left-[-8vw] sm:w-[116vw] sm:h-[76vw] " +
-  "lg:left-[47vw] lg:top-[calc(50%_-_29vw)] lg:w-[100vw] lg:h-[58vw]";
+  // Taller than 58vw only where the section is (1024x768: 688px), up to 68vw: the
+  // group needs that height at 1024, where its controls wrap to the most lines.
+  "lg:left-[47vw] lg:top-[calc(50%_-_clamp(29vw,50%,34vw))] lg:w-[100vw] lg:h-[clamp(58vw,100%,68vw)]";
+
+/** From 1024px: the four values that place the controls and the cut row as one group. */
+const GROUP = [
+  // Cut height: 196px holds the longest run ("Friday from eight") at 21px with 5px to spare.
+  "lg:[--cut-h:clamp(196px,14vw,240px)]",
+  // Left edge of the group in the loaf box: 184px at 1024, 261px at 1920, the middle of the visible orange.
+  "lg:[--col-l:calc(96px_+_8.6vw)]",
+  // Width of the controls column; the cut tops span the same width under it.
+  "lg:[--col-w:min(31vw,34rem)]",
+  // Top of the highest cut against the loaf's centre line: 42px below at 1024 (the controls are
+  // tallest there), 61px above at 1920 (the cut row is the taller half), so the group stays centred.
+  "lg:[--seam:clamp(-61px,160px_-_11.5vw,42px)]",
+].join(" ");
 
 // String.raw keeps `\_` (an escaped underscore for Tailwind) in the runtime
 // class too, so the class in the DOM matches the one Tailwind generated.
 // Cut row: padding of `.landing-loaf__cuts` (% of the loaf width); each cut's
 // width (% of the row), height (% of the loaf) and shift down (% of the cut).
+// From 1024px the row spans the controls column, each cut's top 0.22 of its height
+// (tan 24deg / 2, the lean) right of its box, and the cut keeps a 5.2:1 shape.
+// translate-y 50% puts the cut's top on the loaf's centre line, then --seam moves it.
 const LOAF_SHAPE = String.raw`h-full aspect-auto
   [&_.landing-loaf\_\_cuts]:px-[17%]
-  lg:[&_.landing-loaf\_\_cuts]:pl-[10%] lg:[&_.landing-loaf\_\_cuts]:pr-[50%]
+  lg:[&_.landing-loaf\_\_cuts]:justify-between
+  lg:[&_.landing-loaf\_\_cuts]:pl-[calc(var(--col-l)_-_var(--cut-h)_*_0.22)]
+  lg:[&_.landing-loaf\_\_cuts]:pr-[calc(100%_-_var(--col-l)_-_var(--col-w)_+_var(--cut-h)_*_0.22)]
   [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[25%]
   sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[38%] sm:[&_.landing-loaf\_\_cut]:translate-y-[30%]
-  lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[32%] lg:[&_.landing-loaf\_\_cut]:translate-y-[64%]`;
+  lg:[&_.landing-loaf\_\_cut]:w-[calc(var(--cut-h)_/_5.2)] lg:[&_.landing-loaf\_\_cut]:h-(--cut-h)
+  lg:[&_.landing-loaf\_\_cut]:translate-y-[calc(50%_+_var(--seam))]`;
 
-/** From 1024px every control rides on the loaf. */
-const CONTROLS = "absolute max-lg:hidden lg:left-[19%] lg:w-[32%] lg:bottom-[49%]";
+/** From 1024px every control rides on the loaf, its bottom 12px above the highest cut. */
+const CONTROLS = "absolute max-lg:hidden lg:left-(--col-l) lg:w-(--col-w) lg:bottom-[calc(50%_-_var(--seam)_+_12px)]";
 
 /** Under 1024px only the play button and the overall score ride on the loaf, on its upper band. */
 const PLAY_ON_LOAF = "absolute lg:hidden left-[20.8%] top-[20%] sm:left-[17.2%] sm:top-[22%]";
@@ -200,7 +224,7 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
           run on under the score panel that follows it. */}
       <div className="relative mt-2 h-[84vw] overflow-clip sm:mt-10 sm:h-[70vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto lg:overflow-visible">
         <motion.figure
-          className={LOAF_BOX}
+          className={`${LOAF_BOX} ${GROUP}`}
           data-reveal
           initial={reduced ? false : { opacity: 0, x: 56 }}
           animate={{ opacity: 1, x: 0 }}
@@ -254,22 +278,24 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
  * that. The copy not in use is display: none, so a screen reader meets one.
  */
 function PlayRow({ playing, onToggle }: { playing: boolean; onToggle: () => void }) {
+  // From 640px the row reads at the body step (18px), with a 48px button and an 18px icon to match;
+  // under 640 it stays at 15px, where the larger score would touch the sixth cut at 360px.
   return (
     <div className="flex items-center gap-x-4">
       <button
         type="button"
         onClick={onToggle}
-        className="landing-small inline-flex min-h-11 flex-none items-center gap-2 rounded-full bg-(--on-lit) px-5 font-bold text-(--on-loaf) transition-[background-color,scale] duration-150 ease-out hover:bg-(--crust) focus-visible:outline-(--on-lit) active:scale-[0.97]"
+        className="landing-small inline-flex min-h-11 flex-none items-center gap-2 rounded-full bg-(--on-lit) px-5 font-bold text-(--on-loaf) transition-[background-color,scale] duration-150 ease-out hover:bg-(--crust) focus-visible:outline-(--on-lit) active:scale-[0.97] sm:min-h-12 sm:px-6 sm:text-(length:--type-body)"
       >
         {playing ? (
-          <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
+          <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" className="sm:size-[18px]" />
         ) : (
-          <Play aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
+          <Play aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" className="sm:size-[18px]" />
         )}
         {playing ? "Dừng" : "Nghe câu mẫu"}
       </button>
       <p className="leading-tight">
-        <span className="landing-small block">Điểm tổng</span>
+        <span className="landing-small block sm:text-(length:--type-body) sm:leading-tight">Điểm tổng</span>
         <strong className="landing-display block text-inherit text-(length:--type-lead)">{OVERALL}/10</strong>
       </p>
     </div>
@@ -295,16 +321,17 @@ function ScorePanel({ failed, status, chips, resting, className = "" }: ScorePan
   return (
     <>
       {/* A white panel: the chips and the legend keep the speaking screen's own colours,
-          which do not read on orange. */}
-      <div className={`rounded-2xl bg-white px-3 py-2.5 text-[#1c1917] ${className}`}>
-        <p className="landing-small font-medium">{resting ? REST_LABEL : "Cụm đang đọc:"}</p>
+          which do not read on orange. Its text is at the body step (18px) at every width;
+          from 1024px it is as wide as its longest line, so it does not run past the cut row. */}
+      <div className={`rounded-2xl bg-white px-3 py-2.5 text-[#1c1917] lg:w-fit ${className}`}>
+        <p className="landing-body leading-normal font-medium">{resting ? REST_LABEL : "Cụm đang đọc:"}</p>
         <p className="mt-1.5 flex flex-wrap gap-1.5">
           {chips.map((w, i) => {
             const band = BANDS[scoreBand(w.score)];
             return (
               <span
                 key={i}
-                className={`landing-small inline-flex items-baseline gap-1 rounded-full border px-2.5 py-0.5 font-bold leading-snug whitespace-nowrap tabular-nums ${band.chip}`}
+                className={`landing-body inline-flex items-baseline gap-1 rounded-full border px-2.5 py-0.5 font-bold leading-snug whitespace-nowrap tabular-nums ${band.chip}`}
               >
                 {w.word.replace(/[.,!?;:]+$/, "")} {w.score}
               </span>
@@ -314,7 +341,7 @@ function ScorePanel({ failed, status, chips, resting, className = "" }: ScorePan
         <p
           role="note"
           aria-label="Chú thích màu điểm từng từ"
-          className="landing-small mt-2 flex flex-wrap gap-x-3 gap-y-0.5 font-medium"
+          className="landing-body leading-normal mt-2 flex flex-wrap gap-x-3 gap-y-0.5 font-medium"
         >
           {BAND_ORDER.map((key) => (
             <span key={key} className={`inline-flex items-center gap-1.5 whitespace-nowrap ${BANDS[key].text}`}>
@@ -325,8 +352,8 @@ function ScorePanel({ failed, status, chips, resting, className = "" }: ScorePan
         </p>
       </div>
 
-      <p className="landing-small mt-2 text-pretty">Điểm thật của một lượt luyện nói trên BreadTrans.</p>
-      <p aria-live="polite" className={failed ? "landing-small mt-1 font-medium" : "sr-only"}>
+      <p className="landing-body leading-normal mt-2 text-pretty">Điểm thật của một lượt luyện nói trên BreadTrans.</p>
+      <p aria-live="polite" className={failed ? "landing-body leading-normal mt-1 font-medium" : "sr-only"}>
         {status}
       </p>
       <p className="sr-only">{`Câu mẫu: ${DEMO.sentence} Điểm từng từ, thang 100: ${SPOKEN_SCORES}.`}</p>
@@ -339,13 +366,15 @@ function ScorePanel({ failed, status, chips, resting, className = "" }: ScorePan
  * Centred by position, not by the cut's grid, which would start-align text
  * longer than the cut is wide. Shown only while the cut is lit. The scores sit
  * on their own line in the caption; screen readers get every score there too.
+ * From 1024px the words are 21px (1.3125rem, the 18px body step plus a sixth),
+ * which --cut-h is sized to hold.
  */
 function CutWords({ chunk, on }: { chunk: WordChunk; on: boolean }) {
   return (
     <span
       aria-hidden="true"
       data-on={on}
-      className="absolute top-1/2 left-1/2 w-max -translate-1/2 -rotate-66 font-medium leading-none whitespace-nowrap text-(--on-lit) text-(length:--type-small) opacity-0 transition-opacity duration-240 ease-out data-[on=true]:opacity-100 motion-reduce:transition-none sm:text-(length:--type-body)"
+      className="absolute top-1/2 left-1/2 w-max -translate-1/2 -rotate-66 font-medium leading-none whitespace-nowrap text-(--on-lit) text-(length:--type-small) opacity-0 transition-opacity duration-240 ease-out data-[on=true]:opacity-100 motion-reduce:transition-none sm:text-(length:--type-body) lg:text-[length:1.3125rem]"
     >
       {chunk.words.map((w) => w.word).join(" ")}
     </span>
