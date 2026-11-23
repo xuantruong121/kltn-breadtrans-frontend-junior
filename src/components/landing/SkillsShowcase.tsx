@@ -117,7 +117,7 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                     tabIndex={on ? 0 : -1}
                     onClick={() => setActive(index)}
                     onKeyDown={(event) => onNameKey(event, index)}
-                    className={`flex min-h-11 cursor-pointer items-center whitespace-nowrap rounded-full px-4 text-[16px] font-semibold leading-tight transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.98] lg:min-h-14 lg:gap-[18px] lg:rounded-none lg:bg-transparent lg:px-0 lg:text-left lg:text-[28px] lg:tracking-[-0.01em] ${
+                    className={`flex min-h-11 cursor-pointer items-center whitespace-nowrap rounded-full px-4 text-(length:--type-small) font-semibold leading-tight transition-[color,background-color,scale] duration-150 ease-out active:scale-[0.98] lg:min-h-14 lg:gap-[18px] lg:rounded-none lg:bg-transparent lg:px-0 lg:text-left lg:text-[28px] lg:tracking-[-0.01em] ${
                       on
                         ? "bg-(--ink) text-(--bg) lg:text-(--ink)"
                         : "bg-(--surface) text-(--ink) lg:text-(--quiet) lg:hover:text-(--ink)"
