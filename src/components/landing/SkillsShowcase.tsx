@@ -24,9 +24,15 @@ const FRAGMENTS: Record<SkillKey, ComponentType> = {
   "skill-flashcard": FragFlashcard,
 };
 
-/** The signature move (spec 6.6): the stage opens from its left edge, once. */
-const SHUTTER_CLOSED = "inset(0% 100% 0% 0%)";
-const SHUTTER_OPEN = "inset(0% 0% 0% 0%)";
+/**
+ * The signature move (spec 6.6): the stage opens from its left edge, once.
+ * The insets reach past the stage box (120px up and down, 15% each side), so
+ * neither state cuts the loaf where it runs past the box: the phone band's
+ * 24px overhang and its tilted top. Closed, the right edge sits on the left
+ * one (-15%), so nothing shows; each side keeps its unit in both states.
+ */
+const SHUTTER_CLOSED = "inset(-120px 115% -120px -15%)";
+const SHUTTER_OPEN = "inset(-120px -15% -120px -15%)";
 const SHUTTER_EASE: [number, number, number, number] = [0.65, 0, 0.35, 1];
 
 /**
@@ -64,10 +70,13 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
 
   // Close the shutter only after hydration: the server HTML, a visitor without
   // JavaScript and a reduced-motion visitor all get the open stage. Once the
-  // stage has been seen it never closes again. `reduced` is still false in the
-  // hydration commit, so the media query is read directly as well.
+  // stage has been seen it never closes again: `entered` comes from
+  // useInView({ once: true }). `reduced` is still false in the hydration
+  // commit, so the media query is read directly as well. No `armed` guard on
+  // entry: StrictMode's fake unmount makes useAnimate stop the pending close,
+  // and the second run must close again.
   useEffect(() => {
-    if (reduced || prefersReducedMotion() || entered || armed.current) return;
+    if (reduced || prefersReducedMotion() || entered) return;
     armed.current = true;
     animate(stage.current, { clipPath: SHUTTER_CLOSED }, { duration: 0 });
     animate("[data-shutter-zoom]", { scale: 1.12 }, { duration: 0 });
@@ -75,10 +84,7 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
 
   useEffect(() => {
     if (!entered || !armed.current) return;
-    animate(stage.current, { clipPath: SHUTTER_OPEN }, { duration: 1.1, delay: 0.15, ease: SHUTTER_EASE }).then(() => {
-      // Open, the clip would still cut the loaf where it runs past the stage box.
-      if (stage.current) stage.current.style.clipPath = "none";
-    });
+    animate(stage.current, { clipPath: SHUTTER_OPEN }, { duration: 1.1, delay: 0.15, ease: SHUTTER_EASE });
     animate("[data-shutter-zoom]", { scale: 1 }, { duration: 1.5, delay: 0.15, ease: REVEAL_EASE });
   }, [entered, animate, stage]);
 
@@ -148,6 +154,10 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                 <Loaf cuts={7} className={`h-full aspect-auto ${PHONE_CUTS}`} />
               </div>
 
+              {/* Under lg every card takes the height of the tallest fragment, so the fact
+                  under it and the page below never move; from md, where that height leaves
+                  the most room, a shorter fragment sits centred in its card. From lg the
+                  card hugs its fragment, centred on the loaf. */}
               <div data-shutter-zoom className="relative grid lg:w-[min(540px,80%)]">
                 {SKILLS.map((skill, index) => {
                   const on = index === active;
@@ -156,7 +166,7 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
                     <div
                       key={skill.key}
                       aria-hidden={!on}
-                      className={`flex transition-[opacity,visibility] duration-300 ease-out [grid-area:1/1] lg:self-center ${
+                      className={`flex transition-[opacity,visibility] duration-300 ease-out [grid-area:1/1] md:[&>[data-ui]]:justify-center lg:self-center ${
                         on ? "visible opacity-100" : "invisible opacity-0"
                       }`}
                     >
