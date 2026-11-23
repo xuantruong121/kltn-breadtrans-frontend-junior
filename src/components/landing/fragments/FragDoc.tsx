@@ -39,7 +39,7 @@ export function FragDoc() {
             >
               <span
                 className={`grid size-[30px] flex-none place-items-center rounded-full text-[14px] font-bold ${
-                  correct ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                  correct ? "bg-emerald-700 text-white" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
                 }`}
               >
                 {OPTION_LETTERS[index]}

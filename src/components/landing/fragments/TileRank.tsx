@@ -29,7 +29,7 @@ export function TileRank() {
             >
               <span
                 className={`grid size-7 flex-none place-items-center rounded-full text-[14px] font-bold ${
-                  first ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
+                  first ? "bg-amber-500 text-amber-950" : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
                 }`}
               >
                 {row.rank}
