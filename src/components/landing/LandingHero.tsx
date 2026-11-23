@@ -63,6 +63,10 @@ const GROUP = [
   // Width of the button and panel column: 37vw keeps a 31px right margin at 1024; 40rem (640px) is
   // where the 18 chips fit in three rows.
   "lg:[--col-w:min(37vw,40rem)]",
+  // From 1280 at least 500px (22px right margin at 1280), so the legend's first two items (461px at
+  // 20px) share a row up to 1351, where 37vw passes 500px: a third legend row would lift the button
+  // off the loaf's curve at 1280.
+  "xl:[--col-w:max(min(37vw,40rem),31.25rem)]",
   // Top of the highest cut, below the loaf's centre line. 1024-1279: 175px down to 130px, where the
   // panel is tallest and the button's top-left corner meets the loaf's curve. From 1280, where the
   // chips fit in fewer rows: 130px down to 34px from 1600px, so the group's middle sits on the line.
