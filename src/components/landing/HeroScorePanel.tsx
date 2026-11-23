@@ -62,18 +62,19 @@ type HeroScorePanelProps = {
  * below that; LandingHero renders both, and the copy not in use is display: none.
  */
 export function HeroScorePanel({ runOfWord, failed, status, reading, className = "" }: HeroScorePanelProps) {
-  // Sizes, one step up from the 18px body step: 19px (1.1875rem) for the label, the
-  // pass count and the legend, 20px (1.25rem) for the chips, 32px (2rem) for the score.
+  // Sizes on the page's steps: 20px (1.25rem), the play button's step from 1024px, for the
+  // label, the pass count, the chips, the legend and the status; 28px (1.75rem), the
+  // skills names' step from 1024px, for the score.
   // Spacing scaled up with them from Task 8's 12px panel: 16px sides, 14px top and
   // bottom, 12px between the rows.
   return (
     <div className={`rounded-2xl bg-white px-4 py-3.5 text-[#1c1917] ${className}`}>
       <div className="flex flex-wrap items-end gap-x-5 gap-y-1">
         <p className="leading-none">
-          <span className="block text-[length:1.1875rem] font-medium leading-tight">Điểm tổng</span>
-          <strong className="landing-display mt-1 block text-inherit text-[length:2rem]">{OVERALL}/10</strong>
+          <span className="block text-[length:1.25rem] font-medium leading-tight">Điểm tổng</span>
+          <strong className="landing-display mt-1 block text-inherit text-[length:1.75rem]">{OVERALL}/10</strong>
         </p>
-        <p className="text-[length:1.1875rem] leading-tight font-medium">{PASS_LABEL}</p>
+        <p className="text-[length:1.25rem] leading-tight font-medium">{PASS_LABEL}</p>
       </div>
 
       {/* The chips show the words only; the title and the screen-reader text carry the band
@@ -100,7 +101,7 @@ export function HeroScorePanel({ runOfWord, failed, status, reading, className =
       <p
         role="note"
         aria-label="Chú thích màu điểm từng từ"
-        className="mt-3 flex flex-wrap gap-x-3 gap-y-0.5 text-[length:1.1875rem] leading-normal font-medium"
+        className="mt-3 flex flex-wrap gap-x-3 gap-y-0.5 text-[length:1.25rem] leading-normal font-medium"
       >
         {BAND_ORDER.map((key) => (
           <span key={key} className={`inline-flex items-center gap-1.5 whitespace-nowrap ${BANDS[key].text}`}>
@@ -110,7 +111,7 @@ export function HeroScorePanel({ runOfWord, failed, status, reading, className =
         ))}
       </p>
 
-      <p aria-live="polite" className={failed ? "mt-2 text-[length:1.1875rem] leading-normal font-medium" : "sr-only"}>
+      <p aria-live="polite" className={failed ? "mt-2 text-[length:1.25rem] leading-normal font-medium" : "sr-only"}>
         {status}
       </p>
     </div>
