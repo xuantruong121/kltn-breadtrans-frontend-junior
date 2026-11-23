@@ -28,7 +28,8 @@ const STORED_SET_CODES = [
 // ---- What the guards scan ---------------------------------------------------
 
 const SRC = path.resolve(import.meta.dirname, "../..");
-const SCOPE = "every string literal and JSX text in src/components/landing/** and src/lib/landing/*.ts";
+const SCOPE =
+  "every string literal and JSX text in src/app/(public)/page.tsx, src/components/landing/** and src/lib/landing/*.ts";
 
 function sourceFiles(dir: string, deep: boolean): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -39,14 +40,16 @@ function sourceFiles(dir: string, deep: boolean): string[] {
 }
 
 /**
- * The landing's sources, tests excluded: the section components, the coded
- * fragments, and the copy and data in src/lib/landing (content, faq, plans,
- * fragments, speakingDemo). displayText reads the source text, so it also sees
+ * The landing's sources, tests excluded: the page with its title and meta
+ * description, the section components, the coded fragments, and the copy and
+ * data in src/lib/landing (content, faq, plans, fragments, speakingDemo).
+ * displayText reads the source text, so it also sees
  * quoted text inside a comment (a comment that quotes a guarded word fails
  * here), and it does not see text that arrives at runtime: the plan
  * descriptions GET /plans/catalog may send are not checked.
  */
 const LANDING_FILES = [
+  path.join(SRC, "app/(public)/page.tsx"),
   ...sourceFiles(path.join(SRC, "components/landing"), true),
   ...sourceFiles(path.join(SRC, "lib/landing"), false),
 ].map((file) => ({ rel: path.relative(SRC, file).split(path.sep).join("/"), text: fs.readFileSync(file, "utf8") }));
@@ -133,6 +136,7 @@ test("every item has a unique key and words", () => {
 test(`the guards below scan ${SCOPE}`, () => {
   const files = LANDING_FILES.map((f) => f.rel);
   for (const expected of [
+    "app/(public)/page.tsx",
     "components/landing/LandingHero.tsx",
     "components/landing/HeroScorePanel.tsx",
     "components/landing/PlanPicker.tsx",
@@ -154,6 +158,7 @@ test(`the guards below scan ${SCOPE}`, () => {
   assert.ok(values.some((v) => v.includes("Bắt đầu học miễn phí")), "LandingHero's JSX text");
   assert.ok(values.some((v) => v.includes("Gói học và giá")), "PlanPicker's JSX text");
   assert.ok(values.some((v) => v.includes("AI chấm 30 bài mỗi ngày")), "plans.ts summaries");
+  assert.ok(values.some((v) => v.includes("luyện đề theo cấu trúc TOEIC do BreadTrans biên soạn")), "the meta description");
   // Each allowed sentence is on the page once, so the allow-list cannot go stale unnoticed.
   assert.equal(values.filter((v) => v.includes(CEFR_NEGATION)).length, 1, "the CEFR negation, once");
   assert.equal(values.filter((v) => v.includes(ETS_DISCLAIMER)).length, 1, "the ETS disclaimer, once");
