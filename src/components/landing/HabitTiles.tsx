@@ -1,10 +1,11 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { LANDING_IMAGES } from "@/lib/landing/assets";
 import { CROPS, HABITS, HABITS_LEAD, HABITS_TITLE, cropMedia, cropRatio, fitWidth } from "@/lib/landing/content";
 import { revealProps } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
+import { useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /** Flat tile colours, rotating through three fields of the palette. */
 const TILE_TONES = ["bg-(--surface)", "bg-(--surface-2)", "bg-(--surface-3)"];
@@ -24,7 +25,7 @@ const DOUBLE_INDEX = 1;
  */
 export function HabitTiles({ actions }: { actions: LandingActions }) {
   void actions; // this section only shows the product
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   return (
     <section aria-labelledby="landing-habits-title" className="landing-container">
       <div className="grid gap-y-10 lg:grid-cols-12 lg:gap-x-(--gutter)">

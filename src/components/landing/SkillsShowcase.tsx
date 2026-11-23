@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
-import { motion, useAnimate, useInView, useReducedMotion } from "framer-motion";
+import { motion, useAnimate, useInView } from "framer-motion";
 import { LANDING_IMAGES, LANDING_VIDEO } from "@/lib/landing/assets";
 import {
   CROPS,
@@ -17,6 +17,7 @@ import {
 import { REVEAL_EASE, revealProps } from "@/lib/landing/motion";
 import { Loaf } from "./Loaf";
 import type { LandingActions } from "./types";
+import { prefersReducedMotion, useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /** The page colour of the app behind the screenshots: the margin of the screen on the loaf. */
 const SCREEN_PAPER = "#fcfaf8";
@@ -36,7 +37,7 @@ const VIDEO_INDEX = SKILLS.findIndex((skill) => skill.key === STAGE_VIDEO_KEY);
  */
 export function SkillsShowcase({ actions }: { actions: LandingActions }) {
   void actions; // this section only shows the product
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   const [active, setActive] = useState(0);
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -49,9 +50,10 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
 
   // Close the shutter only after hydration: the server HTML, a visitor without
   // JavaScript and a reduced-motion visitor all get the open stage. Once the
-  // stage has been seen it never closes again.
+  // stage has been seen it never closes again. `reduced` is still false in the
+  // hydration commit, so the media query is read directly as well.
   useEffect(() => {
-    if (reduced || entered || armed.current) return;
+    if (reduced || prefersReducedMotion() || entered || armed.current) return;
     armed.current = true;
     animate(stage.current, { clipPath: SHUTTER_CLOSED }, { duration: 0 });
     animate("[data-shutter-zoom]", { scale: 1.12 }, { duration: 0 });

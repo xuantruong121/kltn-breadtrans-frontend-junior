@@ -5,15 +5,15 @@
  * animates.
  *
  * Usage inside a section:
- *   const reduced = Boolean(useReducedMotion());
+ *   const reduced = useLandingReducedMotion(); // src/components/landing
  *   <motion.h2 {...revealProps(reduced, 0)}>…</motion.h2>
  *   <motion.p {...revealProps(reduced, 1)}>…</motion.p>
  *
  * `data-reveal` marks the element for the guards in landing.css and
- * LandingPage: useReducedMotion() is null on the server, so the server HTML
- * carries the hidden start state even for a reduced-motion visitor, and React
- * does not patch that style on hydration. Under prefers-reduced-motion, and
- * without JavaScript, the guards pin every marked element to its final state.
+ * LandingPage: the flag is false on the server and while hydrating, so the
+ * server HTML carries the hidden start state even for a reduced-motion
+ * visitor. Under prefers-reduced-motion, and without JavaScript, the guards
+ * pin every marked element to its final state.
  */
 
 /** Ease-out (expo-like): quick start, soft landing. */

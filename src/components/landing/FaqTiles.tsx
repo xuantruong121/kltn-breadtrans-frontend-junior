@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { FAQ } from "@/lib/landing/faq";
 import { revealProps } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
+import { useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /**
  * FAQ (spec 6.4.5, blueprint "Accordion of filled tiles"): a sticky heading
@@ -16,7 +17,7 @@ import type { LandingActions } from "./types";
  */
 export function FaqTiles({ actions }: { actions: LandingActions }) {
   void actions; // the FAQ only links to /help
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   return (
     <section aria-labelledby="landing-faq-title" className="landing-container">
       <div className="lg:grid lg:grid-cols-12 lg:gap-x-8">

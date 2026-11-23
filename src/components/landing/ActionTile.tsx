@@ -1,9 +1,10 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { LANDING_IMAGES } from "@/lib/landing/assets";
 import { revealProps } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
+import { useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /** The one tile radius of the page (--radius-tile in landing.css). */
 const TILE = "rounded-(--radius-tile)";
@@ -23,7 +24,7 @@ const PHOTO = LANDING_IMAGES["skill-noi"];
  * --loaf is 3.2:1, below the 4.5:1 that running text needs (spec 6.7).
  */
 export function ActionTile({ actions }: { actions: LandingActions }) {
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   return (
     <section aria-labelledby="landing-action-title" className="overflow-x-clip">
       <div className="landing-container lg:max-w-none lg:px-0">

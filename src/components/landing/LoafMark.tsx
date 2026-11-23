@@ -1,9 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { REVEAL_EASE } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
+import { useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /**
  * Block heights in % of a row: 60-100, no two neighbours alike, like the cuts
@@ -51,7 +52,7 @@ function blockMotion(reduced: boolean, index: number) {
  */
 export function LoafMark({ actions }: { actions: LandingActions }) {
   void actions; // the mark carries no action; AppFooter below holds the links
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   return (
     // The negative margin takes back the section gap .landing-stack leaves after
     // the last section, so the band meets AppFooter. Under lg (public)/layout.tsx

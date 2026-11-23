@@ -1,10 +1,11 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { LANDING_IMAGES } from "@/lib/landing/assets";
 import { CROPS, PATH, PATH_TITLE, cropMedia, cropRatio, fitWidth } from "@/lib/landing/content";
 import { revealProps } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
+import { useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /** One flat field per step, each a tone deeper than the last; the end of the path turns to ink. */
 const FIELDS = [
@@ -28,7 +29,7 @@ const SCREEN_PAPER = "#fcfaf8";
  */
 export function PathFields({ actions }: { actions: LandingActions }) {
   void actions; // this section only shows the product
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   return (
     <section aria-labelledby="landing-path-title">
       <ol className="grid md:min-h-[128svh] md:grid-cols-2 md:grid-rows-[auto_1fr_auto_auto_1fr_auto] xl:min-h-[84svh] xl:grid-cols-4 xl:grid-rows-[auto_1fr_auto]">

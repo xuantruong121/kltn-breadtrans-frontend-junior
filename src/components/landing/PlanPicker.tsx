@@ -3,11 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { planService } from "@/lib/api/services/plan.service";
 import { formatVnd, planViews, type PlanCode, type PlanView } from "@/lib/landing/plans";
 import { revealProps } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
+import { useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /** "/ 30 ngày" beside the price; Free has no term. */
 const periodOf = (plan: PlanView) => (plan.days ? `/ ${plan.days} ngày` : "không thời hạn");
@@ -52,7 +53,7 @@ function PlanStage({ plan, className = "" }: { plan: PlanView; className?: strin
  */
 export function PlanPicker({ actions }: { actions: LandingActions }) {
   void actions; // the plan buttons go to /plans, which handles signing in itself
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   const [selected, setSelected] = useState<PlanCode>("PLUS");
   const { data } = useQuery({
     queryKey: ["landing-plan-catalog"],

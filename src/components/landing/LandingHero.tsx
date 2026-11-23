@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Play, Square } from "lucide-react";
 import { revealProps } from "@/lib/landing/motion";
 import { DEMO, chunkWords, litChunks, type WordChunk } from "@/lib/landing/speakingDemo";
 import { Loaf } from "./Loaf";
 import type { LandingActions } from "./types";
+import { useLandingReducedMotion } from "./useLandingReducedMotion";
 
 /** The 18 words in six runs, one run per cut on the loaf. */
 const CHUNKS: WordChunk[] = chunkWords(DEMO.words, 6);
@@ -57,7 +58,7 @@ const CONTROLS =
   "lg:left-[19%] lg:w-[30%] lg:bottom-[64.5%]";
 
 export function LandingHero({ actions }: { actions: LandingActions }) {
-  const reduced = Boolean(useReducedMotion());
+  const reduced = useLandingReducedMotion();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   // At rest every cut is lit, so the server HTML, a visitor without
