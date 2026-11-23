@@ -57,6 +57,9 @@ const GROUP = [
   // Cut height: no words to hold now, so the cuts are a short strip under the panel: 72px at 1024,
   // all the room the panel leaves there, growing to 160px from 1575px.
   "lg:[--cut-h:clamp(72px,16vw_-_92px,160px)]",
+  // 1024-1279: at most 80px. The panel is at its tallest there (339px), so taller cuts made the
+  // group sit up to 56px below the centre of the hero; shorter cuts pull its middle up.
+  "lg:max-xl:[--cut-h:clamp(72px,16vw_-_92px,80px)]",
   // Left edge of the group in the loaf box: 133px at 1024, as far left as the button's corner stays on
   // the orange, and 213px at 1920; the middle of the group lands 21-65px right of the middle of the
   // visible orange (65px at 1280).
