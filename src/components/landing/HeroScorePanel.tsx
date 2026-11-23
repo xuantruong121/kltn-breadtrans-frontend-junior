@@ -1,6 +1,6 @@
 import {
   DEMO,
-  SCORE_BAND_LABEL,
+  SCORE_BAND_LEGEND,
   chipBandLabel,
   chipText,
   passesStandard,
@@ -15,30 +15,28 @@ const PASS_LABEL = `${PASSED}/${DEMO.words.length} từ đạt chuẩn`;
 
 /**
  * The word bands of the speaking result screen: its thresholds (scoreBand,
- * from getAccuracyTier), its legend words and its chip colours (the word chips
- * and the legend of src/app/(student)/speaking/[id]/page.tsx). The amber chip is
+ * from getAccuracyTier) and its legend words (SCORE_BAND_LEGEND) come from
+ * speakingDemo.ts; these are its chip colours (the word chips and the legend
+ * of src/app/(student)/speaking/[id]/page.tsx). The amber chip is
  * solid here (amber-100, not /80) so nothing of the orange shows through. The
  * chips keep these light colours in dark mode too: they sit on a white panel.
  * `reading` is the same band filled solid, for the chips of the run being read
  * (white on emerald-700 and rose-700, amber-950 on amber-400: all above 4.5:1).
  */
-const BANDS: Record<ScoreBand, { range: string; chip: string; reading: string; dot: string; text: string }> = {
+const BANDS: Record<ScoreBand, { chip: string; reading: string; dot: string; text: string }> = {
   pass: {
-    range: "≥ 80",
     chip: "border-emerald-300 bg-emerald-50 text-emerald-800",
     reading: "border-emerald-700 bg-emerald-700 text-white",
     dot: "bg-emerald-500",
     text: "text-emerald-800",
   },
   fix: {
-    range: "60–79",
     chip: "border-amber-300 bg-amber-100 text-amber-900",
     reading: "border-amber-500 bg-amber-400 text-amber-950",
     dot: "bg-amber-500",
     text: "text-amber-900",
   },
   fail: {
-    range: "< 60",
     chip: "border-rose-300 bg-rose-50 text-rose-800",
     reading: "border-rose-700 bg-rose-700 text-white",
     dot: "bg-rose-500",
@@ -107,7 +105,7 @@ export function HeroScorePanel({ runOfWord, failed, status, reading, className =
         {BAND_ORDER.map((key) => (
           <span key={key} className={`inline-flex items-center gap-1.5 whitespace-nowrap ${BANDS[key].text}`}>
             <span aria-hidden="true" className={`size-2.5 rounded-full ${BANDS[key].dot}`} />
-            {SCORE_BAND_LABEL[key]} {BANDS[key].range}
+            {SCORE_BAND_LEGEND[key]}
           </span>
         ))}
       </p>

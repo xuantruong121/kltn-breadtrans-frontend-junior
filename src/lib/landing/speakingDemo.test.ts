@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import {
   DEMO,
   SCORE_BAND_LABEL,
@@ -11,7 +13,9 @@ import {
   readingRun,
   runOfEachWord,
   scoreBand,
+  SCORE_BAND_LEGEND,
 } from "./speakingDemo.ts";
+import { getAccuracyTier } from "../speaking/speakingPracticeLogic.ts";
 
 const EXPECTED_WORDS: [string, number][] = [
   ["The", 91],
@@ -202,6 +206,23 @@ test("scoreBand follows the product's thresholds at every boundary", () => {
   assert.equal(scoreBand(79), "fix");
   assert.equal(scoreBand(80), "pass");
   assert.equal(scoreBand(100), "pass");
+});
+
+test("scoreBand and its labels agree with the app's getAccuracyTier at every boundary", () => {
+  for (const score of [0, 59, 60, 79, 80, 100])
+    assert.equal(SCORE_BAND_LABEL[scoreBand(score)], getAccuracyTier(score).label, `score ${score}`);
+});
+
+test("the legend reads as the result screen's: Đạt chuẩn (≥ 80%), Cần chỉnh lại (60-79%), Chưa đạt (< 60%)", () => {
+  assert.deepEqual(SCORE_BAND_LEGEND, {
+    pass: "Đạt chuẩn (≥ 80%)",
+    fix: "Cần chỉnh lại (60-79%)",
+    fail: "Chưa đạt (< 60%)",
+  });
+  // The result screen writes them with HTML entities.
+  const page = fs.readFileSync(path.resolve(import.meta.dirname, "../../app/(student)/speaking/[id]/page.tsx"), "utf8");
+  for (const item of ["Đạt chuẩn (&ge; 80%)", "Cần chỉnh lại (60-79%)", "Chưa đạt (&lt; 60%)"])
+    assert.ok(page.includes(item), `the result screen's legend has ${item}`);
 });
 
 test("18/18 words of submission 309 pass under the result screen's rule: 80 or more and errorType None", () => {

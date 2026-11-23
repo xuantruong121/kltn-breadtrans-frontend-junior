@@ -152,11 +152,21 @@ export function scoreBand(score: number): ScoreBand {
   return "fail";
 }
 
-/** The band names of the speaking result screen's legend. */
+/**
+ * The band names of the speaking result screen's legend: the one source for
+ * the hero's panel and the Nói fragment (fragments.ts).
+ */
 export const SCORE_BAND_LABEL: Record<ScoreBand, string> = {
   pass: "Đạt chuẩn",
   fix: "Cần chỉnh lại",
   fail: "Chưa đạt",
+};
+
+/** The legend items of the speaking result screen, in its format (src/app/(student)/speaking/[id]/page.tsx). */
+export const SCORE_BAND_LEGEND: Record<ScoreBand, string> = {
+  pass: `${SCORE_BAND_LABEL.pass} (≥ 80%)`,
+  fix: `${SCORE_BAND_LABEL.fix} (60-79%)`,
+  fail: `${SCORE_BAND_LABEL.fail} (< 60%)`,
 };
 
 /**

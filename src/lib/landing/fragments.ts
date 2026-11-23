@@ -11,7 +11,7 @@
  * No React and no I/O, so the tests run under the Node test runner.
  */
 import { resolveWritingPlaceholder } from "../writing/writingExperienceLogic.ts";
-import { scoreBand, type ScoreBand, type WordError } from "./speakingDemo.ts";
+import { SCORE_BAND_LABEL, SCORE_BAND_LEGEND, scoreBand, type ScoreBand, type WordError } from "./speakingDemo.ts";
 
 // ---- Nói: speaking submission 304 ----------------------------------------
 
@@ -78,19 +78,15 @@ export const SPEAKING_SCORE_LABELS = {
   completeness: "Độ hoàn thiện",
 };
 
-const BAND_NAMES: Record<WordBand, string> = {
-  pass: "Đạt chuẩn",
-  fix: "Cần chỉnh lại",
-  fail: "Chưa đạt",
-  omit: "Bỏ sót",
-};
+/** The three score bands' names come from speakingDemo.ts, the hero's source too. */
+const BAND_NAMES: Record<WordBand, string> = { ...SCORE_BAND_LABEL, omit: "Bỏ sót" };
 
 /** The four-item legend of the result screen, in its order and words (src/app/(student)/speaking/[id]/page.tsx). */
 export const WORD_LEGEND: { band: WordBand; label: string }[] = [
-  { band: "pass", label: "Đạt chuẩn (≥ 80%)" },
-  { band: "fix", label: "Cần chỉnh lại (60-79%)" },
-  { band: "fail", label: "Chưa đạt (< 60%)" },
-  { band: "omit", label: "Bỏ sót" },
+  { band: "pass", label: SCORE_BAND_LEGEND.pass },
+  { band: "fix", label: SCORE_BAND_LEGEND.fix },
+  { band: "fail", label: SCORE_BAND_LEGEND.fail },
+  { band: "omit", label: BAND_NAMES.omit },
 ];
 
 /** The band of a word in words, with its score unless it was omitted: "Chưa đạt (38%)", "Bỏ sót". */
