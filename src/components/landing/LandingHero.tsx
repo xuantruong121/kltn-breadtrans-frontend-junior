@@ -81,8 +81,9 @@ const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
  *   in the middle of the visible orange (owner feedback #5). The text is in px
  *   and the loaf in vw, so GROUP places the group with px and vw together.
  *   Checked at 1024x768, 1280x800, 1366x768, 1440x900, 1536x864 and
- *   1920x1080/950: the controls stay on the orange, every cut stays on the
- *   loaf and every word inside its cut. The Loaf internals are reached by
+ *   1920x1080/950, and in short windows down to 600px tall (HERO_HEIGHT): the
+ *   controls stay on the orange, every cut stays on the loaf and every word
+ *   inside its cut. The Loaf internals are reached by
  *   class (`landing-loaf__…`), the only way to size them without editing
  *   Loaf.tsx or landing.css.
  */
@@ -103,9 +104,10 @@ const GROUP = [
   // Width of the controls column (the cut tops span the same width under it): 31vw keeps a 35px right
   // margin at 1024; 34rem (544px) is where the legend fits on one line (536px).
   "lg:[--col-w:min(31vw,34rem)]",
-  // Top of the highest cut against the loaf's centre line: 42px below at 1024 (the controls are
-  // tallest there), 61px above at 1920 (the cut row is the taller half), so the group stays centred.
-  "lg:[--seam:clamp(-61px,160px_-_11.5vw,42px)]",
+  // Top of the highest cut against the loaf's centre line: 42px below up to 1232px wide (the legend
+  // wraps to three lines there, so the controls are tallest), 61px above at 1920 (the cut row is the
+  // taller half), so the group stays near the centre and its top stays on the orange.
+  "lg:[--seam:clamp(-61px,226px_-_15vw,42px)]",
 ].join(" ");
 
 // String.raw keeps `\_` (an escaped underscore for Tailwind) in the runtime
@@ -125,6 +127,13 @@ const LOAF_SHAPE = String.raw`h-full aspect-auto
   sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[38%] sm:[&_.landing-loaf\_\_cut]:translate-y-[30%]
   lg:[&_.landing-loaf\_\_cut]:w-[calc(var(--cut-h)_/_5.2)] lg:[&_.landing-loaf\_\_cut]:h-(--cut-h)
   lg:[&_.landing-loaf\_\_cut]:translate-y-[calc(50%_+_var(--seam))]`;
+
+/**
+ * From 1024px the hero fills the screen under the 5rem header, and is never shorter than the group
+ * needs to stay on the loaf: 43rem (688px, the hero at 1024x768) under 1280px, where the controls
+ * wrap to the most lines, and 40rem from 1280. A shorter window scrolls a little instead.
+ */
+const HERO_HEIGHT = "lg:max-xl:min-h-[max(calc(100svh_-_5rem),43rem)] xl:min-h-[max(calc(100svh_-_5rem),40rem)]";
 
 /** From 1024px every control rides on the loaf, its bottom 12px above the highest cut. */
 const CONTROLS = "absolute max-lg:hidden lg:left-(--col-l) lg:w-(--col-w) lg:bottom-[calc(50%_-_var(--seam)_+_12px)]";
@@ -181,7 +190,7 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
   return (
     <section
       aria-labelledby="landing-hero-title"
-      className="relative flex flex-col overflow-clip lg:min-h-[calc(100svh_-_5rem)] lg:justify-center"
+      className={`relative flex flex-col overflow-clip lg:justify-center ${HERO_HEIGHT}`}
     >
       <div className="landing-container relative z-[1] pt-[clamp(1rem,3svh,3rem)] sm:pt-16 lg:pointer-events-none lg:py-16">
         {/* --hero-col: what is left of 44vw after the container's own offset, so
