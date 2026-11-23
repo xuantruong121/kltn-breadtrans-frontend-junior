@@ -70,10 +70,11 @@ const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
  * the numbers were checked against the stadium outline from 360 to 2560px.
  *
  * - Phone: the loaf sits under the copy, 130vw wide, cropped left, right and
- *   bottom, with the cut row in the middle of its visible part; the controls
- *   (button, score panel, caption) follow under the loaf, on the page, because
- *   the panel does not fit the loaf's band under 1024px. At 390x844 the words
- *   on the cuts end above MobileBottomNav on the first screen.
+ *   bottom. The play button and the overall score ride on its upper band,
+ *   above the cuts (spec 6.3); the score panel and the caption follow under
+ *   the loaf, on the page, because they do not fit the band under 1024px. At
+ *   390x844 the button and the words on the cuts end above MobileBottomNav on
+ *   the first screen.
  * - 640-1023: the same, at 116vw.
  * - 1024 and up: the loaf enters from the right at 47vw, centred on the
  *   section's height; the six cuts sit on its visible left half, made shorter
@@ -94,12 +95,15 @@ const LOAF_BOX =
 const LOAF_SHAPE = String.raw`h-full aspect-auto
   [&_.landing-loaf\_\_cuts]:px-[17%]
   lg:[&_.landing-loaf\_\_cuts]:pl-[10%] lg:[&_.landing-loaf\_\_cuts]:pr-[50%]
-  [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[-10%]
-  sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[38%] sm:[&_.landing-loaf\_\_cut]:translate-y-0
+  [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[25%]
+  sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[38%] sm:[&_.landing-loaf\_\_cut]:translate-y-[30%]
   lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[32%] lg:[&_.landing-loaf\_\_cut]:translate-y-[64%]`;
 
-/** The controls on the loaf, from 1024px; under that they follow the loaf instead. */
+/** From 1024px every control rides on the loaf. */
 const CONTROLS = "absolute max-lg:hidden lg:left-[19%] lg:w-[32%] lg:bottom-[49%]";
+
+/** Under 1024px only the play button and the overall score ride on the loaf, on its upper band. */
+const PLAY_ON_LOAF = "absolute lg:hidden left-[20.8%] top-[20%] sm:left-[17.2%] sm:top-[22%]";
 
 export function LandingHero({ actions }: { actions: LandingActions }) {
   const reduced = useLandingReducedMotion();
@@ -145,7 +149,7 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
   // While the cuts sweep, the chips are the run just lit; otherwise the lowest words.
   const sweeping = playing && !reduced;
   const chips = sweeping ? CHUNKS[Math.max(0, lit - 1)].words : LOWEST;
-  const controls = { playing, failed, status, chips, resting: !sweeping, onToggle: toggle };
+  const panel = { failed, status, chips, resting: !sweeping };
 
   return (
     <section
@@ -193,8 +197,8 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
       </div>
 
       {/* Under 1024px this box crops the loaf at its bottom edge, so the loaf does not
-          run on under the controls that follow it. */}
-      <div className="relative mt-2 h-[78vw] overflow-clip sm:mt-10 sm:h-[62vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto lg:overflow-visible">
+          run on under the score panel that follows it. */}
+      <div className="relative mt-2 h-[84vw] overflow-clip sm:mt-10 sm:h-[70vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto lg:overflow-visible">
         <motion.figure
           className={LOAF_BOX}
           data-reveal
@@ -227,65 +231,72 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
           {/* Text on the loaf uses --on-lit (dark in both themes): white on this
               orange is under 4.5:1 for text this size. */}
           <figcaption className={`${CONTROLS} text-(--on-lit)`}>
-            <DemoControls {...controls} onLoaf />
+            <PlayRow playing={playing} onToggle={toggle} />
+            <ScorePanel {...panel} className="mt-3" />
           </figcaption>
+          <div className={`${PLAY_ON_LOAF} text-(--on-lit)`}>
+            <PlayRow playing={playing} onToggle={toggle} />
+          </div>
         </motion.figure>
       </div>
 
-      {/* Under 1024px: the same controls under the loaf, on the page. display: none from 1024px. */}
+      {/* Under 1024px the score panel follows the loaf, on the page. display: none from 1024px. */}
       <div className="landing-container relative z-[1] mt-6 lg:hidden">
-        <DemoControls {...controls} onLoaf={false} />
+        <ScorePanel {...panel} />
       </div>
     </section>
   );
 }
 
-type DemoControlsProps = {
-  playing: boolean;
+/**
+ * The play button and the overall score. Always on the orange loaf (dark text,
+ * dark button): in the figcaption from 1024px, on the loaf's upper band under
+ * that. The copy not in use is display: none, so a screen reader meets one.
+ */
+function PlayRow({ playing, onToggle }: { playing: boolean; onToggle: () => void }) {
+  return (
+    <div className="flex items-center gap-x-4">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="landing-small inline-flex min-h-11 flex-none items-center gap-2 rounded-full bg-(--on-lit) px-5 font-bold text-(--on-loaf) transition-[background-color,scale] duration-150 ease-out hover:bg-(--crust) focus-visible:outline-(--on-lit) active:scale-[0.97]"
+      >
+        {playing ? (
+          <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
+        ) : (
+          <Play aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
+        )}
+        {playing ? "Dừng" : "Nghe câu mẫu"}
+      </button>
+      <p className="leading-tight">
+        <span className="landing-small block">Điểm tổng</span>
+        <strong className="landing-display block text-inherit text-(length:--type-lead)">{OVERALL}/10</strong>
+      </p>
+    </div>
+  );
+}
+
+type ScorePanelProps = {
   failed: boolean;
   status: string;
   /** The words shown as chips: the run just lit, or the lowest words at rest. */
   chips: DemoWord[];
   resting: boolean;
-  onToggle: () => void;
-  /** On the orange loaf (dark text, dark button) or on the page (the page's ink). */
-  onLoaf: boolean;
+  className?: string;
 };
 
 /**
- * Play button and overall score, the word chips on a white panel with the
- * three-band legend under them, and the caption. Rendered on the loaf from
- * 1024px and under it below that; the other copy is display: none, so a screen
- * reader meets one.
+ * The word chips on a white panel with the three-band legend under them, the
+ * caption, the play status and the full scores for screen readers. On the
+ * loaf from 1024px (under the play row), on the page under the loaf below that;
+ * the copy not in use is display: none.
  */
-function DemoControls({ playing, failed, status, chips, resting, onToggle, onLoaf }: DemoControlsProps) {
-  const button = onLoaf
-    ? "bg-(--on-lit) text-(--on-loaf) focus-visible:outline-(--on-lit)"
-    : "bg-(--ink) text-(--bg)";
+function ScorePanel({ failed, status, chips, resting, className = "" }: ScorePanelProps) {
   return (
     <>
-      <div className="flex items-center gap-x-4">
-        <button
-          type="button"
-          onClick={onToggle}
-          className={`landing-small inline-flex min-h-11 flex-none items-center gap-2 rounded-full px-5 font-bold transition-[background-color,scale] duration-150 ease-out hover:bg-(--crust) hover:text-(--on-loaf) active:scale-[0.97] ${button}`}
-        >
-          {playing ? (
-            <Square aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
-          ) : (
-            <Play aria-hidden="true" size={15} strokeWidth={2.25} fill="currentColor" />
-          )}
-          {playing ? "Dừng" : "Nghe câu mẫu"}
-        </button>
-        <p className="leading-tight">
-          <span className="landing-small block">Điểm tổng</span>
-          <strong className="landing-display block text-inherit text-(length:--type-lead)">{OVERALL}/10</strong>
-        </p>
-      </div>
-
       {/* A white panel: the chips and the legend keep the speaking screen's own colours,
           which do not read on orange. */}
-      <div className="mt-3 rounded-2xl bg-white px-3 py-2.5 text-[#1c1917]">
+      <div className={`rounded-2xl bg-white px-3 py-2.5 text-[#1c1917] ${className}`}>
         <p className="landing-small font-medium">{resting ? REST_LABEL : "Cụm đang đọc:"}</p>
         <p className="mt-1.5 flex flex-wrap gap-1.5">
           {chips.map((w, i) => {
