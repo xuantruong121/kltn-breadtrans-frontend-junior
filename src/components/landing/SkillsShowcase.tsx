@@ -112,10 +112,11 @@ export function SkillsShowcase({ actions }: { actions: LandingActions }) {
           {SKILLS_TITLE}
         </motion.h2>
 
-        {/* Phone: one sideways-scrolling line under the loaf. Desktop: a column ending level with the loaf. */}
+        {/* Phone: the names wrap under the loaf (a row cut at the screen edge reads
+            as clipped). Desktop: a column ending level with the loaf. */}
         <motion.ul
           aria-label="Chọn phần để xem màn hình"
-          className="order-3 -mx-(--gutter) flex gap-6 overflow-x-auto px-(--gutter) py-2 [scrollbar-width:none] lg:order-none lg:mx-0 lg:flex-col lg:gap-0 lg:overflow-visible lg:p-0 lg:[grid-area:names] [&::-webkit-scrollbar]:hidden"
+          className="order-3 flex flex-wrap gap-x-6 py-2 lg:order-none lg:flex-col lg:flex-nowrap lg:gap-0 lg:p-0 lg:[grid-area:names]"
           {...revealProps(reduced, 1)}
         >
           {SKILLS.map((skill, index) => {

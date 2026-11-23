@@ -1,17 +1,23 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { LANDING_IMAGES } from "@/lib/landing/assets";
 import { revealProps } from "@/lib/landing/motion";
 import type { LandingActions } from "./types";
 
-/** The one tile radius of this part of the page: a 72px FAQ tile is a loaf at 36px. */
-const TILE = "rounded-[36px]";
+/** The one tile radius of the page (--radius-tile in landing.css). */
+const TILE = "rounded-(--radius-tile)";
+
+/** A real screen for the photo flank: the word-by-word pronunciation result. */
+const PHOTO = LANDING_IMAGES["skill-noi"];
 
 /**
  * The close (spec 6.4.6, blueprint "The action tile"): one row of three
  * tiles. The wide orange tile holds the heading and the register action; the
  * two flanking tiles run off the viewport edges, as if cropped from a longer
- * row. On a phone the orange tile comes first, the flanks follow as a pair.
+ * row: one holds a real screen, the other is a flat field. On a phone the
+ * orange tile comes first and the screen follows at full width; the flat
+ * field only exists in the desktop row, where it closes the right edge.
  *
  * Text on the tile is dark (--on-lit, #1c1917 in both modes): white on
  * --loaf is 3.2:1, below the 4.5:1 that running text needs (spec 6.7).
@@ -21,19 +27,25 @@ export function ActionTile({ actions }: { actions: LandingActions }) {
   return (
     <section aria-labelledby="landing-action-title" className="overflow-x-clip">
       <div className="landing-container lg:max-w-none lg:px-0">
-        <div className="grid grid-cols-2 gap-2 lg:-mx-10 lg:grid-cols-[minmax(0,1fr)_min(64%,60rem)_minmax(0,1fr)] lg:gap-3">
-          {/* Photo slot. The spec wants a real photograph here (a found bread picture,
-              spec 6.5, credited in LoafMark); this branch has none, so the tile stays a
-              flat field until one is added. Put it in as an <img> with object-cover,
-              width, height, alt and loading="lazy", and add its credit line in LoafMark. */}
+        <div className="grid grid-cols-1 gap-2 lg:-mx-10 lg:grid-cols-[minmax(0,1fr)_min(64%,60rem)_minmax(0,1fr)] lg:gap-3">
+          {/* The screen fills its tile; on a phone the crop keeps the four rows of scored words. */}
           <motion.div
-            aria-hidden="true"
-            className={`order-2 h-[120px] bg-(--surface-2) lg:order-none lg:h-[360px] ${TILE}`}
+            className={`relative order-2 h-[180px] overflow-hidden bg-white sm:h-[240px] lg:order-none lg:h-[360px] ${TILE}`}
             {...revealProps(reduced, 1)}
-          />
+          >
+            <img
+              src={PHOTO.src}
+              alt={PHOTO.alt}
+              width={PHOTO.width}
+              height={PHOTO.height}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 size-full object-cover object-[50%_45%]"
+            />
+          </motion.div>
 
           <div
-            className={`order-1 col-span-2 flex min-h-[300px] flex-col items-start justify-center bg-(--loaf) p-6 text-(--on-lit) sm:p-10 lg:order-none lg:col-span-1 lg:h-[360px] ${TILE}`}
+            className={`order-1 flex min-h-[300px] flex-col items-start justify-center bg-(--loaf) p-6 text-(--on-lit) sm:p-10 lg:order-none lg:h-[360px] ${TILE}`}
           >
             <motion.h2
               id="landing-action-title"
@@ -58,7 +70,7 @@ export function ActionTile({ actions }: { actions: LandingActions }) {
 
           <motion.div
             aria-hidden="true"
-            className={`order-3 h-[120px] bg-(--surface-3) lg:order-none lg:h-[360px] ${TILE}`}
+            className={`hidden bg-(--surface-3) lg:block lg:h-[360px] ${TILE}`}
             {...revealProps(reduced, 2)}
           />
         </div>

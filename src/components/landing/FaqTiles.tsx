@@ -10,7 +10,7 @@ import type { LandingActions } from "./types";
  * FAQ (spec 6.4.5, blueprint "Accordion of filled tiles"): a sticky heading
  * on the left, filled tiles on the right. Each tile is a <details> sharing
  * name="faq", so the browser keeps one open at a time and the keyboard works
- * without script. A closed tile is a loaf (72px tall, 36px corners); the open
+ * without script. A closed tile is a loaf (72px tall, --radius-tile corners); the open
  * one lights up in --lit, the colour of a lit cut, since orange stays on the
  * button and the loaf (spec 6.2).
  */
@@ -35,9 +35,9 @@ export function FaqTiles({ actions }: { actions: LandingActions }) {
               <motion.li key={item.q} {...revealProps(reduced, 1 + Math.min(index, 2))}>
                 <details
                   name="faq"
-                  className="group rounded-[36px] bg-(--surface) text-(--ink) transition-colors duration-200 open:bg-(--lit) open:text-(--on-lit)"
+                  className="group rounded-(--radius-tile) bg-(--surface) text-(--ink) transition-colors duration-200 open:bg-(--lit) open:text-(--on-lit)"
                 >
-                  <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 rounded-[36px] px-5 py-4 transition-colors duration-200 hover:bg-(--surface-2) group-open:hover:bg-transparent lg:min-h-[72px] lg:px-6 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 rounded-(--radius-tile) px-5 py-4 transition-colors duration-200 hover:bg-(--surface-2) group-open:hover:bg-transparent lg:min-h-[72px] lg:px-6 [&::-webkit-details-marker]:hidden">
                     <span className="text-(length:--type-body) font-medium leading-snug lg:text-(length:--type-lead)">
                       {item.q}
                     </span>

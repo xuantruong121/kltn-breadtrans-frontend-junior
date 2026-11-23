@@ -45,6 +45,9 @@
     /* Space: equal side gutters, and the gap between two sections. */
     --gutter: 1rem;
     --section-gap: 96px;
+    /* One radius for every filled tile (habit tiles, FAQ, action tile):
+       a 72px FAQ tile is a loaf at 36px. Path fields run edge to edge, square. */
+    --radius-tile: 36px;
 
     background-color: var(--bg);
     color: var(--ink);

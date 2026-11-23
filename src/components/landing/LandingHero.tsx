@@ -24,7 +24,9 @@ const LOAF_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
  * the numbers were checked against the stadium outline from 360 to 2560px.
  *
  * - Phone: the loaf sits under the copy, 130vw wide, cropped left, right and
- *   bottom; the controls ride on its upper band, above the cuts.
+ *   bottom; the controls ride on its upper band, above the cuts. The top
+ *   padding, the gap above the loaf and the cut shift are kept small so that at
+ *   390x844 the scored words end above MobileBottomNav on the first screen.
  * - 640-1023: the same, at 116vw.
  * - 1024 and up: the loaf enters from the right at 47vw, centred on the
  *   section's height; the six cuts sit on its visible left half.
@@ -45,7 +47,7 @@ const LOAF_BOX =
 const LOAF_SHAPE = String.raw`h-full aspect-auto
   [&_.landing-loaf\_\_cuts]:px-[17%]
   lg:[&_.landing-loaf\_\_cuts]:pl-[10%] lg:[&_.landing-loaf\_\_cuts]:pr-[50%]
-  [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[47.2%]
+  [&_.landing-loaf\_\_cut]:w-[13%] [&_.landing-loaf\_\_cut]:h-[36%] [&_.landing-loaf\_\_cut]:translate-y-[40%]
   sm:[&_.landing-loaf\_\_cut]:w-[10%] sm:[&_.landing-loaf\_\_cut]:h-[38%] sm:[&_.landing-loaf\_\_cut]:translate-y-[39.5%]
   lg:[&_.landing-loaf\_\_cut]:w-[9%] lg:[&_.landing-loaf\_\_cut]:h-[42%] lg:[&_.landing-loaf\_\_cut]:translate-y-[21.4%]`;
 
@@ -102,7 +104,7 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
       aria-labelledby="landing-hero-title"
       className="relative flex flex-col overflow-clip lg:min-h-[calc(100svh_-_5rem)] lg:justify-center"
     >
-      <div className="landing-container relative z-[1] pt-[clamp(1.5rem,6svh,3rem)] sm:pt-16 lg:pointer-events-none lg:py-16">
+      <div className="landing-container relative z-[1] pt-[clamp(1rem,3svh,3rem)] sm:pt-16 lg:pointer-events-none lg:py-16">
         {/* --hero-col: what is left of 44vw after the container's own offset, so
             the copy always ends short of the loaf (its left edge is at 47vw). */}
         <div className="lg:pointer-events-auto lg:max-w-(--hero-col) lg:[--hero-col:min(40vw,calc(44vw_-_max(0px,(100vw_-_90rem)_/_2)_-_var(--gutter)))]">
@@ -142,7 +144,7 @@ export function LandingHero({ actions }: { actions: LandingActions }) {
         </div>
       </div>
 
-      <div className="relative mt-6 h-[100vw] sm:mt-10 sm:h-[72vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto">
+      <div className="relative mt-2 h-[100vw] sm:mt-10 sm:h-[72vw] lg:absolute lg:inset-0 lg:mt-0 lg:h-auto">
         <motion.figure
           className={LOAF_BOX}
           data-reveal

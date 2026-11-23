@@ -45,17 +45,21 @@ function blockMotion(reduced: boolean, index: number) {
  *
  * Sizes are container units (cqi) of the band's content width, so the
  * construction keeps its proportions at every width: one row of ten from 640px,
- * "Bread" over "Trans" on a phone.
+ * "Bread" over "Trans" on a phone. The letters take the hero step (--type-hero),
+ * so the page keeps five type sizes; the cqi cap stops them outgrowing a block
+ * on screens wider than the 90rem container.
  */
 export function LoafMark({ actions }: { actions: LandingActions }) {
   void actions; // the mark carries no action; AppFooter below holds the links
   const reduced = Boolean(useReducedMotion());
   return (
     // The negative margin takes back the section gap .landing-stack leaves after
-    // the last section, so the band meets AppFooter.
+    // the last section, so the band meets AppFooter. Under lg (public)/layout.tsx
+    // also pads <main> by 4.5rem + the safe area for MobileBottomNav; the band
+    // runs over that padding too, so no strip of page colour shows above the footer.
     <section
       aria-labelledby="landing-mark-title"
-      className="mb-[calc(var(--section-gap)*-1)] bg-(--surface-2) py-12 lg:py-16"
+      className="mb-[calc(var(--section-gap)*-1_-_4.5rem_-_env(safe-area-inset-bottom))] bg-(--surface-2) py-12 lg:mb-[calc(var(--section-gap)*-1)] lg:py-16"
     >
       <div className="landing-container">
         <h2 id="landing-mark-title" aria-label="BreadTrans" className="@container landing-display">
@@ -65,7 +69,7 @@ export function LoafMark({ actions }: { actions: LandingActions }) {
                 key={index}
                 aria-hidden="true"
                 style={{ "--block": block.height / 100 } as CSSProperties}
-                className="flex h-[calc(40cqi*var(--block))] items-end justify-center rounded-full bg-(--loaf) pb-[4cqi] text-[length:13cqi] leading-none text-(--on-loaf) sm:h-[calc(22cqi*var(--block))] sm:pb-[2cqi] sm:text-[length:7cqi]"
+                className="flex h-[calc(40cqi*var(--block))] items-end justify-center rounded-full bg-(--loaf) pb-[4cqi] text-[length:min(var(--type-hero),13cqi)] leading-none text-(--on-loaf) sm:h-[calc(22cqi*var(--block))] sm:pb-[2cqi] sm:text-[length:min(var(--type-hero),7cqi)]"
                 {...blockMotion(reduced, index)}
               >
                 {block.letter}

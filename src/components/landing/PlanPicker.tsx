@@ -42,8 +42,8 @@ function PlanStage({ plan, className = "" }: { plan: PlanView; className?: strin
 
 /**
  * Plans (spec 6.4.4, blueprint "Plan names, one live figure"): the names are
- * toggle buttons on the left, the chosen plan's stage on the right; on a
- * phone the stage opens under its name. Prices come from the public catalog
+ * toggle buttons on the left, the chosen plan's stage on the right; under lg
+ * the stage follows the list. Prices come from the public catalog
  * and show the fallback at once, so nothing waits for the API.
  *
  * Selection follows click, Enter and Space, not focus: with focus-follow a
@@ -92,15 +92,15 @@ export function PlanPicker({ actions }: { actions: LandingActions }) {
                   />
                   {plan.name}
                 </button>
-                {isSelected ? <PlanStage plan={plan} className="mt-4 mb-10 lg:hidden" /> : null}
               </motion.li>
             );
           })}
         </ul>
 
-        {/* Desktop stage: all three stages share one cell, so the figure never moves
-            and the section never changes height; changing plan crossfades in 200ms. */}
-        <motion.div className="hidden lg:col-span-5 lg:col-start-8 lg:block" {...revealProps(reduced, 2)}>
+        {/* The stage: all three stages share one cell, so the figure never moves and
+            the section never changes height; changing plan crossfades in 200ms.
+            Under lg it sits below the three names, never between two of them. */}
+        <motion.div className="mt-8 lg:col-span-5 lg:col-start-8 lg:mt-0" {...revealProps(reduced, 2)}>
           <div className="grid">
             {plans.map((plan) => {
               const isSelected = plan.code === selected;

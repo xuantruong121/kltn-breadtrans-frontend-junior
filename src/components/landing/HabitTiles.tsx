@@ -52,7 +52,7 @@ export function HabitTiles({ actions }: { actions: LandingActions }) {
                 <motion.div {...revealProps(reduced, index + 2)}>
                   {/* The double tile is 8:5; from md up it takes the height of a 4:5 tile beside it (10px gap). */}
                   <div
-                    className={`relative ${TILE_TONES[index % TILE_TONES.length]} ${
+                    className={`relative rounded-(--radius-tile) ${TILE_TONES[index % TILE_TONES.length]} ${
                       double ? "aspect-[8/5] md:aspect-auto md:h-[calc(62.5cqw_-_6.25px)]" : "aspect-[4/5]"
                     }`}
                   >

@@ -4,7 +4,7 @@
  *
  * Every sentence says only what the product does and what its screenshot shows.
  * No learner counts, no testimonials, no exam-board or CEFR claim: the path
- * keeps the old roadmap's caveats (legacy-content.ts, ROADMAP_STEPS), including
+ * keeps the caveats of the old page's roadmap (ROADMAP_STEPS), including
  * "không phải chứng chỉ hay cấp độ CEFR". content.test.ts checks this.
  *
  * No React and no I/O, so the tests run under the Node test runner.
