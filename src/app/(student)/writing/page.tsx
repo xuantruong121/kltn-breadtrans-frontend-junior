@@ -2,11 +2,9 @@
 
 import { RecommendedForYou } from "@/components/learning-path/RecommendedForYou";
 import { useState, useEffect, useMemo, useRef } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
-  History,
   Loader2,
   PenTool,
   RotateCcw,
@@ -37,7 +35,7 @@ import {
   type StatusFilter,
 } from "@/lib/practice/catalogFilters";
 import { unlockPlanFor } from "@/modules/subscription/practicePlan";
-import { quizDisplayTitle, withoutLevelTag } from "@/lib/catalog/displayTitles";
+import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingCatalog } from "@/components/writing/PictureWritingCatalog";
 import { isPictureQuiz, pictureCards } from "@/lib/writing/pictureWriting";
 
@@ -107,12 +105,6 @@ export default function WritingTopicsPage() {
   } = useQuery({
     queryKey: ["writing-topics"],
     queryFn: writingService.getTopics,
-  });
-
-  const { data: writingHistory } = useQuery({
-    queryKey: ["learning-history", "WRITING_PRACTICE_COMPLETED"],
-    queryFn: () => userService.getLearningHistory("WRITING_PRACTICE_COMPLETED"),
-    enabled: Boolean(user),
   });
 
   const { data: skillProgress } = useQuery<UserSkillsSummaryResponse>({
@@ -253,42 +245,6 @@ export default function WritingTopicsPage() {
           </div>
         </div>
       </section>
-
-      {user && (writingHistory?.activities?.length ?? 0) > 0 && (
-        <section className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <History size={17} className="text-sky-600 dark:text-sky-400" />
-              <h2 className="text-sm font-black text-slate-900 dark:text-slate-100">
-                Lịch sử Writing gần đây
-              </h2>
-            </div>
-            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-              Kết quả đã lưu
-            </span>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {writingHistory?.activities.slice(0, 6).map((activity) => (
-              <Link
-                key={activity.id}
-                href={
-                  activity.sourceType === "WRITING_SUBMISSION" && activity.sourceId
-                            ? `/writing/submissions/${activity.sourceId}`
-                    : "/writing"
-                }
-                className="rounded-xl border border-slate-200 bg-slate-50 p-3 transition hover:border-sky-300 hover:bg-sky-50 dark:border-slate-700 dark:bg-slate-800/70 dark:hover:border-sky-700 dark:hover:bg-sky-950/30"
-              >
-                <p className="line-clamp-1 text-xs font-bold text-slate-800 dark:text-slate-100">
-                  {withoutLevelTag(activity.title)}
-                </p>
-                <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                  {activity.detail ?? "Đã hoàn thành"} · {activity.score != null ? `${activity.score}%` : "Chưa có điểm"}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {hasPictureWriting && (
         <div className="flex flex-wrap gap-2" role="tablist" aria-label="Loại bài luyện viết">
