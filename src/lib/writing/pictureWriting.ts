@@ -59,3 +59,22 @@ export function cueWordPairs(cards: Array<{ pair: string }>): string[] {
 export function submitsOnEnter(event: { key: string; shiftKey: boolean; isComposing: boolean }): boolean {
   return event.key === "Enter" && !event.shiftKey && !event.isComposing;
 }
+
+/**
+ * The right answer shown in the answer box once a picture is graded (owner
+ * 2026-11-24): the learner's own text with each correction of the grader
+ * applied. A correction is matched exactly, then without case; one whose
+ * original text is not in the answer is skipped (the result column still
+ * lists it).
+ */
+export function correctedAnswer(text: string, corrections: Array<{ original: string; corrected: string }>): string {
+  let out = text;
+  for (const { original, corrected } of corrections) {
+    if (!original) continue;
+    let at = out.indexOf(original);
+    if (at < 0) at = out.toLowerCase().indexOf(original.toLowerCase());
+    if (at < 0) continue;
+    out = out.slice(0, at) + corrected + out.slice(at + original.length);
+  }
+  return out;
+}
