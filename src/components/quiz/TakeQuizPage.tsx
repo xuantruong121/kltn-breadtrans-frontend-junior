@@ -43,7 +43,11 @@ import {
   isPremiumListeningForbiddenError,
 } from "@/modules/subscription/planLogic";
 import toast from "react-hot-toast";
-import { getUnansweredQuestionIndexes } from "@/lib/reading/readingQuizUtils";
+import {
+  READING_AUTO_ADVANCE_MS,
+  getUnansweredQuestionIndexes,
+  readingStepAfterAnswer,
+} from "@/lib/reading/readingQuizUtils";
 import { createReadingAttemptId } from "@/lib/reading/readingAttempt";
 import { extractReadingDictionaryWord } from "@/lib/reading/readingDictionary";
 import {
@@ -89,6 +93,14 @@ export default function TakeQuizPage(props: {
   const readingDraftScopeRef = useRef<string | null>(null);
   const skipNextDraftSaveRef = useRef(false);
   const [currentStep, setCurrentStep] = useState(0);
+  // Reading: picking an answer opens the next question after a short pause.
+  const readingAdvanceTimerRef = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (readingAdvanceTimerRef.current !== null) window.clearTimeout(readingAdvanceTimerRef.current);
+    },
+    [],
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [dictationResults, setDictationResults] = useState<
@@ -945,6 +957,21 @@ export default function TakeQuizPage(props: {
                                 [currentQuestion.id]: opt,
                               });
                               setSubmitError(null);
+                              // Move on by itself (owner 2026-11-24); the last
+                              // question stays so "Nộp bài" can be pressed.
+                              const next = readingStepAfterAnswer(currentStep, questions.length);
+                              if (readingAdvanceTimerRef.current !== null) {
+                                window.clearTimeout(readingAdvanceTimerRef.current);
+                                readingAdvanceTimerRef.current = null;
+                              }
+                              if (next !== null) {
+                                const from = currentStep;
+                                readingAdvanceTimerRef.current = window.setTimeout(() => {
+                                  readingAdvanceTimerRef.current = null;
+                                  // Only if the learner did not move meanwhile.
+                                  setCurrentStep((step) => (step === from ? next : step));
+                                }, READING_AUTO_ADVANCE_MS);
+                              }
                             }}
                             className={`w-full py-2.5 px-3.5 sm:py-3 sm:px-4 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${
                               isSelected

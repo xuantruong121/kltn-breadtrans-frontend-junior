@@ -68,6 +68,8 @@ test("each kind of notification has its own icon", () => {
     ["NEW_MESSAGE", "message"],
     ["SUGGESTION_RESPONSE", "suggestion"],
     ["ISSUE_REPORT_RESULT", "issue"],
+    ["level_up:5", "level"],
+    ["pet_level_up:3", "pet"],
     ["something_new", "other"],
   ];
   for (const [type, key] of cases) assert.equal(notificationIconKey(type), key, type);
@@ -133,4 +135,11 @@ test("under a day heading, today keeps 'N giờ trước' and older rows show th
   assert.equal(notificationRowTime(at(18, 20, 5), NOW), "20:05");
   assert.equal(notificationRowTime(at(11, 7, 30), NOW), "07:30");
   assert.equal(notificationRowTime("", NOW), "");
+});
+
+test("a level-up line opens the ranking, a pet level-up opens the pet page", () => {
+  const line = (type: string, url: string) =>
+    ({ id: 1, type, title: "t", body: "b", url, isRead: false, createdAt: "" }) as never;
+  assert.equal(resolveNotificationAction(line("level_up:5", "/ranking")), "/ranking");
+  assert.equal(resolveNotificationAction(line("pet_level_up:3", "/pet")), "/pet");
 });

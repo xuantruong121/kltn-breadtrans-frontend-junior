@@ -4,6 +4,7 @@ import {
   formatReadingExplanation,
   formatReadingValue,
   getUnansweredQuestionIndexes,
+  readingStepAfterAnswer,
   resolveReadingCorrectAnswer,
 } from "./readingQuizUtils.ts";
 
@@ -38,4 +39,11 @@ test("keeps review explanation controlled and non-empty", () => {
     "Vì đáp án này khớp với chi tiết trong bài đọc.",
   );
   assert.equal(formatReadingExplanation({ explanation: {} }), null);
+});
+
+test("choosing an answer moves on to the next question, except on the last one", () => {
+  assert.equal(readingStepAfterAnswer(0, 5), 1);
+  assert.equal(readingStepAfterAnswer(3, 5), 4);
+  assert.equal(readingStepAfterAnswer(4, 5), null);
+  assert.equal(readingStepAfterAnswer(0, 1), null);
 });

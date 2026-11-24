@@ -32,7 +32,8 @@ export function getTypeSpecificQuestFallback(type?: string): { actionLabel: stri
     case "DO_LISTENING":
       return { actionLabel: "Luyện nghe", actionUrl: "/listening" };
     case "DO_READING":
-      return { actionLabel: "Luyện đọc", actionUrl: "/reading" };
+      // Đọc hiểu only: grammar practice does not count (owner 2026-11-24).
+      return { actionLabel: "Luyện đọc hiểu", actionUrl: "/reading" };
     case "DO_WRITING":
       return { actionLabel: "Luyện viết", actionUrl: "/writing" };
     case "PERFECT_QUIZ":

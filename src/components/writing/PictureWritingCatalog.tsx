@@ -5,6 +5,7 @@ import { ArrowRight, Lock } from "lucide-react";
 
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
+import { PICTURE_CATALOG_PAGE_SIZES } from "@/lib/practice/catalogPage";
 import {
   catalogLevelLabel,
   DEFAULT_CATALOG_SORT,
@@ -62,7 +63,7 @@ export function PictureWritingCatalog({
       ),
     [cards, difficulty, status, pair, sort],
   );
-  const paging = useCatalogPage(visible, [difficulty, status, pair, sort].join("|"));
+  const paging = useCatalogPage(visible, [difficulty, status, pair, sort].join("|"), PICTURE_CATALOG_PAGE_SIZES);
 
   return (
     <div className="space-y-5">
@@ -112,7 +113,7 @@ export function PictureWritingCatalog({
         </p>
       ) : (
         <div className="space-y-6">
-        <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {paging.items.map(({ key, quiz, task, href }) => {
             const locked = Boolean(quiz.isLocked);
             const levelLocked = isAuthenticated && Boolean(quiz.isLevelLocked);

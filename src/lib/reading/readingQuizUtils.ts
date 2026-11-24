@@ -62,3 +62,14 @@ export function getUnansweredQuestionIndexes(
     return missing;
   }, []);
 }
+
+/** Pause after a choice before the next question opens, so the pick is seen. */
+export const READING_AUTO_ADVANCE_MS = 350;
+
+/**
+ * The question to open after the learner picks an answer (owner 2026-11-24):
+ * the next one, or null on the last question, where "Nộp bài" stays.
+ */
+export function readingStepAfterAnswer(step: number, total: number): number | null {
+  return step < total - 1 ? step + 1 : null;
+}

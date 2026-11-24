@@ -161,6 +161,14 @@ export default function SocketProvider({ children }: { children: React.ReactNode
       }
     });
 
+    // Thưởng bài Nói được tính ở worker riêng; tín hiệu của nó cũng làm mới các số
+    // đang hiện, để cấp mới (của bạn và của thú ảo) hiện ngay sau bài Nói.
+    socketInstance.on("speaking.reward.completed", () => {
+      for (const queryKey of PROGRESS_QUERY_KEYS) {
+        void queryClient.invalidateQueries({ queryKey: [...queryKey] });
+      }
+    });
+
     // Gói vừa được tặng, xác nhận, gia hạn hoặc thu hồi (thường do admin hay PayOS):
     // làm mới gói, khiên và nội dung theo gói ngay trên trang đang mở.
     socketInstance.on("user:plan_updated", (data: { userId?: number }) => {

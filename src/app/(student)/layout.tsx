@@ -7,6 +7,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AppHeader } from "@/components/navigation/AppHeader";
 import { AppFooter } from "@/components/navigation/AppFooter";
 import { BackToTop } from "@/components/navigation/BackToTop";
+import { LevelUpWatcher } from "@/components/gamification/LevelUpWatcher";
 import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 import { userService } from "@/lib/api/services/user.service";
 import { useAuthStore } from "@/stores/authStore";
@@ -113,6 +114,8 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
 
   return (
     <LearningFocusProvider>
+      {/* A toast when the learner or the thú ảo goes up a level (owner 2026-11-24). */}
+      {user?.role === "STUDENT" && <LevelUpWatcher userId={user.id} totalXp={learningStats?.totalPoints} />}
       <StudentLayoutContent
         user={user}
         isDashboardPage={isDashboardPage}

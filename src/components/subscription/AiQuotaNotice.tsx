@@ -31,7 +31,7 @@ export function AiQuotaNotice({
           <p className="text-[15px] font-bold text-amber-950 dark:text-amber-200">Đã hết lượt AI chấm hôm nay</p>
           <p className="mt-1 text-[15px] leading-relaxed text-slate-800 dark:text-slate-200">{quota.message}</p>
           <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-            {keptWork} của bạn vẫn được giữ. Lượt mới có từ 00:00 ngày mai (giờ Việt Nam).
+            {keptWork} của bạn vẫn được giữ. Lượt mới có vào ngày mai.
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {offersUpgrade(quota.planCode) && (
