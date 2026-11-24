@@ -5,10 +5,17 @@ import { useState } from "react";
 import { Pagination } from "@/components/ui";
 import { CATALOG_PAGE_SIZES, catalogPage } from "@/lib/practice/catalogPage";
 
-/** Pages a filtered list. A new `resetKey` (the filters) goes back to page 1. */
-export function useCatalogPage<T>(list: readonly T[], resetKey: string) {
+/**
+ * Pages a filtered list. A new `resetKey` (the filters) goes back to page 1.
+ * `sizes` are the page sizes offered; the first is the default.
+ */
+export function useCatalogPage<T>(
+  list: readonly T[],
+  resetKey: string,
+  sizes: readonly number[] = CATALOG_PAGE_SIZES,
+) {
   const [requested, setRequested] = useState(1);
-  const [pageSize, setPageSize] = useState(CATALOG_PAGE_SIZES[0]);
+  const [pageSize, setPageSize] = useState(sizes[0]);
   const [seenKey, setSeenKey] = useState(resetKey);
   if (seenKey !== resetKey) {
     setSeenKey(resetKey);
@@ -21,6 +28,7 @@ export function useCatalogPage<T>(list: readonly T[], resetKey: string) {
     totalPages,
     total: list.length,
     pageSize,
+    sizes,
     setPage: setRequested,
     setPageSize: (size: number) => {
       setPageSize(size);
@@ -38,7 +46,7 @@ export function CatalogPagination({ paging }: { paging: ReturnType<typeof useCat
       pageSize={paging.pageSize}
       onPageChange={paging.setPage}
       onPageSizeChange={paging.setPageSize}
-      pageSizeOptions={CATALOG_PAGE_SIZES}
+      pageSizeOptions={[...paging.sizes]}
       alwaysShow
     />
   );

@@ -5,6 +5,7 @@ import { ArrowRight, Lock } from "lucide-react";
 
 import { PracticeCatalogFilters } from "@/components/practice/PracticeCatalogFilters";
 import { CatalogPagination, useCatalogPage } from "@/components/practice/CatalogPagination";
+import { PICTURE_CATALOG_PAGE_SIZES } from "@/lib/practice/catalogPage";
 import {
   catalogLevelLabel,
   DEFAULT_CATALOG_SORT,
@@ -62,7 +63,7 @@ export function PictureWritingCatalog({
       ),
     [cards, difficulty, status, pair, sort],
   );
-  const paging = useCatalogPage(visible, [difficulty, status, pair, sort].join("|"));
+  const paging = useCatalogPage(visible, [difficulty, status, pair, sort].join("|"), PICTURE_CATALOG_PAGE_SIZES);
 
   return (
     <div className="space-y-5">
