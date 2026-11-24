@@ -635,7 +635,7 @@ export function AccountHub() {
                   <div className="rounded-2xl border border-slate-100 p-4 dark:border-slate-800">
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
                       <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Lượt dùng hôm nay</p>
-                      <p className="text-xs text-slate-600 dark:text-slate-400">Làm mới lúc 00:00 (giờ Việt Nam)</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">Làm mới mỗi ngày</p>
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       {(
