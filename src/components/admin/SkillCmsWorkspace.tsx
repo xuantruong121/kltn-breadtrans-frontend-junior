@@ -8,7 +8,6 @@ import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown, Circle, FileAudio, Fi
 
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
-import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import ImageUploadField from "@/components/admin/ImageUploadField";
 import RequiredMediaNotice from "@/components/admin/RequiredMediaNotice";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -539,7 +538,6 @@ export default function SkillCmsWorkspace({
   // "Soạn cả bài bằng AI" is running (owner 2026-11-24: it showed nothing for
   // the 10-30 s the AI takes, and could be clicked again).
   const [fullDraftBusy, setFullDraftBusy] = useState(false);
-  const [documentText, setDocumentText] = useState("");
   const [dictationTopic, setDictationTopic] = useState("");
   const [isDictationAiLoading, setIsDictationAiLoading] = useState(false);
   // The "new question" editor is opened on demand; editing happens in place.
@@ -911,7 +909,6 @@ export default function SkillCmsWorkspace({
           currentPrompt: question.prompt.trim() || undefined,
           wordMin: question.wordMin ? Number(question.wordMin) : undefined,
           wordMax: question.wordMax ? Number(question.wordMax) : undefined,
-          sourceText: documentText || undefined,
         },
       );
       const data = response?.data || response;
@@ -932,8 +929,8 @@ export default function SkillCmsWorkspace({
 
   const handleSuggestDictationLines = async () => {
     const topic = dictationTopic.trim() || form.title.trim();
-    if (!topic && !documentText) {
-      toast.error("Nhập chủ đề hoặc chọn tài liệu trước.");
+    if (!topic) {
+      toast.error("Nhập chủ đề trước.");
       return;
     }
     setIsDictationAiLoading(true);
@@ -944,7 +941,6 @@ export default function SkillCmsWorkspace({
           topic: topic || "Theo tài liệu",
           level: form.level || "A2",
           count: 20,
-          sourceText: documentText || undefined,
         },
       );
       const data = response?.data || response;
@@ -986,7 +982,6 @@ export default function SkillCmsWorkspace({
               level: form.level || "A2",
               targetLength: 180,
               count,
-              sourceText: documentText || undefined,
             }
           : {
               topic,
@@ -997,7 +992,6 @@ export default function SkillCmsWorkspace({
               mode: selectedListeningMode,
               // "Nghe chép": sentences, 20 to 30.
               count,
-              sourceText: documentText || undefined,
             },
       );
       const data = response?.data || response;
@@ -2739,7 +2733,6 @@ export default function SkillCmsWorkspace({
                     </select>
                   </label>
                 )}
-                {!draftLocked && <DocumentImportButton onText={setDocumentText} />}
                 <button
                   type="button"
                   onClick={() => void handleSuggestFullDraft()}
@@ -3456,7 +3449,6 @@ export default function SkillCmsWorkspace({
                       placeholder="Chủ đề, ví dụ: đặt lịch hẹn"
                       className="min-h-10 min-w-48 flex-1 rounded-lg border border-slate-300 px-3 text-sm"
                     />
-                    <DocumentImportButton onText={setDocumentText} />
                     <button
                       type="button"
                       disabled={isDictationAiLoading}
@@ -4652,7 +4644,6 @@ export default function SkillCmsWorkspace({
               )}
             </div>
             <div className="mt-4 flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
-              <DocumentImportButton onText={setDocumentText} />
               <button
                 type="button"
                 onClick={() => void handleSuggestWritingTask()}
