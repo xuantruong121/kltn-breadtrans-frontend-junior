@@ -29,6 +29,7 @@ import {
 } from "../petLogic";
 import { CompanionPet2D } from "./CompanionPet2D";
 import { TutorEntryButton } from "./TutorEntryButton";
+import { useLevelUpStore } from "@/stores/levelUpStore";
 
 interface DashboardCompanionCardProps {
   className?: string;
@@ -41,7 +42,8 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
   const queryClient = useQueryClient();
 
   const [isJustFed, setIsJustFed] = useState(false);
-  const [isLevelUp, setIsLevelUp] = useState(false);
+  // The level-up pose comes from LevelUpWatcher, for feeding and study EXP alike.
+  const isLevelUp = useLevelUpStore((state) => state.petLevelUp);
   const [statusFeedback, setStatusFeedback] = useState<string | null>(null);
 
   // 1. Fetch current Pet data from backend (authoritative)
@@ -124,11 +126,9 @@ export const DashboardCompanionCard: React.FC<DashboardCompanionCardProps> = ({
       const leveledUp = updatedPet.level > prevLevel;
 
       if (leveledUp) {
-        setIsLevelUp(true);
-        const msg = `Thú ảo đã thăng cấp lên Cấp ${updatedPet.level}!`;
+        const msg = `Thú ảo đã lên Cấp ${updatedPet.level}!`;
         setStatusFeedback(msg);
-        toast.success(msg, { duration: 5000 });
-        setTimeout(() => setIsLevelUp(false), 5000);
+        // The toast and the pose come from LevelUpWatcher once the pet refetches.
       } else {
         setIsJustFed(true);
         const msg = `Đã cho thú ảo ăn thành công!`;

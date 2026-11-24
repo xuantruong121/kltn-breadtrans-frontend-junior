@@ -8,6 +8,8 @@ import {
   Gift,
   Layers,
   Lightbulb,
+  Medal,
+  PawPrint,
   ShieldCheck,
   ShoppingBag,
   type LucideIcon,
@@ -27,6 +29,8 @@ const ICONS: Record<NotificationIconKey, LucideIcon> = {
   message: Croissant,
   suggestion: Lightbulb,
   issue: Flag,
+  level: Medal,
+  pet: PawPrint,
   other: Bell,
 };
 

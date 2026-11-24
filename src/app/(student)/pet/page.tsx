@@ -13,13 +13,15 @@ import axiosClient from "@/lib/api/axiosClient";
 import { useAuthStore } from "@/stores/authStore";
 import { canFeedPet, handleFeedFailure, lockedSpeciesIds } from "@/modules/pet/petLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { useLevelUpStore } from "@/stores/levelUpStore";
 
 export default function PetPage() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isJustFed, setIsJustFed] = useState(false);
-  const [isLevelUp, setIsLevelUp] = useState(false);
+  // The level-up pose comes from LevelUpWatcher, for feeding and study EXP alike.
+  const isLevelUp = useLevelUpStore((state) => state.petLevelUp);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   // 1. Authoritative Pet data from backend
@@ -71,11 +73,9 @@ export default function PetPage() {
       const leveledUp = updatedPet.level > prevLevel;
 
       if (leveledUp) {
-        setIsLevelUp(true);
-        const msg = `Chúc mừng! Thú ảo đã thăng cấp lên Cấp ${updatedPet.level}!`;
+        const msg = `Thú ảo đã lên Cấp ${updatedPet.level}!`;
         setStatusMessage(msg);
-        toast.success(msg, { duration: 5000 });
-        setTimeout(() => setIsLevelUp(false), 5000);
+        // The toast and the pose come from LevelUpWatcher once the pet refetches.
       } else {
         setIsJustFed(true);
         const expReward = updatedPet.feedExpReward ?? 0;

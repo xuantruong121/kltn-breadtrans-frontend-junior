@@ -42,6 +42,7 @@ import { getSpeciesIdFromPetName, PET_SPECIES_LIST } from "../types";
 import { CompanionPet2D } from "./CompanionPet2D";
 import { isCompanionPetHidden } from "@/lib/pet/companionPetVisibility";
 import { useCompanionPetStore } from "@/stores/companionPetStore";
+import { useLevelUpStore } from "@/stores/levelUpStore";
 
 const FloatingCompanionPetInner: React.FC = () => {
   const { user } = useAuthStore();
@@ -58,7 +59,8 @@ const FloatingCompanionPetInner: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [hasDismissedMessage, setHasDismissedMessage] = useState(true);
   const [isJustFed, setIsJustFed] = useState(false);
-  const [isLevelUp, setIsLevelUp] = useState(false);
+  // The level-up pose comes from LevelUpWatcher, for feeding and study EXP alike.
+  const isLevelUp = useLevelUpStore((state) => state.petLevelUp);
   const [ariaFeedback, setAriaFeedback] = useState<string | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -195,11 +197,9 @@ const FloatingCompanionPetInner: React.FC = () => {
       const leveledUp = updatedPet.level > prevLevel;
 
       if (leveledUp) {
-        setIsLevelUp(true);
-        const msg = `Thú ảo đã thăng cấp lên Cấp ${updatedPet.level}!`;
+        const msg = `Thú ảo đã lên Cấp ${updatedPet.level}!`;
         setAriaFeedback(msg);
-        toast.success(msg, { duration: 5000 });
-        setTimeout(() => setIsLevelUp(false), 5000);
+        // The toast and the pose come from LevelUpWatcher once the pet refetches.
       } else {
         setIsJustFed(true);
         const msg = "Đã cho thú ảo ăn no nê!";

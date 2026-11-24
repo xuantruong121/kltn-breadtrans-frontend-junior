@@ -2,7 +2,7 @@ import { NotificationIcon } from "@/components/notifications/NotificationIcon";
 
 // What BreadTrans sends and when, as scheduled in the backend
 // (src/jobs/system-jobs.scheduler.ts, notifications.cron.ts, plan-expiry-message.ts,
-// promo.logic.ts WINBACK_*, study-reminder.logic.ts). Keep in step with those.
+// promo.logic.ts WINBACK_*, study-reminder.logic.ts, gamification/level-up.logic.ts). Keep in step with those.
 const KINDS = [
   {
     type: "study_reminder",
@@ -28,6 +28,11 @@ const KINDS = [
     type: "winback",
     name: "Ưu đãi quay lại",
     when: "3 ngày sau khi gói đã mua hết hạn mà bạn chưa mua lại: mã giảm 20%, dùng trong 7 ngày.",
+  },
+  {
+    type: "level_up",
+    name: "Lên cấp",
+    when: "Khi bạn hoặc thú ảo lên cấp. Lúc đang mở BreadTrans, thông báo hiện ngay trên màn hình và tự đánh dấu đã đọc.",
   },
   {
     type: "NEW_MESSAGE",

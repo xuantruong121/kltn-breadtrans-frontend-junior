@@ -14,7 +14,7 @@ export function resolveNotificationAction(item: NotificationItem): string | null
   if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("\\")) return null;
   if (raw.startsWith("/practice")) return null;
 
-  const exactRoutes = ["/dashboard", "/hub", "/flashcard", "/plans", "/account", "/messages", "/mistakes"];
+  const exactRoutes = ["/dashboard", "/hub", "/flashcard", "/plans", "/account", "/messages", "/mistakes", "/ranking", "/pet"];
   const routePrefixes = [
     "/reading/",
     "/writing/",
@@ -47,6 +47,8 @@ export type NotificationIconKey =
   | "message"
   | "suggestion"
   | "issue"
+  | "level"
+  | "pet"
   | "other";
 
 /**
@@ -81,6 +83,10 @@ export function notificationIconKey(type: string | null | undefined): Notificati
       return "suggestion";
     case "ISSUE_REPORT_RESULT":
       return "issue";
+    case "level_up":
+      return "level";
+    case "pet_level_up":
+      return "pet";
     default:
       return "other";
   }
