@@ -50,3 +50,12 @@ export function cueWordPairs(cards: Array<{ pair: string }>): string[] {
     a.localeCompare(b),
   );
 }
+
+/**
+ * Whether a key press in the picture answer box grades the answer (owner
+ * 2026-11-24): Enter grades, Shift+Enter starts a new line, and an Enter that
+ * still belongs to an IME composition (Vietnamese input) does nothing.
+ */
+export function submitsOnEnter(event: { key: string; shiftKey: boolean; isComposing: boolean }): boolean {
+  return event.key === "Enter" && !event.shiftKey && !event.isComposing;
+}

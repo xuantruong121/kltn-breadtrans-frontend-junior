@@ -201,7 +201,8 @@ export const PracticeHeader: React.FC<PracticeHeaderProps> = ({
           )}
 
           {displayCategory && (
-            <span className="hidden md:inline-block shrink-0 rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-bold text-slate-300 uppercase tracking-wider truncate max-w-[160px]">
+            // Shown in full (owner 2026-11-24): the title beside it is the part that truncates.
+            <span className="hidden md:inline-block shrink-0 whitespace-nowrap rounded bg-slate-800 border border-slate-700 px-2 py-0.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
               {displayCategory}
             </span>
           )}

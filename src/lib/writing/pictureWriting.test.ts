@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { cueWordPairs, isPictureQuiz, pictureCards } from "./pictureWriting.ts";
+import { cueWordPairs, isPictureQuiz, pictureCards, submitsOnEnter } from "./pictureWriting.ts";
 
 const task = (questionId: number, keywords: string[], imageUrl: string | null = "https://x/a.png") => ({
   questionId,
@@ -47,4 +47,11 @@ test("the pair filter lists only pairs that exist", () => {
     "cashier / scan",
     "order / counter",
   ]);
+});
+
+test("Enter grades the answer; Shift+Enter and a key still being composed do not", () => {
+  assert.equal(submitsOnEnter({ key: "Enter", shiftKey: false, isComposing: false }), true);
+  assert.equal(submitsOnEnter({ key: "Enter", shiftKey: true, isComposing: false }), false);
+  assert.equal(submitsOnEnter({ key: "Enter", shiftKey: false, isComposing: true }), false);
+  assert.equal(submitsOnEnter({ key: "a", shiftKey: false, isComposing: false }), false);
 });

@@ -9,6 +9,7 @@ import {
   Loader2,
   MousePointerClick,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { ReportIssueButton } from "@/components/issue-report/ReportIssueButton";
@@ -17,7 +18,7 @@ import type {
   WritingExerciseTask,
 } from "@/lib/api/services/writing.service";
 import { practiceDetailOf } from "@/lib/api/services/writing.service";
-import { PICTURE_MAX_WORDS } from "@/lib/writing/pictureWriting";
+import { PICTURE_MAX_WORDS, submitsOnEnter } from "@/lib/writing/pictureWriting";
 
 const CARD =
   "flex flex-col rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 lg:min-h-0 lg:overflow-y-auto";
@@ -26,6 +27,9 @@ const CARD =
  * "Viết câu theo tranh" workspace, one screen in three columns (owner
  * 2026-11-14): picture and cue words; instructions and the editor; the
  * result. A footer moves between the pictures.
+ *
+ * A picture is graded once (owner 2026-11-24): after its grade the answer box
+ * is read-only, so the AI is not asked again for the same picture.
  */
 export function PictureWritingWorkspace({
   quizId,
@@ -35,11 +39,12 @@ export function PictureWritingWorkspace({
   content,
   onContentChange,
   wordCount,
+  charCount,
   isEvaluating,
   onEvaluate,
   result,
+  gradedAnswer,
   onSelectTask,
-  nextTaskId,
 }: {
   quizId: number;
   task: WritingExerciseTask;
@@ -48,15 +53,19 @@ export function PictureWritingWorkspace({
   content: string;
   onContentChange: (value: string) => void;
   wordCount: number;
+  charCount: number;
   isEvaluating: boolean;
   onEvaluate: () => void;
   result: WritingEvaluation | null;
+  /** The text just graded for this picture, shown read-only; null when it was graded earlier. */
+  gradedAnswer: string | null;
   onSelectTask: (questionId: number) => void;
-  nextTaskId: number | null;
 }) {
   const [imageFailed, setImageFailed] = useState<string | null>(null);
   const tooLong = wordCount > PICTURE_MAX_WORDS;
   const detail = practiceDetailOf(result);
+  const graded = result !== null || task.latest !== null;
+  const canEvaluate = !graded && !isEvaluating && wordCount > 0 && !tooLong;
   const index = Math.max(
     0,
     tasks.findIndex((t) => t.id === task.id),
@@ -153,6 +162,23 @@ export function PictureWritingWorkspace({
               </ul>
             )}
           </div>
+          {graded ? (
+            <div className="flex flex-1 flex-col">
+              <p className="text-[15px] font-semibold text-slate-700 dark:text-slate-300">Câu trả lời đã chấm</p>
+              <div className="mt-2 min-h-40 w-full flex-1 rounded-xl border border-slate-200 bg-slate-50 p-4 text-[17px] leading-relaxed text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                {gradedAnswer ? (
+                  <p lang="en" className="whitespace-pre-wrap">
+                    {gradedAnswer}
+                  </p>
+                ) : (
+                  <p className="text-slate-600 dark:text-slate-400">Bạn đã chấm tranh này.</p>
+                )}
+              </div>
+              <p className="mt-3 text-[15px] text-slate-600 dark:text-slate-400">
+                Mỗi tranh chỉ chấm một lần. Bấm &quot;Tranh tiếp&quot; để làm tranh sau.
+              </p>
+            </div>
+          ) : (
           <div className="flex flex-1 flex-col">
             <label htmlFor="picture-answer" className="text-[15px] font-semibold text-slate-700 dark:text-slate-300">
               Câu trả lời
@@ -163,8 +189,15 @@ export function PictureWritingWorkspace({
               lang="en"
               value={content}
               onChange={(e) => onContentChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (!submitsOnEnter({ key: e.key, shiftKey: e.shiftKey, isComposing: e.nativeEvent.isComposing })) return;
+                // Enter never adds a line here; it grades when the answer can be graded.
+                e.preventDefault();
+                if (canEvaluate) onEvaluate();
+              }}
               placeholder={`Viết câu tiếng Anh dùng "${task.keywords.join('" và "')}"`}
               aria-describedby="picture-word-count"
+              aria-keyshortcuts="Enter"
               className="mt-2 min-h-40 w-full flex-1 resize-none rounded-xl border border-slate-200 bg-slate-50 p-4 text-[17px] leading-relaxed text-slate-900 outline-none transition focus:border-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-900"
             />
             <div className="mt-3 flex items-center justify-between gap-3">
@@ -173,13 +206,17 @@ export function PictureWritingWorkspace({
                 aria-live="polite"
                 className={`text-[15px] font-semibold tabular-nums ${tooLong ? "text-rose-700 dark:text-rose-400" : "text-slate-600 dark:text-slate-400"}`}
               >
-                {wordCount}/{PICTURE_MAX_WORDS} từ
+                {wordCount}/{PICTURE_MAX_WORDS} từ · {charCount} ký tự
                 {tooLong ? ` · vượt ${wordCount - PICTURE_MAX_WORDS} từ` : ""}
+                <span className="block text-sm font-normal text-slate-500 dark:text-slate-400">
+                  Enter để chấm, Shift+Enter để xuống dòng
+                </span>
               </span>
               <button
                 type="button"
                 onClick={onEvaluate}
                 disabled={isEvaluating}
+                aria-keyshortcuts="Enter"
                 className={`inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 text-base font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed cursor-pointer ${
                   wordCount === 0 || tooLong ? "invisible" : ""
                 }`}
@@ -198,6 +235,7 @@ export function PictureWritingWorkspace({
               </button>
             </div>
           </div>
+          )}
         </section>
 
         {/* The result: a hint until the picture is graded */}
@@ -283,22 +321,30 @@ export function PictureWritingWorkspace({
                     : ""}
                 </p>
               )}
-              {nextTaskId !== null && (
-                <button
-                  type="button"
-                  onClick={() => onSelectTask(nextTaskId)}
-                  className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl border border-blue-200 bg-blue-50 px-4 text-base font-semibold text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 cursor-pointer"
-                >
-                  Tranh tiếp theo
-                  <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
-                </button>
-              )}
+            </>
+          ) : task.latest ? (
+            // Graded on an earlier visit: the score here, the full review on its own page.
+            <>
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Kết quả</h2>
+                <span className="text-3xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
+                  {task.latest.score}/{task.latest.maxScore}
+                </span>
+              </div>
+              <p className="text-base leading-relaxed text-slate-800 dark:text-slate-200">Tranh này đã được chấm.</p>
+              <Link
+                href={`/writing/submissions/${task.latest.submissionId}`}
+                className="inline-flex min-h-11 items-center gap-2 self-start rounded-xl border border-slate-300 px-4 text-base font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Xem chi tiết bài chấm
+                <ArrowRight size={16} strokeWidth={2} aria-hidden="true" />
+              </Link>
             </>
           ) : (
             <div className="flex min-h-40 flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
               <MousePointerClick size={28} strokeWidth={1.75} className="text-slate-400" aria-hidden="true" />
               <p className="max-w-xs text-base leading-relaxed text-slate-600 dark:text-slate-400">
-                Viết câu rồi bấm &quot;Chấm bài&quot; để xem điểm, nhận xét và lỗi cần sửa.
+                Viết câu rồi nhấn Enter hoặc bấm &quot;Chấm bài&quot; để xem điểm, nhận xét và lỗi cần sửa.
               </p>
             </div>
           )}

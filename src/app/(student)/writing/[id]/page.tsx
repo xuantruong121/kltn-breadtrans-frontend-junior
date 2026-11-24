@@ -55,6 +55,8 @@ export default function WritingDetailPage(props: {
   const submittingRef = useRef(false);
   // Picture tasks show their result beside the editor instead of a new page.
   const [pictureResult, setPictureResult] = useState<WritingEvaluation | null>(null);
+  // The picture answer just graded, shown read-only beside its result.
+  const [gradedAnswer, setGradedAnswer] = useState<string | null>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
   const draftKey = user?.id
     ? `breadtrans:writing:draft:${user.id}:${topicId}${requestedTaskId ? `:${requestedTaskId}` : ""}`
@@ -265,6 +267,7 @@ export default function WritingDetailPage(props: {
         queryClient.invalidateQueries({ queryKey: ["learning-history"] }),
       ]);
       if (isPictureTask) {
+        setGradedAnswer(attempt.text);
         setPictureResult(result);
         await queryClient.invalidateQueries({ queryKey: ["writing-topic", topicId] });
         toast.success("Đã chấm xong bức tranh này.");
@@ -313,7 +316,7 @@ export default function WritingDetailPage(props: {
           // SHORT_MESSAGE (owner 2026-11-13).
           category={
             isPictureTask
-              ? "Viết câu theo tranh"
+              ? "Viết theo tranh"
               : topic
                 ? resolveWritingFormatTag(topic)
                 : "Viết"
@@ -321,13 +324,7 @@ export default function WritingDetailPage(props: {
           activityLabel="Luyện viết"
           onExit={() => confirmExit(exitHref)}
           exitLabel="Thoát"
-          statusContent={
-            isTranslationTask ? undefined : <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-300 bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg">
-              <span>{wordCount} từ</span>
-              <span className="text-slate-600 dark:text-slate-400">·</span>
-              <span>{charCount} ký tự</span>
-            </div>
-          }
+          // Word and character counts sit under the answer box, not in the header (owner 2026-11-24).
         />
 
         {quotaNotice && (
@@ -354,14 +351,14 @@ export default function WritingDetailPage(props: {
             content={content}
             onContentChange={setContent}
             wordCount={wordCount}
+            charCount={charCount}
             isEvaluating={isEvaluating}
             onEvaluate={handleEvaluate}
             result={pictureResult}
-            nextTaskId={
-              exercise.questions.find((q) => q.id !== currentTask.id && !q.latest)?.id ?? null
-            }
+            gradedAnswer={gradedAnswer}
             onSelectTask={(questionId) => {
               setPictureResult(null);
+              setGradedAnswer(null);
               const next = new URLSearchParams(searchParams.toString());
               next.set("q", String(questionId));
               router.replace(`/writing/${topicId}?${next.toString()}`);
@@ -485,7 +482,7 @@ export default function WritingDetailPage(props: {
                   }`}
                 >
                   {wordCount}
-                  {topic?.wordRange?.[1] ? ` / ${topic.wordRange[1]}` : ""} từ
+                  {topic?.wordRange?.[1] ? ` / ${topic.wordRange[1]}` : ""} từ · {charCount} ký tự
                 </span>
               </div>
 
