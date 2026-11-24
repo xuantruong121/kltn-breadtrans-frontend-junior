@@ -47,6 +47,8 @@ export default function ToeicWritingExamComposer({
   const [selected, setSelected] = useState(1);
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
+  // The AI suggestion is running: its button shows it (owner 2026-11-24).
+  const [suggesting, setSuggesting] = useState(false);
   const slot = section?.slots.find((item) => item.order === selected);
   const readyCount = section?.slots.filter((item) => item.filled).length ?? 0;
   const disabled = busy || !section?.editable;
@@ -107,6 +109,7 @@ export default function ToeicWritingExamComposer({
   const suggest = async () => {
     if (!slot) return;
     setBusy(true);
+    setSuggesting(true);
     try {
       const response = await axiosClient.post("/admin/writing/ai/suggest-task", {
         taskType: slot.taskKind,
@@ -131,6 +134,7 @@ export default function ToeicWritingExamComposer({
       toast.error(getApiErrorMessage(error, "Không thể gợi ý đề bài lúc này."));
     } finally {
       setBusy(false);
+      setSuggesting(false);
     }
   };
 
@@ -206,9 +210,11 @@ export default function ToeicWritingExamComposer({
                 type="button"
                 onClick={() => void suggest()}
                 disabled={busy}
+                aria-busy={suggesting}
                 className={BTN_AI}
               >
-                Gợi ý đề bài bằng AI
+                {suggesting && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
+                {suggesting ? "Đang gợi ý…" : "Gợi ý đề bài bằng AI"}
               </button>
             )}
           </div>

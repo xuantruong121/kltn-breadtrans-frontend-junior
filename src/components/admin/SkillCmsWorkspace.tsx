@@ -536,6 +536,9 @@ export default function SkillCmsWorkspace({
   } | null>(null);
   const [fullDraft, setFullDraft] = useState<CmsFullDraft | null>(null);
   const [fullDraftCount, setFullDraftCount] = useState(5);
+  // "Soạn cả bài bằng AI" is running (owner 2026-11-24: it showed nothing for
+  // the 10-30 s the AI takes, and could be clicked again).
+  const [fullDraftBusy, setFullDraftBusy] = useState(false);
   const [documentText, setDocumentText] = useState("");
   const [dictationTopic, setDictationTopic] = useState("");
   const [isDictationAiLoading, setIsDictationAiLoading] = useState(false);
@@ -556,6 +559,9 @@ export default function SkillCmsWorkspace({
     done: number;
     total: number;
   } | null>(null);
+  // A Listening lesson saved from "Soạn cả bài bằng AI" gets its audio at once
+  // (owner 2026-11-24): set on save, run when the saved lesson has loaded.
+  const [autoAudio, setAutoAudio] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
   const [bulkLines, setBulkLines] = useState("");
   const [pendingFullDraftQuestions, setPendingFullDraftQuestions] = useState<
@@ -969,6 +975,8 @@ export default function SkillCmsWorkspace({
       fullDraftCount,
       fullDraftCountRange(domain === "listening" ? selectedListeningMode : undefined),
     );
+    if (fullDraftBusy) return;
+    setFullDraftBusy(true);
     try {
       const response: any = await axiosClient.post(
         `/admin/${domain}/ai/full-draft`,
@@ -1011,7 +1019,9 @@ export default function SkillCmsWorkspace({
           throw new Error("AI không trả về câu nghe chép hợp lệ.");
         setFullDraft({
           domain,
-          title: String(data.title),
+          // The admin's own title stays (owner 2026-11-24): the AI wrote
+          // English titles over Vietnamese ones.
+          title: topic || String(data.title),
           description: String(data.description || ""),
           level: String(data.level || form.level || "A2"),
           passage: "",
@@ -1043,7 +1053,8 @@ export default function SkillCmsWorkspace({
           : undefined;
       setFullDraft({
         domain,
-        title: String(data.title),
+        // The admin's own title stays (owner 2026-11-24).
+        title: topic || String(data.title),
         description: String(data.description),
         level: String(data.level || form.level || "A2"),
         passage:
@@ -1071,6 +1082,8 @@ export default function SkillCmsWorkspace({
           ? error.message
           : getApiErrorMessage(error, "Không thể soạn bản nháp lúc này."),
       );
+    } finally {
+      setFullDraftBusy(false);
     }
   };
 
@@ -1135,6 +1148,11 @@ export default function SkillCmsWorkspace({
         type: formTypeOf(data),
       });
       setPendingFullDraftQuestions([]);
+      // A new lesson saved from an AI draft arrives with ?audio=1.
+      if (domain === "listening" && searchParams.get("audio") === "1") {
+        setAutoAudio(true);
+        router.replace(`/admin/listening/${data.id}`, { scroll: false });
+      }
       // Saved from /new with "Lưu và thêm câu hỏi": open the first question of the right kind.
       if (domain === "writing" && searchParams.get("add") === "1") {
         const formType = formTypeOf(data);
@@ -1219,10 +1237,17 @@ export default function SkillCmsWorkspace({
       }
       await syncDialogueQuestions(savedItem.id, savedQuestions, listening.transcript);
       toast.success("Đã lưu bản nháp");
+      // An AI lesson goes on to make its audio (owner 2026-11-24).
+      const makeAudio = domain === "listening" && pendingFullDraftQuestions.length > 0;
       setPendingFullDraftQuestions([]);
-      router.push(`/admin/${domain}/${savedItem.id}${options.addQuestion ? "?add=1" : ""}`);
+      router.push(
+        `/admin/${domain}/${savedItem.id}${options.addQuestion ? "?add=1" : makeAudio && !id ? "?audio=1" : ""}`,
+      );
       // Saved in place: the route does not change, so reload the stored item.
-      if (id) await loadItem();
+      if (id) {
+        await loadItem();
+        if (makeAudio) setAutoAudio(true);
+      }
     } catch (error: any) {
       toast.error(getApiErrorMessage(error, "Lưu thất bại"));
     } finally {
@@ -1622,6 +1647,45 @@ export default function SkillCmsWorkspace({
     if (made) toast.success(`Đã tạo audio cho ${made} câu`);
     await loadItem();
   };
+
+  /** "Hội thoại": check the conversation, then make the audio to listen to before approving. */
+  const makeDialogueAudio = async () => {
+    if (!id) return;
+    setBusy(true);
+    try {
+      const base = `/admin/skill-content/listening/${id}/audio`;
+      const check = unwrap<any>(await axiosClient.post(`${base}/validate`));
+      setTranscriptChecked(check?.valid === true);
+      if (!check?.valid) {
+        toast.error("Lời thoại chưa hợp lệ nên chưa tạo được audio. Hãy sửa rồi tạo lại.");
+        return;
+      }
+      await axiosClient.post(`${base}/generate-preview`);
+      toast.success("Đã tạo audio nghe thử cho hội thoại");
+      await refreshArtifacts();
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "Không thể tạo audio"));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // The saved AI lesson makes its audio once it has loaded: one clip per
+  // question for "Nghe hiểu" and "Nghe chép", the conversation for "Hội thoại".
+  useEffect(() => {
+    if (!autoAudio || loading || busy || !id || domain !== "listening") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- runs once per save, then clears
+    setAutoAudio(false);
+    if (selectedListeningMode === "DIALOGUE") {
+      void makeDialogueAudio();
+      return;
+    }
+    const missing = ((item?.questions ?? []) as any[])
+      .filter((q) => !(q.audioAssets ?? []).some((asset: any) => asset.isActive))
+      .map((q) => q.id as number);
+    if (missing.length) void generateMissingAudio(missing);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the helpers are rebuilt each render; run when the saved lesson is ready
+  }, [autoAudio, loading, busy, id, domain, item, selectedListeningMode]);
 
   /** Dictation: one sentence per line becomes one item, in order. */
   const addDictationLines = async () => {
@@ -2679,6 +2743,8 @@ export default function SkillCmsWorkspace({
                 <button
                   type="button"
                   onClick={() => void handleSuggestFullDraft()}
+                  disabled={fullDraftBusy}
+                  aria-busy={fullDraftBusy}
                                     title={
                     draftLocked
                       ? "Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’"
@@ -2686,11 +2752,23 @@ export default function SkillCmsWorkspace({
                   }
                   className={`${BTN_AI} ${draftLocked ? "invisible" : ""}`}
                 >
-                  Soạn cả bài bằng AI
+                  {fullDraftBusy ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                      Đang soạn bài…
+                    </>
+                  ) : (
+                    "Soạn cả bài bằng AI"
+                  )}
                 </button>
               </div>
             )}
           </div>
+          {fullDraftBusy && (
+            <p role="status" className="mt-2 text-sm text-amber-800 dark:text-amber-300">
+              AI đang soạn bài {meta[domain].label.toLowerCase()}, thường mất 10–30 giây. Bản nháp sẽ hiện ra để xem lại.
+            </p>
+          )}
           {draftLocked && (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
