@@ -66,6 +66,8 @@ export default function WritingTopicsPage() {
     open: boolean;
     topicId?: number;
     title?: string;
+    /** Where to land after signing in: a picture keeps its own task (?q=). */
+    route?: string;
   }>({ open: false });
 
   // Keyboard shortcut Ctrl+K / Cmd+K
@@ -277,8 +279,8 @@ export default function WritingTopicsPage() {
           onOpen={(href) => router.push(href)}
           onLocked={(quiz) => setPaywallTopic(quiz)}
           onLevelLocked={(quiz) => setLevelLock(levelLockOf("WRITING", quiz))}
-          onGuest={(quiz) =>
-            setAuthGate({ open: true, topicId: quiz.id, title: quiz.title })
+          onGuest={(quiz, href) =>
+            setAuthGate({ open: true, topicId: quiz.id, title: quiz.title, route: href })
           }
         />
       ) : (
@@ -429,7 +431,7 @@ export default function WritingTopicsPage() {
         isOpen={authGate.open}
         onClose={() => setAuthGate({ open: false })}
         targetLabel={authGate.title ? `chủ đề"${authGate.title}"` : "chủ đề luyện viết này"}
-        targetRoute={authGate.topicId ? `/writing/${authGate.topicId}` : "/writing"}
+        targetRoute={authGate.route ?? (authGate.topicId ? `/writing/${authGate.topicId}` : "/writing")}
         onOpenLogin={() => router.push("/login")}
         onOpenRegister={() => router.push("/register")}
       />

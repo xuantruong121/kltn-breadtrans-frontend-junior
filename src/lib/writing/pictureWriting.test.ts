@@ -1,7 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { correctedAnswer, cueWordPairs, isPictureQuiz, pictureCards, submitsOnEnter } from "./pictureWriting.ts";
+import {
+  correctedAnswer,
+  cueWordPairs,
+  isPictureQuiz,
+  pictureCards,
+  pictureNeighbours,
+  pictureTitle,
+  submitsOnEnter,
+} from "./pictureWriting.ts";
 
 const task = (questionId: number, keywords: string[], imageUrl: string | null = "https://x/a.png") => ({
   questionId,
@@ -81,4 +89,25 @@ test("a correction is matched without case when the exact text is not there, and
     "The cashier scans the milk.",
   );
   assert.equal(correctedAnswer("Already right.", []), "Already right.");
+});
+
+test("a picture moves to the pictures next to it in the list, not in its set (owner 2026-11-24)", () => {
+  const task = (questionId: number) => ({ questionId, position: 1, imageUrl: "https://x/p.jpg", keywords: ["a", "b"], isGraded: false });
+  const quizzes = [
+    { id: 126, taskType: "PICTURE_SENTENCE", cefrLevel: "B1", isLocked: true, pictureTasks: [task(481), task(482)] },
+    { id: 124, taskType: "PICTURE_SENTENCE", cefrLevel: "A2", pictureTasks: [task(466), task(470)] },
+    { id: 123, taskType: "PICTURE_SENTENCE", cefrLevel: "A2", pictureTasks: [task(461)] },
+  ];
+  // A2 first (Dễ → Khó), then the locked B1 set, which is skipped.
+  assert.deepEqual(pictureNeighbours(quizzes, 124, 466), { prev: null, next: "/writing/124?q=470" });
+  assert.deepEqual(pictureNeighbours(quizzes, 124, 470), { prev: "/writing/124?q=466", next: "/writing/123?q=461" });
+  assert.deepEqual(pictureNeighbours(quizzes, 123, 461), { prev: "/writing/124?q=470", next: null });
+  // Opened directly, a locked picture still finds its neighbours.
+  assert.deepEqual(pictureNeighbours(quizzes, 126, 481), { prev: "/writing/123?q=461", next: null });
+  assert.deepEqual(pictureNeighbours(quizzes, 999, 1), { prev: null, next: null });
+});
+
+test("a picture is titled by its cue words", () => {
+  assert.equal(pictureTitle(["ride", "street"]), "ride · street");
+  assert.equal(pictureTitle([]), "Viết câu theo tranh");
 });

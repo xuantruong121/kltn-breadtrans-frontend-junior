@@ -155,6 +155,9 @@ export interface SubmissionAnalytics {
         questionId: number;
         position: number;
         prompt: string | null;
+        /** "PICTURE_SENTENCE" for a picture of "Viết câu theo tranh". */
+        taskType?: string | null;
+        keywords?: string[];
       })
     | null;
   /** Practice Writing only: the chain of revisions this submission is in. */

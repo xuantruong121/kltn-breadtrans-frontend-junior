@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, RefreshCw } from "lucide-react";
 import type { SubmissionAnalytics } from "@/lib/api/services/quiz.service";
-import { practiceDetailOf } from "@/lib/api/services/writing.service";
+import { practiceDetailOf, writingService } from "@/lib/api/services/writing.service";
+import { PICTURE_TASK_TYPE, pictureNeighbours, pictureTitle } from "@/lib/writing/pictureWriting";
 import { PracticeWritingDetail } from "@/components/writing/PracticeWritingDetail";
 import { WritingRevisionPanel } from "@/components/writing/WritingRevisionPanel";
 import { resultTitle } from "./submissionReviewLogic";
@@ -27,13 +29,26 @@ export function WritingResultView({
   const answer = typeof analytics.submittedAnswer === "string" ? analytics.submittedAnswer : null;
   const taskHref = (questionId: number) => `/writing/${analytics.quizId}?q=${questionId}`;
   const retryHref = exercise ? taskHref(exercise.questionId) : `/writing/${analytics.quizId}`;
-  const nextHref =
-    exercise && !exercise.complete && exercise.nextQuestionId ? taskHref(exercise.nextQuestionId) : null;
+  // A picture is its own exercise (owner 2026-11-24): named by its cue words,
+  // followed by the next picture of the catalog, not by its set.
+  const isPicture = exercise?.taskType === PICTURE_TASK_TYPE;
+  const { data: catalog } = useQuery({
+    queryKey: ["writing-topics"],
+    queryFn: writingService.getTopics,
+    enabled: isPicture,
+  });
+  const nextHref = isPicture
+    ? exercise && catalog
+      ? pictureNeighbours(catalog.quizzes ?? [], analytics.quizId, exercise.questionId).next
+      : null
+    : exercise && !exercise.complete && exercise.nextQuestionId
+      ? taskHref(exercise.nextQuestionId)
+      : null;
   const score = feedback?.score ?? analytics.overallScore;
 
   const subline = [
-    "Luyện viết",
-    exercise && exercise.total > 1 ? `Câu ${exercise.position}/${exercise.total}` : null,
+    isPicture ? "Viết câu theo tranh" : "Luyện viết",
+    !isPicture && exercise && exercise.total > 1 ? `Câu ${exercise.position}/${exercise.total}` : null,
     revision && revision.number > 0 ? `Bản sửa ${revision.number}` : null,
   ]
     .filter(Boolean)
@@ -43,13 +58,13 @@ export function WritingResultView({
     <div data-result-page className="w-full pb-20">
       <div className="mb-6">
         <Link
-          href="/writing"
+          href={isPicture ? "/writing?tab=picture" : "/writing"}
           className="inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
-          <ArrowLeft size={16} aria-hidden="true" /> Danh sách bài viết
+          <ArrowLeft size={16} aria-hidden="true" /> {isPicture ? "Danh sách tranh" : "Danh sách bài viết"}
         </Link>
         <h1 className="mt-1 text-2xl font-bold leading-tight text-slate-900 dark:text-slate-100">
-          {resultTitle(analytics)}
+          {isPicture ? pictureTitle(exercise?.keywords) : resultTitle(analytics)}
         </h1>
         <p className="mt-1 text-[15px] text-slate-600 dark:text-slate-400">{subline}</p>
       </div>
@@ -146,7 +161,7 @@ export function WritingResultView({
             </p>
           )}
 
-          {exercise && exercise.total > 1 && (
+          {!isPicture && exercise && exercise.total > 1 && (
             <p className="mt-4 text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">
               {exercise.complete && exercise.percent !== null
                 ? `Đã xong cả ${exercise.total} câu, điểm bài ${exercise.percent}%.`
@@ -160,7 +175,7 @@ export function WritingResultView({
                 href={nextHref}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 text-sm font-bold text-white transition-colors hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
               >
-                Làm câu tiếp theo <ArrowRight size={16} aria-hidden="true" />
+                {isPicture ? "Tranh tiếp" : "Làm câu tiếp theo"} <ArrowRight size={16} aria-hidden="true" />
               </Link>
             )}
             <Link
@@ -171,7 +186,7 @@ export function WritingResultView({
                   : "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 text-sm font-bold text-white transition-colors hover:bg-amber-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
               }
             >
-              <RefreshCw size={16} aria-hidden="true" /> Viết bài mới
+              <RefreshCw size={16} aria-hidden="true" /> {isPicture ? "Viết lại tranh này" : "Viết bài mới"}
             </Link>
             <Link
               href="/writing"

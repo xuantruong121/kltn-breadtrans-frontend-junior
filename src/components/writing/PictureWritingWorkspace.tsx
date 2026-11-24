@@ -26,7 +26,9 @@ const CARD =
 /**
  * "Viết câu theo tranh" workspace, one screen in three columns (owner
  * 2026-11-14): picture and cue words; instructions and the editor; the
- * result. A footer moves between the pictures.
+ * result. Each picture is its own exercise (owner 2026-11-24): the room shows
+ * only the picture opened, and the footer moves to the pictures before and
+ * after it in the catalog, not through the set it is stored in.
  *
  * Right after a grade (owner 2026-11-24) the answer box shows the right
  * answer, the learner's text with the grader's corrections applied, and is
@@ -36,7 +38,6 @@ const CARD =
 export function PictureWritingWorkspace({
   quizId,
   task,
-  tasks,
   exerciseLabel,
   content,
   onContentChange,
@@ -46,11 +47,13 @@ export function PictureWritingWorkspace({
   onEvaluate,
   result,
   gradedAnswer,
-  onSelectTask,
+  prevHref,
+  nextHref,
+  onNavigate,
 }: {
   quizId: number;
   task: WritingExerciseTask;
-  tasks: WritingExerciseTask[];
+  /** The stored set's name: only for an issue report, never shown. */
   exerciseLabel: string;
   content: string;
   onContentChange: (value: string) => void;
@@ -61,7 +64,10 @@ export function PictureWritingWorkspace({
   result: WritingEvaluation | null;
   /** The text just graded for this picture; null until it is graded on this visit. */
   gradedAnswer: string | null;
-  onSelectTask: (questionId: number) => void;
+  /** The pictures before and after this one in the catalog (pictureNeighbours). */
+  prevHref: string | null;
+  nextHref: string | null;
+  onNavigate: (href: string) => void;
 }) {
   const [imageFailed, setImageFailed] = useState<string | null>(null);
   const tooLong = wordCount > PICTURE_MAX_WORDS;
@@ -70,29 +76,17 @@ export function PictureWritingWorkspace({
   const graded = result !== null;
   const canEvaluate = !graded && !isEvaluating && wordCount > 0 && !tooLong;
   const rightAnswer = correctedAnswer(gradedAnswer ?? "", detail?.corrections ?? []);
-  const index = Math.max(
-    0,
-    tasks.findIndex((t) => t.id === task.id),
-  );
 
   return (
     <div className="flex flex-1 flex-col lg:min-h-0">
       <div className="grid flex-1 grid-cols-1 gap-4 p-4 lg:min-h-0 lg:grid-cols-3 lg:p-5">
         {/* Picture and cue words */}
         <section aria-label="Tranh và từ gợi ý" className={`${CARD} gap-4`}>
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="min-w-0 truncate text-[15px] font-semibold text-slate-600 dark:text-slate-400">
-              {exerciseLabel}
-            </p>
-            <p className="shrink-0 text-base font-bold tabular-nums text-slate-900 dark:text-slate-100">
-              Tranh {task.position}/{tasks.length}
-            </p>
-          </div>
           {task.imageUrl && imageFailed !== task.imageUrl ? (
             <img
               key={task.imageUrl}
               src={task.imageUrl}
-              alt={`Tranh ${task.position} để viết câu với từ gợi ý ${task.keywords.join(" và ")}`}
+              alt={`Tranh để viết câu với từ gợi ý ${task.keywords.join(" và ")}`}
               onError={() => setImageFailed(task.imageUrl)}
               className="aspect-[4/3] w-full shrink-0 rounded-xl object-cover"
             />
@@ -119,38 +113,6 @@ export function PictureWritingWorkspace({
               ))}
             </div>
           </div>
-          {tasks.length > 1 && (
-            <nav
-              aria-label="Các tranh trong bài"
-              className="flex flex-wrap gap-2 border-t border-slate-100 pt-4 dark:border-slate-800"
-            >
-              {tasks.map((t) => {
-                const active = t.id === task.id;
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    aria-current={active ? "step" : undefined}
-                    onClick={() => onSelectTask(t.id)}
-                    className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-[15px] font-semibold transition-colors cursor-pointer ${
-                      active
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : t.latest
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
-                          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                    }`}
-                  >
-                    Tranh {t.position}
-                    {t.latest && (
-                      <span className="tabular-nums opacity-90">
-                        {t.latest.score}/{t.latest.maxScore}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          )}
         </section>
 
         {/* Instructions and the editor */}
@@ -184,9 +146,7 @@ export function PictureWritingWorkspace({
                 {detail && detail.corrections.length > 0
                   ? "Câu của bạn đã được sửa theo các lỗi ở cột Kết quả."
                   : "Câu của bạn đã đúng."}{" "}
-                {tasks.length > 1
-                  ? `Bấm lại "Tranh ${task.position}" nếu muốn viết và chấm lần nữa.`
-                  : "Mở lại bài này nếu muốn viết và chấm lần nữa."}
+                Mở lại tranh này nếu muốn viết và chấm lần nữa.
               </p>
             </div>
           ) : (
@@ -324,14 +284,6 @@ export function PictureWritingWorkspace({
                   ))}
                 </ul>
               )}
-              {result.exercise && (
-                <p className="text-[15px] text-slate-700 dark:text-slate-300">
-                  Đã chấm {result.exercise.answered}/{result.exercise.total} tranh
-                  {result.exercise.complete && result.exercise.percent !== null
-                    ? ` · hoàn thành bài, điểm ${result.exercise.percent}%`
-                    : ""}
-                </p>
-              )}
             </>
           ) : task.latest ? (
             // Graded on an earlier visit: that score here, the full review on its own page;
@@ -383,24 +335,21 @@ export function PictureWritingWorkspace({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => onSelectTask(tasks[index - 1].id)}
+            onClick={() => prevHref && onNavigate(prevHref)}
             aria-label="Tranh trước"
             className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-300 px-3.5 text-[15px] font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer ${
-              index === 0 ? "invisible" : ""
+              prevHref ? "" : "invisible"
             }`}
           >
             <ChevronLeft size={18} aria-hidden="true" />
             <span className="hidden sm:inline">Tranh trước</span>
           </button>
-          <span className="min-w-16 text-center text-[15px] font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-            {index + 1}/{tasks.length}
-          </span>
           <button
             type="button"
-            onClick={() => onSelectTask(tasks[index + 1].id)}
+            onClick={() => nextHref && onNavigate(nextHref)}
             aria-label="Tranh tiếp"
             className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-blue-700 cursor-pointer ${
-              index >= tasks.length - 1 ? "invisible" : ""
+              nextHref ? "" : "invisible"
             }`}
           >
             <span className="hidden sm:inline">Tranh tiếp</span>
