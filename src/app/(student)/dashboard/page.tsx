@@ -136,7 +136,7 @@ function getQuestCategoryMeta(type?: string) {
       };
     case "DO_READING":
       return {
-        label: "Luyện đọc",
+        label: "Đọc hiểu",
         badgeClass: "bg-blue-100 dark:bg-blue-950/70 text-blue-900 dark:text-blue-300 border-blue-200 dark:border-blue-800",
         btnClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-600/20",
         progressFill: "bg-blue-500",
