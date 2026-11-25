@@ -53,6 +53,7 @@ import {
   writingKindOfForm,
   type AiQuestionCandidate,
   type ListFilters,
+  listeningTitlePrefix,
 } from "./skillCmsStatus";
 import {
   dialogueForSave,
@@ -2786,19 +2787,30 @@ export default function SkillCmsWorkspace({
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <label className="text-sm font-medium">
               Tiêu đề
-              <input
-                id="cms-title"
-                // The page opened from "Tạo bằng AI": the AI drafts from this title.
-                autoFocus={aiStart}
-                value={form.title}
-                aria-invalid={titleError || undefined}
-                aria-describedby={titleError ? "cms-title-error" : undefined}
-                onChange={(event) => {
-                  setForm({ ...form, title: event.target.value });
-                  if (titleError) setTitleError(false);
-                }}
-                className={inputClassName()}
-              />
+              {/* A Listening title is stored under its form (owner 2026-11-25): the
+                  form's name stands before the box and follows "Dạng bài". */}
+              <span className="mt-1 flex items-stretch">
+                {isListening && (
+                  <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-l-lg border border-r-0 border-slate-300 bg-slate-50 px-3 text-sm font-semibold text-slate-700">
+                    {listeningTitlePrefix(selectedListeningMode)}:
+                  </span>
+                )}
+                <input
+                  id="cms-title"
+                  // The page opened from "Tạo bằng AI": the AI drafts from this title.
+                  autoFocus={aiStart}
+                  value={form.title}
+                  aria-invalid={titleError || undefined}
+                  aria-describedby={titleError ? "cms-title-error" : undefined}
+                  onChange={(event) => {
+                    setForm({ ...form, title: event.target.value });
+                    if (titleError) setTitleError(false);
+                  }}
+                  className={`min-w-0 flex-1 border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-200 ${
+                    isListening ? "rounded-r-lg" : "rounded-lg"
+                  }`}
+                />
+              </span>
               {titleError && (
                 <span id="cms-title-error" className="mt-1 block text-xs font-normal text-rose-700">
                   Cần nhập tiêu đề trước khi lưu.

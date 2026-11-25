@@ -35,6 +35,7 @@ import {
   splitTitleHead,
   writingKindOfForm,
   writingTaskLabel,
+  listeningTitlePrefix,
 } from "./skillCmsStatus.ts";
 import { comprehensionSpokenContent } from "../../lib/listening/listeningExchange.ts";
 
@@ -677,3 +678,9 @@ test("the listening form locks with saved questions or an applied draft (owner 2
   assert.equal(listeningFormLocked(0, 3), true);
 });
 
+test("a Listening title shows the form chosen before it (owner 2026-11-25)", () => {
+  assert.equal(listeningTitlePrefix("DIALOGUE"), "Hội thoại");
+  assert.equal(listeningTitlePrefix("DICTATION"), "Nghe chép");
+  assert.equal(listeningTitlePrefix("COMPREHENSION"), "Nghe hiểu");
+  assert.equal(listeningTitlePrefix(undefined), "Nghe hiểu");
+});

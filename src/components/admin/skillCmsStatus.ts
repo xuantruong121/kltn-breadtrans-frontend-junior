@@ -724,3 +724,12 @@ export function writingDraftQuestion(task: WritingDraftTask, level?: string) {
   };
 }
 
+/**
+ * The form's name shown before a Listening title (owner 2026-11-25), the head
+ * the server stores it under: "Hội thoại", "Nghe chép" or "Nghe hiểu".
+ */
+export function listeningTitlePrefix(mode: string | null | undefined): string {
+  if (mode === "DIALOGUE") return "Hội thoại";
+  if (mode === "DICTATION") return "Nghe chép";
+  return "Nghe hiểu";
+}
