@@ -743,3 +743,13 @@ export function draftDescription(typed: string | null | undefined, drafted: unkn
   const own = (typed ?? "").trim();
   return own || String(drafted ?? "").trim();
 }
+
+/**
+ * What to do after "Áp dụng vào biểu mẫu" (owner 2026-11-25: nothing said
+ * that Lưu comes next). A Listening lesson makes its audio once saved.
+ */
+export function draftSaveHint(domain: string): string {
+  return domain === "listening"
+    ? "Bấm Lưu để lưu bài. Audio sẽ tự tạo sau khi lưu."
+    : "Bấm Lưu để lưu bài.";
+}

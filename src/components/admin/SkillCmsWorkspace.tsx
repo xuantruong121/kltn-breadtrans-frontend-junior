@@ -55,6 +55,7 @@ import {
   type ListFilters,
   listeningTitlePrefix,
   draftDescription,
+  draftSaveHint,
 } from "./skillCmsStatus";
 import {
   dialogueForSave,
@@ -2630,7 +2631,8 @@ export default function SkillCmsWorkspace({
           <button
             onClick={() => void saveContent()}
             disabled={busy}
-            className={BTN_SECONDARY}
+            // An applied AI draft waits for Lưu: it is the next step (owner 2026-11-25).
+            className={pendingDraft ? BTN_PRIMARY : BTN_SECONDARY}
           >
             <Save size={16} /> Lưu
           </button>
@@ -2665,6 +2667,21 @@ export default function SkillCmsWorkspace({
             )}
         </div>
       </header>
+
+      {pendingDraft && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
+        >
+          <p className="text-sm text-amber-900">
+            <span className="font-semibold">Bản nháp AI đã vào biểu mẫu nhưng chưa được lưu.</span>{" "}
+            {draftSaveHint(domain)}
+          </p>
+          <button type="button" onClick={() => void saveContent()} disabled={busy} className={BTN_PRIMARY}>
+            <Save size={16} /> Lưu ngay
+          </button>
+        </div>
+      )}
 
       {/* Two columns from 1280px: the work on the left; the audio and the
           publish checklist in a 400px rail that stays in view (24px gap). */}
@@ -4041,7 +4058,7 @@ export default function SkillCmsWorkspace({
                   setPendingFullDraftQuestions(activeQuestions);
                   setFullDraft(null);
                   toast.success(
-                    "Đã áp dụng bản nháp vào biểu mẫu. Chưa có dữ liệu nào được lưu.",
+                    `Đã đưa bản nháp vào biểu mẫu, chưa lưu. ${draftSaveHint(domain)}`,
                   );
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-slate-950 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"

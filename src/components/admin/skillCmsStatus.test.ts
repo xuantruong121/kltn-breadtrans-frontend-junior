@@ -37,6 +37,7 @@ import {
   writingTaskLabel,
   listeningTitlePrefix,
   draftDescription,
+  draftSaveHint,
 } from "./skillCmsStatus.ts";
 import { comprehensionSpokenContent } from "../../lib/listening/listeningExchange.ts";
 
@@ -690,4 +691,9 @@ test("an AI draft keeps the description the admin typed, and fills only an empty
   assert.equal(draftDescription("Nghe hội thoại ở quầy lễ tân.", "AI sentence"), "Nghe hội thoại ở quầy lễ tân.");
   assert.equal(draftDescription("   ", "  Nghe khách hỏi đường.  "), "Nghe khách hỏi đường.");
   assert.equal(draftDescription(undefined, undefined), "");
+});
+
+test("after applying an AI draft the page says Lưu comes next, and that a Listening lesson then makes its audio (owner 2026-11-25)", () => {
+  assert.equal(draftSaveHint("listening"), "Bấm Lưu để lưu bài. Audio sẽ tự tạo sau khi lưu.");
+  assert.equal(draftSaveHint("reading"), "Bấm Lưu để lưu bài.");
 });
