@@ -190,7 +190,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const addQuestions = async (drafts: GrammarDraft[]) => {
     if (!topic) {
       setPendingQuestions((current) => [...current, ...drafts]);
-      toast.success(`Giữ ${drafts.length} câu; sẽ thêm khi bấm Tạo chủ đề.`);
+      toast.success(`Giữ ${drafts.length} câu; sẽ thêm khi bấm Lưu.`);
       return true;
     }
     try {
@@ -322,7 +322,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         setCandidatesFromDraft(true);
         setCandidates((data?.questions ?? []).map((q: GrammarDraft) => ({ ...q, chosen: true })));
         toast.success(
-          `AI đã viết lý thuyết và gợi ý câu hỏi, chưa lưu. Xem lại rồi bấm ${topic ? "Lưu" : "Tạo chủ đề"}.`,
+          "AI đã viết lý thuyết và gợi ý câu hỏi, chưa lưu. Xem lại rồi bấm Lưu.",
         );
       } else {
         const data = unwrap<any>(
@@ -396,7 +396,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
 
   const chosenCount = candidates.filter((c) => c.chosen).length;
   const pendingLabel = (count: number) =>
-    topic ? `Thêm ${count} câu` : `Giữ ${count} câu để thêm khi tạo chủ đề`;
+    topic ? `Thêm ${count} câu` : `Giữ ${count} câu để thêm khi lưu`;
   const pickedNote =
     previewQuestion && previewPick !== null && previewPick !== previewQuestion.correctIndex
       ? previewQuestion.optionExplanations?.[previewPick]
@@ -433,7 +433,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
               className={unsaved ? BTN_PRIMARY : BTN_SECONDARY}
             >
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{" "}
-              {topic ? "Lưu" : "Tạo chủ đề"}
+              Lưu
             </button>
             {topic && (
               <button
@@ -461,7 +461,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         >
           <p className="text-sm text-amber-900">
             <span className="font-semibold">{grammarUnsavedNotice(dirty, pendingQuestions.length)}</span>{" "}
-            Bấm {topic ? "Lưu" : "Tạo chủ đề"} để lưu.
+            Bấm Lưu để lưu chủ đề.
           </p>
           <button type="button" onClick={() => void saveTopic()} disabled={busy || aiBusy} className={BTN_PRIMARY}>
             <Save size={16} /> Lưu ngay
@@ -557,7 +557,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           </details>
           {pendingQuestions.length > 0 && (
             <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50/40 p-3 text-sm text-slate-700">
-              {pendingQuestions.length} câu hỏi sẽ được thêm khi bấm {topic ? "Lưu" : "Tạo chủ đề"}.
+              {pendingQuestions.length} câu hỏi sẽ được thêm khi bấm Lưu.
             </p>
           )}
         </section>
@@ -989,7 +989,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  title={topic ? undefined : "Tạo chủ đề trước"}
+                  title={topic ? undefined : "Lưu chủ đề trước"}
                   onClick={() => {
                     setCopyFrom(null);
                     setEditingId("new");

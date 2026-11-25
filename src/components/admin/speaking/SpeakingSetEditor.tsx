@@ -502,7 +502,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           </h1>
           <p className="mt-1 text-sm text-slate-600">
             {set
-              ? `Trạng thái: ${STATUS_LABELS[set.publicationStatus] ?? set.publicationStatus}`
+              ? `${STATUS_LABELS[set.publicationStatus] ?? set.publicationStatus}`
               : "Bộ luyện mới, chưa lưu"}{" "}
             · {doneCount}/{checklist.length} mục sẵn sàng
             {dirty && " · có thay đổi chưa lưu"}
@@ -521,7 +521,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
             ) : (
               <Save size={16} />
             )}
-            {set ? "Lưu" : "Tạo bộ luyện"}
+            Lưu
           </button>
           {set && (
             <button
@@ -550,7 +550,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         >
           <p className="text-sm text-amber-900">
             <span className="font-semibold">Bản nháp AI đã vào biểu mẫu nhưng chưa được lưu.</span>{" "}
-            Bấm {set ? "Lưu" : "Tạo bộ luyện"} để lưu bộ cùng {pendingExercises.length} câu luyện. Audio
+            Bấm Lưu để lưu bộ cùng {pendingExercises.length} câu luyện. Audio
             mẫu sẽ tự tạo sau khi lưu.
           </p>
           <button type="button" onClick={save} disabled={busy} className={BTN_PRIMARY}>
@@ -826,7 +826,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                     setPendingExercises(chosen);
                     setFullDraft(null);
                     toast.success(
-                      `Đã đưa bản nháp vào biểu mẫu, chưa lưu. Bấm ${set ? "Lưu" : "Tạo bộ luyện"} để lưu bộ.`,
+                      "Đã đưa bản nháp vào biểu mẫu, chưa lưu. Bấm Lưu để lưu bộ.",
                     );
                   }}
                   className={BTN_SECONDARY}
@@ -996,7 +996,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           {pendingExercises.length > 0 && (
             <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/40 p-3 text-sm text-slate-700">
               {pendingExercises.length} câu từ bản nháp AI sẽ được thêm khi bấm{" "}
-              {set ? "Lưu" : "Tạo bộ luyện"}.
+              Lưu.
             </div>
           )}
 
@@ -1033,9 +1033,8 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
           )}
 
           {!set ? (
-            <p className="mt-4 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
-              Tạo bộ luyện trước, sau đó thêm câu luyện ngay tại đây.
-            </p>
+            // Plain text like the other pages: no dashed empty box (owner 2026-11-25).
+            <p className="mt-4 text-sm text-slate-600">Lưu bộ luyện trước, sau đó thêm câu luyện ngay tại đây.</p>
           ) : (
             <>
               <ol className="mt-4 space-y-3">

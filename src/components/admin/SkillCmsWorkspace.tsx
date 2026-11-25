@@ -60,6 +60,7 @@ import {
   draftSentenceAvoid,
   fillDraftSentences,
   replaceDraftSentence,
+  TRACK_FIELD_COPY,
 } from "./skillCmsStatus";
 import {
   dialogueForSave,
@@ -562,7 +563,11 @@ export default function SkillCmsWorkspace({
     mode !== "list" && !id && (domain === "listening" || domain === "reading") && searchParams.get("ai") === "1";
   // Writing AI (owner 2026-11-19): the create dialog on the list, the draft panel in the editor.
   const [writingAiCreating, setWritingAiCreating] = useState(false);
-  const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean } | null>(null);
+  const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean; keep?: boolean } | null>(null);
+  // "Số câu" beside the Writing "Soạn bằng AI" button, new page included (owner 2026-11-25).
+  const [writingAiCount, setWritingAiCount] = useState(5);
+  /** Lĩnh vực chosen on a new bài, tagged on its first save (owner 2026-11-25). */
+  const [pendingTracks, setPendingTracks] = useState<string[]>([]);
   const [questionPreview, setQuestionPreview] = useState<{
     questionId: number;
     url: string;
@@ -1239,7 +1244,12 @@ export default function SkillCmsWorkspace({
       }
       // Created from "Tạo bằng AI": the draft panel opens and asks the AI at once.
       if (domain === "writing" && Number(searchParams.get("ai")) > 0) {
-        setWritingAi({ count: Number(searchParams.get("ai")), auto: true });
+        setWritingAi({
+          count: Number(searchParams.get("ai")),
+          auto: true,
+          // Made from the new-bài form, not by "Tạo bằng AI": cancelling keeps it.
+          keep: searchParams.get("from") === "new",
+        });
         router.replace(`/admin/writing/${data.id}`, { scroll: false });
       }
     } catch (error: any) {
@@ -1256,7 +1266,7 @@ export default function SkillCmsWorkspace({
   }, [domain, mode, id]);
 
   /** `addQuestion`: a new Writing exercise is saved, then its first question opens (owner 2026-11-19). */
-  const saveContent = async (options: { addQuestion?: boolean } = {}) => {
+  const saveContent = async (options: { addQuestion?: boolean; aiCount?: number } = {}) => {
     if (!form.title.trim()) {
       setTitleError(true);
       document.getElementById("cms-title")?.focus();
@@ -1302,6 +1312,18 @@ export default function SkillCmsWorkspace({
           )
         : await axiosClient.post(`/admin/skill-content/${domain}`, payload);
       const savedItem = unwrap<any>(saved);
+      // Lĩnh vực chosen before the first save is tagged now (owner
+      // 2026-11-25). The bài exists either way: a refusal is only reported.
+      if (!id && pendingTracks.length) {
+        try {
+          await axiosClient.put(`/admin/skill-content/${domain}/${savedItem.id}/tracks`, {
+            tracks: pendingTracks,
+          });
+          setPendingTracks([]);
+        } catch (error) {
+          toast.error(getApiErrorMessage(error, TRACK_FIELD_COPY.saveError));
+        }
+      }
       // A dialogue's turns go onto every MCQ, as published quizzes store
       // them. Saved one by one so the questions keep the draft's order.
       for (const draft of pendingFullDraftQuestions) {
@@ -1318,7 +1340,16 @@ export default function SkillCmsWorkspace({
       const makeAudio = domain === "listening" && pendingFullDraftQuestions.length > 0;
       setPendingFullDraftQuestions([]);
       router.push(
-        `/admin/${domain}/${savedItem.id}${options.addQuestion ? "?add=1" : makeAudio && !id ? "?audio=1" : ""}`,
+        `/admin/${domain}/${savedItem.id}${
+          options.addQuestion
+            ? "?add=1"
+            : options.aiCount && !id
+              ? // from=new: the admin filled this form, so cancelling keeps the bài.
+                `?ai=${options.aiCount}&from=new`
+              : makeAudio && !id
+                ? "?audio=1"
+                : ""
+        }`,
       );
       // Saved in place: the route does not change, so reload the stored item.
       if (id) {
@@ -2745,7 +2776,7 @@ export default function SkillCmsWorkspace({
             {item?.title ? quizDisplayTitle(item.id, item.title) : title}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Trạng thái: {publicationStatusLabel(item?.publicationStatus)} ·{" "}
+            {id ? publicationStatusLabel(item?.publicationStatus) : "Bài mới, chưa lưu"} ·{" "}
             {checklist.filter((entry) => entry.done).length}/{checklist.length}{" "}
             mục sẵn sàng
           </p>
@@ -2823,10 +2854,40 @@ export default function SkillCmsWorkspace({
                 Nhập tiêu đề (chủ đề) và trình độ bên dưới, rồi bấm “Soạn cả bài bằng AI”.
               </p>
             )}
-            {isWriting && id && writingDraftKind(form.type) && (
-              <button type="button" onClick={() => setWritingAi({ count: 5, auto: false })} className={BTN_AI}>
-                <FileStack size={16} aria-hidden="true" /> Soạn bằng AI
-              </button>
+            {/* On the new page too (owner 2026-11-25): the bài is saved first,
+                then the draft panel opens and asks the AI, as "Tạo bằng AI" on
+                the list does. A "Viết câu theo tranh" bài has no AI draft. */}
+            {isWriting && writingDraftKind(form.type) && (
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                  Số câu
+                  <select
+                    aria-label="Số câu trong bản nháp Viết"
+                    value={writingAiCount}
+                    onChange={(event) => setWritingAiCount(Number(event.target.value))}
+                    className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                  >
+                    {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    id
+                      ? setWritingAi({ count: writingAiCount, auto: false })
+                      : void saveContent({ aiCount: writingAiCount })
+                  }
+                  title={id ? undefined : "Lưu bài với tiêu đề và trình độ bên dưới, rồi AI soạn các câu."}
+                  className={BTN_AI}
+                >
+                  <FileStack size={16} aria-hidden="true" /> Soạn bằng AI
+                </button>
+              </div>
             )}
             {(isListening || domain === "reading") && (
               <div className="flex flex-wrap items-center gap-2">
@@ -3003,6 +3064,8 @@ export default function SkillCmsWorkspace({
               id={item?.id}
               tracks={item?.tracks ?? []}
               listKey={`admin-skill-content-${domain}`}
+              // A new bài keeps the choice and is tagged on its first save.
+              onPendingChange={item?.id ? undefined : setPendingTracks}
             />
             {isWriting && (
               <label className="text-sm font-medium">
@@ -3728,7 +3791,7 @@ export default function SkillCmsWorkspace({
           onClose={() => setWritingAi(null)}
           onSaved={() => loadItem()}
           // Made by "Tạo bằng AI" on the list: cancelling removes the empty bài (owner 2026-11-25).
-          onCancelEmpty={writingAi.auto ? () => void discardEmptyAiWriting() : undefined}
+          onCancelEmpty={writingAi.auto && !writingAi.keep ? () => void discardEmptyAiWriting() : undefined}
         />
       )}
       {fullDraft && (

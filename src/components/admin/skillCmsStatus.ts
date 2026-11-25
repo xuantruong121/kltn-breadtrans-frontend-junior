@@ -77,6 +77,7 @@ export const TRACK_FIELD_COPY = {
   label: TERMS.track,
   hint: "Bài được ưu tiên đề xuất cho học viên chọn lĩnh vực này. Tự lưu khi bấm.",
   lockedHint: "Lưu bài trước, sau đó chọn lĩnh vực.",
+  pendingHint: "Bài được ưu tiên đề xuất cho học viên chọn lĩnh vực này. Lĩnh vực được gắn khi lưu bài.",
   untagged: "Chưa gắn lĩnh vực",
   saveError: "Chưa lưu được lĩnh vực",
 } as const;

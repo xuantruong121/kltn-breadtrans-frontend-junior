@@ -239,7 +239,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   ];
   const firstIndex = (page - 1) * PAGE_SIZE;
 
-  const saveDeck = async () => {
+  /** `aiCount`: a new deck goes on to ask the AI for that many words (owner 2026-11-25). */
+  const saveDeck = async (aiCount?: number) => {
     if (!form.title.trim()) {
       toast.error("Cần nhập tên bộ từ.");
       return;
@@ -263,9 +264,10 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           await axiosClient.post("/admin/vocab/topics", dto),
         );
         setSavedForm(form);
-        toast.success("Đã tạo bộ từ. Giờ thêm từ vào bộ.");
+        toast.success(aiCount ? "Đã lưu bộ từ. AI đang gợi ý từ." : "Đã lưu bộ từ. Giờ thêm từ vào bộ.");
         queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
-        router.replace(`/admin/vocab/${created.id}`);
+        // from=new: the admin filled this form, so the deck stays if the AI fails.
+        router.replace(`/admin/vocab/${created.id}${aiCount ? `?ai=${aiCount}&from=new` : ""}`);
       }
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể lưu bộ từ."));
@@ -289,8 +291,11 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   const aiStarted = useRef(false);
   useEffect(() => {
     if (!deck || aiStarted.current) return;
-    const count = Number(new URLSearchParams(window.location.search).get("ai"));
+    const params = new URLSearchParams(window.location.search);
+    const count = Number(params.get("ai"));
     if (!count) return;
+    // Saved from the new-deck form: the admin's deck stays whatever the AI does.
+    const fromForm = params.get("from") === "new";
     aiStarted.current = true;
     window.history.replaceState(null, "", window.location.pathname);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the AI panel once when the page is reached with ?ai=
@@ -299,7 +304,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     void askAi(count).then((answered) => {
       // QA 2026-11-22: the list made this deck for the AI; when the AI
       // fails it stays empty, so it goes and the admin is told.
-      if (!answered && !deck.stats.total) void removeEmptyDeck(deck.id);
+      if (!answered && !deck.stats.total && !fromForm) void removeEmptyDeck(deck.id);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on arrival
   }, [deck]);
@@ -551,7 +556,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
               disabled={busy}
               className={BTN_SECONDARY}
             >
-              <Save size={16} /> {deck ? "Lưu" : "Tạo bộ từ"}
+              <Save size={16} /> Lưu
             </button>
             {deck && !isSystem && !blocker && (
               <button
@@ -590,7 +595,39 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           400px rail with the checklist and the 4-step preview (24px gap). */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start [&>*]:min-w-0">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
-          <h2 className="font-semibold text-slate-950">Thông tin bộ từ</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-semibold text-slate-950">Thông tin bộ từ</h2>
+            {/* The new page drafts with AI too, like the other pages (owner
+                2026-11-25): the deck is saved, then the AI suggests words. */}
+            {!deck && (
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                  Số từ
+                  <select
+                    aria-label="Số từ AI gợi ý"
+                    value={aiCount}
+                    onChange={(event) => setAiCount(Number(event.target.value))}
+                    className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                  >
+                    {[5, 10, 15, 20, 25, 30].map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void saveDeck(aiCount)}
+                  title="Lưu bộ với tên và trình độ bên dưới, rồi AI gợi ý từ để bạn chọn."
+                  className={BTN_AI}
+                >
+                  Soạn bằng AI
+                </button>
+              </div>
+            )}
+          </div>
           <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
             <label className="text-sm font-medium text-slate-800">
               Tên bộ từ
@@ -760,7 +797,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
 
           {!deck ? (
             <p className="mt-4 text-sm text-slate-600">
-              Tạo bộ từ trước, sau đó thêm từ ngay tại đây: từng từ, dán cả danh
+              Lưu bộ từ trước, sau đó thêm từ ngay tại đây: từng từ, dán cả danh
               sách, hoặc nhờ AI gợi ý.
             </p>
           ) : (
