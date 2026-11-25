@@ -38,6 +38,10 @@ import {
   listeningTitlePrefix,
   draftDescription,
   draftSaveHint,
+  dictationDraftState,
+  draftSentenceAvoid,
+  fillDraftSentences,
+  replaceDraftSentence,
 } from "./skillCmsStatus.ts";
 import { comprehensionSpokenContent } from "../../lib/listening/listeningExchange.ts";
 
@@ -697,4 +701,34 @@ test("an AI draft keeps the description the admin typed, and fills only an empty
 test("after applying an AI draft the page says Lưu comes next, and that a Listening lesson then makes its audio (owner 2026-11-25)", () => {
   assert.equal(draftSaveHint("listening"), "Bấm Lưu để lưu bài. Audio sẽ tự tạo sau khi lưu.");
   assert.equal(draftSaveHint("reading"), "Bấm Lưu để lưu bài.");
+});
+
+test("Nghe chép draft review: replacements fill dropped sentences and nothing is repeated (owner 2026-11-25)", () => {
+  const draft = [
+    { text: "We eat dinner at six." },
+    { text: "Call your brother.", excluded: true },
+    { text: "  " },
+    { text: "My aunt grows tomatoes.", excluded: true },
+  ];
+  // Every line goes to the AI to avoid, dropped ones too.
+  assert.deepEqual(draftSentenceAvoid(draft), ["We eat dinner at six.", "Call your brother.", "My aunt grows tomatoes."]);
+  assert.deepEqual(dictationDraftState(draft, 10), { kept: 1, dropped: 2, missing: 9 });
+  // One click replaces one sentence in place, dropped or not.
+  assert.deepEqual(replaceDraftSentence(draft, 1, "Visit grandma on Sunday.")[1], {
+    text: "Visit grandma on Sunday.",
+    excluded: false,
+  });
+  // Several new ones fill the dropped slots in order; extras go at the end.
+  const filled = fillDraftSentences(draft, ["A.", "B.", "C."]);
+  assert.deepEqual(
+    filled.map((s) => [s.text, !!s.excluded]),
+    [
+      ["We eat dinner at six.", false],
+      ["A.", false],
+      ["  ", false],
+      ["B.", false],
+      ["C.", false],
+    ],
+  );
+  assert.deepEqual(dictationDraftState(Array.from({ length: 10 }, () => ({ text: "x" }))), { kept: 10, dropped: 0, missing: 0 });
 });

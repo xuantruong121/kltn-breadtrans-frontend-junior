@@ -56,6 +56,10 @@ import {
   listeningTitlePrefix,
   draftDescription,
   draftSaveHint,
+  dictationDraftState,
+  draftSentenceAvoid,
+  fillDraftSentences,
+  replaceDraftSentence,
 } from "./skillCmsStatus";
 import {
   dialogueForSave,
@@ -541,6 +545,8 @@ export default function SkillCmsWorkspace({
   // "Soạn cả bài bằng AI" is running (owner 2026-11-24: it showed nothing for
   // the 10-30 s the AI takes, and could be clicked again).
   const [fullDraftBusy, setFullDraftBusy] = useState(false);
+  // A "Nghe chép" draft sentence being rewritten by the AI: its index, or "fill" for several.
+  const [sentenceAiBusy, setSentenceAiBusy] = useState<number | "fill" | null>(null);
   const [dictationTopic, setDictationTopic] = useState("");
   const [isDictationAiLoading, setIsDictationAiLoading] = useState(false);
   // The "new question" editor is opened on demand; editing happens in place.
@@ -957,6 +963,70 @@ export default function SkillCmsWorkspace({
       toast.error(getApiErrorMessage(error, "Không thể soạn câu lúc này."));
     } finally {
       setIsDictationAiLoading(false);
+    }
+  };
+
+  /**
+   * New "Nghe chép" sentences for the draft review (owner 2026-11-25): same
+   * topic, level and description, never a line the draft already has.
+   */
+  const askDraftSentences = async (count: number): Promise<string[]> => {
+    if (!fullDraft?.sentences) return [];
+    const data = unwrap<any>(
+      await axiosClient.post("/admin/listening/ai/dictation-lines", {
+        topic: form.title.trim() || fullDraft.title,
+        level: fullDraft.level || form.level || "A2",
+        count,
+        avoid: draftSentenceAvoid(fullDraft.sentences),
+        brief: fullDraft.description.trim() || undefined,
+      }),
+    );
+    return (Array.isArray(data?.sentences) ? data.sentences : [])
+      .map((line: unknown) => String(line ?? "").trim())
+      .filter(Boolean);
+  };
+
+  /** "Tạo câu khác": one sentence rewritten in place. */
+  const replaceSentenceWithAi = async (index: number) => {
+    if (sentenceAiBusy !== null) return;
+    setSentenceAiBusy(index);
+    try {
+      const [text] = await askDraftSentences(1);
+      if (!text) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      setFullDraft((current) =>
+        current?.sentences ? { ...current, sentences: replaceDraftSentence(current.sentences, index, text) } : current,
+      );
+      toast.success(`Đã thay câu ${index + 1}.`);
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setSentenceAiBusy(null);
+    }
+  };
+
+  /** One AI call for every dropped sentence and any still missing for the minimum. */
+  const fillSentencesWithAi = async (count: number) => {
+    if (sentenceAiBusy !== null || count < 1) return;
+    setSentenceAiBusy("fill");
+    try {
+      const texts = (await askDraftSentences(count)).slice(0, count);
+      if (!texts.length) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      setFullDraft((current) =>
+        current?.sentences ? { ...current, sentences: fillDraftSentences(current.sentences, texts) } : current,
+      );
+      toast.success(
+        texts.length < count ? `AI chỉ tạo được ${texts.length}/${count} câu.` : `Đã tạo ${texts.length} câu mới.`,
+      );
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setSentenceAiBusy(null);
     }
   };
 
@@ -3728,8 +3798,43 @@ export default function SkillCmsWorkspace({
                     Câu nghe chép ({fullDraft.sentences.filter((sentence) => !sentence.excluded).length})
                   </h4>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    Có thể sửa từng câu, hoặc loại câu không dùng.
+                    Có thể sửa từng câu, bấm “Tạo câu khác” để AI viết câu thay thế, hoặc loại câu không dùng.
                   </p>
+                  {(() => {
+                    // Dropped sentences get replacements, and the lesson is topped up to the minimum (owner 2026-11-25).
+                    const state = dictationDraftState(fullDraft.sentences);
+                    const ask = Math.max(state.dropped, state.missing);
+                    if (!ask) return null;
+                    const label =
+                      state.dropped > 0
+                        ? `Tạo câu thay cho ${state.dropped} câu đã loại${ask > state.dropped ? ` và thêm ${ask - state.dropped} câu` : ""}`
+                        : `Tạo thêm ${ask} câu`;
+                    return (
+                      <div
+                        role="status"
+                        className={`mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm ${
+                          state.missing > 0
+                            ? "border-amber-200 bg-amber-50 text-amber-900"
+                            : "border-slate-200 bg-slate-50 text-slate-700"
+                        }`}
+                      >
+                        <span>
+                          {state.missing > 0
+                            ? `Còn ${state.kept}/${DICTATION_MIN_SENTENCES} câu: lưu nháp được, nhưng cần đủ ${DICTATION_MIN_SENTENCES} câu mới xuất bản.`
+                            : `Đã loại ${state.dropped} câu.`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void fillSentencesWithAi(ask)}
+                          disabled={sentenceAiBusy !== null}
+                          className={BTN_SECONDARY}
+                        >
+                          {sentenceAiBusy === "fill" && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
+                          {sentenceAiBusy === "fill" ? "Đang tạo câu…" : label}
+                        </button>
+                      </div>
+                    );
+                  })()}
                   <ol className="mt-3 space-y-2">
                     {fullDraft.sentences.map((sentence, index) => (
                       <li
@@ -3762,6 +3867,16 @@ export default function SkillCmsWorkspace({
                         />
                         <button
                           type="button"
+                          onClick={() => void replaceSentenceWithAi(index)}
+                          disabled={sentenceAiBusy !== null}
+                          className="inline-flex flex-none items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {sentenceAiBusy === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                          {sentenceAiBusy === index ? "Đang tạo…" : "Tạo câu khác"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={sentenceAiBusy === index}
                           onClick={() =>
                             setFullDraft((current) =>
                               current?.sentences
@@ -4023,6 +4138,8 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => {
+                  // A sentence still being rewritten by the AI waits for its answer.
+                  if (sentenceAiBusy !== null) return;
                   // "Nghe chép": each kept sentence becomes one dictation item.
                   const activeQuestions = fullDraft.sentences
                     ? fullDraft.sentences

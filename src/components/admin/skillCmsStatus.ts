@@ -753,3 +753,37 @@ export function draftSaveHint(domain: string): string {
     ? "Bấm Lưu để lưu bài. Audio sẽ tự tạo sau khi lưu."
     : "Bấm Lưu để lưu bài.";
 }
+
+/** A "Nghe chép" sentence in the AI draft review. */
+export type DraftSentence = { text: string; excluded?: boolean };
+
+/**
+ * Replacing sentences in the "Nghe chép" draft review (owner 2026-11-25: a
+ * dropped sentence had no replacement while a lesson needs
+ * DICTATION_MIN_SENTENCES to publish). Every line already in the draft, kept
+ * or dropped, goes to the AI as one it must not repeat.
+ */
+export function draftSentenceAvoid(sentences: DraftSentence[]): string[] {
+  return sentences.map((sentence) => sentence.text.trim()).filter(Boolean);
+}
+
+/** Kept sentences, dropped ones, and how many more a publishable lesson needs. */
+export function dictationDraftState(sentences: DraftSentence[], min = DICTATION_MIN_SENTENCES) {
+  const kept = sentences.filter((sentence) => !sentence.excluded && sentence.text.trim()).length;
+  const dropped = sentences.filter((sentence) => sentence.excluded).length;
+  return { kept, dropped, missing: Math.max(0, min - kept) };
+}
+
+/** One sentence replaced in place by a new one, kept. */
+export function replaceDraftSentence(sentences: DraftSentence[], index: number, text: string): DraftSentence[] {
+  return sentences.map((sentence, at) => (at === index ? { text, excluded: false } : sentence));
+}
+
+/** New sentences fill the dropped ones in order; any left over are added at the end. */
+export function fillDraftSentences(sentences: DraftSentence[], texts: string[]): DraftSentence[] {
+  const queue = [...texts];
+  const filled = sentences.map((sentence) =>
+    sentence.excluded && queue.length ? { text: queue.shift() as string, excluded: false } : sentence,
+  );
+  return [...filled, ...queue.map((text) => ({ text, excluded: false }))];
+}
