@@ -33,7 +33,7 @@ import {
   BTN_SUCCESS,
 } from "../cmsButtons";
 import { TrackTagField } from "../TrackTagField";
-import { TRACK_FIELD_COPY } from "../skillCmsStatus";
+import { TRACK_FIELD_COPY, draftAvoidList, replaceDraftItem } from "../skillCmsStatus";
 import { ADMIN_LEARNING_TRACKS_KEY, useLearningTracks } from "@/lib/learning-path/useLearningTracks";
 import { TERMS } from "@/lib/ui/terms";
 import SpeakingExerciseForm from "./SpeakingExerciseForm";
@@ -416,6 +416,53 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     },
   });
 
+  // "Tạo câu khác" on one drafted exercise (owner 2026-11-25): its index while the AI writes.
+  const [exerciseAiBusy, setExerciseAiBusy] = useState<number | null>(null);
+  const replaceDraftExercise = async (index: number) => {
+    if (!fullDraft || exerciseAiBusy !== null) return;
+    const current = fullDraft.exercises[index];
+    setExerciseAiBusy(index);
+    try {
+      const data = unwrap<{ candidates?: SpeakingExerciseSuggestion[] }>(
+        await axiosClient.post("/admin/speaking/ai/suggest-exercises", {
+          practiceSetTitle: form.title.trim() || fullDraft.practiceSet.title,
+          practiceSetDescription: form.description.trim() || fullDraft.practiceSet.description || undefined,
+          level: form.level,
+          track: aiTrack || undefined,
+          // The same kind of exercise, never one the draft already holds.
+          taskType: current?.taskType || undefined,
+          existingExerciseTitles: draftAvoidList(fullDraft.exercises.map((exercise) => exercise.title)),
+          count: 2,
+        }),
+      );
+      const taken = new Set(
+        draftAvoidList(fullDraft.exercises.flatMap((exercise) => [exercise.title, exercise.targetText])).map(
+          (line) => line.toLowerCase(),
+        ),
+      );
+      const next = (data?.candidates ?? []).find(
+        (candidate) =>
+          !draftExerciseProblem(candidate) &&
+          !taken.has(candidate.title.trim().toLowerCase()) &&
+          !taken.has(candidate.targetText.trim().toLowerCase()),
+      );
+      if (!next) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      setFullDraft((draft) =>
+        draft
+          ? { ...draft, exercises: replaceDraftItem(draft.exercises, index, { ...next, excluded: false }) }
+          : draft,
+      );
+      toast.success(`Đã thay câu ${index + 1}.`);
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setExerciseAiBusy(null);
+    }
+  };
+
   const fullDraftMutation = useMutation({
     mutationFn: async () => {
       const topic = form.title.trim() || form.description.trim();
@@ -745,7 +792,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                   Bản nháp AI: {fullDraft.practiceSet.title}
                 </p>
                 <p className="text-sm text-slate-600">
-                  Bỏ chọn câu không dùng, rồi áp dụng. Chưa có gì được lưu.
+                  Bỏ chọn câu không dùng hoặc bấm “Tạo câu khác”, rồi áp dụng. Chưa có gì được lưu.
                 </p>
               </div>
               <ul className="mt-3 space-y-2">
@@ -787,7 +834,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                           className="mt-1 size-4 flex-none"
                         />
                       )}
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-xs text-slate-600 dark:text-slate-400">
                           {taskTypeLabel(candidate.taskType)} ·{" "}
                           {difficultyLabel(candidate.difficulty)}
@@ -804,6 +851,15 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                           </p>
                         )}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => void replaceDraftExercise(index)}
+                        disabled={exerciseAiBusy !== null}
+                        className="inline-flex flex-none items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {exerciseAiBusy === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                        {exerciseAiBusy === index ? "Đang tạo…" : "Tạo câu khác"}
+                      </button>
                     </li>
                   );
                 })}
@@ -829,6 +885,8 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                       "Đã đưa bản nháp vào biểu mẫu, chưa lưu. Bấm Lưu để lưu bộ.",
                     );
                   }}
+                  // An exercise still being rewritten by the AI waits for its answer.
+                  disabled={exerciseAiBusy !== null}
                   className={BTN_SECONDARY}
                 >
                   Áp dụng bản nháp

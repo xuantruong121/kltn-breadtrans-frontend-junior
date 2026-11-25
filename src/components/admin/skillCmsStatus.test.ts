@@ -40,6 +40,8 @@ import {
   draftSaveHint,
   dictationDraftState,
   draftSentenceAvoid,
+  draftAvoidList,
+  replaceDraftItem,
   fillDraftSentences,
   replaceDraftSentence,
 } from "./skillCmsStatus.ts";
@@ -731,4 +733,20 @@ test("Nghe chép draft review: replacements fill dropped sentences and nothing i
     ],
   );
   assert.deepEqual(dictationDraftState(Array.from({ length: 10 }, () => ({ text: "x" }))), { kept: 10, dropped: 0, missing: 0 });
+});
+
+test("draftAvoidList: every draft item once, trimmed, at most 40 of 300 characters", () => {
+  assert.deepEqual(draftAvoidList(["  What is  the idea? ", "what is the idea?", "", null, undefined, "Why?"]), [
+    "What is the idea?",
+    "Why?",
+  ]);
+  assert.equal(draftAvoidList(Array.from({ length: 50 }, (_, i) => `q${i}`)).length, 40);
+  assert.equal(draftAvoidList(["x".repeat(400)])[0].length, 300);
+});
+
+test("replaceDraftItem: one item replaced in place, the others untouched", () => {
+  const items = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const next = replaceDraftItem(items, 1, { id: 9 });
+  assert.deepEqual(next, [{ id: 1 }, { id: 9 }, { id: 3 }]);
+  assert.equal(next[0], items[0]);
 });

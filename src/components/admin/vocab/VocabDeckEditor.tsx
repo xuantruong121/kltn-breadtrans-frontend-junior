@@ -48,6 +48,7 @@ import {
   wordsWithoutIpa,
   type DeckStats,
 } from "./vocabCms";
+import { draftAvoidList, replaceDraftItem } from "../skillCmsStatus";
 
 type Deck = {
   id: number;
@@ -385,6 +386,54 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       return false;
     } finally {
       setBusy(false);
+    }
+  };
+
+  /**
+   * "Tạo từ khác" on one suggested word (owner 2026-11-25): one new word for
+   * the deck, never one the suggestions or the deck already hold.
+   */
+  const [wordAiBusy, setWordAiBusy] = useState<number | null>(null);
+  const replaceAiWord = async (index: number) => {
+    if (wordAiBusy !== null || busy) return;
+    setWordAiBusy(index);
+    try {
+      const deckWords = await loadAllWordNames();
+      const data = unwrap<any>(
+        await axiosClient.post("/admin/vocab/ai/full-draft", {
+          topic: form.title.trim(),
+          level: cefrToScaleLevel(form.level),
+          context: form.description.trim() || undefined,
+          count: 1,
+          // The suggestions first: the API takes 40 items.
+          avoid: draftAvoidList([...aiWords.map((row) => row.word), ...deckWords]),
+        }),
+      );
+      const taken = new Set([...aiWords.map((row) => row.word), ...deckWords].map((word) => word.trim().toLowerCase()));
+      const next = (data?.words ?? []).find(
+        (word: any) => String(word?.word ?? "").trim() && !taken.has(String(word.word).trim().toLowerCase()),
+      );
+      if (!next) {
+        toast.error("AI chưa tạo được từ mới. Thử lại sau.");
+        return;
+      }
+      setAiWords((rows) =>
+        replaceDraftItem(rows, index, {
+          word: String(next.word),
+          meaning: String(next.meaning ?? ""),
+          pos: next.pos,
+          ipaUs: next.ipaUs,
+          ipaUk: next.ipaUk,
+          exampleEn: next.exampleEn,
+          exampleVi: next.exampleVi,
+          chosen: true,
+        }),
+      );
+      toast.success(`Đã thay từ ${index + 1}.`);
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "AI chưa tạo được từ mới. Thử lại sau."));
+    } finally {
+      setWordAiBusy(null);
     }
   };
 
@@ -1018,8 +1067,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                       <>
                         <ul className="mt-3 max-h-80 space-y-1 overflow-y-auto text-sm">
                           {aiWords.map((row, index) => (
-                            <li key={`${row.word}-${index}`}>
-                              <label className="flex cursor-pointer items-baseline gap-2">
+                            <li key={`${row.word}-${index}`} className="flex items-baseline gap-2">
+                              <label className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2">
                                 <input
                                   type="checkbox"
                                   checked={row.chosen}
@@ -1034,12 +1083,22 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                                 <span className="text-slate-700">{row.meaning}</span>
                                 <span className="text-xs text-slate-600 dark:text-slate-400">{row.pos}</span>
                               </label>
+                              <button
+                                type="button"
+                                onClick={() => void replaceAiWord(index)}
+                                disabled={wordAiBusy !== null || busy}
+                                className="inline-flex flex-none items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {wordAiBusy === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                                {wordAiBusy === index ? "Đang tạo…" : "Tạo từ khác"}
+                              </button>
                             </li>
                           ))}
                         </ul>
                         <button
                           type="button"
-                          disabled={busy}
+                          // A word still being replaced by the AI waits for its answer.
+                          disabled={busy || wordAiBusy !== null}
                           onClick={async () => {
                             if (
                               await addWords(

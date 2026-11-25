@@ -42,6 +42,7 @@ import {
   youtubeIdFrom,
   type GrammarDraft,
 } from "./grammarCms";
+import { draftAvoidList, replaceDraftItem } from "../skillCmsStatus";
 import GrammarQuestionForm from "./GrammarQuestionForm";
 import GrammarPastePanel from "./GrammarPastePanel";
 
@@ -344,6 +345,44 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       return false;
     } finally {
       setAiBusy(false);
+    }
+  };
+
+  /**
+   * "Tạo câu khác" on one suggested question (owner 2026-11-25): one new
+   * question on the same structure, never one the topic or the list holds.
+   */
+  const [candidateAiBusy, setCandidateAiBusy] = useState<number | null>(null);
+  const replaceCandidate = async (index: number) => {
+    if (candidateAiBusy !== null || aiBusy) return;
+    setCandidateAiBusy(index);
+    try {
+      const data = unwrap<any>(
+        await axiosClient.post("/admin/grammar/ai/suggest-questions", {
+          topicTitle: form.title.trim(),
+          level: form.level,
+          theory: form.description.trim() || undefined,
+          keyFormula: form.keyFormula.trim() || undefined,
+          count: 1,
+          avoid: draftAvoidList([
+            ...candidates.map((candidate) => candidate.question),
+            ...questions.map((question) => question.question),
+            ...pendingQuestions.map((question) => question.question),
+          ]),
+        }),
+      );
+      const [next] = (data?.candidates ?? []) as GrammarDraft[];
+      if (!next) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      setCandidates((rows) => replaceDraftItem(rows, index, { ...next, chosen: true }));
+      if (editingCandidate === index) setEditingCandidate(null);
+      toast.success(`Đã thay câu ${index + 1}.`);
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setCandidateAiBusy(null);
     }
   };
 
@@ -896,7 +935,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                 {candidates.length > 0 && (
                   <>
                     <p className="mt-3 text-sm text-slate-700">
-                      Bỏ chọn câu không dùng; bấm Sửa để chỉnh trước khi thêm.
+                      Bỏ chọn câu không dùng, bấm “Tạo câu khác” để AI viết câu thay thế, hoặc bấm Sửa để chỉnh trước khi thêm.
                     </p>
                     <ul className="mt-2 space-y-2">
                       {candidates.map((candidate, index) => (
@@ -931,6 +970,17 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                             </div>
                             <button
                               type="button"
+                              onClick={() => void replaceCandidate(index)}
+                              disabled={candidateAiBusy !== null || aiBusy}
+                              className="inline-flex flex-none items-center gap-1 self-center text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {candidateAiBusy === index && (
+                                <Loader2 size={12} className="animate-spin" aria-hidden="true" />
+                              )}
+                              {candidateAiBusy === index ? "Đang tạo…" : "Tạo câu khác"}
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => setEditingCandidate(editingCandidate === index ? null : index)}
                               className={BTN_SECONDARY}
                             >
@@ -956,7 +1006,8 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                     </ul>
                     <button
                       type="button"
-                      disabled={busy}
+                      // A question still being rewritten by the AI waits for its answer.
+                      disabled={busy || candidateAiBusy !== null}
                       onClick={async () => {
                         setBusy(true);
                         const added = await addQuestions(

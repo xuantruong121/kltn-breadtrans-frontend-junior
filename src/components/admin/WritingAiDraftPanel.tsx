@@ -7,7 +7,14 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { BTN_AI, BTN_SECONDARY } from "./cmsButtons";
-import { aiShortfallNotice, writingDraftQuestion, writingTaskLabel, type WritingDraftTask } from "./skillCmsStatus";
+import {
+  aiShortfallNotice,
+  draftAvoidList,
+  replaceDraftItem,
+  writingDraftQuestion,
+  writingTaskLabel,
+  type WritingDraftTask,
+} from "./skillCmsStatus";
 
 type Draft = { title: string; description: string; tasks: WritingDraftTask[]; dropped: number };
 
@@ -76,6 +83,36 @@ export function WritingAiDraftPanel({
       toast.error(getApiErrorMessage(error, "AI chưa soạn được bài lúc này."));
     } finally {
       setBusy(null);
+    }
+  };
+
+  // "Tạo câu khác" (owner 2026-11-25): the index of the task being rewritten.
+  const [replacing, setReplacing] = useState<number | null>(null);
+  const replaceTask = async (index: number) => {
+    if (!draft || replacing !== null || busy) return;
+    setReplacing(index);
+    try {
+      const data = (await axiosClient.post("/admin/writing/ai/full-draft", {
+        topic,
+        brief: brief?.trim() || undefined,
+        level,
+        kind,
+        count: 1,
+        // Every task in the draft, picked or not, is one the AI must not repeat.
+        avoid: draftAvoidList(draft.tasks.map((task) => task.prompt)),
+      })) as unknown as Draft;
+      const [task] = data?.tasks ?? [];
+      if (!task) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      setDraft((current) => (current ? { ...current, tasks: replaceDraftItem(current.tasks, index, task) } : current));
+      setPicked((current) => current.map((value, at) => (at === index ? true : value)));
+      toast.success(`Đã thay câu ${index + 1}.`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setReplacing(null);
     }
   };
 
@@ -189,8 +226,8 @@ export function WritingAiDraftPanel({
               )}
               <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
                 {draft.tasks.map((task, index) => (
-                  <li key={index}>
-                    <label className="flex cursor-pointer gap-3 p-3 hover:bg-slate-50">
+                  <li key={index} className="flex items-start gap-2 pr-3 hover:bg-slate-50">
+                    <label className="flex min-w-0 flex-1 cursor-pointer gap-3 p-3">
                       <input
                         type="checkbox"
                         checked={picked[index] ?? false}
@@ -221,6 +258,15 @@ export function WritingAiDraftPanel({
                         {task.explanation && <span className="block text-slate-600">{task.explanation}</span>}
                       </span>
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => void replaceTask(index)}
+                      disabled={replacing !== null || busy !== null}
+                      className="mt-3 inline-flex flex-none items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {replacing === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                      {replacing === index ? "Đang tạo…" : "Tạo câu khác"}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -235,7 +281,7 @@ export function WritingAiDraftPanel({
           {/* No faded button before there is something to add (anti-slop rule). */}
           {draft &&
             (chosen.length ? (
-              <button type="button" onClick={() => void save()} disabled={busy !== null} className={BTN_AI}>
+              <button type="button" onClick={() => void save()} disabled={busy !== null || replacing !== null} className={BTN_AI}>
                 {busy === "save" && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
                 Thêm {chosen.length} câu đã chọn
               </button>

@@ -61,6 +61,8 @@ import {
   fillDraftSentences,
   replaceDraftSentence,
   TRACK_FIELD_COPY,
+  draftAvoidList,
+  replaceDraftItem,
 } from "./skillCmsStatus";
 import {
   dialogueForSave,
@@ -553,6 +555,8 @@ export default function SkillCmsWorkspace({
   const [fullDraftBusy, setFullDraftBusy] = useState(false);
   // A "Nghe chép" draft sentence being rewritten by the AI: its index, or "fill" for several.
   const [sentenceAiBusy, setSentenceAiBusy] = useState<number | "fill" | null>(null);
+  // A Reading draft question being rewritten by the AI: its index.
+  const [questionAiBusy, setQuestionAiBusy] = useState<number | null>(null);
   const [dictationTopic, setDictationTopic] = useState("");
   const [isDictationAiLoading, setIsDictationAiLoading] = useState(false);
   // The "new question" editor is opened on demand; editing happens in place.
@@ -994,6 +998,43 @@ export default function SkillCmsWorkspace({
     return (Array.isArray(data?.sentences) ? data.sentences : [])
       .map((line: unknown) => String(line ?? "").trim())
       .filter(Boolean);
+  };
+
+  /**
+   * "Tạo câu khác" on one question of a Reading draft (owner 2026-11-25):
+   * one new question on the same passage, never one the draft already holds.
+   */
+  const replaceReadingDraftQuestion = async (index: number) => {
+    if (!fullDraft || fullDraft.domain !== "reading" || questionAiBusy !== null) return;
+    setQuestionAiBusy(index);
+    try {
+      const data = unwrap<any>(
+        await axiosClient.post("/admin/reading/ai/suggest-questions", {
+          passage: fullDraft.passage,
+          level: fullDraft.level || form.level || "A2",
+          count: 1,
+          avoid: draftAvoidList(fullDraft.questions.map((question) => question.prompt)),
+        }),
+      );
+      const [candidate] = Array.isArray(data?.candidates) ? data.candidates : [];
+      if (!candidate || !aiCandidateReady(candidate, false)) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      const next: QuestionDraft = {
+        ...emptyQuestion("reading"),
+        ...aiCandidateQuestionFields(candidate),
+        questionType: normalizeReadingQuestionType(candidate.questionType),
+      };
+      setFullDraft((current) =>
+        current ? { ...current, questions: replaceDraftItem(current.questions, index, next) } : current,
+      );
+      toast.success(`Đã thay câu ${index + 1}.`);
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setQuestionAiBusy(null);
+    }
   };
 
   /** "Tạo câu khác": one sentence rewritten in place. */
@@ -4042,7 +4083,9 @@ export default function SkillCmsWorkspace({
                     )
                   </h4>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    Có thể sửa từng câu, hoặc khôi phục câu đã loại.
+                    {fullDraft.domain === "reading"
+                      ? "Có thể sửa từng câu, bấm “Tạo câu khác” để AI viết câu thay thế, hoặc loại câu không dùng."
+                      : "Có thể sửa từng câu, hoặc khôi phục câu đã loại."}
                   </p>
                 </div>
               </div>
@@ -4056,8 +4099,21 @@ export default function SkillCmsWorkspace({
                       <span className="text-xs font-semibold text-slate-600">
                         Câu {index + 1}
                       </span>
+                      <span className="flex items-center gap-3">
+                      {fullDraft.domain === "reading" && (
+                        <button
+                          type="button"
+                          onClick={() => void replaceReadingDraftQuestion(index)}
+                          disabled={questionAiBusy !== null}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {questionAiBusy === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                          {questionAiBusy === index ? "Đang tạo…" : "Tạo câu khác"}
+                        </button>
+                      )}
                       <button
                         type="button"
+                        disabled={questionAiBusy === index}
                         onClick={() =>
                           setFullDraft((current) =>
                             current
@@ -4077,6 +4133,7 @@ export default function SkillCmsWorkspace({
                       >
                         {candidate.excluded ? "Khôi phục" : "Loại câu này"}
                       </button>
+                      </span>
                     </div>
                     {fullDraft.listeningMode === "COMPREHENSION" && (
                       <label className="mt-3 block text-xs font-semibold text-slate-700">
@@ -4269,8 +4326,8 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => {
-                  // A sentence still being rewritten by the AI waits for its answer.
-                  if (sentenceAiBusy !== null) return;
+                  // A sentence or question still being rewritten by the AI waits for its answer.
+                  if (sentenceAiBusy !== null || questionAiBusy !== null) return;
                   // "Nghe chép": each kept sentence becomes one dictation item.
                   const activeQuestions = fullDraft.sentences
                     ? fullDraft.sentences

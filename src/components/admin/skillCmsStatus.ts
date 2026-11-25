@@ -768,6 +768,30 @@ export function draftSentenceAvoid(sentences: DraftSentence[]): string[] {
   return sentences.map((sentence) => sentence.text.trim()).filter(Boolean);
 }
 
+/**
+ * "Tạo câu khác" on the other draft reviews (owner 2026-11-25): every item
+ * the draft holds, kept or dropped, as the AI's list to avoid. Trimmed, one
+ * line, no blanks or repeats, at most 40 of 300 characters (the API limit).
+ */
+export function draftAvoidList(items: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const list: string[] = [];
+  for (const item of items) {
+    const line = String(item ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
+    const key = line.toLowerCase();
+    if (!line || seen.has(key)) continue;
+    seen.add(key);
+    list.push(line);
+    if (list.length === 40) break;
+  }
+  return list;
+}
+
+/** One draft item replaced in place; the others keep their place and state. */
+export function replaceDraftItem<T>(items: T[], index: number, next: T): T[] {
+  return items.map((item, at) => (at === index ? next : item));
+}
+
 /** Kept sentences, dropped ones, and how many more a publishable lesson needs. */
 export function dictationDraftState(sentences: DraftSentence[], min = DICTATION_MIN_SENTENCES) {
   const kept = sentences.filter((sentence) => !sentence.excluded && sentence.text.trim()).length;
