@@ -637,6 +637,11 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
               Nhập tên bộ (chủ đề) và trình độ bên dưới, rồi bấm “Soạn cả bộ bằng AI”.
             </p>
           )}
+          {fullDraftMutation.isPending && (
+            <p role="status" className="mt-2 text-sm text-amber-800">
+              AI đang soạn bộ luyện nói, thường mất 10–30 giây. Bản nháp sẽ hiện ra để xem lại.
+            </p>
+          )}
           {exercises.length > 0 && !published && (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Bộ đã có câu luyện — dùng ‘Thêm câu luyện bằng AI’ ở mục Câu

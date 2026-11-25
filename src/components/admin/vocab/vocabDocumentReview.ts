@@ -14,6 +14,8 @@ export type ReviewWord = {
 export type ReviewDeck = {
   title: string;
   description: string;
+  /** A1-C2 as the AI proposed it, or "" for none; the admin may change it. */
+  level: string;
   chosen: boolean;
   words: ReviewWord[];
 };
@@ -21,16 +23,33 @@ export type ReviewDeck = {
 type SuggestedDeck = {
   title: string;
   description?: string;
+  level?: string | null;
   words: Array<Omit<ReviewWord, "chosen">>;
+};
+
+const DECK_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+/** The deck's level kept from the AI (owner 2026-11-25: it was dropped), when it is a CMS level. */
+export const deckLevel = (level: string | null | undefined) => {
+  const code = String(level ?? "").trim().toUpperCase();
+  return DECK_LEVELS.includes(code) ? code : "";
 };
 
 export const toReviewDecks = (decks: SuggestedDeck[]): ReviewDeck[] =>
   decks.map((deck) => ({
     title: deck.title,
     description: deck.description ?? "",
+    level: deckLevel(deck.level),
     chosen: true,
     words: deck.words.map((word) => ({ ...word, chosen: true })),
   }));
+
+/** A deck needs 4 different meanings for its quiz step before it can be published. */
+export const DECK_MIN_WORDS = 4;
+
+/** A chosen deck with fewer chosen words than that: created, but not publishable as it is. */
+export const deckTooSmall = (deck: ReviewDeck) =>
+  deck.chosen && deck.words.filter((word) => word.chosen).length < DECK_MIN_WORDS;
 
 /** Decks to create: a chosen deck with a name and at least one chosen word. */
 export const decksToCreate = (decks: ReviewDeck[]) =>

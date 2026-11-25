@@ -46,3 +46,24 @@ export function toggleKey(selected: Set<string>, key: string): Set<string> {
   else next.add(key);
   return next;
 }
+
+/**
+ * A draft key in words: "LR:P3:G2" is "Part 3 · Nhóm 2", "SPEAKING" is
+ * "Speaking" (owner 2026-11-25: the held-back list showed the raw key).
+ */
+export function candidateKeyLabel(key: string): string {
+  const lr = /^LR:P(\d+):G(\d+)$/.exec(key);
+  if (lr) return `Part ${lr[1]} · Nhóm ${lr[2]}`;
+  const task = /^(SPEAKING|WRITING):TASK(\d+)$/.exec(key);
+  if (task) return `${task[1] === "SPEAKING" ? "Speaking" : "Writing"} · Task ${task[2]}`;
+  if (key === "SPEAKING") return "Speaking";
+  if (key === "WRITING") return "Writing";
+  return key;
+}
+
+export type PartCoverage = { part: number; expected: number; drafted: number };
+
+/** Parts the draft holds fewer questions for than the exam frame needs. */
+export function shortParts(coverage: PartCoverage[] | null | undefined): PartCoverage[] {
+  return (coverage ?? []).filter((row) => row.drafted < row.expected);
+}

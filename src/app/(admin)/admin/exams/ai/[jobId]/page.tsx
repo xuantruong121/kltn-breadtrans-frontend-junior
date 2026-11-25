@@ -20,9 +20,11 @@ import {
 } from "@/lib/examAi/answerReview";
 import {
   candidateGroupState,
+  candidateKeyLabel,
   matchesCandidateFilter,
   selectAllValidKeys,
   selectUnappliedKeys,
+  shortParts,
   toggleKey,
   type CandidateFilter as Filter,
 } from "@/lib/examAi/candidateWorkspaceLogic";
@@ -204,7 +206,12 @@ export default function ExamAiCandidateWorkspacePage({
     );
   };
 
+  // Busy states (owner 2026-11-25: "Thử lại" and "Lưu" gave no sign of running).
+  const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
+
   const saveEdit = async (candidateKey: string) => {
+    setSavingKey(candidateKey);
     try {
       await examAiService.updateCandidate(jobId, candidateKey, {
         ...editDraft,
@@ -220,6 +227,8 @@ export default function ExamAiCandidateWorkspacePage({
       });
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể lưu chỉnh sửa"));
+    } finally {
+      setSavingKey(null);
     }
   };
 
@@ -273,6 +282,8 @@ export default function ExamAiCandidateWorkspacePage({
   };
 
   const retryJob = async () => {
+    if (retrying) return;
+    setRetrying(true);
     try {
       await examAiService.retry(jobId);
       toast.success("Đã yêu cầu tạo lại");
@@ -281,6 +292,8 @@ export default function ExamAiCandidateWorkspacePage({
       });
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể thử lại"));
+    } finally {
+      setRetrying(false);
     }
   };
 
@@ -340,9 +353,11 @@ export default function ExamAiCandidateWorkspacePage({
           <button
             type="button"
             onClick={retryJob}
-            className="shrink-0 rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
+            disabled={retrying}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:cursor-wait dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
           >
-            Chạy lại ngay
+            {retrying && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+            {retrying ? "Đang gửi…" : "Chạy lại ngay"}
           </button>
         </div>
       )}
@@ -352,9 +367,11 @@ export default function ExamAiCandidateWorkspacePage({
           <button
             type="button"
             onClick={retryJob}
-            className="rounded-md border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-slate-900"
+            disabled={retrying}
+            className="inline-flex items-center gap-1.5 rounded-md border border-rose-300 bg-white px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:cursor-wait dark:border-rose-800 dark:bg-slate-900"
           >
-            Thử lại
+            {retrying && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+            {retrying ? "Đang gửi…" : "Thử lại"}
           </button>
         </div>
       )}
@@ -392,9 +409,11 @@ export default function ExamAiCandidateWorkspacePage({
             <button
               type="button"
               onClick={retryJob}
-              className="shrink-0 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
+              disabled={retrying}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100 disabled:cursor-wait dark:border-amber-800 dark:bg-slate-900 dark:text-amber-200"
             >
-              Thử lại nhóm chưa hoàn tất
+              {retrying && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+              {retrying ? "Đang gửi…" : "Thử lại nhóm chưa hoàn tất"}
             </button>
           </div>
         </section>
@@ -468,6 +487,26 @@ export default function ExamAiCandidateWorkspacePage({
             </div>
           </div>
 
+          {/* A Part short of questions (owner 2026-11-25: nothing said so). */}
+          {shortParts(candidate.partCoverage).length > 0 && (
+            <section
+              aria-label="Part còn thiếu câu"
+              className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+            >
+              <p className="font-semibold">Bản nháp còn thiếu câu so với khung đề</p>
+              <ul className="mt-1 space-y-0.5">
+                {shortParts(candidate.partCoverage).map((row) => (
+                  <li key={row.part}>
+                    {partLabel(row.part)}: có {row.drafted}/{row.expected} câu
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1">
+                Thử lại nhóm chưa hoàn tất, bấm “Tạo lại Part”, hoặc thêm câu trên trang đề sau khi áp dụng.
+              </p>
+            </section>
+          )}
+
           {/* Filters + bulk select */}
           <div className="mt-5 flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
             {(["FLAGGED", "ALL"] as Filter[]).map((f) => (
@@ -504,6 +543,31 @@ export default function ExamAiCandidateWorkspacePage({
               </button>
             </div>
           </div>
+
+          {/* Nothing under the filter used to leave a blank page (owner 2026-11-25). */}
+          {totalItems === 0 ? (
+            <p className="mt-6 text-sm text-slate-600 dark:text-slate-400">
+              Bản nháp chưa có nội dung nào.
+            </p>
+          ) : (
+            filter === "FLAGGED" &&
+            ![
+              ...(candidate.lrGroups ?? []),
+              ...candidate.speaking,
+              ...candidate.writing,
+            ].some(matchesFilter) && (
+              <p className="mt-6 text-sm text-slate-600 dark:text-slate-400">
+                Không còn nội dung nào cần kiểm tra.{" "}
+                <button
+                  type="button"
+                  onClick={() => setFilter("ALL")}
+                  className="font-semibold text-slate-900 underline underline-offset-2 hover:text-slate-700 dark:text-slate-100"
+                >
+                  Xem tất cả
+                </button>
+              </p>
+            )
+          )}
 
           {/* Listening/Reading groups by Part */}
           {lrByPart.map(([part, groups]) => {
@@ -741,9 +805,13 @@ export default function ExamAiCandidateWorkspacePage({
                               <button
                                 type="button"
                                 onClick={() => saveEdit(group.candidateKey)}
-                                className="rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white dark:bg-slate-100 dark:text-slate-900"
+                                disabled={savingKey === group.candidateKey}
+                                className="inline-flex items-center gap-1.5 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-wait dark:bg-slate-100 dark:text-slate-900"
                               >
-                                Lưu
+                                {savingKey === group.candidateKey && (
+                                  <Loader2 size={12} className="animate-spin" aria-hidden="true" />
+                                )}
+                                {savingKey === group.candidateKey ? "Đang lưu…" : "Lưu"}
                               </button>
                             </div>
                           </div>
@@ -862,7 +930,7 @@ export default function ExamAiCandidateWorkspacePage({
               <ul className="mt-1 space-y-0.5 text-xs">
                 {skipped.map((row) => (
                   <li key={row.candidateKey}>
-                    {row.candidateKey}: {skipReasonLabel(row.reason)}
+                    {candidateKeyLabel(row.candidateKey)}: {skipReasonLabel(row.reason)}
                   </li>
                 ))}
               </ul>
@@ -873,6 +941,19 @@ export default function ExamAiCandidateWorkspacePage({
           <div className="sticky bottom-4 mt-8 flex items-center justify-between rounded-lg border border-slate-200 bg-white/95 p-4 shadow-md backdrop-blur dark:border-slate-700 dark:bg-slate-900/95">
             <p className="text-xs text-slate-600 dark:text-slate-400">
               Nội dung chỉ được áp dụng vào bản nháp, chưa được xuất bản.
+              {/* After an apply, the exam is the next stop (owner 2026-11-25). */}
+              {candidate.appliedCandidateKeys.length > 0 && status?.examId ? (
+                <>
+                  {" "}
+                  Đã áp dụng {candidate.appliedCandidateKeys.length} nội dung.{" "}
+                  <Link
+                    href={`/admin/exams/${status.examId}`}
+                    className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400"
+                  >
+                    Mở đề thi
+                  </Link>
+                </>
+              ) : null}
             </p>
             <button
               type="button"

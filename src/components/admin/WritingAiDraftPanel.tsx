@@ -29,6 +29,7 @@ export function WritingAiDraftPanel({
   onUseDescription,
   onClose,
   onSaved,
+  onCancelEmpty,
 }: {
   quizId: number;
   topic: string;
@@ -41,6 +42,8 @@ export function WritingAiDraftPanel({
   onUseDescription?: (description: string) => void;
   onClose: () => void;
   onSaved: () => Promise<void> | void;
+  /** Closed with nothing added from this panel (owner 2026-11-25: the empty bài stayed). */
+  onCancelEmpty?: () => void;
 }) {
   const [count, setCount] = useState(Math.min(10, Math.max(1, initialCount)));
   const [busy, setBusy] = useState<"draft" | "save" | null>(null);
@@ -49,6 +52,12 @@ export function WritingAiDraftPanel({
   // How many tasks the last request asked for: the AI may send fewer (QA 2026-11-22).
   const [requested, setRequested] = useState(0);
   const started = useRef(false);
+  // Any task saved from this panel, even in a run that stopped part-way.
+  const savedAny = useRef(false);
+  const cancel = () => {
+    onClose();
+    if (!savedAny.current) onCancelEmpty?.();
+  };
 
   const requestDraft = async () => {
     setBusy("draft");
@@ -89,6 +98,7 @@ export function WritingAiDraftPanel({
       for (const task of chosen) {
         await axiosClient.post(`/admin/skill-content/writing/${quizId}/questions`, writingDraftQuestion(task, level));
         saved += 1;
+        savedAny.current = true;
       }
       toast.success(`Đã thêm ${saved} câu vào bài.`);
       await onSaved();
@@ -118,7 +128,7 @@ export function WritingAiDraftPanel({
               Chủ đề: <span className="font-semibold text-slate-800">{topic}</span> · Trình độ {level}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Đóng" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={cancel} aria-label="Đóng" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
             <X size={18} aria-hidden="true" />
           </button>
         </div>
@@ -158,7 +168,7 @@ export function WritingAiDraftPanel({
                       type="button"
                       onClick={() => {
                         onUseDescription(draft.description);
-                        toast.success("Đã điền mô tả. Bấm Lưu nội dung để giữ lại.");
+                        toast.success("Đã điền mô tả, chưa lưu. Bấm Lưu để giữ lại.");
                       }}
                       className="mt-1 font-semibold text-blue-700 hover:underline"
                     >
@@ -219,7 +229,7 @@ export function WritingAiDraftPanel({
         </div>
 
         <div className="flex justify-end gap-2 border-t border-slate-200 p-4">
-          <button type="button" onClick={onClose} disabled={busy === "save"} className={BTN_SECONDARY}>
+          <button type="button" onClick={cancel} disabled={busy === "save"} className={BTN_SECONDARY}>
             Hủy
           </button>
           {/* No faded button before there is something to add (anti-slop rule). */}

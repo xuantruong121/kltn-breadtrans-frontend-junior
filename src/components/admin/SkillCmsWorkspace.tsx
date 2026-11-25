@@ -496,6 +496,11 @@ export default function SkillCmsWorkspace({
       questionType?: string;
     }>
   >([]);
+  // Reading candidates wait between openings of the AI dialog, for this bài only.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the previous bài's candidates
+    setReadingAiCandidates([]);
+  }, [id]);
 
   // Contextual AI state: Listening / Writing. Suggestions remain local until the existing save action.
   const [isListeningContentAiOpen, setIsListeningContentAiOpen] =
@@ -1495,6 +1500,60 @@ export default function SkillCmsWorkspace({
       setBusy(false);
     }
     await loadItem();
+  };
+
+  /**
+   * Every reviewed reading candidate goes in at once (owner 2026-11-25: one
+   * candidate went to the form and the others were lost on closing).
+   */
+  const addReadingAiCandidates = async () => {
+    if (!id) return;
+    const ready = readingAiCandidates.filter((candidate) => aiCandidateReady(candidate, false));
+    if (!ready.length) return;
+    setBusy(true);
+    let added = 0;
+    try {
+      for (const candidate of ready) {
+        await axiosClient.post(
+          `/admin/skill-content/reading/${id}/questions`,
+          questionDraftPayload({
+            ...emptyQuestion("reading"),
+            ...aiCandidateQuestionFields(candidate),
+            questionType: normalizeReadingQuestionType(candidate.questionType),
+          }),
+        );
+        added++;
+      }
+      toast.success(`Đã thêm ${added} câu vào bài.`);
+      setReadingAiCandidates([]);
+      setIsQuestionsAiOpen(false);
+    } catch (error: any) {
+      // The saved ones leave the list, so a retry adds only the rest.
+      const saved = new Set(ready.slice(0, added));
+      setReadingAiCandidates((current) => current.filter((candidate) => !saved.has(candidate)));
+      toast.error(getApiErrorMessage(error, `Đã thêm ${added} câu; câu tiếp theo chưa lưu được.`));
+    } finally {
+      setBusy(false);
+    }
+    await loadItem();
+  };
+
+  /**
+   * "Tạo bằng AI" on the Writing list makes the bài before the AI runs; when
+   * the admin cancels without adding a task, the empty bài goes. Checked on
+   * the server first: a bài with any question, or one learners did, stays.
+   */
+  const discardEmptyAiWriting = async () => {
+    if (!id || domain !== "writing") return;
+    try {
+      const fresh = unwrap<any>(await axiosClient.get(`/admin/skill-content/writing/${id}`));
+      if ((fresh?.questions?.length ?? 0) > 0 || Number(fresh?._count?.submissions) > 0) return;
+      await axiosClient.delete(`/admin/skill-content/writing/${id}`);
+      toast("Đã huỷ: bài trống vừa tạo cho AI đã được xoá.");
+      router.push("/admin/writing");
+    } catch {
+      toast.error("Bài trống vẫn còn trong danh sách: soạn tay hoặc xoá ở đó.");
+    }
   };
 
   const removeItem = async () => {
@@ -3337,7 +3396,7 @@ export default function SkillCmsWorkspace({
                 <button
                   type="button"
                   onClick={() => {
-                    setReadingAiCandidates([]);
+                    // Candidates not yet added wait here, so editing one in the form loses none.
                     setAiQuestionsShortfall(null);
                     setIsQuestionsAiOpen(true);
                   }}
@@ -3668,6 +3727,8 @@ export default function SkillCmsWorkspace({
           onUseDescription={(description) => setForm((current) => ({ ...current, description }))}
           onClose={() => setWritingAi(null)}
           onSaved={() => loadItem()}
+          // Made by "Tạo bằng AI" on the list: cancelling removes the empty bài (owner 2026-11-25).
+          onCancelEmpty={writingAi.auto ? () => void discardEmptyAiWriting() : undefined}
         />
       )}
       {fullDraft && (
@@ -4713,25 +4774,8 @@ export default function SkillCmsWorkspace({
                       className={`${inputClassName()} min-h-32`}
                     />
                   </label>
-                  <label className="text-sm font-semibold text-slate-700">
-                    Bối cảnh / người nhận
-                    <input
-                      value={
-                        writingAiSuggestion.context ||
-                        writingAiSuggestion.recipient ||
-                        writingAiSuggestion.scenario ||
-                        ""
-                      }
-                      onChange={(event) =>
-                        setWritingAiSuggestion((current) =>
-                          current
-                            ? { ...current, context: event.target.value }
-                            : current,
-                        )
-                      }
-                      className={inputClassName()}
-                    />
-                  </label>
+                  {/* "Bối cảnh / người nhận" went (owner 2026-11-25): no field
+                      of the question keeps it; the situation is in the prompt. */}
                   <div className="grid grid-cols-2 gap-3">
                     <label className="text-sm font-semibold text-slate-700">
                       Từ tối thiểu
@@ -4776,27 +4820,32 @@ export default function SkillCmsWorkspace({
                       />
                     </label>
                   </div>
+                  {/* Two boxes, as the question keeps them (owner 2026-11-25:
+                      one box mixed them and saved every line as a keyword). */}
                   <label className="text-sm font-semibold text-slate-700">
-                    Từ khoá / câu mẫu
+                    Từ khoá
                     <textarea
-                      value={[
-                        ...(writingAiSuggestion.keywords || []),
-                        ...(writingAiSuggestion.sampleSentences || []),
-                      ].join("\n")}
+                      value={(writingAiSuggestion.keywords || []).join("\n")}
                       onChange={(event) =>
                         setWritingAiSuggestion((current) =>
-                          current
-                            ? {
-                                ...current,
-                                keywords: event.target.value
-                                  .split("\n")
-                                  .filter(Boolean),
-                              }
-                            : current,
+                          current ? { ...current, keywords: event.target.value.split("\n") } : current,
+                        )
+                      }
+                      className={`${inputClassName()} min-h-16`}
+                      placeholder="Mỗi dòng một từ khoá"
+                    />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Câu mẫu
+                    <textarea
+                      value={(writingAiSuggestion.sampleSentences || []).join("\n")}
+                      onChange={(event) =>
+                        setWritingAiSuggestion((current) =>
+                          current ? { ...current, sampleSentences: event.target.value.split("\n") } : current,
                         )
                       }
                       className={`${inputClassName()} min-h-24`}
-                      placeholder="Mỗi dòng một từ khoá hoặc câu mẫu"
+                      placeholder="Mỗi dòng một câu mẫu"
                     />
                   </label>
                 </>
@@ -4830,9 +4879,10 @@ export default function SkillCmsWorkspace({
                         ? String(suggestion.wordRange[1])
                         : current.wordMax,
                       keywords:
-                        suggestion.keywords?.join("\n") || current.keywords,
+                        (suggestion.keywords ?? []).map((line) => line.trim()).filter(Boolean).join("\n") ||
+                        current.keywords,
                       sampleSentences:
-                        suggestion.sampleSentences?.join("\n") ||
+                        (suggestion.sampleSentences ?? []).map((line) => line.trim()).filter(Boolean).join("\n") ||
                         current.sampleSentences,
                     }));
                     setIsWritingAiOpen(false);
@@ -5175,14 +5225,16 @@ export default function SkillCmsWorkspace({
                             questionType: normalizeReadingQuestionType(candidate.questionType),
                           });
                           setIsAddingQuestion(true);
+                          // The others stay for "Thêm câu hỏi bằng AI" (owner 2026-11-25).
+                          setReadingAiCandidates((prev) => prev.filter((_, i) => i !== idx));
                           setIsQuestionsAiOpen(false);
                           toast.success(
                             "Đã điền câu hỏi vào biểu mẫu. Kiểm tra rồi bấm Thêm câu hỏi.",
                           );
                         }}
-                        className="rounded bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                        className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
                       >
-                        Áp dụng vào biểu mẫu
+                        Sửa trong biểu mẫu
                       </button>
                     </div>
                   </div>
@@ -5190,7 +5242,7 @@ export default function SkillCmsWorkspace({
               )}
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsQuestionsAiOpen(false)}
@@ -5198,6 +5250,21 @@ export default function SkillCmsWorkspace({
               >
                 Đóng
               </button>
+              {/* Shown only when there is something complete to add, as in Listening. */}
+              {(() => {
+                const ready = readingAiCandidates.filter((candidate) => aiCandidateReady(candidate, false)).length;
+                return ready > 0 && id ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void addReadingAiCandidates()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-wait"
+                  >
+                    {busy && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
+                    {busy ? "Đang thêm…" : `Thêm ${ready} câu vào bài`}
+                  </button>
+                ) : null;
+              })()}
             </div>
           </div>
         </div>

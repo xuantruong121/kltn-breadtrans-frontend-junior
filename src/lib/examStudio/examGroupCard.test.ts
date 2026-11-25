@@ -81,3 +81,13 @@ test("the edit action names what it opens", () => {
   assert.equal(editContentLabel(3), "Sửa audio và lời thoại");
   assert.equal(editContentLabel(7), "Sửa đoạn văn");
 });
+
+test("part5CandidateReady: a sentence, four filled options and a key", async () => {
+  const { part5CandidateReady } = await import("./examGroupCard.ts");
+  const good = { prompt: "The report ____ by Friday.", options: ["is due", "due", "dues", "dueing"], correctIndex: 0 };
+  assert.equal(part5CandidateReady(good), true);
+  assert.equal(part5CandidateReady({ ...good, prompt: "  " }), false);
+  assert.equal(part5CandidateReady({ ...good, options: ["a", "b", "c"] }), false);
+  assert.equal(part5CandidateReady({ ...good, options: ["a", "", "c", "d"] }), false);
+  assert.equal(part5CandidateReady({ ...good, correctIndex: 4 }), false);
+});

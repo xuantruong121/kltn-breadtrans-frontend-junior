@@ -128,9 +128,17 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [editingCandidate, setEditingCandidate] = useState<number | null>(null);
   const [pendingQuestions, setPendingQuestions] = useState<GrammarDraft[]>([]);
-  /** The AI wrote the theory into the form; cleared once saved. */
-  const [aiFilled, setAiFilled] = useState(false);
+  /**
+   * The theory and formula the AI last wrote into the form; cleared once
+   * saved. "Gợi ý lại" may replace them while the admin has not edited them.
+   */
+  const [aiTheory, setAiTheory] = useState<{ description: string; keyFormula: string } | null>(null);
+  const aiFilled = aiTheory !== null;
+  /** The shown candidates came with a whole-topic draft. */
+  const [candidatesFromDraft, setCandidatesFromDraft] = useState(false);
   const [busy, setBusy] = useState(false);
+  // An AI request: its own spinner, so Lưu does not look busy (owner 2026-11-25).
+  const [aiBusy, setAiBusy] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [previewPick, setPreviewPick] = useState<number | null>(null);
   const [previewTab, setPreviewTab] = useState<"theory" | "questions">("theory");
@@ -139,7 +147,10 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const [confirmLifecycle, setConfirmLifecycle] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<Question | null>(null);
   const published = topic?.publicationStatus === "PUBLISHED";
-  const aiDraftsWholeTopic = !questions.length && !form.description.trim();
+  // "Gợi ý lại" on a whole-topic draft drafts the topic again, never 5
+  // extra questions in place of the draft's (owner 2026-11-25).
+  const aiDraftsWholeTopic =
+    !questions.length && (!form.description.trim() || (candidatesFromDraft && candidates.length > 0));
   const aiMax = aiDraftsWholeTopic ? AI_MAX.draft : AI_MAX.suggest;
   const checklist = grammarChecklist({
     title: form.title,
@@ -242,7 +253,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         if (pendingQuestions.length) await addBatch(topic.id, pendingQuestions);
         setSavedForm(form);
         setPendingQuestions([]);
-        setAiFilled(false);
+        setAiTheory(null);
         toast.success("Đã lưu chủ đề.");
         refresh();
       } else {
@@ -275,26 +286,41 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       toast.error("Cần tên chủ đề để AI biết viết về gì.");
       return false;
     }
-    setBusy(true);
+    setAiBusy(true);
     const count = Math.min(requested, aiMax);
     try {
       if (aiDraftsWholeTopic) {
+        // A key formula the admin typed is what the theory follows (owner
+        // 2026-11-25); one the AI wrote last time is not the admin's.
+        const typedFormula =
+          form.keyFormula.trim() && form.keyFormula !== aiTheory?.keyFormula ? form.keyFormula.trim() : undefined;
         const data = unwrap<any>(
           await axiosClient.post("/admin/grammar/ai/full-draft", {
             topicTitle: form.title.trim(),
             level: form.level,
-            // A key formula the admin typed is what the theory follows (owner 2026-11-25).
-            objective: form.keyFormula.trim() || undefined,
+            objective: typedFormula,
             count,
           }),
         );
+        const drafted = {
+          description: String(data?.description ?? ""),
+          keyFormula: String(data?.keyFormula ?? ""),
+        };
+        // What the admin typed stays; the AI's last text is replaced.
         setForm((current) => ({
           ...current,
-          description: current.description || String(data?.description ?? ""),
-          keyFormula: current.keyFormula || String(data?.keyFormula ?? ""),
+          description:
+            !current.description.trim() || current.description === aiTheory?.description
+              ? drafted.description
+              : current.description,
+          keyFormula:
+            !current.keyFormula.trim() || current.keyFormula === aiTheory?.keyFormula
+              ? drafted.keyFormula
+              : current.keyFormula,
         }));
+        setAiTheory(drafted);
+        setCandidatesFromDraft(true);
         setCandidates((data?.questions ?? []).map((q: GrammarDraft) => ({ ...q, chosen: true })));
-        setAiFilled(true);
         toast.success(
           `AI đã viết lý thuyết và gợi ý câu hỏi, chưa lưu. Xem lại rồi bấm ${topic ? "Lưu" : "Tạo chủ đề"}.`,
         );
@@ -308,6 +334,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             count,
           }),
         );
+        setCandidatesFromDraft(false);
         setCandidates((data?.candidates ?? []).map((q: GrammarDraft) => ({ ...q, chosen: true })));
       }
       setEditingCandidate(null);
@@ -316,7 +343,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
       toast.error(getApiErrorMessage(err, "Không thể lấy gợi ý AI lúc này."));
       return false;
     } finally {
-      setBusy(false);
+      setAiBusy(false);
     }
   };
 
@@ -401,7 +428,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             <button
               type="button"
               onClick={() => void saveTopic()}
-              disabled={busy}
+              disabled={busy || aiBusy}
               // Unsaved theory or held questions: Lưu is the next step (owner 2026-11-25).
               className={unsaved ? BTN_PRIMARY : BTN_SECONDARY}
             >
@@ -436,7 +463,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
             <span className="font-semibold">{grammarUnsavedNotice(dirty, pendingQuestions.length)}</span>{" "}
             Bấm {topic ? "Lưu" : "Tạo chủ đề"} để lưu.
           </p>
-          <button type="button" onClick={() => void saveTopic()} disabled={busy} className={BTN_PRIMARY}>
+          <button type="button" onClick={() => void saveTopic()} disabled={busy || aiBusy} className={BTN_PRIMARY}>
             <Save size={16} /> Lưu ngay
           </button>
         </div>
@@ -853,14 +880,19 @@ function TopicBody({ topic }: { topic: Topic | null }) {
                       className="min-h-10 w-16 rounded-lg border border-slate-300 px-2 text-center text-sm"
                     />
                   </label>
-                  <button type="button" disabled={busy} onClick={() => void askAi()} className={BTN_AI}>
-                    {busy && <Loader2 size={14} className="animate-spin" />}
+                  <button type="button" disabled={busy || aiBusy} onClick={() => void askAi()} className={BTN_AI}>
+                    {aiBusy && <Loader2 size={14} className="animate-spin" />}
                     {candidates.length ? "Gợi ý lại" : "Gợi ý"}
                   </button>
                   <button type="button" onClick={() => setPanel(null)} className={BTN_SECONDARY}>
                     Đóng
                   </button>
                 </div>
+                {aiBusy && (
+                  <p role="status" className="mt-2 text-sm text-amber-800">
+                    AI đang soạn, thường mất 10–30 giây. Gợi ý sẽ hiện ra để xem lại.
+                  </p>
+                )}
                 {candidates.length > 0 && (
                   <>
                     <p className="mt-3 text-sm text-slate-700">

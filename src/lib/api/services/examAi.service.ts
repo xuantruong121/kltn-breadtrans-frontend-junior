@@ -65,6 +65,8 @@ export type ExamAiCandidate = {
   failedUnits: ExamAiFailedUnit[];
   flaggedCount: number;
   appliedCandidateKeys: string[];
+  /** Questions each planned L&R Part needs and has. */
+  partCoverage?: Array<{ part: number; expected: number; drafted: number }>;
 };
 
 export type ExamAiJobStatus = {

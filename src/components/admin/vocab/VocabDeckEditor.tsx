@@ -328,8 +328,11 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       }
       toast.success(`Đã thêm ${added} từ.`);
     } catch (err: any) {
+      // The server's reason, then where the run stopped (owner 2026-11-25:
+      // the reason replaced the "dừng ở từ thứ N" part).
       toast.error(
-        getApiErrorMessage(err, `Dừng ở từ thứ ${added + 1}; ${added} từ đã thêm.`),
+        `${getApiErrorMessage(err, "Không thể thêm từ.")} Dừng ở từ thứ ${added + 1} ("${rows[added]?.word ?? ""}"); ${added} từ đã thêm.`,
+        { duration: 8000 },
       );
     } finally {
       setProgress(null);
