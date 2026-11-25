@@ -2861,20 +2861,20 @@ export default function SkillCmsWorkspace({
               Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
             </p>
           )}
-          {isListening && pendingDraft && !draftLocked && (
+          {pendingDraft && !draftLocked && (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               {/* A dialogue's turns are in the conversation, not a question of their own. */}
-              Đã áp dụng {pendingFullDraftQuestions.length}{" "}
-              câu từ bản nháp AI, dạng{" "}
-              {LISTENING_MODE_LABEL[selectedListeningMode]}. Bấm Lưu để lưu bài, hoặc{" "}
+              Đã áp dụng {pendingFullDraftQuestions.length} câu từ bản nháp AI
+              {isListening ? `, dạng ${LISTENING_MODE_LABEL[selectedListeningMode]}` : ""}. Bấm Lưu để
+              lưu bài, hoặc{" "}
               <button
                 type="button"
                 onClick={() => setPendingFullDraftQuestions([])}
                 className="cursor-pointer rounded-md font-semibold text-slate-900 underline underline-offset-4 hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
               >
                 bỏ bản nháp
-              </button>{" "}
-              để đổi dạng bài.
+              </button>
+              {isListening ? " để đổi dạng bài." : "."}
             </p>
           )}
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -3372,12 +3372,18 @@ export default function SkillCmsWorkspace({
           </div>
 
           <div className="mt-4 space-y-3">
-            {answered.length === 0 && (
-              <p className="text-sm text-slate-600">
-                Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
-                tiên cho bài {isListening ? "nghe" : isWriting ? "viết" : "đọc"}.
-              </p>
-            )}
+            {answered.length === 0 &&
+              (pendingDraft ? (
+                // The applied draft's questions are not saved yet (owner 2026-11-25).
+                <p className="text-sm text-amber-900">
+                  {pendingFullDraftQuestions.length} câu từ bản nháp AI sẽ được thêm khi bấm Lưu.
+                </p>
+              ) : (
+                <p className="text-sm text-slate-600">
+                  Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
+                  tiên cho bài {isListening ? "nghe" : isWriting ? "viết" : "đọc"}.
+                </p>
+              ))}
             {/* A legacy turns question's turns are in the conversation above. */}
             {(isListening && selectedListeningMode === "DIALOGUE" ? answered : questions).map((current: any, index: number) => (
               <div
@@ -3654,6 +3660,7 @@ export default function SkillCmsWorkspace({
           quizId={Number(id)}
           // The title without its level head ("Writing B1 — "): the AI's topic.
           topic={form.title.trim()}
+          brief={form.description}
           level={form.level}
           kind={writingDraftKind(form.type) as "EMAIL" | "TRANSLATION"}
           initialCount={writingAi.count}

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
+import { vocabService } from "@/lib/api/services/vocab.service";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pagination } from "@/components/ui";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -40,9 +41,11 @@ import {
   VOCAB_LEVELS,
   cefrToScaleLevel,
   parseVocabPaste,
+  phoneticsFromLookup,
   vocabDeckChecklist,
   vocabPublishBlocker,
   vocabPublishConfirm,
+  wordsWithoutIpa,
   type DeckStats,
 } from "./vocabCms";
 
@@ -174,6 +177,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   const [aiWords, setAiWords] = useState<DraftWord[]>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  /** "Lấy phiên âm cho N từ còn thiếu" running: "3/12". */
+  const [ipaProgress, setIpaProgress] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AdminVocabWord | null>(
     null,
   );
@@ -372,6 +377,85 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       return false;
     } finally {
       setBusy(false);
+    }
+  };
+
+  /** The learner dictionary first (as "Lấy phiên âm" in the word form), then the AI word helper. */
+  const findPhonetics = async (word: string) => {
+    try {
+      const found = phoneticsFromLookup(await vocabService.lookupWord(word));
+      if (found.ipaUs) return found;
+    } catch {
+      // The dictionary did not answer: the AI may still know the word.
+    }
+    const data = unwrap<any>(
+      await axiosClient.post("/admin/vocab/ai/suggest-word", {
+        word,
+        level: cefrToScaleLevel(form.level),
+      }),
+    );
+    return {
+      ipaUs: String(data?.ipaUs ?? "").trim(),
+      ipaUk: String(data?.ipaUk ?? "").trim(),
+    };
+  };
+
+  /**
+   * Fills the US phonetics of every word that has none (owner 2026-11-25: a
+   * deck is published only when every word has them, and the admin had to
+   * look each word up by hand). Words found are saved one by one; words
+   * neither source knows are named for the admin to fill in.
+   */
+  const fillMissingPhonetics = async () => {
+    if (!deck) return;
+    setBusy(true);
+    setIpaProgress("…");
+    let filled = 0;
+    const notFound: string[] = [];
+    try {
+      const all: AdminVocabWord[] = [];
+      for (let p = 1; ; p++) {
+        const result = unwrap<WordPage>(
+          await axiosClient.get(`/admin/vocab/topics/${deck.id}/words`, {
+            params: { page: p, pageSize: 100 },
+          }),
+        );
+        all.push(...result.items);
+        if (p * 100 >= result.total) break;
+      }
+      const missing = wordsWithoutIpa(all);
+      for (const [index, word] of missing.entries()) {
+        setIpaProgress(`${index + 1}/${missing.length}`);
+        let found = { ipaUs: "", ipaUk: "" };
+        try {
+          found = await findPhonetics(word.word);
+        } catch {
+          // Counted below as not found.
+        }
+        if (!found.ipaUs) {
+          notFound.push(word.word);
+          continue;
+        }
+        await axiosClient.patch(`/admin/vocab/topics/${deck.id}/words/${word.id}`, {
+          ipaUs: found.ipaUs,
+          ...(found.ipaUk && !word.ipaUk?.trim() ? { ipaUk: found.ipaUk } : {}),
+        });
+        filled++;
+      }
+      if (filled) toast.success(`Đã điền phiên âm cho ${filled} từ. Kiểm tra lại trong danh sách.`);
+      if (notFound.length)
+        toast.error(
+          `Chưa tìm được phiên âm cho ${notFound.length} từ: ${notFound.slice(0, 5).join(", ")}${notFound.length > 5 ? "…" : ""}. Bấm Sửa ở từng từ để điền tay.`,
+          { duration: 8000 },
+        );
+    } catch (err: any) {
+      toast.error(
+        getApiErrorMessage(err, `Dừng lại sau ${filled} từ đã điền phiên âm.`),
+      );
+    } finally {
+      setIpaProgress(null);
+      setBusy(false);
+      refresh();
     }
   };
 
@@ -606,6 +690,25 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 </li>
               ))}
             </ul>
+            {deck && stats.withIpa < stats.total && (
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => void fillMissingPhonetics()}
+                  disabled={busy}
+                  title="Tra từ điển của học viên trước, rồi nhờ AI với từ từ điển chưa có."
+                  className={BTN_SECONDARY}
+                >
+                  {ipaProgress && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
+                  {ipaProgress
+                    ? `Đang lấy phiên âm ${ipaProgress}`
+                    : `Lấy phiên âm cho ${stats.total - stats.withIpa} từ còn thiếu`}
+                </button>
+                <p className="mt-1.5 text-sm text-slate-600">
+                  Từ nào không tra được thì sửa tay ở danh sách bên dưới.
+                </p>
+              </div>
+            )}
           </section>
 
           )}

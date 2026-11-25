@@ -36,6 +36,7 @@ import {
   OPTION_LETTERS,
   grammarChecklist,
   grammarLevelLabel,
+  grammarUnsavedNotice,
   publishBlocker,
   rationaleCount,
   youtubeIdFrom,
@@ -127,6 +128,8 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [editingCandidate, setEditingCandidate] = useState<number | null>(null);
   const [pendingQuestions, setPendingQuestions] = useState<GrammarDraft[]>([]);
+  /** The AI wrote the theory into the form; cleared once saved. */
+  const [aiFilled, setAiFilled] = useState(false);
   const [busy, setBusy] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [previewPick, setPreviewPick] = useState<number | null>(null);
@@ -144,9 +147,10 @@ function TopicBody({ topic }: { topic: Topic | null }) {
     questions,
   });
   const doneCount = checklist.filter((item) => item.done).length;
-  const blocker = published
-    ? null
-    : publishBlocker(checklist, dirty || pendingQuestions.length > 0);
+  // Theory the AI wrote, or questions held for a new topic, wait for Lưu.
+  const unsaved = dirty || pendingQuestions.length > 0;
+  const showUnsavedNotice = (aiFilled && dirty) || pendingQuestions.length > 0;
+  const blocker = published ? null : publishBlocker(checklist, unsaved);
   const previewQuestion = questions[Math.min(previewIndex, questions.length - 1)];
   const videoId = youtubeIdFrom(form.video);
   const videoInvalid = Boolean(form.video.trim()) && !videoId;
@@ -238,6 +242,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         if (pendingQuestions.length) await addBatch(topic.id, pendingQuestions);
         setSavedForm(form);
         setPendingQuestions([]);
+        setAiFilled(false);
         toast.success("Đã lưu chủ đề.");
         refresh();
       } else {
@@ -278,6 +283,8 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           await axiosClient.post("/admin/grammar/ai/full-draft", {
             topicTitle: form.title.trim(),
             level: form.level,
+            // A key formula the admin typed is what the theory follows (owner 2026-11-25).
+            objective: form.keyFormula.trim() || undefined,
             count,
           }),
         );
@@ -287,7 +294,10 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           keyFormula: current.keyFormula || String(data?.keyFormula ?? ""),
         }));
         setCandidates((data?.questions ?? []).map((q: GrammarDraft) => ({ ...q, chosen: true })));
-        toast.success("AI đã viết lý thuyết và gợi ý câu hỏi. Hãy xem lại.");
+        setAiFilled(true);
+        toast.success(
+          `AI đã viết lý thuyết và gợi ý câu hỏi, chưa lưu. Xem lại rồi bấm ${topic ? "Lưu" : "Tạo chủ đề"}.`,
+        );
       } else {
         const data = unwrap<any>(
           await axiosClient.post("/admin/grammar/ai/suggest-questions", {
@@ -388,7 +398,13 @@ function TopicBody({ topic }: { topic: Topic | null }) {
         </div>
         <div className="flex flex-col items-end gap-1.5">
           <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => void saveTopic()} disabled={busy} className={BTN_SECONDARY}>
+            <button
+              type="button"
+              onClick={() => void saveTopic()}
+              disabled={busy}
+              // Unsaved theory or held questions: Lưu is the next step (owner 2026-11-25).
+              className={unsaved ? BTN_PRIMARY : BTN_SECONDARY}
+            >
               {busy ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}{" "}
               {topic ? "Lưu" : "Tạo chủ đề"}
             </button>
@@ -410,6 +426,21 @@ function TopicBody({ topic }: { topic: Topic | null }) {
           )}
         </div>
       </header>
+
+      {showUnsavedNotice && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
+        >
+          <p className="text-sm text-amber-900">
+            <span className="font-semibold">{grammarUnsavedNotice(dirty, pendingQuestions.length)}</span>{" "}
+            Bấm {topic ? "Lưu" : "Tạo chủ đề"} để lưu.
+          </p>
+          <button type="button" onClick={() => void saveTopic()} disabled={busy} className={BTN_PRIMARY}>
+            <Save size={16} /> Lưu ngay
+          </button>
+        </div>
+      )}
 
       {locked && (
         <p className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

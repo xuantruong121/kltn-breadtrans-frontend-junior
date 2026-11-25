@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { AdminImageThumb } from "@/components/admin/AdminImageThumb";
 import { speakingSetDisplayTitle } from "@/lib/catalog/displayTitles";
@@ -28,6 +28,7 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import {
   BTN_AI,
   BTN_DANGER,
+  BTN_PRIMARY,
   BTN_SECONDARY,
   BTN_SUCCESS,
 } from "../cmsButtons";
@@ -60,6 +61,7 @@ import {
   addDraftExercises,
   draftExerciseProblem,
   draftFailureToast,
+  formAfterDraft,
   type DraftFailure,
 } from "./speakingDraftLogic";
 
@@ -199,6 +201,16 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
     id: number;
     title: string;
   } | null>(null);
+  /**
+   * After a save that added drafted exercises: how many exercises the set
+   * has once reloaded, then their reference audio is made. A new set arrives
+   * with ?audio=1 (owner 2026-11-25).
+   */
+  const [autoAudioAt, setAutoAudioAt] = useState<number | null>(
+    set && searchParams.get("audio") === "1" ? 0 : null,
+  );
+  // Strict mode runs an effect twice: the audio is made once.
+  const autoAudioStarted = useRef(false);
 
   // Leaving with unsaved set details asks first.
   useEffect(() => {
@@ -262,10 +274,14 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         (body) => axiosClient.post(`/admin/skill-content/speaking/${setId}/exercises`, body),
         (error) => getApiErrorMessage(error, "Không thể thêm câu luyện này."),
       );
-      return { setId, dto, tagError, failures };
+      const added = pendingExercises.length - failures.length;
+      return { setId, dto, tagError, failures, added };
     },
-    onSuccess: ({ setId, dto, tagError, failures }) => {
+    onSuccess: ({ setId, dto, tagError, failures, added }) => {
       toast.success(set ? "Đã lưu bộ luyện." : "Đã tạo bộ luyện.");
+      // Drafted exercises go on to get their reference audio (owner
+      // 2026-11-25), as a saved Listening lesson makes its audio.
+      if (set && added > 0) setAutoAudioAt(exercises.length + added);
       if (tagError) toast.error(getApiErrorMessage(tagError, TRACK_FIELD_COPY.saveError));
       const failureToast = draftFailureToast(failures);
       if (failureToast) toast.error(failureToast, { duration: 8000 });
@@ -277,7 +293,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
       refresh();
       // The Lĩnh vực page counts the sets tagged with each track.
       if (!set && draftTrack) queryClient.invalidateQueries({ queryKey: ADMIN_LEARNING_TRACKS_KEY });
-      if (!set) router.replace(`/admin/speaking/${setId}`);
+      if (!set) router.replace(`/admin/speaking/${setId}${added > 0 ? "?audio=1" : ""}`);
     },
     onError: (err: any) => {
       toast.error(getApiErrorMessage(err, "Không thể lưu bộ luyện nói."));
@@ -446,6 +462,29 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const audioWarning = set ? referenceAudioWarning(exercises) : null;
   const busy = saveMutation.isPending || publishMutation.isPending;
 
+  // The saved set has its drafted exercises: make their reference audio.
+  useEffect(() => {
+    if (autoAudioAt === null || autoAudioStarted.current || !set || audioBatch) return;
+    if (exercises.length < autoAudioAt) return;
+    autoAudioStarted.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- runs once per save, then clears
+    setAutoAudioAt(null);
+    if (searchParams.get("audio") === "1")
+      router.replace(`/admin/speaking/${set.id}`, { scroll: false });
+    void (missingAudio.length ? makeMissingReferences(missingAudio) : Promise.resolve()).finally(() => {
+      autoAudioStarted.current = false;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the helpers are rebuilt each render; run when the saved set is ready
+  }, [autoAudioAt, set, exercises.length, audioBatch]);
+
+  const save = () => {
+    if (!form.title.trim()) {
+      toast.error("Cần nhập tên bộ luyện.");
+      return;
+    }
+    saveMutation.mutate();
+  };
+
   return (
     <div className="space-y-6 p-6">
       <Link
@@ -472,15 +511,10 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => {
-              if (!form.title.trim()) {
-                toast.error("Cần nhập tên bộ luyện.");
-                return;
-              }
-              saveMutation.mutate();
-            }}
+            onClick={save}
             disabled={busy}
-            className={`${BTN_SECONDARY} ${published ? "invisible" : ""}`}
+            // An applied AI draft waits for Lưu: it is the next step (owner 2026-11-25).
+            className={`${pendingExercises.length ? BTN_PRIMARY : BTN_SECONDARY} ${published ? "invisible" : ""}`}
           >
             {saveMutation.isPending ? (
               <Loader2 size={16} className="animate-spin" />
@@ -507,6 +541,22 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Bộ đang hiển thị cho học viên. Chuyển về bản nháp để sửa nội dung.
         </p>
+      )}
+
+      {pendingExercises.length > 0 && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3"
+        >
+          <p className="text-sm text-amber-900">
+            <span className="font-semibold">Bản nháp AI đã vào biểu mẫu nhưng chưa được lưu.</span>{" "}
+            Bấm {set ? "Lưu" : "Tạo bộ luyện"} để lưu bộ cùng {pendingExercises.length} câu luyện. Audio
+            mẫu sẽ tự tạo sau khi lưu.
+          </p>
+          <button type="button" onClick={save} disabled={busy} className={BTN_PRIMARY}>
+            <Save size={16} /> Lưu ngay
+          </button>
+        </div>
       )}
 
       {/* Two columns from 1280px: the set and its exercises on the left; a
@@ -765,10 +815,14 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
                       toast.error("Chọn ít nhất một câu lưu được.");
                       return;
                     }
-                    setForm(setFormOf(fullDraft.practiceSet));
+                    // The name and description the admin typed stay (owner 2026-11-25).
+                    setForm((current) => formAfterDraft(current, fullDraft.practiceSet));
                     setDraftTrack(fullDraft.practiceSet.track ?? null);
                     setPendingExercises(chosen);
                     setFullDraft(null);
+                    toast.success(
+                      `Đã đưa bản nháp vào biểu mẫu, chưa lưu. Bấm ${set ? "Lưu" : "Tạo bộ luyện"} để lưu bộ.`,
+                    );
                   }}
                   className={BTN_SECONDARY}
                 >

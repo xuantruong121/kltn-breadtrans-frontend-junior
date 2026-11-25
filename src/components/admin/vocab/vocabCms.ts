@@ -139,6 +139,27 @@ export type DeckStats = {
   distinctMeanings: number;
 };
 
+/** Words still without US phonetics: each one blocks publishing the deck. */
+export const wordsWithoutIpa = <T extends { ipaUs?: string | null }>(words: T[]) =>
+  words.filter((word) => !filled(word.ipaUs));
+
+type LookupPhonetics = { ipaUs?: string | null; ipaUk?: string | null };
+
+/**
+ * The phonetics a learner-dictionary lookup found: the dictionary entry
+ * first, then the word store. Empty strings when it found none.
+ */
+export function phoneticsFromLookup(
+  result: { entries?: LookupPhonetics[] | null; matches?: LookupPhonetics[] | null } | null | undefined,
+): { ipaUs: string; ipaUk: string } {
+  const entry = result?.entries?.[0];
+  const local = result?.matches?.[0];
+  return {
+    ipaUs: String(entry?.ipaUs || local?.ipaUs || "").trim(),
+    ipaUk: String(entry?.ipaUk || local?.ipaUk || "").trim(),
+  };
+}
+
 /** From the server's deck summary, so a large deck needs no full load. */
 export function vocabDeckChecklist(deck: {
   title: string;

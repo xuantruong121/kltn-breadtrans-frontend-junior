@@ -121,6 +121,19 @@ export function publishBlocker(
 }
 
 /**
+ * The notice above the editor while something waits for Lưu (owner
+ * 2026-11-25: after "Soạn bằng AI" the questions were saved at once but the
+ * theory was not, and only a grey "có thay đổi chưa lưu" said so).
+ */
+export function grammarUnsavedNotice(dirty: boolean, pendingQuestions: number): string {
+  const parts: string[] = [];
+  if (dirty) parts.push("Tên, công thức hoặc lý thuyết có thay đổi chưa được lưu.");
+  if (pendingQuestions > 0)
+    parts.push(`${pendingQuestions} câu hỏi đang chờ, sẽ được thêm khi lưu.`);
+  return parts.join(" ");
+}
+
+/**
  * A topic card's publish blocker on the list. The server sends what blocks
  * each draft (grammarPublishProblems, the rule its publish runs); without it
  * the card checks what it has, which matches the checklist's topic items.

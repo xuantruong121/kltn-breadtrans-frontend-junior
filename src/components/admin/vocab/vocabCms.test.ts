@@ -3,13 +3,43 @@ import assert from "node:assert/strict";
 import {
   entryToWord,
   parseVocabPaste,
+  phoneticsFromLookup,
   sharedEntryNote,
   vocabDeckChecklist,
   vocabListBlocker,
   vocabPublishBlocker,
   vocabPublishConfirm,
   wordStageReadiness,
+  wordsWithoutIpa,
 } from "./vocabCms.ts";
+
+test("wordsWithoutIpa lists the words whose missing US phonetics block publishing", () => {
+  const words = [
+    { id: 1, ipaUs: "/əˈdʒendə/" },
+    { id: 2, ipaUs: "  " },
+    { id: 3, ipaUs: null },
+    { id: 4 },
+  ];
+  assert.deepEqual(
+    wordsWithoutIpa(words).map((word) => word.id),
+    [2, 3, 4],
+  );
+});
+
+test("phoneticsFromLookup prefers the dictionary entry, then the word store, else empty", () => {
+  assert.deepEqual(
+    phoneticsFromLookup({
+      entries: [{ ipaUs: "/ˈmiːtɪŋ/", ipaUk: null }],
+      matches: [{ ipaUs: "/x/", ipaUk: "/ˈmiːtɪŋ/" }],
+    }),
+    { ipaUs: "/ˈmiːtɪŋ/", ipaUk: "/ˈmiːtɪŋ/" },
+  );
+  assert.deepEqual(phoneticsFromLookup({ entries: [], matches: [{ ipaUs: " /x/ " }] }), {
+    ipaUs: "/x/",
+    ipaUk: "",
+  });
+  assert.deepEqual(phoneticsFromLookup(null), { ipaUs: "", ipaUk: "" });
+});
 
 test("parseVocabPaste reads spreadsheet rows, pipes, dashes and commas", () => {
   const rows = parseVocabPaste(

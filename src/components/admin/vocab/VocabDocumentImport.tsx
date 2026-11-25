@@ -69,6 +69,7 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
             word: word.word,
             meaning: word.meaning,
             pos: word.pos || "noun",
+            ipaUs: word.ipaUs?.trim() || undefined,
             exampleEn: word.exampleEn || undefined,
             exampleVi: word.exampleVi || undefined,
           });

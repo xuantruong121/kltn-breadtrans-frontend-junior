@@ -21,6 +21,7 @@ const KIND_LABEL = { EMAIL: "Viết email", TRANSLATION: "Dịch câu" } as cons
 export function WritingAiDraftPanel({
   quizId,
   topic,
+  brief,
   level,
   kind,
   initialCount,
@@ -31,6 +32,8 @@ export function WritingAiDraftPanel({
 }: {
   quizId: number;
   topic: string;
+  /** The admin's own description: the situation the tasks play out (owner 2026-11-25). */
+  brief?: string;
   level: string;
   kind: "EMAIL" | "TRANSLATION";
   initialCount: number;
@@ -52,6 +55,7 @@ export function WritingAiDraftPanel({
     try {
       const data = (await axiosClient.post("/admin/writing/ai/full-draft", {
         topic,
+        brief: brief?.trim() || undefined,
         level,
         kind,
         count,

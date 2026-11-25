@@ -3,6 +3,8 @@ export type ReviewWord = {
   word: string;
   pos: string;
   meaning: string;
+  /** From the AI; a deck is published only when every word has it. */
+  ipaUs?: string;
   exampleEn: string;
   exampleVi: string;
   known: boolean;
