@@ -470,8 +470,6 @@ export default function DashboardPage() {
     return `${stats?.masteredVocabCount ?? 0} từ`;
   }, [filterPeriod, quests, stats?.masteredVocabCount, customDays]);
 
-  // The backend keeps no longest streak, so only the current one is shown.
-  const streakDays = stats?.streakCount ?? 0;
   const shieldCount = stats?.streakFreezes ?? 0;
 
   // XP Earned Metric
@@ -1008,8 +1006,8 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* Row 1: 5 Summary Metric Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {/* Row 1: 4 Summary Metric Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {/* 1. Study Time */}
             <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
@@ -1055,23 +1053,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* 4. Streak */}
+            {/* The streak tile went (owner 2026-11-25); the streak stays in its own places. */}
+            {/* 4. XP Earned */}
             <div className="flex flex-col items-start gap-2 min-[360px]:flex-row min-[360px]:items-center min-[360px]:gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400">
-                <Flame size={20} className="fill-amber-500 text-amber-500" aria-hidden="true" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-base sm:text-lg lg:text-xl font-black text-slate-900 dark:text-slate-100">
-                  {streakDays} ngày
-                </div>
-                <div className="text-sm font-semibold leading-snug text-slate-600 dark:text-slate-400">
-                  Chuỗi hiện tại
-                </div>
-              </div>
-            </div>
-
-            {/* 5. XP Earned */}
-            <div className="col-span-2 sm:col-span-1 flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 p-3 sm:p-3.5 shadow-2xs">
               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
                 <Target size={20} aria-hidden="true" />
               </div>
