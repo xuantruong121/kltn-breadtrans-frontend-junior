@@ -102,8 +102,8 @@ export const isTranscriptHolder = (question: { type?: string }) => question.type
 export const answeredQuestions = <T extends { type?: string }>(domain: string, questions: T[]) =>
   domain === "listening" ? questions.filter((question) => !isTranscriptHolder(question)) : questions;
 
-/** "Nghe chép" needs this many sentences to publish, as the server checks. */
-export const DICTATION_MIN_SENTENCES = 20;
+/** "Nghe chép" needs this many sentences to publish, as the server checks (owner 2026-11-25: 10, was 20). */
+export const DICTATION_MIN_SENTENCES = 10;
 export const DICTATION_MAX_SENTENCES = 30;
 
 const PICTURE_TASKS = ["PICTURE", "PICTURE_SENTENCE", "DESCRIBE_PICTURE"];
@@ -314,7 +314,7 @@ export const aiShortfallNotice = (received: number, requested: number) =>
 
 /**
  * The count beside "Soạn cả bài bằng AI": questions for a dialogue, a
- * comprehension or a reading draft; sentences for "Nghe chép", 20 to 30.
+ * comprehension or a reading draft; sentences for "Nghe chép", 10 to 30.
  */
 export function fullDraftCountRange(listeningMode?: string) {
   return listeningMode === "DICTATION"

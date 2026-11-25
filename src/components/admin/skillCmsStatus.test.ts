@@ -245,7 +245,7 @@ test("publishChecklist: writing has no choice item and checks its own tasks", ()
   assert.equal(translation.some((item) => item.label === "Câu trắc nghiệm đủ đáp án"), false);
 });
 
-test("publishChecklist: dictation needs 20 sentences, as the server", () => {
+test("publishChecklist: dictation needs 10 sentences, as the server", () => {
   const sentence = { type: "DICTATION", content: { correctAnswer: "The bus is late." }, audioAssets: [{ isActive: true }] };
   const few = publishChecklist({
     domain: "listening",
@@ -260,7 +260,7 @@ test("publishChecklist: dictation needs 20 sentences, as the server", () => {
       ["Có tiêu đề", true],
       ["Có trình độ", true],
       ["Có ít nhất 1 câu hỏi", true],
-      ["Nghe chép cần ít nhất 20 câu (3/20)", false],
+      ["Nghe chép cần ít nhất 10 câu (3/10)", false],
       ["Mỗi câu nghe chép có câu cần chép", true],
       ["Audio từng câu 3/3", true],
     ],
@@ -270,7 +270,8 @@ test("publishChecklist: dictation needs 20 sentences, as the server", () => {
     listeningMode: "DICTATION",
     title: "Nghe chép",
     levelTagged: true,
-    questions: Array.from({ length: 20 }, () => sentence),
+    // Exactly the minimum is enough.
+    questions: Array.from({ length: 10 }, () => sentence),
   });
   assert.ok(enough.every((item) => item.done));
 });
@@ -367,10 +368,10 @@ test("aiShortfallNotice: says how many items the AI sent", () => {
   assert.equal(aiShortfallNotice(3, 3), null);
 });
 
-test("fullDraftCountRange: Nghe chép counts 20 to 30 sentences", () => {
+test("fullDraftCountRange: Nghe chép counts 10 to 30 sentences (owner 2026-11-25)", () => {
   const dictation = fullDraftCountRange("DICTATION");
-  assert.deepEqual(dictation, { min: 20, max: 30, label: "Số câu" });
-  assert.equal(clampDraftCount(5, dictation), 20);
+  assert.deepEqual(dictation, { min: 10, max: 30, label: "Số câu" });
+  assert.equal(clampDraftCount(5, dictation), 10);
   assert.equal(clampDraftCount(40, dictation), 30);
   assert.equal(clampDraftCount(25, fullDraftCountRange("DIALOGUE")), 10);
   assert.equal(fullDraftCountRange(undefined).label, "Số câu hỏi");

@@ -996,7 +996,7 @@ export default function SkillCmsWorkspace({
               // (inferring it from the question being edited once produced
               // dictation silently).
               mode: selectedListeningMode,
-              // "Nghe chép": sentences, 20 to 30.
+              // "Nghe chép": sentences, 10 to 30.
               count,
             },
       );
@@ -2738,7 +2738,7 @@ export default function SkillCmsWorkspace({
                   ))}
                 {!draftLocked && (
                   <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
-                    {/* "Nghe chép" counts sentences, 20 to 30; the others count questions. */}
+                    {/* "Nghe chép" counts sentences, 10 to 30; the others count questions. */}
                     {draftCountRange.label}
                     <select
                       aria-label={`${draftCountRange.label} trong bản nháp ${meta[domain].label}`}
