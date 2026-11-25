@@ -54,6 +54,7 @@ import {
   type AiQuestionCandidate,
   type ListFilters,
   listeningTitlePrefix,
+  draftDescription,
 } from "./skillCmsStatus";
 import {
   dialogueForSave,
@@ -1017,7 +1018,8 @@ export default function SkillCmsWorkspace({
           // The admin's own title stays (owner 2026-11-24): the AI wrote
           // English titles over Vietnamese ones.
           title: topic || String(data.title),
-          description: String(data.description || ""),
+          // The admin's own description stays too (owner 2026-11-25).
+          description: draftDescription(form.description, data.description),
           level: String(data.level || form.level || "A2"),
           passage: "",
           listeningMode: "DICTATION",
@@ -1050,7 +1052,8 @@ export default function SkillCmsWorkspace({
         domain,
         // The admin's own title stays (owner 2026-11-24).
         title: topic || String(data.title),
-        description: String(data.description),
+        // The admin's own description stays too (owner 2026-11-25).
+        description: draftDescription(form.description, data.description),
         level: String(data.level || form.level || "A2"),
         passage:
           domain === "reading"

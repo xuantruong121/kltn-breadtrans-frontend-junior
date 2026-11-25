@@ -733,3 +733,13 @@ export function listeningTitlePrefix(mode: string | null | undefined): string {
   if (mode === "DICTATION") return "Nghe chép";
   return "Nghe hiểu";
 }
+
+/**
+ * The description an AI lesson draft carries (owner 2026-11-25): what the
+ * admin already typed stays, as the title does; the AI's sentence only fills
+ * an empty box.
+ */
+export function draftDescription(typed: string | null | undefined, drafted: unknown): string {
+  const own = (typed ?? "").trim();
+  return own || String(drafted ?? "").trim();
+}

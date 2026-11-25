@@ -36,6 +36,7 @@ import {
   writingKindOfForm,
   writingTaskLabel,
   listeningTitlePrefix,
+  draftDescription,
 } from "./skillCmsStatus.ts";
 import { comprehensionSpokenContent } from "../../lib/listening/listeningExchange.ts";
 
@@ -683,4 +684,10 @@ test("a Listening title shows the form chosen before it (owner 2026-11-25)", () 
   assert.equal(listeningTitlePrefix("DICTATION"), "Nghe chép");
   assert.equal(listeningTitlePrefix("COMPREHENSION"), "Nghe hiểu");
   assert.equal(listeningTitlePrefix(undefined), "Nghe hiểu");
+});
+
+test("an AI draft keeps the description the admin typed, and fills only an empty box (owner 2026-11-25)", () => {
+  assert.equal(draftDescription("Nghe hội thoại ở quầy lễ tân.", "AI sentence"), "Nghe hội thoại ở quầy lễ tân.");
+  assert.equal(draftDescription("   ", "  Nghe khách hỏi đường.  "), "Nghe khách hỏi đường.");
+  assert.equal(draftDescription(undefined, undefined), "");
 });
