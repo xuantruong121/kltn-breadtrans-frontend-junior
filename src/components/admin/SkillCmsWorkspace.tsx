@@ -981,12 +981,15 @@ export default function SkillCmsWorkspace({
         domain === "reading"
           ? {
               topic,
+              // The admin's own description is the situation the draft plays out (owner 2026-11-25).
+              brief: form.description.trim() || undefined,
               level: form.level || "A2",
               targetLength: 180,
               count,
             }
           : {
               topic,
+              brief: form.description.trim() || undefined,
               level: form.level || "A2",
               // The form chosen in "Dạng bài", which the quiz is saved as
               // (inferring it from the question being edited once produced
