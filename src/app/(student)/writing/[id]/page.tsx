@@ -29,7 +29,7 @@ import { dependsOnLevel } from "@/lib/learning-path/levelLock";
 import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingWorkspace } from "@/components/writing/PictureWritingWorkspace";
 import { SentenceTranslationWorkspace } from "@/components/writing/SentenceTranslationWorkspace";
-import { isPictureQuiz } from "@/lib/writing/pictureWriting";
+import { isPictureQuiz, pictureNeighbours, pictureTitle } from "@/lib/writing/pictureWriting";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { resolveWritingFormatTag } from "@/components/writing/writingCardLogic";
 import { AiQuotaNotice } from "@/components/subscription/AiQuotaNotice";
@@ -44,7 +44,6 @@ export default function WritingDetailPage(props: {
   const searchParams = useSearchParams();
   // The task of a multi-task exercise being answered (?q=<questionId>).
   const requestedTaskId = Number(searchParams.get("q")) || null;
-  const exitHref = "/writing";
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const [content, setContent] = useState("");
@@ -131,6 +130,18 @@ export default function WritingDetailPage(props: {
 
   const isPictureTask =
     Boolean(exercise && currentTask) && isPictureQuiz(topic ?? {});
+  // Each picture is its own exercise (owner 2026-11-24): it is titled by its
+  // cue words, moves through the catalog list and exits to the picture tab.
+  const exitHref = isPictureTask ? "/writing?tab=picture" : "/writing";
+  const { data: writingCatalog } = useQuery({
+    queryKey: ["writing-topics"],
+    queryFn: writingService.getTopics,
+    enabled: isPictureTask,
+  });
+  const pictureNav =
+    isPictureTask && currentTask && writingCatalog
+      ? pictureNeighbours(writingCatalog.quizzes ?? [], topicId, currentTask.id)
+      : { prev: null, next: null };
   // "Dịch câu" (owner 2026-11-14): checked sentence by sentence on its own workspace.
   const isTranslationTask =
     Boolean(exercise) && currentTask?.taskType === "SENTENCE_TRANSLATION";
@@ -311,7 +322,13 @@ export default function WritingDetailPage(props: {
     >
       <div className="w-full min-h-dvh lg:h-dvh lg:overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 font-sans">
         <PracticeHeader
-          title={topic?.title ? quizDisplayTitle(topicId, topic.title) : "Luyện viết"}
+          title={
+            isPictureTask && currentTask
+              ? pictureTitle(currentTask.keywords)
+              : topic?.title
+                ? quizDisplayTitle(topicId, topic.title)
+                : "Luyện viết"
+          }
           // The same name as the catalog card, never a stored code such as
           // SHORT_MESSAGE (owner 2026-11-13).
           category={
@@ -344,7 +361,6 @@ export default function WritingDetailPage(props: {
           <PictureWritingWorkspace
             quizId={topicId}
             task={currentTask}
-            tasks={exercise.questions}
             exerciseLabel={
               topic?.title ? quizDisplayTitle(topicId, topic.title) : "Viết câu theo tranh"
             }
@@ -356,12 +372,12 @@ export default function WritingDetailPage(props: {
             onEvaluate={handleEvaluate}
             result={pictureResult}
             gradedAnswer={gradedAnswer}
-            onSelectTask={(questionId) => {
+            prevHref={pictureNav.prev}
+            nextHref={pictureNav.next}
+            onNavigate={(href) => {
               setPictureResult(null);
               setGradedAnswer(null);
-              const next = new URLSearchParams(searchParams.toString());
-              next.set("q", String(questionId));
-              router.replace(`/writing/${topicId}?${next.toString()}`);
+              router.push(href);
             }}
           />
         ) : (

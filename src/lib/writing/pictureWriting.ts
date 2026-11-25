@@ -3,6 +3,8 @@
  * (the older keyword sentence quiz shares the WRITING_PICTURE quiz type but
  * has no picture). The API enforces the same 40-word limit.
  */
+import { DEFAULT_CATALOG_SORT, sortByLevel } from "../practice/catalogFilters.ts";
+
 export const PICTURE_TASK_TYPE = "PICTURE_SENTENCE";
 export const PICTURE_MAX_WORDS = 40;
 
@@ -42,6 +44,33 @@ export function pictureCards<T extends PictureQuizLike>(quizzes: T[]) {
         href: `/writing/${quiz.id}?q=${task.questionId}`,
       })),
   );
+}
+
+/**
+ * The pictures before and after one, in the catalog's default order (Dễ →
+ * Khó): each picture is its own exercise (owner 2026-11-24), so the room
+ * moves through the list, not through the set the picture is stored in.
+ * Pictures the learner cannot open (plan or level) are skipped.
+ */
+export function pictureNeighbours<T extends PictureQuizLike>(
+  quizzes: T[],
+  quizId: number,
+  questionId: number,
+): { prev: string | null; next: string | null } {
+  const isCurrent = (card: { quiz: T; task: PictureTaskSummary }) =>
+    card.quiz.id === quizId && card.task.questionId === questionId;
+  const cards = sortByLevel(pictureCards(quizzes), DEFAULT_CATALOG_SORT, (card) => card.quiz.cefrLevel).filter(
+    (card) => isCurrent(card) || !(card.quiz.isLocked || card.quiz.isLevelLocked),
+  );
+  const index = cards.findIndex(isCurrent);
+  if (index < 0) return { prev: null, next: null };
+  return { prev: cards[index - 1]?.href ?? null, next: cards[index + 1]?.href ?? null };
+}
+
+/** The title of one picture: its two cue words. */
+export function pictureTitle(keywords: readonly string[] | null | undefined): string {
+  const words = (keywords ?? []).filter((word) => word.trim());
+  return words.length ? words.join(" · ") : "Viết câu theo tranh";
 }
 
 /** Cue-word pairs that actually exist, for the pair filter. */

@@ -102,8 +102,8 @@ export const isTranscriptHolder = (question: { type?: string }) => question.type
 export const answeredQuestions = <T extends { type?: string }>(domain: string, questions: T[]) =>
   domain === "listening" ? questions.filter((question) => !isTranscriptHolder(question)) : questions;
 
-/** "Nghe chép" needs this many sentences to publish, as the server checks. */
-export const DICTATION_MIN_SENTENCES = 20;
+/** "Nghe chép" needs this many sentences to publish, as the server checks (owner 2026-11-25: 10, was 20). */
+export const DICTATION_MIN_SENTENCES = 10;
 export const DICTATION_MAX_SENTENCES = 30;
 
 const PICTURE_TASKS = ["PICTURE", "PICTURE_SENTENCE", "DESCRIBE_PICTURE"];
@@ -314,7 +314,7 @@ export const aiShortfallNotice = (received: number, requested: number) =>
 
 /**
  * The count beside "Soạn cả bài bằng AI": questions for a dialogue, a
- * comprehension or a reading draft; sentences for "Nghe chép", 20 to 30.
+ * comprehension or a reading draft; sentences for "Nghe chép", 10 to 30.
  */
 export function fullDraftCountRange(listeningMode?: string) {
   return listeningMode === "DICTATION"
@@ -724,3 +724,66 @@ export function writingDraftQuestion(task: WritingDraftTask, level?: string) {
   };
 }
 
+/**
+ * The form's name shown before a Listening title (owner 2026-11-25), the head
+ * the server stores it under: "Hội thoại", "Nghe chép" or "Nghe hiểu".
+ */
+export function listeningTitlePrefix(mode: string | null | undefined): string {
+  if (mode === "DIALOGUE") return "Hội thoại";
+  if (mode === "DICTATION") return "Nghe chép";
+  return "Nghe hiểu";
+}
+
+/**
+ * The description an AI lesson draft carries (owner 2026-11-25): what the
+ * admin already typed stays, as the title does; the AI's sentence only fills
+ * an empty box.
+ */
+export function draftDescription(typed: string | null | undefined, drafted: unknown): string {
+  const own = (typed ?? "").trim();
+  return own || String(drafted ?? "").trim();
+}
+
+/**
+ * What to do after "Áp dụng vào biểu mẫu" (owner 2026-11-25: nothing said
+ * that Lưu comes next). A Listening lesson makes its audio once saved.
+ */
+export function draftSaveHint(domain: string): string {
+  return domain === "listening"
+    ? "Bấm Lưu để lưu bài. Audio sẽ tự tạo sau khi lưu."
+    : "Bấm Lưu để lưu bài.";
+}
+
+/** A "Nghe chép" sentence in the AI draft review. */
+export type DraftSentence = { text: string; excluded?: boolean };
+
+/**
+ * Replacing sentences in the "Nghe chép" draft review (owner 2026-11-25: a
+ * dropped sentence had no replacement while a lesson needs
+ * DICTATION_MIN_SENTENCES to publish). Every line already in the draft, kept
+ * or dropped, goes to the AI as one it must not repeat.
+ */
+export function draftSentenceAvoid(sentences: DraftSentence[]): string[] {
+  return sentences.map((sentence) => sentence.text.trim()).filter(Boolean);
+}
+
+/** Kept sentences, dropped ones, and how many more a publishable lesson needs. */
+export function dictationDraftState(sentences: DraftSentence[], min = DICTATION_MIN_SENTENCES) {
+  const kept = sentences.filter((sentence) => !sentence.excluded && sentence.text.trim()).length;
+  const dropped = sentences.filter((sentence) => sentence.excluded).length;
+  return { kept, dropped, missing: Math.max(0, min - kept) };
+}
+
+/** One sentence replaced in place by a new one, kept. */
+export function replaceDraftSentence(sentences: DraftSentence[], index: number, text: string): DraftSentence[] {
+  return sentences.map((sentence, at) => (at === index ? { text, excluded: false } : sentence));
+}
+
+/** New sentences fill the dropped ones in order; any left over are added at the end. */
+export function fillDraftSentences(sentences: DraftSentence[], texts: string[]): DraftSentence[] {
+  const queue = [...texts];
+  const filled = sentences.map((sentence) =>
+    sentence.excluded && queue.length ? { text: queue.shift() as string, excluded: false } : sentence,
+  );
+  return [...filled, ...queue.map((text) => ({ text, excluded: false }))];
+}

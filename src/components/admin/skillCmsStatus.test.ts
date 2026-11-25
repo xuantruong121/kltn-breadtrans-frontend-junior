@@ -35,6 +35,13 @@ import {
   splitTitleHead,
   writingKindOfForm,
   writingTaskLabel,
+  listeningTitlePrefix,
+  draftDescription,
+  draftSaveHint,
+  dictationDraftState,
+  draftSentenceAvoid,
+  fillDraftSentences,
+  replaceDraftSentence,
 } from "./skillCmsStatus.ts";
 import { comprehensionSpokenContent } from "../../lib/listening/listeningExchange.ts";
 
@@ -242,7 +249,7 @@ test("publishChecklist: writing has no choice item and checks its own tasks", ()
   assert.equal(translation.some((item) => item.label === "Câu trắc nghiệm đủ đáp án"), false);
 });
 
-test("publishChecklist: dictation needs 20 sentences, as the server", () => {
+test("publishChecklist: dictation needs 10 sentences, as the server", () => {
   const sentence = { type: "DICTATION", content: { correctAnswer: "The bus is late." }, audioAssets: [{ isActive: true }] };
   const few = publishChecklist({
     domain: "listening",
@@ -257,7 +264,7 @@ test("publishChecklist: dictation needs 20 sentences, as the server", () => {
       ["Có tiêu đề", true],
       ["Có trình độ", true],
       ["Có ít nhất 1 câu hỏi", true],
-      ["Nghe chép cần ít nhất 20 câu (3/20)", false],
+      ["Nghe chép cần ít nhất 10 câu (3/10)", false],
       ["Mỗi câu nghe chép có câu cần chép", true],
       ["Audio từng câu 3/3", true],
     ],
@@ -267,7 +274,8 @@ test("publishChecklist: dictation needs 20 sentences, as the server", () => {
     listeningMode: "DICTATION",
     title: "Nghe chép",
     levelTagged: true,
-    questions: Array.from({ length: 20 }, () => sentence),
+    // Exactly the minimum is enough.
+    questions: Array.from({ length: 10 }, () => sentence),
   });
   assert.ok(enough.every((item) => item.done));
 });
@@ -364,10 +372,10 @@ test("aiShortfallNotice: says how many items the AI sent", () => {
   assert.equal(aiShortfallNotice(3, 3), null);
 });
 
-test("fullDraftCountRange: Nghe chép counts 20 to 30 sentences", () => {
+test("fullDraftCountRange: Nghe chép counts 10 to 30 sentences (owner 2026-11-25)", () => {
   const dictation = fullDraftCountRange("DICTATION");
-  assert.deepEqual(dictation, { min: 20, max: 30, label: "Số câu" });
-  assert.equal(clampDraftCount(5, dictation), 20);
+  assert.deepEqual(dictation, { min: 10, max: 30, label: "Số câu" });
+  assert.equal(clampDraftCount(5, dictation), 10);
   assert.equal(clampDraftCount(40, dictation), 30);
   assert.equal(clampDraftCount(25, fullDraftCountRange("DIALOGUE")), 10);
   assert.equal(fullDraftCountRange(undefined).label, "Số câu hỏi");
@@ -677,3 +685,50 @@ test("the listening form locks with saved questions or an applied draft (owner 2
   assert.equal(listeningFormLocked(0, 3), true);
 });
 
+test("a Listening title shows the form chosen before it (owner 2026-11-25)", () => {
+  assert.equal(listeningTitlePrefix("DIALOGUE"), "Hội thoại");
+  assert.equal(listeningTitlePrefix("DICTATION"), "Nghe chép");
+  assert.equal(listeningTitlePrefix("COMPREHENSION"), "Nghe hiểu");
+  assert.equal(listeningTitlePrefix(undefined), "Nghe hiểu");
+});
+
+test("an AI draft keeps the description the admin typed, and fills only an empty box (owner 2026-11-25)", () => {
+  assert.equal(draftDescription("Nghe hội thoại ở quầy lễ tân.", "AI sentence"), "Nghe hội thoại ở quầy lễ tân.");
+  assert.equal(draftDescription("   ", "  Nghe khách hỏi đường.  "), "Nghe khách hỏi đường.");
+  assert.equal(draftDescription(undefined, undefined), "");
+});
+
+test("after applying an AI draft the page says Lưu comes next, and that a Listening lesson then makes its audio (owner 2026-11-25)", () => {
+  assert.equal(draftSaveHint("listening"), "Bấm Lưu để lưu bài. Audio sẽ tự tạo sau khi lưu.");
+  assert.equal(draftSaveHint("reading"), "Bấm Lưu để lưu bài.");
+});
+
+test("Nghe chép draft review: replacements fill dropped sentences and nothing is repeated (owner 2026-11-25)", () => {
+  const draft = [
+    { text: "We eat dinner at six." },
+    { text: "Call your brother.", excluded: true },
+    { text: "  " },
+    { text: "My aunt grows tomatoes.", excluded: true },
+  ];
+  // Every line goes to the AI to avoid, dropped ones too.
+  assert.deepEqual(draftSentenceAvoid(draft), ["We eat dinner at six.", "Call your brother.", "My aunt grows tomatoes."]);
+  assert.deepEqual(dictationDraftState(draft, 10), { kept: 1, dropped: 2, missing: 9 });
+  // One click replaces one sentence in place, dropped or not.
+  assert.deepEqual(replaceDraftSentence(draft, 1, "Visit grandma on Sunday.")[1], {
+    text: "Visit grandma on Sunday.",
+    excluded: false,
+  });
+  // Several new ones fill the dropped slots in order; extras go at the end.
+  const filled = fillDraftSentences(draft, ["A.", "B.", "C."]);
+  assert.deepEqual(
+    filled.map((s) => [s.text, !!s.excluded]),
+    [
+      ["We eat dinner at six.", false],
+      ["A.", false],
+      ["  ", false],
+      ["B.", false],
+      ["C.", false],
+    ],
+  );
+  assert.deepEqual(dictationDraftState(Array.from({ length: 10 }, () => ({ text: "x" }))), { kept: 10, dropped: 0, missing: 0 });
+});

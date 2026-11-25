@@ -104,7 +104,7 @@ const QUICK_ACTIONS: QuickActionItem[] = [
     icon: Inbox,
   },
   {
-    label: "Chi phí & Hiệu ứng",
+    label: "Chi phí & Hiệu năng",
     detail: "Giám sát AI tokens & TTS",
     href: "/admin/costs",
     icon: Coins,

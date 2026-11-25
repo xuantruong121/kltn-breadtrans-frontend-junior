@@ -40,7 +40,8 @@ export function PictureWritingCatalog({
   onOpen: (href: string) => void;
   onLocked: (quiz: WritingTopicItem) => void;
   onLevelLocked: (quiz: WritingTopicItem) => void;
-  onGuest: (quiz: WritingTopicItem) => void;
+  /** A guest is asked to sign in, then lands on this very picture (`href`). */
+  onGuest: (quiz: WritingTopicItem, href: string) => void;
 }) {
   const [difficulty, setDifficulty] = useState<DifficultyFilter>("ALL");
   const [sort, setSort] = useState<CatalogSort>(DEFAULT_CATALOG_SORT);
@@ -171,7 +172,7 @@ export function PictureWritingCatalog({
                     ) : (
                       <button
                         type="button"
-                        onClick={() => (isAuthenticated ? onOpen(href) : onGuest(quiz))}
+                        onClick={() => (isAuthenticated ? onOpen(href) : onGuest(quiz, href))}
                         aria-label={`Luyện viết với tranh có từ ${task.keywords.join(", ")}`}
                         className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 cursor-pointer"
                       >

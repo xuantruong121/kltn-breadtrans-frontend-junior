@@ -18,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosClient from "@/lib/api/axiosClient";
 import toast from "react-hot-toast";
 import { AiReviewCostsSection } from "@/components/admin/AiReviewCostsSection";
+import { viNumber } from "@/lib/admin/costFormat";
 
 type SystemCostsResponse = {
   summary: {
@@ -348,7 +349,7 @@ export default function AdminCostsPage() {
                       ${services.gemini.costUsd.toFixed(4)} USD
                     </span>
                   </div>
-                  <div className="mt-1 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                  <div className="mt-1 flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
                     <span>Quy đổi VND:</span>
                     <span className="font-medium text-slate-700 font-mono">
                       ≈ {services.gemini.costVnd.toLocaleString("vi-VN")} đ
@@ -428,12 +429,12 @@ export default function AdminCostsPage() {
 
                 {/* Usage Progress Box */}
                 <div className="mt-4 rounded-lg border border-slate-200/70 bg-slate-50/80 p-3.5">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between gap-3 text-xs">
                     <span className="font-semibold text-slate-700">
                       Chấm phát âm tháng này:
                     </span>
-                    <span className="font-mono font-bold text-slate-950 tabular-nums">
-                      {services.azureSpeech.audioMinutesThisMonth} / {services.azureSpeech.freeQuotaMinutes} phút ({services.azureSpeech.usedPercent}%)
+                    <span className="text-right font-mono font-bold text-slate-950 tabular-nums">
+                      {viNumber(services.azureSpeech.audioMinutesThisMonth)} / {viNumber(services.azureSpeech.freeQuotaMinutes)} phút ({services.azureSpeech.usedPercent}%)
                     </span>
                   </div>
                   <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
@@ -446,18 +447,18 @@ export default function AdminCostsPage() {
                       }}
                     />
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
                     <span>Còn lại trong hạn mức:</span>
                     <span className="font-semibold text-emerald-700">
-                      {Math.max(0, services.azureSpeech.freeQuotaMinutes - services.azureSpeech.audioMinutesThisMonth).toLocaleString("vi-VN")} phút miễn phí
+                      {viNumber(Math.max(0, services.azureSpeech.freeQuotaMinutes - services.azureSpeech.audioMinutesThisMonth))} phút miễn phí
                     </span>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between text-xs">
+                  <div className="mt-4 flex items-center justify-between gap-3 text-xs">
                     <span className="font-semibold text-slate-700">
                       Giọng đọc (TTS) tháng này:
                     </span>
-                    <span className="font-mono font-bold text-slate-950 tabular-nums">
+                    <span className="text-right font-mono font-bold text-slate-950 tabular-nums">
                       {services.azureSpeech.ttsCharactersThisMonth.toLocaleString("vi-VN")} / {services.azureSpeech.freeTtsCharacters.toLocaleString("vi-VN")} ký tự ({services.azureSpeech.ttsUsedPercent}%)
                     </span>
                   </div>
@@ -496,7 +497,7 @@ export default function AdminCostsPage() {
                       Thời lượng chấm
                     </p>
                     <p className="mt-1 font-mono text-base font-bold text-slate-900 tabular-nums">
-                      {services.azureSpeech.audioMinutesThisMonth}{" "}
+                      {viNumber(services.azureSpeech.audioMinutesThisMonth)}{" "}
                       <span className="text-xs font-medium text-slate-600 dark:text-slate-400">phút</span>
                     </p>
                   </div>
@@ -546,12 +547,12 @@ export default function AdminCostsPage() {
 
                 {/* Storage Progress Box */}
                 <div className="mt-4 rounded-lg border border-slate-200/70 bg-slate-50/80 p-3.5">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between gap-3 text-xs">
                     <span className="font-semibold text-slate-700">
                       Dung lượng đã dùng:
                     </span>
-                    <span className="font-mono font-bold text-slate-950 tabular-nums">
-                      {services.cloudflareR2.usedStorageMb.toFixed(1)} / {(services.cloudflareR2.freeQuotaGb * 1024).toLocaleString("vi-VN")} MB ({services.cloudflareR2.usedPercent}%)
+                    <span className="text-right font-mono font-bold text-slate-950 tabular-nums">
+                      {viNumber(services.cloudflareR2.usedStorageMb)} / {viNumber(services.cloudflareR2.freeQuotaGb * 1024)} MB ({services.cloudflareR2.usedPercent}%)
                     </span>
                   </div>
                   <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
@@ -564,10 +565,10 @@ export default function AdminCostsPage() {
                       }}
                     />
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                  <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-400">
                     <span>Dung lượng còn trống:</span>
                     <span className="font-semibold text-emerald-700">
-                      {(services.cloudflareR2.freeQuotaGb - services.cloudflareR2.usedStorageGb).toFixed(2)} GB miễn phí
+                      {viNumber(services.cloudflareR2.freeQuotaGb - services.cloudflareR2.usedStorageGb, 2)} GB miễn phí
                     </span>
                   </div>
                 </div>
