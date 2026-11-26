@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { CornerDownLeft, Crown } from "lucide-react";
 import type { DungeonOutcome, DungeonQuestion } from "@/lib/api/services/dungeon.service";
 import { fitsHint, typedCells } from "../dungeonLogic";
+import { HARD_WORD_LABEL } from "../../arena/hardWords";
 
 type Typed = Extract<DungeonQuestion, { type: "typed" }>;
 
@@ -65,6 +66,10 @@ export function BossTyping({
         <Crown size={14} strokeWidth={2.5} aria-hidden="true" />
         Gõ từ tiếng Anh để hạ boss
       </p>
+      {/* One of the learner's hard flashcard words (thesis supervisor 2026-11-26). */}
+      {question.oftenForgotten && (
+        <p className="mt-1 text-center text-xs font-semibold text-amber-300">{HARD_WORD_LABEL}</p>
+      )}
       <p className={`text-center font-bold leading-snug text-white ${compact ? "mt-1 text-lg sm:text-xl" : "mt-2 text-xl sm:text-2xl"}`}>
         {question.prompt}
         {question.pos && <span className="ml-2 align-middle text-sm font-semibold text-white/60">({question.pos})</span>}

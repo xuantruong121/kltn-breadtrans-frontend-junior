@@ -72,7 +72,14 @@ describe("blasterResultCopy", () => {
       line: "Bắn vỡ 18 khối, chỉ để lọt 2.",
       banh: "+50",
       note: null,
+      hardLine: null,
     });
+    // The learner's hard flashcard words: a count, never the words (2026-11-26).
+    assert.equal(
+      blasterResultCopy({ ...base, outcome: "win", net: 50, hardWords: { hit: 3, total: 4 } }).hardLine,
+      "Trúng 3/4 từ bạn hay quên.",
+    );
+    assert.equal(blasterResultCopy({ ...base, outcome: "lose", net: -50, hardWords: { hit: 0, total: 0 } }).hardLine, null);
     const lose = blasterResultCopy({ ...base, outcome: "lose", destroyed: 9, landed: 3, net: -50 });
     assert.equal(lose.title, "Hết mạng");
     assert.equal(lose.banh, "−50");

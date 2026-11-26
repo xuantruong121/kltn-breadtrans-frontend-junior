@@ -33,8 +33,12 @@ export type MonsterKind =
   | "pandan_jelly"
   | "yeast_frog";
 
-/** A question as the server sends it: no answer. */
-export type DungeonQuestion =
+/**
+ * A question as the server sends it: no answer. `oftenForgotten`: one of the
+ * learner's hard flashcard words (free dungeon only, thesis supervisor
+ * 2026-11-26).
+ */
+export type DungeonQuestion = (
   | {
       type: "choice";
       kind: "fill_blank" | "meaning_to_word" | "word_to_meaning";
@@ -52,7 +56,8 @@ export type DungeonQuestion =
       hint: string;
       /** Letters shown at the start (a topping). */
       revealed: string;
-    };
+    }
+) & { oftenForgotten?: boolean };
 
 export interface DungeonOutcome {
   right: boolean;
@@ -81,6 +86,8 @@ export interface DungeonResult {
   xp: number;
   record: boolean;
   dailyRank: number | null;
+  /** Hard flashcard words right the first time, out of those asked (free dungeon). */
+  hardWords?: { hit: number; total: number };
 }
 
 /** A number a topping moves, before and after taking it, as the server words it. */

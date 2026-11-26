@@ -1,3 +1,5 @@
+import { hardWordsLine, type HardTally } from "../arena/hardWords.ts";
+
 /** The words of a Pháo Bánh Mì result. Pure. */
 export type BlasterResultInput = {
   outcome: "win" | "lose";
@@ -7,6 +9,8 @@ export type BlasterResultInput = {
   stake: number;
   net: number;
   bonusCapped: number;
+  /** The learner's hard flashcard words broken, out of those in the game. */
+  hardWords?: HardTally;
 };
 
 export function blasterResultCopy(r: BlasterResultInput) {
@@ -22,5 +26,5 @@ export function blasterResultCopy(r: BlasterResultInput) {
     r.outcome === "win" && r.bonusCapped > 0
       ? `Hôm nay đã đủ 300 Bánh Mì thưởng từ Đấu trường, nên chỉ hoàn cược${r.net > 0 ? ` và thưởng ${r.net}` : ""}.`
       : null;
-  return { title, line, banh, note };
+  return { title, line, banh, note, hardLine: hardWordsLine("Trúng", r.hardWords) };
 }

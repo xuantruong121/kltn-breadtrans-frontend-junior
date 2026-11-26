@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { Crosshair, Heart } from "lucide-react";
+import { Crosshair, Heart, History } from "lucide-react";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { wordBlasterService, type BlasterMode } from "@/lib/api/services/wordBlaster.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -76,6 +76,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <li className="flex items-center gap-2"><Crosshair size={15} strokeWidth={2.25} aria-hidden="true" /> 20 khối, rơi dày và nhanh dần, về cuối có lúc hai khối cùng rơi. Qua hết mà còn mạng là thắng.</li>
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 3 mạng: mỗi khối chạm đất mất một mạng.</li>
           <li className="flex items-center gap-2"><BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" /> Gõ không dấu cũng được khi trả lời nghĩa tiếng Việt.</li>
+          <li className="flex items-center gap-2"><History size={15} strokeWidth={2.25} aria-hidden="true" /> Tối đa 6 khối là từ bạn hay quên khi học Từ vựng.</li>
         </ul>
 
         <fieldset className="mt-5" disabled={starting}>

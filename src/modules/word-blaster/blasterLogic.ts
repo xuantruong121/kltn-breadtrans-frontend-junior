@@ -11,6 +11,8 @@ export type ClientBlock = {
   fallMs: number;
   lane: number;
   hint?: string | null;
+  /** One of the learner's hard flashcard words; the card says so. */
+  oftenForgotten?: boolean;
 };
 
 /** Same as the server: a shot this long after landing still counts. */

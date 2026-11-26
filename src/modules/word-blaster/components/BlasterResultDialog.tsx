@@ -56,6 +56,9 @@ export function BlasterResultDialog({
             {copy.title}
           </h2>
           <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{copy.line}</p>
+          {copy.hardLine && (
+            <p className="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-300">{copy.hardLine}</p>
+          )}
 
           <div className="mt-4 flex justify-center gap-2">
             <motion.span
