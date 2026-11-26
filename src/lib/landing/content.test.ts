@@ -68,7 +68,7 @@ function offenders(pattern: RegExp, allowed: string[] = []): string[] {
 test("SKILLS lists the six parts in order, Nói first", () => {
   assert.deepEqual(
     SKILLS.map((s) => s.name),
-    ["Nói", "Nghe", "Đọc", "Viết", "Luyện đề TOEIC", "Flashcard"],
+    ["Nói", "Nghe", "Đọc", "Viết", "Luyện đề", "Flashcard"],
   );
   assert.deepEqual(
     SKILLS.map((s) => s.key),
@@ -85,13 +85,13 @@ test("each skills fact says exactly what its fragment shows (owner feedback #3)"
       ["Đọc", "Đọc thông báo, tin nhắn hay email rồi trả lời. Mỗi câu có giải thích vì sao đáp án đúng."],
       ["Viết", "Mỗi đề Viết nêu rõ tình huống và số từ cần viết. Bài nộp được nhận xét theo tiêu chí."],
       [
-        "Luyện đề TOEIC",
+        "Luyện đề",
         "Đề Nghe & Đọc theo cấu trúc TOEIC do BreadTrans biên soạn: 200 câu trong 120 phút, hoặc chọn từng Part để luyện.",
       ],
       ["Flashcard", "Mỗi thẻ có phiên âm, nghĩa và câu ví dụ. Lật thẻ để xem mặt sau."],
     ],
   );
-  const toeic = SKILLS.find((s) => s.name === "Luyện đề TOEIC");
+  const toeic = SKILLS.find((s) => s.name === "Luyện đề");
   assert.ok(toeic?.fact.includes("do BreadTrans biên soạn"));
 });
 
