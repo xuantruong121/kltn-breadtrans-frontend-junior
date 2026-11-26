@@ -72,6 +72,14 @@ it("waitedFor: hours under a day, days after, nothing when nothing waits", async
   assert.equal(waitedFor("2026-11-23T11:00:00Z", now), "3 ngày");
 });
 
+it("signedCount: a plus on additions, the minus kept, plain zero", async () => {
+  const { signedCount } = await import("./adminDashboardChartUtils.ts");
+  assert.equal(signedCount(1360), "+1.360");
+  assert.equal(signedCount(-50), "-50");
+  assert.equal(signedCount(0), "0");
+  assert.equal(signedCount(undefined), "0");
+});
+
 it("getPreviousRangeLabel: the same length just before the chosen range", async () => {
   const { getPreviousRangeLabel } = await import("./adminDashboardChartUtils.ts");
   assert.equal(getPreviousRangeLabel("30d"), "30 ngày trước đó");

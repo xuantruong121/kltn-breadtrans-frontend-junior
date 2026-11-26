@@ -47,6 +47,12 @@ export function trendSummary(points: { label: string; value: number }[]) {
   return { total, peak, activePeriods, periodCount: points.length };
 }
 
+/** A count with its sign, for an adjustment: "+1.360", "-50", "0". */
+export function signedCount(value?: number | null): string {
+  const n = Number(value ?? 0);
+  return n > 0 ? `+${n.toLocaleString("vi-VN")}` : n.toLocaleString("vi-VN");
+}
+
 /** How long the oldest waiting item has waited: "3 ngày", "5 giờ", "dưới 1 giờ". */
 export function waitedFor(since?: string | Date | null, now = new Date()): string | null {
   if (!since) return null;

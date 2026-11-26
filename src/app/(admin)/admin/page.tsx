@@ -10,6 +10,7 @@ import AdminContentBreakdown from "@/components/admin/AdminContentBreakdown";
 import {
   getPreviousRangeLabel,
   getRangeLabel,
+  signedCount,
   waitedFor,
   type ContentBreakdown,
 } from "@/components/admin/adminDashboardChartUtils";
@@ -56,6 +57,11 @@ type DashboardStats = {
     totalOrders: number;
     approvedOrders: number;
     pendingOrders: number;
+    /**
+     * Learners' Bánh Mì of the range, netted per source (a game's stake and
+     * return, a purchase and its refund); admin top-ups kept apart.
+     */
+    flow?: { issued: number; spent: number; adminAdjusted: number };
   };
 };
 
@@ -361,6 +367,10 @@ export default function AdminDashboardPage() {
                 </p>
               </div>
               <dl className={FIGURES}>
+                {/* Earned and spent by learners, admin top-ups on their own row (owner 2026-11-26). */}
+                <Figure label={`Nhận trong ${shortRangeText}`} value={number(data.gamification?.flow?.issued)} />
+                <Figure label={`Tiêu trong ${shortRangeText}`} value={number(data.gamification?.flow?.spent)} />
+                <Figure label="Quản trị viên điều chỉnh" value={signedCount(data.gamification?.flow?.adminAdjusted)} />
                 <Figure label={`Lượt đổi quà trong ${shortRangeText}`} value={number(data.gamification?.totalOrders)} />
               </dl>
             </Link>
