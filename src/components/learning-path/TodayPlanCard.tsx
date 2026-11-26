@@ -9,18 +9,24 @@ import { learningPathService } from "@/lib/api/services/learningPath.service";
 import { PRACTICE_SKILL_LABEL, PRACTICE_SKILL_ORDER } from "@/lib/learning-path/practiceLevel";
 import {
   SKILL_LIST_ROUTE,
+  balanceText,
   filterBySkill,
+  frameStatus,
   skillsWithItems,
-  totalMinutes,
   type SkillFilter,
 } from "@/lib/learning-path/recommendation";
 import { FoundationCards } from "./FoundationCards";
 import { RecommendationItemCard } from "./RecommendationItemCard";
+import { TodaySlotCard } from "./TodaySlotCard";
 
 const FIRST_VISIBLE = 6;
 const INVALIDATE = [["learning-path-today"]];
 
-/** Dashboard "Bài luyện hôm nay" (F5.3b): open items sized to the learner's minutes per day, then other choices. */
+/**
+ * Dashboard "Bài luyện hôm nay": a frame of four items, one per skill (thesis
+ * supervisor 2026-11-26), a nudge when one skill was practised a lot today,
+ * then vocabulary/grammar and other choices.
+ */
 export function TodayPlanCard({ enabled }: { enabled: boolean }) {
   const [filter, setFilter] = useState<SkillFilter>("ALL");
   const [expanded, setExpanded] = useState(false);
@@ -30,7 +36,9 @@ export function TodayPlanCard({ enabled }: { enabled: boolean }) {
     enabled,
     staleTime: 60_000,
   });
-  if (!data?.items.length) return null;
+  const slots = data?.slots ?? [];
+  if (!data || !slots.some((s) => s.state !== "EMPTY")) return null;
+  const status = frameStatus(slots);
 
   const more = data.more ?? [];
   const matching = filterBySkill(more, filter);
@@ -53,20 +61,19 @@ export function TodayPlanCard({ enabled }: { enabled: boolean }) {
             Bài luyện hôm nay cho bạn
           </h2>
           <p className="mt-1 text-base text-slate-600 dark:text-slate-400">
-            Chọn theo mức luyện tập và mục tiêu của bạn, vừa {data.minutesPerDay} phút mỗi ngày.
+            Mỗi kỹ năng một bài, chọn theo mức luyện tập và mục tiêu của bạn.
           </p>
         </div>
-        <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-          Khoảng {totalMinutes(data.items)} phút
-        </p>
+        {status && <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">{status}</p>}
       </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {data.items.map((item) => (
-          <RecommendationItemCard
-            key={`${item.contentType}:${item.contentId}`}
-            item={item}
-            invalidateKeys={INVALIDATE}
-          />
+      {data.balance && (
+        <p className="mt-4 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 text-sm font-semibold text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+          {balanceText(data.balance)}
+        </p>
+      )}
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {slots.map((slot) => (
+          <TodaySlotCard key={slot.skill} slot={slot} invalidateKeys={INVALIDATE} />
         ))}
       </div>
 

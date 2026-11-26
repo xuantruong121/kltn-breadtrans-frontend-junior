@@ -17,10 +17,16 @@ import { plansHrefFor } from "@/modules/subscription/practicePlan";
 export function RecommendationItemCard({
   item,
   invalidateKeys,
+  leadReason,
+  highlight = false,
 }: {
   item: RecommendationItem;
   /** Query keys refreshed after save/unsave. */
   invalidateKeys: unknown[][];
+  /** A first reason above the others, e.g. the balance nudge of today's frame. */
+  leadReason?: string;
+  /** Marks the item the frame suggests next. */
+  highlight?: boolean;
 }) {
   const queryClient = useQueryClient();
   const [levelLock, setLevelLock] = useState<LevelLock | null>(null);
@@ -36,7 +42,13 @@ export function RecommendationItemCard({
   const title = recommendationDisplayTitle(item);
 
   return (
-    <article className="flex h-full flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+    <article
+      className={`flex h-full flex-col justify-between rounded-2xl border bg-white p-4 dark:bg-slate-900 ${
+        highlight
+          ? "border-blue-400 ring-1 ring-blue-200 dark:border-blue-500 dark:ring-blue-900"
+          : "border-slate-200 dark:border-slate-800"
+      }`}
+    >
       <div>
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold text-blue-700 dark:text-blue-300">
@@ -58,8 +70,9 @@ export function RecommendationItemCard({
           </button>
         </div>
         <h3 className="mt-1 text-base font-bold leading-snug text-slate-900 dark:text-slate-100">{title}</h3>
-        {reasons.length > 0 && (
+        {(leadReason || reasons.length > 0) && (
           <ul className="mt-2 space-y-0.5 text-sm text-slate-600 dark:text-slate-400">
+            {leadReason && <li className="font-semibold text-blue-800 dark:text-blue-300">{leadReason}</li>}
             {reasons.map((r) => (
               <li key={r}>{r}</li>
             ))}
