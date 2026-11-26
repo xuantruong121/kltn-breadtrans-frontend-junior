@@ -187,7 +187,9 @@ export default function ToeicExamDetailShell({
         </div>
 
         {/* CỘT PHẢI: Quy cách phòng thi + CTA */}
-        <div className="lg:col-span-4 sticky top-6 space-y-4">
+        {/* Sticks below the 80 px app header (it stuck at 24 px and slid under it;
+            mobile check 2026-11-26), and scrolls inside when taller than the screen. */}
+        <div className="lg:col-span-4 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto space-y-4">
           <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs space-y-5">
             {summaryRows.length > 0 && (
               <>

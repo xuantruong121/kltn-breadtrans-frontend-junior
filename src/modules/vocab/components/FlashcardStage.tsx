@@ -36,10 +36,10 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
   const ipaUkText = formatIpa(word.ipaUk);
 
   return (
-    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6 short:space-y-3">
+    <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6 short:space-y-3 phone-land:space-y-3">
       {/* 3D Flippable Card Container */}
       <div
-        className="w-full h-[490px] sm:h-[530px] md:h-[560px] short:h-[clamp(300px,calc(100dvh-290px),560px)] [perspective:1000px] cursor-pointer select-none"
+        className="w-full h-[490px] sm:h-[530px] md:h-[560px] short:h-[clamp(300px,calc(100dvh-290px),560px)] phone-land:h-[clamp(230px,calc(100dvh-130px),360px)] [perspective:1000px] cursor-pointer select-none"
         onClick={onFlip}
       >
         <motion.div
@@ -50,7 +50,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           {/* ==================================================== */}
           {/* FRONT FACE */}
           {/* ==================================================== */}
-          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 short:p-6 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
+          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 short:p-6 phone-land:p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
             {/* Top Toolbar */}
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-sky-700 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 border border-sky-200/80 dark:border-sky-800/60 px-3.5 py-1.5 rounded-full">
@@ -88,8 +88,8 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
             </div>
 
             {/* Main Word Body */}
-            <div className="flex flex-col items-center justify-center text-center my-auto space-y-4 short:space-y-3">
-              <h2 className="text-5xl sm:text-6xl md:text-7xl short:text-6xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+            <div className="flex flex-col items-center justify-center text-center my-auto space-y-4 short:space-y-3 phone-land:space-y-2">
+              <h2 className="text-5xl sm:text-6xl md:text-7xl short:text-6xl phone-land:text-4xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
                 {word.word}
               </h2>
 
@@ -103,7 +103,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
               {/* Wraps onto two rows on a narrow card (mobile check 2026-11-26: at 320 px the
                   two buttons squeezed each other and the phonetic broke after its first slash). */}
               <div
-                className="flex flex-wrap items-center justify-center gap-3.5 pt-2"
+                className="flex flex-wrap items-center justify-center gap-3.5 pt-2 phone-land:pt-0"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* US Audio Button (Blue) */}
@@ -133,7 +133,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
             </div>
 
             {/* Bottom Hint */}
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400 font-semibold pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400 font-semibold pt-3 phone-land:pt-2 border-t border-slate-100 dark:border-slate-800">
               <RotateCw size={15} className="text-slate-500 dark:text-slate-400" />
               <span>Nhấn để xem nghĩa (hoặc Space)</span>
             </div>
@@ -142,7 +142,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
           {/* ==================================================== */}
           {/* BACK FACE (Zero-scroll, single-glance layout) */}
           {/* ==================================================== */}
-          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl border border-sky-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 short:p-5 flex flex-col justify-between gap-2 shadow-sm hover:shadow-md transition-shadow overflow-hidden short:overflow-y-auto select-none">
+          <div className="glass-face absolute inset-0 w-full h-full [backface-visibility:hidden] [transform:rotateY(180deg)] rounded-3xl border border-sky-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 md:p-9 short:p-5 phone-land:p-4 flex flex-col justify-between gap-2 shadow-sm hover:shadow-md transition-shadow overflow-hidden short:overflow-y-auto phone-land:overflow-y-auto select-none">
             {/* Top Header Bar */}
             <div className="flex items-center justify-between shrink-0">
               <span className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 px-3.5 py-1.5 rounded-full">

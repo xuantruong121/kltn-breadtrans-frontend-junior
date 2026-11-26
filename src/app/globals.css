@@ -10,6 +10,14 @@
  */
 @custom-variant short (@media (min-width: 1024px) and (max-height: 760px));
 
+/*
+ * A phone held sideways (about 667x375 to 932x430). Used only where the mobile
+ * check of 2026-11-26 found the screen too short: the header and bottom nav
+ * took 37% of its height, the flashcard sat under the room's footer, and the
+ * Arena music bar covered the lobby.
+ */
+@custom-variant phone-land (@media (orientation: landscape) and (max-height: 520px));
+
 @theme {
   --font-sans: var(--font-quicksand), ui-sans-serif, system-ui, sans-serif;
 

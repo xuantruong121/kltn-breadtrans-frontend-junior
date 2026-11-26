@@ -164,10 +164,10 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
       />
 
       {/* 2. Main Active Canvas (Pulled up closer to header, no excessive vertical blank space) */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-12 short:pt-3 short:pb-4 flex flex-col items-center">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-12 short:pt-3 short:pb-4 phone-land:pt-2 phone-land:pb-4 flex flex-col items-center">
         {/* Sequential Stage Tab Pills */}
         {!isCompleted && (
-          <div className="w-full mb-6 short:mb-3">
+          <div className="w-full mb-6 short:mb-3 phone-land:mb-2">
             <StageTabIndicator
               currentMode={currentMode}
               onSelectMode={(mode) => handleSwitchMode(mode)}
@@ -176,7 +176,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
         )}
 
         {/* Dynamic Animated Stage Container */}
-        <div className="w-full flex items-center justify-center min-h-[440px] short:min-h-0">
+        <div className="w-full flex items-center justify-center min-h-[440px] short:min-h-0 phone-land:min-h-0">
           <AnimatePresence mode="wait" custom={direction}>
             {isCompleted ? (
               <motion.div

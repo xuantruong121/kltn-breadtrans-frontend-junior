@@ -397,7 +397,7 @@ export function AppHeader() {
       <Suspense fallback={null}>
         <HubSuggestionParamListener onTrigger={() => setSuggestionOpen(true)} />
       </Suspense>
-      <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 flex items-center justify-between gap-1.5 sm:gap-4">
+      <div className="w-full px-3 sm:px-6 lg:px-6 xl:px-8 2xl:px-12 h-16 sm:h-20 phone-land:h-14 flex items-center justify-between gap-1.5 sm:gap-4">
         
         {/* Brand Logo & Role Tag (Item 1: Logo/Home) */}
         <div className="flex items-center shrink-0">
