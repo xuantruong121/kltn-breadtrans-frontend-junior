@@ -25,6 +25,7 @@ import {
   selectAllValidKeys,
   selectUnappliedKeys,
   shortParts,
+  toCheckCount,
   toggleKey,
   type CandidateFilter as Filter,
 } from "@/lib/examAi/candidateWorkspaceLogic";
@@ -320,6 +321,12 @@ export default function ExamAiCandidateWorkspacePage({
       })
     : null;
   const hasFailedUnits = failedUnits.length > 0;
+  // The status API names the exam in `exam` (26/11: `examId` never came, so
+  // "Mở đề thi" never showed).
+  const examId = status?.exam?.id ?? status?.examId ?? null;
+  const toCheck = candidate
+    ? toCheckCount([...candidate.lrGroups, ...candidate.speaking, ...candidate.writing])
+    : 0;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
@@ -428,11 +435,11 @@ export default function ExamAiCandidateWorkspacePage({
             : status?.status === "CANCELLED"
               ? "Bản nháp này đã bị huỷ."
               : "Không tải được bản nháp của lần tạo đề này."}
-          {status?.examId ? (
+          {examId ? (
             <>
               {" "}
               <Link
-                href={`/admin/exams/${status.examId}`}
+                href={`/admin/exams/${examId}`}
                 className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400"
               >
                 Mở đề thi
@@ -458,7 +465,8 @@ export default function ExamAiCandidateWorkspacePage({
                 Cần kiểm tra
               </p>
               <p className="text-lg font-semibold text-amber-700 dark:text-amber-400">
-                {candidate.flaggedCount}
+                {/* What the "Cần kiểm tra" view lists: unapplied items with a warning. */}
+                {toCheck}
               </p>
             </div>
             <div>
@@ -942,12 +950,12 @@ export default function ExamAiCandidateWorkspacePage({
             <p className="text-xs text-slate-600 dark:text-slate-400">
               Nội dung chỉ được áp dụng vào bản nháp, chưa được xuất bản.
               {/* After an apply, the exam is the next stop (owner 2026-11-25). */}
-              {candidate.appliedCandidateKeys.length > 0 && status?.examId ? (
+              {candidate.appliedCandidateKeys.length > 0 && examId ? (
                 <>
                   {" "}
                   Đã áp dụng {candidate.appliedCandidateKeys.length} nội dung.{" "}
                   <Link
-                    href={`/admin/exams/${status.examId}`}
+                    href={`/admin/exams/${examId}`}
                     className="font-semibold text-blue-700 underline underline-offset-2 hover:text-blue-800 dark:text-blue-400"
                   >
                     Mở đề thi
