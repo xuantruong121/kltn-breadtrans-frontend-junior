@@ -250,10 +250,11 @@ export function RankingBoard({
             />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Vị trí của bạn</p>
-              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {/* Wraps instead of ending in "…" (owner 2026-11-26: the league line was cut). */}
+              <p className="break-words text-sm font-semibold text-slate-900 dark:text-slate-100">
                 {me?.rank ? `Hạng ${me.rank} trên ${data?.total.toLocaleString("vi-VN")} học viên` : emptyPlace(metric, period)} · {myName}
               </p>
-              {me && leagueLine(me.league) && <p className="truncate text-xs text-emerald-900 dark:text-emerald-200">{leagueLine(me.league)}</p>}
+              {me && leagueLine(me.league) && <p className="break-words text-xs text-emerald-900 dark:text-emerald-200">{leagueLine(me.league)}</p>}
             </div>
             <div className="text-right">
               <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Cấp {me?.level ?? 1}</p>
