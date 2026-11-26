@@ -4,7 +4,7 @@ import { BrandLogo } from "@/components/brand";
 
 export function AppFooter() {
   return (
-    <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 pt-14 pb-10 text-slate-600 dark:text-slate-400 transition-colors duration-150">
+    <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 pt-14 pb-[calc(13.5rem+env(safe-area-inset-bottom))] md:pb-10 text-slate-600 dark:text-slate-400 transition-colors duration-150">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-10">
           {/* Brand Col */}

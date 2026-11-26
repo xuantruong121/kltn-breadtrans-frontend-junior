@@ -100,8 +100,10 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
               )}
 
               {/* Dual Audio Buttons with Phonetics */}
+              {/* Wraps onto two rows on a narrow card (mobile check 2026-11-26: at 320 px the
+                  two buttons squeezed each other and the phonetic broke after its first slash). */}
               <div
-                className="flex items-center justify-center gap-3.5 pt-2"
+                className="flex flex-wrap items-center justify-center gap-3.5 pt-2"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* US Audio Button (Blue) */}

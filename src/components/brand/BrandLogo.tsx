@@ -29,6 +29,8 @@ export interface BrandLogoProps {
    * Custom subtitle under the wordmark
    */
   subtitle?: string;
+  /** Extra classes for the subtitle, e.g. "hidden sm:block" where the bar is narrow. */
+  subtitleClassName?: string;
   /**
    * Link destination (if null or undefined, renders as a div)
    */
@@ -72,6 +74,7 @@ export function BrandLogo({
   size = "md",
   roleBadge,
   subtitle,
+  subtitleClassName = "",
   href,
   onClick,
   iconContainer = true,
@@ -166,7 +169,7 @@ export function BrandLogo({
           {/* Subtitle / Tagline */}
           {(subtitle || variant === "full") && (
             <span
-              className={`font-medium tracking-normal mt-0.5 truncate ${sizeStyles.subtitle} ${
+              className={`font-medium tracking-normal mt-0.5 truncate ${sizeStyles.subtitle} ${subtitleClassName} ${
                 isDark
                   ? "text-slate-600 dark:text-slate-400"
                   : variant === "admin"

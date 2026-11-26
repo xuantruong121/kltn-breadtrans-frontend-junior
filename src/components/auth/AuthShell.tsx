@@ -28,6 +28,8 @@ export function AuthShell({
               variant="full"
               size="md"
               subtitle="Nền tảng Tự học Tiếng Anh & Luyện 4 Kỹ năng"
+              // Under 640 px it ran under the theme button (mobile check 2026-11-26).
+              subtitleClassName="hidden sm:block"
             />
           </div>
           <div className="flex shrink-0 items-center gap-2">
