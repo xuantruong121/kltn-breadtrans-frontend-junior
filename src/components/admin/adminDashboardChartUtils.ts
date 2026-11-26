@@ -20,6 +20,44 @@ export function getRangeLabel(range: string) {
   }
 }
 
+/** What "Kỳ trước" means for each range: the same length just before it. */
+export function getPreviousRangeLabel(range: string) {
+  switch (range) {
+    case "30d":
+      return "30 ngày trước đó";
+    case "12m":
+      return "12 tháng trước đó";
+    default:
+      return "6 tháng trước đó";
+  }
+}
+
+/**
+ * Total, best period and how many periods had anything (2026-11-26: a best
+ * period was named even when every period was 0, and an average over mostly
+ * empty days said nothing).
+ */
+export function trendSummary(points: { label: string; value: number }[]) {
+  const total = points.reduce((sum, point) => sum + point.value, 0);
+  const peak = points.reduce<{ label: string; value: number } | null>(
+    (best, point) => (point.value > (best?.value ?? 0) ? point : best),
+    null,
+  );
+  const activePeriods = points.filter((point) => point.value > 0).length;
+  return { total, peak, activePeriods, periodCount: points.length };
+}
+
+/** How long the oldest waiting item has waited: "3 ngày", "5 giờ", "dưới 1 giờ". */
+export function waitedFor(since?: string | Date | null, now = new Date()): string | null {
+  if (!since) return null;
+  const waited = now.getTime() - new Date(since).getTime();
+  if (!Number.isFinite(waited)) return null;
+  const hours = Math.floor(waited / 3_600_000);
+  if (hours < 1) return "dưới 1 giờ";
+  if (hours < 24) return `${hours} giờ`;
+  return `${Math.floor(hours / 24)} ngày`;
+}
+
 export type ContentBreakdown = {
   vocabDecks: number;
   grammarTopics: number;

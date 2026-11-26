@@ -7,7 +7,12 @@ import { AlertTriangle, ArrowRight, CheckCircle2, RefreshCw } from "lucide-react
 import axiosClient from "@/lib/api/axiosClient";
 import AdminAnalyticsChart from "@/components/admin/AdminAnalyticsChart";
 import AdminContentBreakdown from "@/components/admin/AdminContentBreakdown";
-import { getRangeLabel, type ContentBreakdown } from "@/components/admin/adminDashboardChartUtils";
+import {
+  getPreviousRangeLabel,
+  getRangeLabel,
+  waitedFor,
+  type ContentBreakdown,
+} from "@/components/admin/adminDashboardChartUtils";
 import { formatVnd } from "@/modules/subscription/planLogic";
 
 type DashboardRange = "30d" | "6m" | "12m";
@@ -16,17 +21,28 @@ type DashboardStats = {
   range: DashboardRange;
   stats: {
     totalStudents: number;
+    /** Learners who learned in the range; a sign-in alone does not count. */
     activeStudents: number;
+    newStudents?: number;
+    /** New learners who completed the entry assessment (a count, no level). */
+    newStudentsWithDiagnostic?: number;
     pendingPayments: number;
     unreadSupportMessages: number;
     pendingSuggestions: number;
     openIssueReports: number;
+    /** The same figures over the period just before the chosen one. */
+    previous?: { activeStudents: number; newStudents: number };
   };
+  /** When the oldest item of each "Cần xử lý" row came in. */
+  waitingSince?: Partial<Record<AttentionKey, string | null>>;
   /** Revenue and purchases of the chosen range; subscriptions live now. */
   finance?: {
     totalRevenueVnd: number;
     completedPurchasesCount: number;
     activeSubscriptionsCount: number;
+    /** Learners whose paid plan ends within 7 days with nothing after it. */
+    plansEndingSoon?: number;
+    previous?: { totalRevenueVnd: number; completedPurchasesCount: number };
   };
   monthlyTrends?: {
     month: string;
@@ -43,7 +59,15 @@ type DashboardStats = {
   };
 };
 
+type AttentionKey =
+  | "pendingPayments"
+  | "pendingOrders"
+  | "openIssueReports"
+  | "unreadSupportMessages"
+  | "pendingSuggestions";
+
 interface AttentionItem {
+  key: AttentionKey;
   count: number;
   label: string;
   href: string;
@@ -57,11 +81,49 @@ const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
   { value: "12m", label: "12 tháng" },
 ];
 
+/**
+ * One figure of a card's footer, with the same figure of the period before
+ * when there is one: a plain number, no percentage (2026-11-26).
+ */
+function Figure({
+  label,
+  value,
+  previous,
+  highlight = false,
+}: {
+  label: string;
+  value: string;
+  previous?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt>{label}</dt>
+      <dd className="shrink-0 text-right tabular-nums">
+        <span
+          className={
+            highlight
+              ? "font-semibold text-amber-700 dark:text-amber-400"
+              : "font-medium text-slate-800 dark:text-slate-200"
+          }
+        >
+          {value}
+        </span>
+        {previous !== undefined && (
+          <span className="ml-1.5 text-slate-600 dark:text-slate-400">· kỳ trước {previous}</span>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+const FIGURES = "mt-4 space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm text-slate-600 dark:text-slate-400";
+
 const CARD =
   "flex flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition hover:border-slate-300 dark:hover:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600";
 
 export default function AdminDashboardPage() {
-  const [range, setRange] = useState<DashboardRange>("6m");
+  const [range, setRange] = useState<DashboardRange>("30d");
   const { data, isLoading, isFetching, isError, refetch } = useQuery<DashboardStats>({
     queryKey: ["admin-dashboard", range],
     queryFn: async () => {
@@ -72,9 +134,16 @@ export default function AdminDashboardPage() {
     },
   });
   const rangeText = getRangeLabel(data?.range ?? range).toLowerCase();
+  const previousRangeText = getPreviousRangeLabel(data?.range ?? range);
+  // "30 ngày", short enough for a row label beside its figure.
+  const shortRangeText = (RANGE_OPTIONS.find((option) => option.value === (data?.range ?? range))?.label ?? "").toLowerCase();
+  const number = (value?: number) => (value ?? 0).toLocaleString("vi-VN");
+  const previousStats = data?.stats.previous;
+  const previousFinance = data?.finance?.previous;
 
   const rawAttentionItems: AttentionItem[] = [
     {
+      key: "pendingPayments",
       count: data?.stats.pendingPayments ?? 0,
       label: "giao dịch nâng cấp gói cần đối soát",
       href: "/admin/plan-purchases",
@@ -82,6 +151,7 @@ export default function AdminDashboardPage() {
       actionLabel: "Duyệt đơn",
     },
     {
+      key: "pendingOrders",
       count: data?.gamification?.pendingOrders ?? 0,
       label: "yêu cầu đổi quà bưu điện/voucher chờ duyệt",
       href: "/admin/market",
@@ -89,6 +159,7 @@ export default function AdminDashboardPage() {
       actionLabel: "Xử lý kho",
     },
     {
+      key: "openIssueReports",
       count: data?.stats.openIssueReports ?? 0,
       label: "báo cáo sự cố từ người học cần xử lý",
       href: "/admin/issue-reports",
@@ -96,6 +167,7 @@ export default function AdminDashboardPage() {
       actionLabel: "Kiểm tra",
     },
     {
+      key: "unreadSupportMessages",
       count: data?.stats.unreadSupportMessages ?? 0,
       label: "tin nhắn hỗ trợ học viên chưa đọc",
       href: "/admin/messages",
@@ -103,6 +175,7 @@ export default function AdminDashboardPage() {
       actionLabel: "Phản hồi",
     },
     {
+      key: "pendingSuggestions",
       count: data?.stats.pendingSuggestions ?? 0,
       label: "đề xuất & góp ý từ học viên đang chờ",
       href: "/admin/suggestions",
@@ -123,7 +196,8 @@ export default function AdminDashboardPage() {
             Tổng quan vận hành
           </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Theo dõi dữ liệu thực tế hệ thống, tình hình tài chính và xử lý các tác vụ tồn đọng.
+            Theo dõi dữ liệu thực tế hệ thống, tình hình tài chính và xử lý các tác vụ tồn đọng. Kỳ trước là{" "}
+            {previousRangeText}.
           </p>
         </div>
 
@@ -217,17 +291,28 @@ export default function AdminDashboardPage() {
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Học viên</p>
                 <p className="mt-2 flex items-baseline gap-2">
                   <span className="text-3xl font-semibold tabular-nums text-slate-950 dark:text-slate-100">
-                    {data.stats.totalStudents.toLocaleString("vi-VN")}
+                    {number(data.stats.totalStudents)}
                   </span>
                   <span className="text-sm text-slate-600 dark:text-slate-400">tài khoản</span>
                 </p>
               </div>
-              <p className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-800 dark:text-slate-200">
-                  {data.stats.activeStudents.toLocaleString("vi-VN")}
-                </span>{" "}
-                hoạt động trong {rangeText}
-              </p>
+              <dl className={FIGURES}>
+                <Figure
+                  label={`Hoạt động trong ${shortRangeText}`}
+                  value={number(data.stats.activeStudents)}
+                  previous={previousStats ? number(previousStats.activeStudents) : undefined}
+                />
+                <Figure
+                  label="Học viên mới"
+                  value={number(data.stats.newStudents)}
+                  previous={previousStats ? number(previousStats.newStudents) : undefined}
+                />
+                {/* Completions only: the entry assessment gives no level here. */}
+                <Figure
+                  label="Đã làm bài đánh giá đầu vào"
+                  value={`${number(data.stats.newStudentsWithDiagnostic)}/${number(data.stats.newStudents)}`}
+                />
+              </dl>
             </Link>
 
             <Link href="/admin/plan-purchases" className={CARD}>
@@ -238,18 +323,26 @@ export default function AdminDashboardPage() {
                 <p className="mt-2 text-3xl font-semibold tabular-nums text-slate-950 dark:text-slate-100">
                   {formatVnd(data.finance?.totalRevenueVnd ?? 0)}
                 </p>
+                {previousFinance && (
+                  <p className="mt-1 text-sm tabular-nums text-slate-600 dark:text-slate-400">
+                    Kỳ trước {formatVnd(previousFinance.totalRevenueVnd)}
+                  </p>
+                )}
               </div>
-              <p className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm text-slate-600 dark:text-slate-400">
-                {(data.finance?.completedPurchasesCount ?? 0).toLocaleString("vi-VN")} lượt mua ·{" "}
-                {(data.finance?.activeSubscriptionsCount ?? 0).toLocaleString("vi-VN")} gói đang hoạt động ·{" "}
-                <span
-                  className={
-                    data.stats.pendingPayments > 0 ? "font-semibold text-amber-700 dark:text-amber-400" : undefined
-                  }
-                >
-                  {data.stats.pendingPayments} đơn chờ duyệt
-                </span>
-              </p>
+              {/* Waiting payments are counted once, in "Cần xử lý" below. */}
+              <dl className={FIGURES}>
+                <Figure
+                  label="Lượt mua"
+                  value={number(data.finance?.completedPurchasesCount)}
+                  previous={previousFinance ? number(previousFinance.completedPurchasesCount) : undefined}
+                />
+                <Figure label="Gói đang hoạt động" value={number(data.finance?.activeSubscriptionsCount)} />
+                <Figure
+                  label="Hết hạn trong 7 ngày, chưa gia hạn"
+                  value={number(data.finance?.plansEndingSoon)}
+                  highlight={(data.finance?.plansEndingSoon ?? 0) > 0}
+                />
+              </dl>
             </Link>
 
             <Link href="/admin/market" className={CARD}>
@@ -257,23 +350,14 @@ export default function AdminDashboardPage() {
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Bánh Mì học viên đang giữ</p>
                 <p className="mt-2 flex items-baseline gap-2">
                   <span className="text-3xl font-semibold tabular-nums text-slate-950 dark:text-slate-100">
-                    {(data.gamification?.totalBreads ?? 0).toLocaleString("vi-VN")}
+                    {number(data.gamification?.totalBreads)}
                   </span>
                   <span className="text-sm text-slate-600 dark:text-slate-400">Bánh Mì</span>
                 </p>
               </div>
-              <p className="mt-4 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm text-slate-600 dark:text-slate-400">
-                {(data.gamification?.totalOrders ?? 0).toLocaleString("vi-VN")} lượt đổi quà trong {rangeText} ·{" "}
-                <span
-                  className={
-                    (data.gamification?.pendingOrders ?? 0) > 0
-                      ? "font-semibold text-amber-700 dark:text-amber-400"
-                      : undefined
-                  }
-                >
-                  {data.gamification?.pendingOrders ?? 0} đơn chờ duyệt
-                </span>
-              </p>
+              <dl className={FIGURES}>
+                <Figure label={`Lượt đổi quà trong ${shortRangeText}`} value={number(data.gamification?.totalOrders)} />
+              </dl>
             </Link>
           </section>
 
@@ -313,6 +397,11 @@ export default function AdminDashboardPage() {
                         {item.count}
                       </span>
                       {item.label}
+                      {waitedFor(data.waitingSince?.[item.key]) && (
+                        <span className="ml-1.5 text-slate-600 dark:text-slate-400">
+                          · cũ nhất chờ {waitedFor(data.waitingSince?.[item.key])}
+                        </span>
+                      )}
                     </p>
                     <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 group-hover:underline">
                       {item.actionLabel}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   getBarHeightPercent,
   getRangeLabel,
+  trendSummary,
   type DashboardTrend,
 } from "./adminDashboardChartUtils";
 
@@ -60,13 +61,13 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
   };
 
   const maximum = Math.max(0, ...trends.map(getValue));
-  const total = trends.reduce((sum, trend) => sum + getValue(trend), 0);
-  const peak = trends.reduce<DashboardTrend | null>(
-    (currentPeak, trend) =>
-      !currentPeak || getValue(trend) > getValue(currentPeak) ? trend : currentPeak,
-    null,
+  const { total, peak, activePeriods, periodCount } = trendSummary(
+    trends.map((trend) => ({ label: trend.month, value: getValue(trend) })),
   );
-  const average = trends.length ? Math.round(total / trends.length) : 0;
+  // One bar is a day or a month; "kỳ" already means the whole range here.
+  const periodName = range === "30d" ? "Ngày" : "Tháng";
+  const formatSummaryValue = (val: number) =>
+    metric === "revenue" ? formatVndCompact(val) : val.toLocaleString("vi-VN");
 
   const barColor =
     metric === "revenue"
@@ -186,27 +187,19 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
             {metric === "revenue" ? "Tổng thu kỳ này" : "Tổng lượt trong kỳ"}
           </dt>
           <dd className="mt-1.5 text-lg sm:text-xl font-semibold text-slate-950 tabular-nums dark:text-slate-100">
-            {metric === "revenue" ? formatVndCompact(total) : total.toLocaleString("vi-VN")}
+            {formatSummaryValue(total)}
           </dd>
         </div>
         <div className="px-3 text-center sm:text-left">
-          <dt className="text-sm text-slate-600 dark:text-slate-400">Kỳ cao nhất</dt>
+          <dt className="text-sm text-slate-600 dark:text-slate-400">{periodName} cao nhất</dt>
           <dd className="mt-1.5 text-lg sm:text-xl font-semibold text-slate-950 tabular-nums dark:text-slate-100 truncate">
-            {peak ? (
-              metric === "revenue" ? (
-                `${peak.month} · ${formatVndCompact(getValue(peak))}`
-              ) : (
-                `${peak.month} · ${getValue(peak).toLocaleString("vi-VN")}`
-              )
-            ) : (
-              "—"
-            )}
+            {peak ? `${peak.label} · ${formatSummaryValue(peak.value)}` : "—"}
           </dd>
         </div>
         <div className="pl-3 text-center sm:text-left">
-          <dt className="text-sm text-slate-600 dark:text-slate-400">Trung bình mỗi kỳ</dt>
+          <dt className="text-sm text-slate-600 dark:text-slate-400">{periodName} có phát sinh</dt>
           <dd className="mt-1.5 text-lg sm:text-xl font-semibold text-slate-950 tabular-nums dark:text-slate-100">
-            {metric === "revenue" ? formatVndCompact(average) : average.toLocaleString("vi-VN")}
+            {activePeriods}/{periodCount}
           </dd>
         </div>
       </dl>
