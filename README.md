@@ -8,9 +8,6 @@ Giao diện web của BreadTrans, nền tảng tự học tiếng Anh (khóa lu�
 - **Quản trị viên:** trang tổng quan; quản lý người dùng, thanh toán, lượt mua gói, mã giảm giá và chợ
   đổi quà; CMS cho nội dung từng kỹ năng, từ điển và đề thi; báo lỗi, góp ý và tin nhắn hỗ trợ.
 
-Không có khóa học, giáo viên hay lớp học (gỡ ngày 01/11/2026). Đường dẫn cũ như `/courses` hay
-`/teacher` được chuyển về `/dashboard` (xem `next.config.ts`).
-
 API nằm ở repo `kltn-breadtrans-backend`.
 
 ## Công nghệ
@@ -54,7 +51,7 @@ Muốn chạy thêm một dev server thứ hai (ví dụ để kiểm thử) mà
 
 ## Kiểm thử
 
-Test dùng trình chạy test có sẵn của Node, không phải Jest. File test là `*.test.ts`, đặt cạnh mã nguồn.
+Test dùng trình chạy test có sẵn của Node (`node --test`). File test là `*.test.ts`, đặt cạnh mã nguồn.
 
 ```bash
 npm run lint
@@ -106,9 +103,8 @@ một lần làm mới token duy nhất, thay vì mỗi yêu cầu tự làm m�
 
 - Quy tắc giao diện và tiến độ: `FRONTEND_RULES.md`, `PROJECT_PROGRESS.md`. Cách gọi tên trên giao
   diện: `docs/UI_TERMINOLOGY.md`.
-- Icon dùng `lucide-react` với `strokeWidth` thống nhất, không dùng emoji làm icon. Không dùng gradient
-  tím, hồng neon. Màu theo nghĩa: xanh dương cho học viên, xanh lục cho thành công, hổ phách cho chờ
-  hoặc cảnh báo, đỏ hồng cho lỗi.
+- Icon dùng SVG của `lucide-react` với `strokeWidth` thống nhất. Màu theo nghĩa: xanh dương cho học
+  viên, xanh lục cho thành công, hổ phách cho chờ hoặc cảnh báo, đỏ hồng cho lỗi.
 - Commit theo Conventional Commits. Nhánh `feature/*`, `bugfix/*` tách từ `develop`.
 
 ## Triển khai
@@ -117,4 +113,4 @@ Triển khai qua Vercel Git Integration: nhánh `develop` tạo bản Preview, n
 Trên Vercel đặt `NEXT_PUBLIC_API_URL=/api` và `API_ORIGIN` là địa chỉ công khai của backend. Chi tiết:
 `docs/CI_CD_SETUP.md`.
 
-Web chạy như một ứng dụng web responsive, chưa phải PWA cài đặt được (`docs/PWA_STATUS.md`).
+Web là ứng dụng web responsive, có thông báo Web Push (`docs/PWA_STATUS.md`).
