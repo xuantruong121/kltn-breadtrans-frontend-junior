@@ -1,119 +1,120 @@
-# 🍞 BreadTrans Junior Frontend (`kltn-breadtrans-frontend-junior`)
+# BreadTrans Frontend
 
-Giao diện người dùng hiện đại, sống động cho **Nền tảng Tự học Tiếng Anh theo kỹ năng, cấp độ, chủ đề và lộ trình BreadTrans E-Learning**. Người học có thể luyện đề theo nhiều dạng chứng chỉ, trong đó hiện có format TOEIC, kết hợp AI, Gamification và theo dõi tiến độ — Khóa luận tốt nghiệp.
-Ứng dụng được thiết kế theo phong cách **Junior Neo-Brutalism** (border dày dặn, nút bấm 3D nổi bật, màu sắc rực rỡ và chuyển động vi mô mượt mà).
+Giao diện web của BreadTrans, nền tảng tự học tiếng Anh (khóa luận tốt nghiệp). Có hai phần:
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Next.js-16.3-black?logo=next.js" alt="Next.js" />
-  <img src="https://img.shields.io/badge/React-19.2-blue?logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/TypeScript-5-blue?logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/TailwindCSS-v4-38B2AC?logo=tailwindcss" alt="TailwindCSS" />
-  <img src="https://img.shields.io/badge/Framer_Motion-13-FF0055?logo=framer" alt="Framer Motion" />
-  <img src="https://img.shields.io/badge/Daily.co-Classroom-0070F3" alt="Daily.co Video" />
-  <img src="https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=githubactions" alt="CI/CD" />
-</p>
+- **Học viên:** bài đánh giá đầu vào, luyện Nghe, Nói, Đọc, Viết, từ vựng (flashcard), ngữ pháp, đề mô
+  phỏng cấu trúc TOEIC, sổ lỗi sai, bảng xếp hạng, đấu trường 1v1, thú ảo, chợ đổi Bánh Mì và gói
+  Free/Plus/Pro.
+- **Quản trị viên:** trang tổng quan; quản lý người dùng, thanh toán, lượt mua gói, mã giảm giá và chợ
+  đổi quà; CMS cho nội dung từng kỹ năng, từ điển và đề thi; báo lỗi, góp ý và tin nhắn hỗ trợ.
 
----
+Không có khóa học, giáo viên hay lớp học (gỡ ngày 01/11/2026). Đường dẫn cũ như `/courses` hay
+`/teacher` được chuyển về `/dashboard` (xem `next.config.ts`).
 
-## 🌟 Tính Năng Nổi Bật
+API nằm ở repo `kltn-breadtrans-backend`.
 
-### 🎓 1. Phân Hệ Học Sinh (`(student)`)
-- **Dashboard Trung Tâm:** Lộ trình học tập, thống kê tiến độ, thanh nhiệm vụ hằng ngày, chuỗi Streak và Bánh Mì tích lũy.
-- **Khóa học tự học (PRO):** Lộ trình bài học, tài liệu và bài tập trong từng bài; tiến độ lưu theo bài tập đã nộp, giữ nguyên khi gói PRO hết hạn và gia hạn. Không có lớp học, giáo viên hay học phí riêng.
-- **Luyện Nói & Chấm Điểm Phát Âm (Azure AI Speech F0):** Thu âm trực quan với đồng hồ đếm ngược giới hạn **45 giây**, phân tích phát âm chi tiết cấp độ âm vị (Phoneme-level), độ lưu loát (Fluency), ngữ điệu (Prosody).
-- **Luyện Viết theo kỹ năng & format chứng chỉ (AI Tutor):** Viết bài trực tiếp trên web, tính năng đếm từ thông minh và AI chấm điểm, phân tích ngữ pháp, gợi ý diễn đạt; hiện có nội dung TOEIC Writing.
-- **Học Từ Vựng & Flashcard 3D:** Hiệu ứng lật thẻ 3D, âm thanh phát âm mẫu chuẩn người bản xứ, chế độ Quiz và Typing ôn luyện.
-- **Đấu Trường 1v1 (Arena):** Ghép cặp ngẫu nhiên và thi đấu trả lời câu hỏi đối kháng thời gian thực qua WebSockets.
-- **Cửa Hàng Vật Phẩm (Market):** Dùng điểm Bánh Mì đổi các vật phẩm thú vị (Khiên đóng băng Streak, ngoại trang).
+## Công nghệ
 
-> Vai trò đang hoạt động: **Học viên** và **Quản trị viên**. Phân hệ Giáo viên, lớp học, ghi danh lớp và học phí lớp đã ngừng (CP60.1); xem `Project/CP60_1_LEGACY_CLASS_TEACHER_DECOMMISSION.md`.
+| Thành phần | Dùng cho |
+|---|---|
+| Next.js 16 (App Router, Turbopack), React 19 | Khung ứng dụng |
+| TypeScript 5, Tailwind CSS 4 | Mã nguồn và giao diện |
+| TanStack Query 5 | Gọi API, cache và làm mới dữ liệu |
+| Zustand 5 | Trạng thái phía trình duyệt: đăng nhập, bài thi, thú ảo… |
+| Axios | HTTP, một điểm vào duy nhất `src/lib/api/axiosClient.ts` |
+| Socket.io client | Đấu trường 1v1 và thông báo thời gian thực |
+| Framer Motion | Chuyển động |
+| lucide-react | Icon SVG |
 
-### 🛡️ 2. Phân Hệ Quản Trị Viên (`(admin)`)
-- **Analytics Dashboard:** Biểu đồ tương tác thời gian thực (Interactive Animated SVG Bar Chart) theo dõi xu hướng ghi danh, lượt hoạt động và cơ cấu nội dung bài học.
-- **Quản Trị Nội Dung (CMS):** Quản lý ngân hàng Từ vựng, Ngữ pháp, Bài luyện nói, Đề thi Reading/Listening và Quản lý người dùng.
+## Chạy ở máy
 
----
+Cần Node.js 22 và backend đang chạy ở `http://localhost:3001`.
 
-## 🛠️ Công Nghệ Sử Dụng (Tech Stack)
+```bash
+npm install
+npm run dev          # http://localhost:3000
+```
 
-| Thành phần | Công nghệ | Mục đích |
+Tạo file `.env.local` (không commit):
+
+| Biến | Giá trị khi chạy ở máy | Ý nghĩa |
 |---|---|---|
-| **Framework** | Next.js 16.3 (App Router, Turbopack) | Server Components, tối ưu hóa tốc độ tải trang |
-| **Giao diện** | React 19, TailwindCSS v4 | Thiết kế phong cách Neo-Brutalism trẻ trung |
-| **Hiệu ứng & 3D** | Framer Motion 13 | Lật thẻ 3D, thanh tiến trình dâng động, pháo hoa Confetti |
-| **Server State** | TanStack React Query v5 | Quản lý caching, fetching và refetching dữ liệu API |
-| **Client State** | Zustand v5 | Quản lý trạng thái đăng nhập (`authStore`), bài thi (`toeicStore`) |
-| **Realtime** | Socket.io-Client v4 | Đồng bộ thời gian thực cho Đấu trường 1v1 Arena |
-| **HTTP Client** | Axios (Interceptor) | Gọi REST API kèm tự động xác thực Bearer Token |
+| `NEXT_PUBLIC_API_URL` | `/api` | Trình duyệt gọi API qua chính domain của web |
+| `API_ORIGIN` | `http://localhost:3001` | Địa chỉ backend mà Next.js chuyển tiếp `/api/*` tới |
+| `NEXT_PUBLIC_SOCKET_URL` | `http://localhost:3001` | Địa chỉ Socket.io |
+| `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | client ID OAuth của Google | Đăng nhập bằng Google |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | khóa công khai VAPID của backend | Thông báo Web Push |
 
----
+Trình duyệt gọi `/api` trên domain của web, rồi Next.js chuyển tiếp sang `API_ORIGIN`. Nhờ vậy cookie
+refresh là cookie cùng domain và chạy được cả trên Safari. Không đặt khóa bí mật nào vào biến
+`NEXT_PUBLIC_*`, vì chúng nằm trong mã gửi xuống trình duyệt.
 
-## 📂 Cấu Trúc Thư Mục (35+ Routes)
+Muốn chạy thêm một dev server thứ hai (ví dụ để kiểm thử) mà không đụng `.next` của server đang chạy,
+đặt `NEXT_DIST_DIR` sang một thư mục build khác.
+
+## Kiểm thử
+
+Test dùng trình chạy test có sẵn của Node, không phải Jest. File test là `*.test.ts`, đặt cạnh mã nguồn.
+
+```bash
+npm run lint
+npm run typecheck
+npm run test:ci      # mọi src/**/*.test.ts
+npm run ci:check     # lint, typecheck, test:ci, build
+
+# một file
+node --no-warnings --test --experimental-strip-types src/lib/diagnostic/diagnosticUiLogic.test.ts
+
+npm run test:responsive-invariants   # scripts/verify_responsive_invariants.mjs
+```
+
+Các script `test:*` khác trong `package.json` chạy từng nhóm test riêng.
+
+`npm run build` tốn nhiều RAM. Tắt `npm run dev` trước khi build trên máy cá nhân.
+
+GitHub Actions (`.github/workflows/ci.yml`) chạy `npm ci`, `lint`, `typecheck`, `test:ci` và `build`.
+
+## Cấu trúc thư mục
 
 ```
 src/
 ├── app/
-│   ├── (admin)/             # Phân hệ Quản trị viên (/admin, /admin/vocab, /admin/speaking...)
-│   ├── (student)/           # Phân hệ Học viên (/dashboard, /learn, /courses, /my-courses...)
-│   ├── (auth)/              # Luồng Đăng nhập & Đăng ký
-│   ├── arena/               # Đấu trường đối kháng 1v1 Realtime
-│   └── layout.tsx           # Root Layout & Global Providers
-├── components/
-│   ├── admin/               # AdminAnalyticsChart, AdminContentBreakdown
-│   ├── ui/                  # Button3D, CardJunior, Badge, Modal...
-│   └── common/              # Header, Sidebar, AudioVisualizer...
+│   ├── (public)/        # trang chủ, /help, /privacy, /terms
+│   ├── (student)/       # /dashboard, /diagnostic, /listening, /reading, /writing, /speaking,
+│   │                    # /vocabulary, /flashcard, /grammar, /toeic, /exams, /mistakes, /ranking,
+│   │                    # /arena, /pet, /market, /plans, /notifications…
+│   ├── (admin)/admin/   # trang quản trị
+│   ├── login/, register/, forgot-password/, reset-password/, change-password/
+│   ├── auth/            # callback và trang lỗi đăng nhập Google
+│   ├── layout.tsx       # layout gốc và các provider
+│   └── globals.css      # Tailwind, token màu, biến thể phone-land và short
+├── components/          # thành phần giao diện theo khu vực (practice, toeic, admin, ui…)
+├── modules/             # gói tính năng: arena, flashcard, market, pet, ranking, subscription, toeic…
 ├── lib/
-│   ├── api/                 # Axios Client & Services kết nối Backend
-│   └── providers/           # React Query Provider, Socket Provider
-└── stores/                  # Zustand Store (authStore, toeicStore)
+│   ├── api/             # axiosClient.ts và các service gọi backend
+│   ├── auth/            # phiên đăng nhập, làm mới token, đăng nhập Google
+│   └── …                # logic thuần theo kỹ năng, kèm *.test.ts
+├── hooks/, contexts/
+└── stores/              # Zustand: authStore, toeicStore, gamificationStore…
 ```
 
----
+`axiosClient.ts` gắn access token từ `authStore`. Khi nhiều yêu cầu cùng nhận 401, chúng xếp hàng chờ
+một lần làm mới token duy nhất, thay vì mỗi yêu cầu tự làm mới. Khi sửa file này phải giữ nguyên cơ chế
+đó.
 
-## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy
+## Quy ước
 
-### 1. Cài đặt Dependencies
+- Quy tắc giao diện và tiến độ: `FRONTEND_RULES.md`, `PROJECT_PROGRESS.md`. Cách gọi tên trên giao
+  diện: `docs/UI_TERMINOLOGY.md`.
+- Icon dùng `lucide-react` với `strokeWidth` thống nhất, không dùng emoji làm icon. Không dùng gradient
+  tím, hồng neon. Màu theo nghĩa: xanh dương cho học viên, xanh lục cho thành công, hổ phách cho chờ
+  hoặc cảnh báo, đỏ hồng cho lỗi.
+- Commit theo Conventional Commits. Nhánh `feature/*`, `bugfix/*` tách từ `develop`.
 
-```bash
-cd kltn-breadtrans-frontend-junior
-npm install
-```
+## Triển khai
 
-### 2. Cấu hình biến môi trường (`.env.local`)
+Triển khai qua Vercel Git Integration: nhánh `develop` tạo bản Preview, nhánh `main` tạo bản Production.
+Trên Vercel đặt `NEXT_PUBLIC_API_URL=/api` và `API_ORIGIN` là địa chỉ công khai của backend. Chi tiết:
+`docs/CI_CD_SETUP.md`.
 
-Tạo file `.env.local` tại thư mục gốc:
-
-```env
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-```
-
-### 3. Chạy môi trường phát triển (Development)
-
-```bash
-npm run dev
-```
-
-Mở trình duyệt truy cập: **[http://localhost:3000](http://localhost:3000)**
-
----
-
-## 🧪 Kiểm Thử & CI/CD (GitHub Actions)
-
-Dự án đã được thiết lập pipeline tự động hóa hoàn chỉnh:
-
-```bash
-# Kiểm tra định dạng và quy chuẩn mã nguồn
-npm run lint
-
-# Biên dịch kiểm thử Production Bundle
-npm run build
-```
-
-- **GitHub Actions (`.github/workflows/ci.yml`):** Tự động kích hoạt khi có commit/PR để kiểm tra toàn bộ 35 routes và type-check TypeScript.
-- **GitHub Actions (`.github/workflows/deploy.yml`):** Sẵn sàng kích hoạt deploy tự động khi merge vào nhánh `main`.
-
----
-
-## 👨‍💻 Bản Quyền
-
-Dự án Khóa Luận Tốt Nghiệp — BreadTrans E-Learning Frontend Junior.
+Web chạy như một ứng dụng web responsive, chưa phải PWA cài đặt được (`docs/PWA_STATUS.md`).
