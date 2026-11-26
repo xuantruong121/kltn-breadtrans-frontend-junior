@@ -107,7 +107,8 @@ export function AppFooter() {
           <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link href="/terms" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Điều khoản dịch vụ</Link>
             <Link href="/privacy" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Chính sách bảo mật</Link>
-            <Link href="/help" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">FAQ</Link>
+            {/* min-w-6: the word alone was 23 px wide, under the 24 px tap target (mobile check 2026-11-26). */}
+            <Link href="/help" className="inline-flex min-h-6 min-w-6 items-center justify-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">FAQ</Link>
           </div>
           <p>© {new Date().getFullYear()} BreadTrans — Nền tảng tự học tiếng Anh tương tác. Thiết kế lấy người học làm trung tâm.</p>
         </div>
