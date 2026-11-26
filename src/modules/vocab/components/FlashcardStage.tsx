@@ -12,7 +12,8 @@ interface FlashcardStageProps {
   isFlipped: boolean;
   onFlip: () => void;
   onPlayAudio: (accent?: "us" | "uk", text?: string) => void;
-  onMarkMastered: () => void;
+  /** "Kiểm tra nhanh" (owner 2026-11-26): a word the learner says they know still meets the quiz and the typing. */
+  onQuickCheck: () => void;
   onEscalate: () => void;
   /** "Từ đã lưu" (owner 2026-11-16); the button is hidden without a handler (admin preview). */
   isSaved?: boolean;
@@ -25,7 +26,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
   isFlipped,
   onFlip,
   onPlayAudio,
-  onMarkMastered,
+  onQuickCheck,
   onEscalate,
   isSaved = false,
   saveBusy = false,
@@ -266,14 +267,14 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
       {/* Action Buttons Below Card */}
       <div className="w-full flex flex-col items-center gap-2.5">
         <div className="flex items-center gap-3.5 w-full">
-          {/* Left: [Đã thuộc] */}
+          {/* Left: [Kiểm tra nhanh] (was "Đã thuộc") */}
           <button
             type="button"
-            onClick={onMarkMastered}
+            onClick={onQuickCheck}
             className="glass-fill flex-1 inline-flex min-h-[52px] sm:min-h-[56px] short:min-h-12 items-center justify-center gap-2.5 rounded-2xl border-2 border-emerald-500 bg-white dark:bg-slate-900 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-black text-base sm:text-lg transition-all active:scale-98 shadow-2xs focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none cursor-pointer"
           >
             <Check size={20} />
-            <span>Đã thuộc</span>
+            <span>Kiểm tra nhanh</span>
             <kbd className="hidden sm:inline text-xs font-mono font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-md ml-1.5">
               Tab
             </kbd>
@@ -294,7 +295,7 @@ export const FlashcardStage: React.FC<FlashcardStageProps> = ({
 
         {/* Subtext Hint */}
         <p className="text-sm short:text-xs text-slate-600 dark:text-slate-400 text-center font-medium">
-          Bấm &ldquo;Chưa nhớ&rdquo; để qua chế độ học tiếp theo
+          Đã thuộc từ này? &ldquo;Kiểm tra nhanh&rdquo; chỉ hỏi trắc nghiệm và gõ từ. Chưa nhớ thì học đủ các bước.
         </p>
       </div>
     </div>

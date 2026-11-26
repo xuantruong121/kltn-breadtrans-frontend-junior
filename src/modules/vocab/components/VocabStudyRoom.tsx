@@ -11,6 +11,7 @@ import { FlashcardStage } from "./FlashcardStage";
 import { QuizStage } from "./QuizStage";
 import { TypingStage } from "./TypingStage";
 import { SpeakingStage } from "./SpeakingStage";
+import { WordVerdict } from "./WordVerdict";
 import { StudyFooter } from "./StudyFooter";
 import { WordListDrawer } from "./WordListDrawer";
 import { StudySettingsModal } from "./StudySettingsModal";
@@ -86,6 +87,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     setTypingInput,
     typingHintCount,
     typingFeedback,
+    isQuickCheck,
     handleCheckTyping,
     handleRevealTypingHint,
     isRecording,
@@ -95,9 +97,13 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     isSpeakingSkipped,
     handleToggleRecordSpeech,
     handleSkipSpeaking,
-    handleSrsRate,
+    handleContinueSpeaking,
+    verdict,
+    handleContinue,
+    handleRetryVerdict,
+    handleDeferVerdict,
     handlePlayAudio,
-    handleMarkMastered,
+    handleQuickCheck,
     handleEscalateMode,
     handleSwitchMode,
     handleJumpToWord,
@@ -196,6 +202,23 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                   onRestart={handleRestart}
                 />
               </motion.div>
+            ) : verdict ? (
+              <motion.div
+                key={`${verdict.word.id}-verdict`}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="w-full"
+              >
+                <WordVerdict
+                  verdict={verdict}
+                  onContinue={handleContinue}
+                  onRetry={handleRetryVerdict}
+                  onDefer={handleDeferVerdict}
+                />
+              </motion.div>
             ) : currentWord ? (
               <motion.div
                 key={`${currentWord.id}-${currentMode}`}
@@ -215,7 +238,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                       playChime("flip");
                     }}
                     onPlayAudio={handlePlayAudio}
-                    onMarkMastered={handleMarkMastered}
+                    onQuickCheck={handleQuickCheck}
                     onEscalate={handleEscalateMode}
                     isSaved={Boolean(savedRow)}
                     saveBusy={savedWords.busy}
@@ -243,6 +266,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                     onInputChange={setTypingInput}
                     onCheck={handleCheckTyping}
                     onRevealHint={handleRevealTypingHint}
+                    quickCheck={isQuickCheck}
                   />
                 )}
 
@@ -256,9 +280,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                     isSkipped={isSpeakingSkipped}
                     onToggleRecord={handleToggleRecordSpeech}
                     onPlayAudio={handlePlayAudio}
-                    onRateSrs={handleSrsRate}
                     onSkipSpeaking={handleSkipSpeaking}
-                    onSkip={handleMarkMastered}
+                    onContinue={handleContinueSpeaking}
                   />
                 )}
               </motion.div>

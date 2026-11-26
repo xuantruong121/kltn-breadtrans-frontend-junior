@@ -135,7 +135,7 @@ export default function VocabStagePreview({
             isFlipped={flipped}
             onFlip={() => setFlipped((value) => !value)}
             onPlayAudio={(accent) => play(accent)}
-            onMarkMastered={() => undefined}
+            onQuickCheck={() => setStage("QUIZ")}
             onEscalate={() => setStage("QUIZ")}
           />
         )}
@@ -178,7 +178,6 @@ export default function VocabStagePreview({
             feedback={null}
             onToggleRecord={() => undefined}
             onPlayAudio={(accent) => play(accent)}
-            onRateSrs={() => undefined}
           />
         )}
         </div>

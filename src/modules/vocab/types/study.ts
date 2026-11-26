@@ -6,7 +6,8 @@ export interface QueueItem {
   word: VocabWord;
   mode: StudyMode;
   stepCount: number;
-  incorrectAttempts?: number;
+  /** "Kiểm tra nhanh" (owner 2026-11-26): quiz and typing only, then the grade. */
+  quickCheck?: boolean;
 }
 
 export interface QuizOption {
@@ -14,16 +15,6 @@ export interface QuizOption {
   key: "1" | "2" | "3" | "4";
   text: string;
   isCorrect: boolean;
-}
-
-export type SrsRating = "AGAIN" | "HARD" | "GOOD" | "EASY";
-
-export interface SrsIntervalOption {
-  rating: SrsRating;
-  label: string;
-  intervalText: string;
-  badgeStyle: string;
-  keyNumber: string;
 }
 
 export interface StudySettings {

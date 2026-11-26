@@ -1,10 +1,8 @@
 "use client";
 
 import React from "react";
-import { Mic, Volume2, FastForward, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mic, Volume2, FastForward, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
 import { VocabWord } from "@/lib/api/services/vocab.service";
-import { SrsRating } from "../types/study";
-import { formatReviewInterval } from "../utils/reviewInterval";
 
 interface SpeakingStageProps {
   word: VocabWord;
@@ -15,43 +13,16 @@ interface SpeakingStageProps {
   isSkipped?: boolean;
   onToggleRecord: () => void;
   onPlayAudio: (accent?: "us" | "uk") => void;
-  onRateSrs: (rating: SrsRating) => void;
+  /** Grade the word without the speaking step ("Bỏ qua phần phát âm"). */
   onSkipSpeaking?: () => void;
-  onSkip?: () => void;
+  /** Grade the word after a failed or impossible attempt ("Tiếp tục"). */
+  onContinue?: () => void;
 }
 
-const SRS_OPTIONS: Array<{
-  rating: SrsRating;
-  label: string;
-  styleClass: string;
-  keyNumber: string;
-}> = [
-  {
-    rating: "AGAIN",
-    label: "Học lại",
-    styleClass: "bg-rose-500 hover:bg-rose-600 text-white border-rose-600 shadow-xs",
-    keyNumber: "1",
-  },
-  {
-    rating: "HARD",
-    label: "Khó",
-    styleClass: "bg-amber-50 hover:bg-amber-100/80 border-amber-200 text-amber-800 dark:bg-amber-950/40 dark:border-amber-900/60 dark:text-amber-300",
-    keyNumber: "2",
-  },
-  {
-    rating: "GOOD",
-    label: "Tốt",
-    styleClass: "bg-emerald-50 hover:bg-emerald-100/80 border-emerald-200 text-emerald-800 dark:bg-emerald-950/40 dark:border-emerald-900/60 dark:text-emerald-300",
-    keyNumber: "3",
-  },
-  {
-    rating: "EASY",
-    label: "Dễ",
-    styleClass: "bg-blue-50 hover:bg-blue-100/80 border-blue-200 text-blue-800 dark:bg-blue-950/40 dark:border-blue-900/60 dark:text-blue-300",
-    keyNumber: "4",
-  },
-];
-
+/**
+ * The last step of a word. Its result goes into the grade the system gives
+ * the word (thesis supervisor 2026-11-26); the learner no longer rates it.
+ */
 export const SpeakingStage: React.FC<SpeakingStageProps> = ({
   word,
   isRecording,
@@ -60,11 +31,11 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
   isSkipped = false,
   onToggleRecord,
   onPlayAudio,
-  onRateSrs,
   onSkipSpeaking,
-  onSkip,
+  onContinue,
 }) => {
-  const canRateSrs = score !== null || feedback !== null || isSkipped;
+  const attempted = score !== null || feedback !== null || isSkipped;
+  const canContinue = feedback !== null && score !== 100;
 
   return (
     <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-6 short:space-y-3">
@@ -133,11 +104,11 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
           {isRecording ? "Đang lắng nghe... Hãy đọc to từ vựng" : "Nhấn vào micro để bắt đầu nói (hoặc Space)"}
         </p>
 
-        {/* Skip Option: Allow skipping pronunciation to reveal SRS ratings */}
-        {!canRateSrs && (
+        {/* Skip Option: the word is graded without the speaking step */}
+        {!attempted && (
           <button
             type="button"
-            onClick={onSkipSpeaking || onSkip}
+            onClick={onSkipSpeaking}
             className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors cursor-pointer"
           >
             <FastForward size={13} />
@@ -174,53 +145,25 @@ export const SpeakingStage: React.FC<SpeakingStageProps> = ({
 
           <p className="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 max-w-lg mx-auto">
             {score === 100
-              ? "Rất tốt! Hãy chọn mức độ ghi nhớ của bạn ở các nút bên dưới:"
+              ? "Rất tốt! Đang chấm từ này…"
               : score === 0
-              ? "Bạn có thể nhấn micro ở trên để phát âm lại, hoặc chọn mức độ ghi nhớ bên dưới:"
+              ? "Bạn có thể nhấn micro ở trên để nói lại, hoặc bấm Tiếp tục."
               : feedback}
           </p>
         </div>
       )}
 
-      {/* Note when pronunciation was skipped */}
-      {isSkipped && !feedback && (
-        <div className="glass-face w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 sm:p-5 rounded-3xl text-center space-y-1 animate-fadeIn shadow-xs">
-          <p className="text-sm sm:text-base font-bold text-slate-700 dark:text-slate-200">
-            Đã bỏ qua phần phát âm. Hãy đánh giá mức độ ghi nhớ của bạn bên dưới:
-          </p>
-        </div>
-      )}
-
-      {/* SRS Rating Buttons (Shown post-evaluation OR when learner clicked skip speaking) */}
-      {canRateSrs && (
-        <div className="w-full space-y-2 animate-fadeIn">
-          <p className="text-xs font-bold text-slate-600 dark:text-slate-400 text-center uppercase tracking-wider">
-            Bạn nhớ từ này đến mức nào?
-          </p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {SRS_OPTIONS.map((opt) => (
-              <button
-                key={opt.rating}
-                type="button"
-                onClick={() => onRateSrs(opt.rating)}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all active:scale-95 cursor-pointer ${opt.styleClass}`}
-              >
-                <div className="flex items-center gap-1">
-                  <span className="text-xs font-extrabold">{opt.label}</span>
-                  <kbd className="text-xs font-mono opacity-80 border border-current/30 px-1 rounded">
-                    {opt.keyNumber}
-                  </kbd>
-                </div>
-                {word.reviewPreview && (
-                  <span className="text-xs font-medium opacity-85 mt-0.5">
-                    Ôn lại sau {formatReviewInterval(word.reviewPreview[opt.rating])}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
+      {/* After a failed or impossible attempt: grade the word as it stands */}
+      {canContinue && onContinue && (
+        <button
+          type="button"
+          onClick={onContinue}
+          className="w-full inline-flex min-h-[52px] sm:min-h-[56px] short:min-h-12 items-center justify-center gap-2 rounded-2xl bg-sky-700 hover:bg-sky-800 text-white font-black text-base sm:text-lg transition-colors shadow-sm cursor-pointer animate-fadeIn"
+        >
+          <span>Tiếp tục</span>
+          <ArrowRight size={18} aria-hidden="true" />
+          <kbd className="hidden sm:inline text-xs font-mono font-bold bg-sky-700 text-white px-2 py-0.5 rounded-md">Enter</kbd>
+        </button>
       )}
     </div>
   );

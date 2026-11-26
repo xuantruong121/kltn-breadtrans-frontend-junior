@@ -4,17 +4,43 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/stores/authStore";
 import toast from "react-hot-toast";
-import { VocabWord, vocabService } from "@/lib/api/services/vocab.service";
-import { QueueItem, StudyMode, QuizOption, SrsRating, StudySettings } from "../types/study";
+import {
+  ReviewEvidence,
+  SpeakingResult,
+  SrsGrade,
+  VocabWord,
+  vocabService,
+} from "@/lib/api/services/vocab.service";
+import { QueueItem, StudyMode, QuizOption, StudySettings } from "../types/study";
 import { playWordAudio, playChime, stopCurrentAudio } from "../utils/audio";
 import { buildQuizOptions } from "../utils/quizOptions";
 import { addSessionXp } from "../utils/sessionXp";
-
-
+import {
+  NO_EVIDENCE,
+  StepEvidence,
+  toReviewEvidence,
+  withQuickCheck,
+  withQuiz,
+  withSpeaking,
+  withTyping,
+} from "../utils/wordVerdict";
 
 interface UseVocabStudyEngineProps {
   topicId: number;
   initialWords: VocabWord[];
+}
+
+/**
+ * The system's grade of the word just finished (thesis supervisor 2026-11-26:
+ * no self-rating). PENDING while the server decides, ERROR when it could not
+ * be saved.
+ */
+export interface WordVerdictState {
+  word: VocabWord;
+  evidence: ReviewEvidence;
+  status: "PENDING" | "READY" | "ERROR";
+  grade?: SrsGrade;
+  intervalDays?: number;
 }
 
 export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngineProps) {
@@ -67,6 +93,31 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   const [isSpeakingSkipped, setIsSpeakingSkipped] = useState<boolean>(false);
   const recognitionRef = useRef<any>(null);
 
+  // What each word did in its steps. A ref: it outlives resetModeInputs, and
+  // the delayed step changes (900-1800 ms) always read the latest value.
+  const attemptsRef = useRef(new Map<number, StepEvidence>());
+  const evidenceOf = useCallback(
+    (wordId: number) => attemptsRef.current.get(wordId) ?? NO_EVIDENCE,
+    []
+  );
+  const record = useCallback(
+    (wordId: number, next: (e: StepEvidence) => StepEvidence) => {
+      attemptsRef.current.set(wordId, next(attemptsRef.current.get(wordId) ?? NO_EVIDENCE));
+    },
+    []
+  );
+
+  // The grade of the word just finished, shown until the learner goes on.
+  const [verdict, setVerdictState] = useState<WordVerdictState | null>(null);
+  const verdictRef = useRef<WordVerdictState | null>(null);
+  const setVerdict = useCallback((next: WordVerdictState | null) => {
+    verdictRef.current = next;
+    setVerdictState(next);
+  }, []);
+
+  // The typing input and the window both hear Enter; check once.
+  const checkingRef = useRef(false);
+
   // Reset helper called during transitions to avoid setState within effect
   const resetModeInputs = useCallback(() => {
     setIsFlipped(false);
@@ -80,6 +131,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     setSpeechScore(null);
     setSpeechFeedback(null);
     setIsSpeakingSkipped(false);
+    checkingRef.current = false;
   }, []);
 
   // Active current item
@@ -100,20 +152,10 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     }
   }, [queryClient, topicId]);
 
-  // Backend mastery mutation
-  const toggleMasteredMut = useMutation({
-    mutationFn: ({ wordId, isMastered }: { wordId: number; isMastered: boolean }) =>
-      vocabService.masterWord(wordId, isMastered),
-    onSuccess: (reply) => {
-      setSessionXp((total) => addSessionXp(total, reply));
-      refreshProgress();
-    },
-  });
-
-  // A self-rating after the last step: the server reschedules the word by it.
+  // The room's steps for one word: the server grades it and reschedules it.
   const reviewMut = useMutation({
-    mutationFn: ({ wordId, grade }: { wordId: number; grade: SrsRating }) =>
-      vocabService.reviewWord(wordId, grade),
+    mutationFn: ({ wordId, evidence }: { wordId: number; evidence: ReviewEvidence }) =>
+      vocabService.reviewWord(wordId, evidence),
     onSuccess: (reply) => {
       setSessionXp((total) => addSessionXp(total, reply));
       refreshProgress();
@@ -191,15 +233,14 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   );
 
   // -------------------------------------------------------------
-  // ACTION: "ĐÃ THUỘC" (Mastered)
+  // A word known for now: the server already stored its grade.
   // -------------------------------------------------------------
-  const finishWord = useCallback((grade?: SrsRating) => {
+  const finishWord = useCallback(() => {
     if (!currentWord || isCompleted) return;
 
     playChime("success");
     setDirection(1);
 
-    // 1. Mark as mastered in state & backend
     setMasteredIds((prev) => new Set(prev).add(currentWord.id));
     setSessionMasteredIds((prev) => new Set(prev).add(currentWord.id));
     setReviewIds((prev) => {
@@ -208,11 +249,6 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       return updated;
     });
 
-    // A self-rating carries its own schedule; the plain "Đã thuộc" does not.
-    if (grade) reviewMut.mutate({ wordId: currentWord.id, grade });
-    else toggleMasteredMut.mutate({ wordId: currentWord.id, isMastered: true });
-
-    // 2. Remove word from active queue
     const remainingQueue = queue.filter((_, idx) => idx !== currentIndex);
     setQueue(remainingQueue);
 
@@ -221,17 +257,101 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     } else {
       advanceQueue(remainingQueue, currentIndex < remainingQueue.length ? currentIndex : 0);
     }
-  }, [currentWord, isCompleted, queue, currentIndex, toggleMasteredMut, reviewMut, advanceQueue]);
+  }, [currentWord, isCompleted, queue, currentIndex, advanceQueue]);
 
-  // Bound to buttons and keys, so it must ignore whatever they pass.
-  const handleMarkMastered = useCallback(() => finishWord(), [finishWord]);
+  // The word goes to the end of the session, from its flashcard, steps forgotten.
+  const requeueWord = useCallback(() => {
+    if (!currentWord) return;
+    setDirection(1);
+    attemptsRef.current.delete(currentWord.id);
+    const withoutCurrent = queue.filter((_, idx) => idx !== currentIndex);
+    const nextQueue = [
+      ...withoutCurrent,
+      { word: currentWord, mode: "FLASHCARD" as StudyMode, stepCount: 1 },
+    ];
+    setQueue(nextQueue);
+    advanceQueue(nextQueue, currentIndex < withoutCurrent.length ? currentIndex : 0);
+  }, [currentWord, queue, currentIndex, advanceQueue]);
+
+  // -------------------------------------------------------------
+  // The steps are over: the server decides the grade.
+  // -------------------------------------------------------------
+  const reviewWord = reviewMut.mutate;
+  const sendVerdict = useCallback(
+    (pending: WordVerdictState) => {
+      setVerdict(pending);
+      reviewWord(
+        { wordId: pending.word.id, evidence: pending.evidence },
+        {
+          onSuccess: (reply) =>
+            setVerdict({
+              ...pending,
+              status: "READY",
+              grade: reply?.grade ?? "GOOD",
+              intervalDays: reply?.intervalDays,
+            }),
+          onError: () => setVerdict({ ...pending, status: "ERROR" }),
+        },
+      );
+    },
+    [reviewWord, setVerdict]
+  );
+
+  const submitWord = useCallback(
+    (word: VocabWord) => {
+      if (verdictRef.current || isCompleted) return;
+      if (isRecording && recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {
+          // ignore
+        }
+        setIsRecording(false);
+      }
+      sendVerdict({
+        word,
+        evidence: toReviewEvidence(evidenceOf(word.id)),
+        status: "PENDING",
+      });
+    },
+    [isCompleted, isRecording, sendVerdict, evidenceOf]
+  );
+
+  /** "Tiếp tục" on the grade: the word is done for now, or comes back this session. */
+  const handleContinue = useCallback(() => {
+    const v = verdictRef.current;
+    if (!v || v.status !== "READY") return;
+    setVerdict(null);
+    if (v.grade === "AGAIN") {
+      playChime("step");
+      requeueWord();
+    } else {
+      attemptsRef.current.delete(v.word.id);
+      finishWord();
+    }
+  }, [finishWord, requeueWord, setVerdict]);
+
+  const handleRetryVerdict = useCallback(() => {
+    const v = verdictRef.current;
+    if (!v || v.status !== "ERROR") return;
+    sendVerdict({ ...v, status: "PENDING" });
+  }, [sendVerdict]);
+
+  /** "Để sau": nothing was saved, the word comes back at the end of the session. */
+  const handleDeferVerdict = useCallback(() => {
+    const v = verdictRef.current;
+    if (!v || v.status !== "ERROR") return;
+    setVerdict(null);
+    toast("Chưa lưu được kết quả, từ này sẽ quay lại cuối phiên.");
+    requeueWord();
+  }, [requeueWord, setVerdict]);
 
   // -------------------------------------------------------------
   // ACTION: "CHƯA NHỚ" (Escalate to next sequential mode)
   // Flashcard -> Trắc nghiệm -> Gõ từ -> Phát âm
   // -------------------------------------------------------------
   const handleEscalateMode = useCallback(() => {
-    if (!currentWord || isCompleted) return;
+    if (!currentWord || isCompleted || verdictRef.current) return;
 
     resetModeInputs();
     playChime("step");
@@ -264,6 +384,19 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   }, [currentWord, isCompleted, currentMode, currentIndex, resetModeInputs]);
 
   // -------------------------------------------------------------
+  // ACTION: "KIỂM TRA NHANH" (the old "Đã thuộc", owner 2026-11-26):
+  // the quiz and the typing still decide; the speaking step is not asked.
+  // -------------------------------------------------------------
+  const handleQuickCheck = useCallback(() => {
+    if (!currentWord || isCompleted || verdictRef.current || currentMode !== "FLASHCARD") return;
+    record(currentWord.id, withQuickCheck);
+    setQueue((prevQueue) =>
+      prevQueue.map((item, idx) => (idx === currentIndex ? { ...item, quickCheck: true } : item))
+    );
+    handleEscalateMode();
+  }, [currentWord, isCompleted, currentMode, currentIndex, record, handleEscalateMode]);
+
+  // -------------------------------------------------------------
   // ACTION: SELECT QUIZ OPTION (Mode 2)
   // -------------------------------------------------------------
   const handleSelectQuizOption = useCallback(
@@ -275,6 +408,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
 
       setSelectedQuizKey(key);
       setQuizAnswered(true);
+      record(currentWord.id, (e) => withQuiz(e, selectedOpt.isCorrect));
 
       if (selectedOpt.isCorrect) {
         playChime("success");
@@ -290,33 +424,46 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
         }, 1200);
       }
     },
-    [quizAnswered, currentWord, quizOptions, handleEscalateMode]
+    [quizAnswered, currentWord, quizOptions, record, handleEscalateMode]
   );
 
   // -------------------------------------------------------------
   // ACTION: CHECK TYPING (Mode 3)
   // -------------------------------------------------------------
   const handleCheckTyping = useCallback(() => {
-    if (!currentWord || typingFeedback) return;
+    if (!currentWord || typingFeedback || checkingRef.current) return;
+    checkingRef.current = true;
 
     const normalizedInput = typingInput.trim().toLowerCase();
     const normalizedTarget = currentWord.word.trim().toLowerCase();
+    const correct = normalizedInput === normalizedTarget;
+    record(currentWord.id, (e) => withTyping(e, correct, typingHintCount));
+    // After a quick check the typing is the last step.
+    const word = currentWord;
+    const next = () =>
+      evidenceOf(word.id).quickCheck ? submitWord(word) : handleEscalateMode();
 
-    if (normalizedInput === normalizedTarget) {
+    if (correct) {
       playChime("success");
       setTypingFeedback("CORRECT");
-      setTimeout(() => {
-        handleEscalateMode(); // advances to Mode 4: Phát âm
-      }, 1000);
+      setTimeout(next, 1000);
     } else {
       playChime("error");
       setTypingFeedback("INCORRECT");
       handlePlayAudio();
-      setTimeout(() => {
-        handleEscalateMode(); // advances to Mode 4: Phát âm for reinforcement
-      }, 1800);
+      setTimeout(next, 1800);
     }
-  }, [currentWord, typingFeedback, typingInput, handleEscalateMode, handlePlayAudio]);
+  }, [
+    currentWord,
+    typingFeedback,
+    typingInput,
+    typingHintCount,
+    record,
+    evidenceOf,
+    handleEscalateMode,
+    handlePlayAudio,
+    submitWord,
+  ]);
 
   const handleRevealTypingHint = useCallback(() => {
     if (!currentWord) return;
@@ -327,10 +474,15 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   }, [currentWord, typingHintCount]);
 
   // -------------------------------------------------------------
-  // ACTION: SPEECH PRACTICE & SRS RATING (Mode 4)
+  // ACTION: SPEECH PRACTICE (Mode 4)
   // -------------------------------------------------------------
+  const speakingResult = useCallback(
+    (word: VocabWord, result: SpeakingResult) => record(word.id, (e) => withSpeaking(e, result)),
+    [record]
+  );
+
   const handleToggleRecordSpeech = useCallback(() => {
-    if (!currentWord) return;
+    if (!currentWord || verdictRef.current) return;
 
     if (isRecording) {
       if (recognitionRef.current) {
@@ -347,19 +499,16 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     const SpeechRecognitionClass =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
+    // No speech recognition in this browser: the step cannot be checked, and
+    // it no longer pretends it passed (the grade would be wrong).
     if (!SpeechRecognitionClass) {
-      // Fallback if speech API is unavailable
-      setIsRecording(true);
-      setTimeout(() => {
-        setIsRecording(false);
-        setSpokenTranscript(currentWord.word);
-        setSpeechScore(100);
-        setSpeechFeedback("Phát âm chính xác!");
-        playChime("success");
-      }, 1600);
+      speakingResult(currentWord, "UNAVAILABLE");
+      setSpeechScore(null);
+      setSpeechFeedback("Trình duyệt này không nhận được giọng nói. Bấm Tiếp tục để xem kết quả.");
       return;
     }
 
+    const word = currentWord;
     try {
       const recognition = new SpeechRecognitionClass();
       recognition.lang = settings.preferUkAccent ? "en-GB" : "en-US";
@@ -376,7 +525,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       recognition.onresult = (event: any) => {
         const transcript = event.results?.[0]?.[0]?.transcript || "";
         const cleanTranscript = transcript.trim().toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, "");
-        const cleanTarget = currentWord.word.trim().toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, "");
+        const cleanTarget = word.word.trim().toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, "");
 
         setSpokenTranscript(transcript);
 
@@ -389,10 +538,13 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
           cleanTranscript.includes(" " + cleanTarget + " ");
 
         if (isMatch) {
+          speakingResult(word, "PASSED");
           setSpeechScore(100);
           setSpeechFeedback("Phát âm chính xác!");
           playChime("success");
+          setTimeout(() => submitWord(word), 900);
         } else {
+          speakingResult(word, "FAILED");
           setSpeechScore(0);
           setSpeechFeedback("Chưa chính xác, cần cải thiện thêm.");
           playChime("error");
@@ -400,9 +552,10 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       };
 
       recognition.onerror = () => {
+        speakingResult(word, "UNAVAILABLE");
         setIsRecording(false);
         setSpeechScore(null);
-        setSpeechFeedback("Không thể nhận diện âm thanh. Bạn hãy thử lại hoặc chọn mức nhớ bên dưới:");
+        setSpeechFeedback("Không nhận được giọng nói. Bạn có thể thử lại, hoặc bấm Tiếp tục.");
       };
 
       recognition.onend = () => {
@@ -412,57 +565,30 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       recognitionRef.current = recognition;
       recognition.start();
     } catch {
+      speakingResult(word, "UNAVAILABLE");
       setIsRecording(false);
       setSpeechScore(null);
-      setSpeechFeedback("Không thể truy cập microphone. Bạn hãy thử lại hoặc chọn mức nhớ bên dưới:");
+      setSpeechFeedback("Không truy cập được micro. Bạn có thể thử lại, hoặc bấm Tiếp tục.");
     }
-  }, [currentWord, isRecording, settings.preferUkAccent]);
+  }, [currentWord, isRecording, settings.preferUkAccent, speakingResult, submitWord]);
 
-  // Skip speaking action (reveals SRS ratings without recording)
+  // "Bỏ qua phần phát âm": the word is graded without it.
   const handleSkipSpeaking = useCallback(() => {
+    if (!currentWord || verdictRef.current) return;
     setIsSpeakingSkipped(true);
-    if (isRecording && recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        // ignore
-      }
-      setIsRecording(false);
-    }
-  }, [isRecording]);
+    speakingResult(currentWord, "SKIPPED");
+    submitWord(currentWord);
+  }, [currentWord, speakingResult, submitWord]);
 
-  // SRS Rating Selection
-  const handleSrsRate = useCallback(
-    (rating: SrsRating) => {
-      if (!currentWord || isCompleted) return;
-
-      if (rating === "AGAIN") {
-        playChime("step");
-        setDirection(1);
-        reviewMut.mutate({ wordId: currentWord.id, grade: "AGAIN" });
-
-        const withoutCurrent = queue.filter((_, idx) => idx !== currentIndex);
-        const nextQueue = [
-          ...withoutCurrent,
-          {
-            word: currentWord,
-            mode: "FLASHCARD" as StudyMode,
-            stepCount: 1,
-          },
-        ];
-        setQueue(nextQueue);
-        const nextIdx = currentIndex < withoutCurrent.length ? currentIndex : 0;
-        advanceQueue(nextQueue, nextIdx);
-      } else {
-        // HARD, GOOD, EASY -> known for now, next review by the rating
-        finishWord(rating);
-      }
-    },
-    [currentWord, isCompleted, queue, currentIndex, advanceQueue, finishWord, reviewMut]
-  );
+  // "Tiếp tục" after a failed or impossible speaking attempt.
+  const handleContinueSpeaking = useCallback(() => {
+    if (!currentWord) return;
+    submitWord(currentWord);
+  }, [currentWord, submitWord]);
 
   // Directly switch mode via stage pill tabs
   const handleSwitchMode = useCallback((mode: StudyMode) => {
+    if (verdictRef.current) return;
     resetModeInputs();
     setDirection(1);
     setQueue((prevQueue) => {
@@ -480,6 +606,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   // Jump directly to a specific word
   const handleJumpToWord = useCallback(
     (wordId: number) => {
+      if (verdictRef.current) return;
       resetModeInputs();
       const existingIdx = queue.findIndex((item) => item.word.id === wordId);
       if (existingIdx !== -1) {
@@ -505,6 +632,8 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   // Restart session
   const handleRestart = useCallback(() => {
     resetModeInputs();
+    attemptsRef.current.clear();
+    setVerdict(null);
     setQueue(
       initialWords.map((word) => ({
         word,
@@ -517,7 +646,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     setSessionMasteredIds(new Set());
     setReviewIds(new Set());
     setSessionXp(0);
-  }, [initialWords, resetModeInputs]);
+  }, [initialWords, resetModeInputs, setVerdict]);
 
   // Sync if topicId changes
   const prevTopicIdRef = useRef<number>(topicId);
@@ -528,18 +657,29 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     }
   }, [topicId, handleRestart]);
 
+  const speakingDone = speechScore !== null || speechFeedback !== null || isSpeakingSkipped;
+  const canContinueSpeaking = speechFeedback !== null && speechScore !== 100;
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const v = verdictRef.current;
+      if (v) {
+        // On the grade, Enter goes on (or retries a save that failed).
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (v.status === "READY") handleContinue();
+          else if (v.status === "ERROR") handleRetryVerdict();
+        }
+        return;
+      }
+
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         e.target instanceof HTMLSelectElement
       ) {
-        if (e.key === "Enter" && currentMode === "TYPING") {
-          e.preventDefault();
-          handleCheckTyping();
-        }
+        // The typing input checks on its own Enter.
         return;
       }
 
@@ -554,7 +694,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       } else if (e.key === "Tab") {
         e.preventDefault();
         if (currentMode === "FLASHCARD") {
-          handleMarkMastered();
+          handleQuickCheck();
         }
       } else if (e.key === "Enter") {
         e.preventDefault();
@@ -562,14 +702,11 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
           handleEscalateMode();
         } else if (currentMode === "TYPING") {
           handleCheckTyping();
-        } else if (
-          currentMode === "SPEAKING" &&
-          speechScore === null &&
-          speechFeedback === null &&
-          !isSpeakingSkipped
-        ) {
-          // "Bỏ qua phần phát âm" (owner 2026-11-16); only while it is shown.
-          handleSkipSpeaking();
+        } else if (currentMode === "SPEAKING") {
+          // "Bỏ qua phần phát âm" before any attempt (owner 2026-11-16),
+          // "Tiếp tục" after a failed or impossible one.
+          if (!speakingDone) handleSkipSpeaking();
+          else if (canContinueSpeaking) handleContinueSpeaking();
         }
       } else if (["1", "2", "3", "4"].includes(e.key)) {
         if (currentMode === "QUIZ" && !quizAnswered) {
@@ -581,20 +718,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
             handleEscalateMode();
           } else if (e.key === "2") {
             e.preventDefault();
-            handleMarkMastered();
-          }
-        } else if (currentMode === "SPEAKING") {
-          if (speechScore !== null || speechFeedback !== null || isSpeakingSkipped) {
-            const srsMap: Record<string, SrsRating> = {
-              "1": "AGAIN",
-              "2": "HARD",
-              "3": "GOOD",
-              "4": "EASY",
-            };
-            if (srsMap[e.key]) {
-              e.preventDefault();
-              handleSrsRate(srsMap[e.key]);
-            }
+            handleQuickCheck();
           }
         }
       }
@@ -605,16 +729,17 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   }, [
     currentMode,
     quizAnswered,
-    speechScore,
-    speechFeedback,
-    isSpeakingSkipped,
+    speakingDone,
+    canContinueSpeaking,
     handleCheckTyping,
-    handleMarkMastered,
+    handleQuickCheck,
     handleEscalateMode,
     handleSelectQuizOption,
     handleToggleRecordSpeech,
-    handleSrsRate,
     handleSkipSpeaking,
+    handleContinueSpeaking,
+    handleContinue,
+    handleRetryVerdict,
   ]);
 
   // Derived metrics for UI
@@ -658,6 +783,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     setTypingInput,
     typingHintCount,
     typingFeedback,
+    isQuickCheck: Boolean(currentItem?.quickCheck),
     handleCheckTyping,
     handleRevealTypingHint,
     // Speaking state
@@ -666,12 +792,18 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     speechScore,
     speechFeedback,
     isSpeakingSkipped,
+    canContinueSpeaking,
     handleToggleRecordSpeech,
     handleSkipSpeaking,
-    handleSrsRate,
+    handleContinueSpeaking,
+    // The system's grade of the word just finished
+    verdict,
+    handleContinue,
+    handleRetryVerdict,
+    handleDeferVerdict,
     // General Actions
     handlePlayAudio,
-    handleMarkMastered,
+    handleQuickCheck,
     handleEscalateMode,
     handleSwitchMode,
     handleJumpToWord,
