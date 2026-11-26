@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, Activity, DollarSign } from "lucide-react";
 import {
   getBarHeightPercent,
   getRangeLabel,
@@ -49,7 +48,7 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
       case "revenue":
         return "₫";
       default:
-        return "lượt hoạt động";
+        return "lượt làm bài";
     }
   };
 
@@ -83,17 +82,13 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
     <section aria-labelledby="analytics-chart-heading" className="space-y-5">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/90 pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h2 id="analytics-chart-heading" className="text-base font-bold text-slate-950">
-              Xu hướng vận hành hệ thống
-            </h2>
-            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
-              <BarChart3 size={13} aria-hidden="true" />
-              {rangeLabel}
-            </span>
-          </div>
-          <p className="mt-1 text-xs sm:text-sm text-slate-600 font-medium dark:text-slate-400">
-            Dữ liệu ghi nhận thực tế từ lịch sử nộp bài và giao dịch của học viên
+          <h2 id="analytics-chart-heading" className="text-base font-semibold text-slate-950 dark:text-slate-100">
+            Hoạt động và doanh thu
+          </h2>
+          {/* What the bars count, and over which range (owner 2026-11-26). */}
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Lượt làm bài của học viên (Nghe, Đọc, Viết, Nói, ngữ pháp, luyện đề) và doanh thu gói nâng cấp,{" "}
+            {rangeLabel.toLowerCase()}.
           </p>
         </div>
 
@@ -111,7 +106,6 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <Activity size={13} />
             <span>Học tập</span>
           </button>
 
@@ -127,16 +121,15 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
                 : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            <DollarSign size={13} />
             <span>Doanh thu</span>
           </button>
         </div>
       </header>
 
       {trends.length === 0 ? (
-        <div className="flex min-h-56 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 px-5 text-center text-sm text-slate-600 font-medium dark:text-slate-400">
-          Chưa có dữ liệu thống kê trong khoảng thời gian này.
-        </div>
+        <p className="py-10 text-center text-sm text-slate-600 dark:text-slate-400">
+          Chưa có dữ liệu trong khoảng thời gian này.
+        </p>
       ) : (
         <div className="border-b border-slate-200/90 px-1 pt-6 pb-2">
           <div className="relative flex h-60 items-end gap-1.5 sm:gap-2" role="list" aria-label={`Biểu đồ ${rangeLabel}`}>
@@ -163,7 +156,7 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
                     {isActive && (
                       <span className="pointer-events-none absolute bottom-[calc(100%+8px)] z-20 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-md">
                         <span className="font-semibold text-slate-600 mr-1 dark:text-slate-400">{item.month}:</span>
-                        <span className="font-mono">{formatDisplayValue(val)}</span>
+                        <span className="tabular-nums">{formatDisplayValue(val)}</span>
                       </span>
                     )}
 
@@ -176,7 +169,7 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
                       style={{ height: `${height}%` }}
                     />
                   </button>
-                  <span className={`mt-2.5 min-h-4 text-xs font-medium font-mono ${showTick ? "text-slate-600" : "text-transparent"} dark:text-slate-400`} aria-hidden={!showTick}>
+                  <span className={`mt-2.5 min-h-4 text-xs font-medium tabular-nums ${showTick ? "text-slate-600" : "text-transparent"} dark:text-slate-400`} aria-hidden={!showTick}>
                     {item.month}
                   </span>
                 </div>
@@ -189,16 +182,16 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
       {/* Metric Aggregate Summary */}
       <dl className="grid grid-cols-3 divide-x divide-slate-200/90 rounded-xl bg-slate-50/70 border border-slate-200/80 p-3 sm:p-4">
         <div className="pr-3 text-center sm:text-left">
-          <dt className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          <dt className="text-sm text-slate-600 dark:text-slate-400">
             {metric === "revenue" ? "Tổng thu kỳ này" : "Tổng lượt trong kỳ"}
           </dt>
-          <dd className="mt-1.5 text-lg sm:text-xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
+          <dd className="mt-1.5 text-lg sm:text-xl font-semibold text-slate-950 tabular-nums dark:text-slate-100">
             {metric === "revenue" ? formatVndCompact(total) : total.toLocaleString("vi-VN")}
           </dd>
         </div>
         <div className="px-3 text-center sm:text-left">
-          <dt className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Kỳ cao nhất</dt>
-          <dd className="mt-1.5 text-lg sm:text-xl font-bold tracking-tight text-slate-950 font-mono tabular-nums truncate">
+          <dt className="text-sm text-slate-600 dark:text-slate-400">Kỳ cao nhất</dt>
+          <dd className="mt-1.5 text-lg sm:text-xl font-semibold text-slate-950 tabular-nums dark:text-slate-100 truncate">
             {peak ? (
               metric === "revenue" ? (
                 `${peak.month} · ${formatVndCompact(getValue(peak))}`
@@ -211,8 +204,8 @@ export default function AdminAnalyticsChart({ data, range }: AdminAnalyticsChart
           </dd>
         </div>
         <div className="pl-3 text-center sm:text-left">
-          <dt className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Trung bình mỗi kỳ</dt>
-          <dd className="mt-1.5 text-lg sm:text-xl font-bold tracking-tight text-slate-950 font-mono tabular-nums">
+          <dt className="text-sm text-slate-600 dark:text-slate-400">Trung bình mỗi kỳ</dt>
+          <dd className="mt-1.5 text-lg sm:text-xl font-semibold text-slate-950 tabular-nums dark:text-slate-100">
             {metric === "revenue" ? formatVndCompact(average) : average.toLocaleString("vi-VN")}
           </dd>
         </div>

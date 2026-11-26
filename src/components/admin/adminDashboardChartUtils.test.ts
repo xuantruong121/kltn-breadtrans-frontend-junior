@@ -18,3 +18,22 @@ describe("admin dashboard chart utilities", () => {
     assert.equal(getRangeLabel("12m"), "12 tháng gần nhất");
   });
 });
+
+it("contentBreakdownRows: one row per area in its own unit, missing counts as 0", async () => {
+  const { contentBreakdownRows } = await import("./adminDashboardChartUtils.ts");
+  const rows = contentBreakdownRows({ vocabDecks: 30, speakingSets: 21, exams: 3 });
+  assert.deepEqual(rows.map((row) => row.label), [
+    "Từ vựng",
+    "Ngữ pháp",
+    "Nghe",
+    "Đọc",
+    "Viết",
+    "Nói",
+    "Luyện đề",
+    "Phim, nhạc",
+  ]);
+  assert.deepEqual(rows[0], { label: "Từ vựng", count: 30, unit: "bộ từ" });
+  assert.deepEqual(rows[5], { label: "Nói", count: 21, unit: "bộ luyện" });
+  assert.equal(rows[2].count, 0);
+  assert.equal(contentBreakdownRows(undefined).every((row) => row.count === 0), true);
+});
