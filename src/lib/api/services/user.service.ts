@@ -180,7 +180,32 @@ export interface UpdateShippingProfilePayload {
   addressLine: string;
 }
 
+/** GET /users/me/learning-summary: "Kết quả học tập" for a period, from the learner's rows. */
+export type LearningSummaryPeriod = "today" | "week" | "month" | "all" | "custom";
+export type LearningSummarySkill = { count: number; seconds: number; days: number };
+export interface LearningSummary {
+  period: LearningSummaryPeriod;
+  from: string | null;
+  to: string;
+  days: number | null;
+  totals: { studySeconds: number; questions: number; vocabMastered: number; xp: number };
+  skills: Record<"EXAM" | "READING" | "LISTENING" | "SPEAKING" | "WRITING" | "VOCAB", LearningSummarySkill>;
+}
+
 export const userService = {
+  getLearningSummary: async (params: {
+    period: LearningSummaryPeriod;
+    from?: string;
+    to?: string;
+  }): Promise<LearningSummary> => {
+    return await axiosClient.get("/users/me/learning-summary", { params });
+  },
+
+  /** What a practice room counted; at most 120 seconds per report. */
+  addStudyTime: async (skill: string, seconds: number): Promise<{ dayKey: string; added: number }> => {
+    return await axiosClient.post("/users/me/study-time", { skill, seconds });
+  },
+
   getProfile: async (): Promise<UserProfile> => {
     return await axiosClient.get("/users/profile");
   },

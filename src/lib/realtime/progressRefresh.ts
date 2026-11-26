@@ -22,6 +22,8 @@ export const PROGRESS_QUERY_KEYS: readonly (readonly string[])[] = [
   ["my-pet"],
   ["my-badges"],
   ["user-skills-summary"],
+  // the dashboard's "Kết quả học tập"
+  ["learning-summary"],
   ["learning-history"],
   ["mistakes"],
   ["notifications"],

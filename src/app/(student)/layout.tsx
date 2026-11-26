@@ -15,6 +15,8 @@ import { useAuthSyncStore } from "@/stores/authSyncStore";
 import { useGamificationStore } from "@/stores/gamificationStore";
 import { LearningFocusProvider, useLearningFocusMode } from "@/contexts/LearningFocusContext";
 import { isLearningFocusRoute } from "@/lib/practice/focusMode";
+import { studySkillFor } from "@/lib/practice/studyTime";
+import { useStudyTimer } from "@/lib/practice/useStudyTimer";
 import { shouldResetScrollOnPathChange } from "@/lib/navigation/forwardScrollPolicy";
 
 const FloatingAiTutor = dynamic(
@@ -142,6 +144,8 @@ function StudentLayoutContent({
   const isHistoryPopRef = useRef(false);
   const { isFocusMode } = useLearningFocusMode();
   const isPracticeRoomPage = isFocusMode || isLearningFocusRoute(pathname);
+  // Time in the practice rooms, for "Thời gian học" on the dashboard (owner 2026-11-26).
+  useStudyTimer(user ? studySkillFor(pathname, isFocusMode) : null);
   const isPracticeCatalogPage = ["/listening", "/speaking", "/reading", "/writing", "/exams", "/toeic", "/flashcard", "/arena", "/ranking"].includes(pathname);
   // Result pages use the full width like the catalogs; the page caps itself at 1440 px (owner 2026-11-12).
   const isResultPage = /^\/(listening|reading|writing|exams)\/submissions\/[^/]+$/.test(pathname) || pathname === "/mistakes";

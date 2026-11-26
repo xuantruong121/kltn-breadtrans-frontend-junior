@@ -57,15 +57,17 @@ import {
   FILTER_PERIODS,
   type FilterPeriod,
   getVietnamDayOfWeek,
-  getVietnamFormattedDate,
   getVietnamGreeting,
-  matchPartActivity,
+  learningSummaryParams,
+  periodPhrase,
   resolveQuestAction,
   SKILL_DETAIL_CONFIGS,
+  SKILL_TILE_ORDER,
   type SkillKey,
   weekDayState,
   type WeekDayState,
 } from "./dashboardUtils";
+import { formatStudyTime } from "@/lib/practice/studyTime";
 
 const emptySubscribe = () => () => {};
 
@@ -261,13 +263,6 @@ export default function DashboardPage() {
     staleTime: 30_000,
   });
 
-  // 4. 4-Skills Summary Data
-  const { data: skillsSummary } = useQuery({
-    queryKey: ["user-skills-summary", user?.id],
-    queryFn: userService.getSkillProgress,
-    enabled,
-    staleTime: 60_000,
-  });
 
   const {
     data: dailyPractice,
@@ -294,7 +289,7 @@ export default function DashboardPage() {
       queryClient.invalidateQueries({ queryKey: ["dashboard-today", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["user-stats", user?.id] });
       queryClient.invalidateQueries({ queryKey: ["my-pet", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["user-skills-summary", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["learning-summary"] });
       queryClient.invalidateQueries({ queryKey: ["daily-practice", user?.id] });
       queryClient.invalidateQueries({ queryKey: PLAN_QUERY_KEYS.effectivePlan });
     };
@@ -396,314 +391,65 @@ export default function DashboardPage() {
     }
   };
 
-  // Study Duration Metric
-  const studyDurationText = useMemo(() => {
-    if (filterPeriod === "today") {
-      const activitySec = (todayData?.activities ?? []).reduce(
-        (acc, act) => acc + (Number(act.metadata?.durationSec) || 0),
-        0
-      );
-      if (activitySec > 0) {
-        return `${Math.max(1, Math.round(activitySec / 60))}m`;
-      }
-      return safeCompleted > 0 ? `${safeCompleted * 3}m` : "1m";
-    }
-    if (filterPeriod === "week") {
-      return `${Math.max(15, (safeCompleted || 1) * 7)}m`;
-    }
-    if (filterPeriod === "month") {
-      return `${Math.max(45, (safeCompleted || 1) * 25)}m`;
-    }
-    if (filterPeriod === "custom") {
-      return `${Math.max(10, Math.round(customDays * 12))}m`;
-    }
-    return `${Math.max(60, (stats?.totalQuizzesDone ?? 0) * 8)}m`;
-  }, [filterPeriod, todayData?.activities, safeCompleted, stats?.totalQuizzesDone, customDays]);
-
-  // Questions Practiced Metric
-  const questionsPracticedText = useMemo(() => {
-    if (filterPeriod === "today") {
-      const questQuestions = quests.reduce((acc, q) => {
-        const type = (q.type ?? q.quest?.type ?? "").toUpperCase();
-        if (
-          type.includes("QUIZ") ||
-          type.includes("PRACTICE") ||
-          type.includes("LISTENING") ||
-          type.includes("READING")
-        ) {
-          return acc + (q.currentValue || 0);
-        }
-        return acc;
-      }, 0);
-      return `${questQuestions || (todayData?.activities?.length ?? 0)} câu`;
-    }
-    if (filterPeriod === "week") {
-      return `${Math.min(stats?.totalQuizzesDone ?? 0, Math.max(12, safeCompleted * 4))} câu`;
-    }
-    if (filterPeriod === "month") {
-      return `${Math.min(stats?.totalQuizzesDone ?? 0, Math.max(35, safeCompleted * 10))} câu`;
-    }
-    if (filterPeriod === "custom") {
-      return `${Math.min(stats?.totalQuizzesDone ?? 0, Math.max(5, Math.round(customDays * 4)))} câu`;
-    }
-    return `${stats?.totalQuizzesDone ?? 0} câu`;
-  }, [filterPeriod, quests, todayData?.activities, stats?.totalQuizzesDone, safeCompleted, customDays]);
-
-  // Vocab Learned Metric
-  const vocabLearnedText = useMemo(() => {
-    if (filterPeriod === "today") {
-      const vocabQuest = quests.find((q) => {
-        const type = (q.type ?? q.quest?.type ?? "").toUpperCase();
-        return type === "LEARN_VOCAB" || type === "DO_VOCAB";
-      });
-      return `${vocabQuest?.currentValue ?? 0} từ`;
-    }
-    if (filterPeriod === "week") {
-      return `${Math.min(stats?.masteredVocabCount ?? 0, 15)} từ`;
-    }
-    if (filterPeriod === "month") {
-      return `${Math.min(stats?.masteredVocabCount ?? 0, 45)} từ`;
-    }
-    if (filterPeriod === "custom") {
-      return `${Math.min(stats?.masteredVocabCount ?? 0, Math.max(2, Math.round(customDays * 3)))} từ`;
-    }
-    return `${stats?.masteredVocabCount ?? 0} từ`;
-  }, [filterPeriod, quests, stats?.masteredVocabCount, customDays]);
+  // "Kết quả học tập" from GET /users/me/learning-summary, the learner's own
+  // rows (owner 2026-11-26: these figures were made up here, e.g. "1m" of
+  // study with nothing done, or the month's XP as 40 % of all XP).
+  const summaryParams = learningSummaryParams(filterPeriod, customStartDate, customEndDate);
+  const customReady =
+    filterPeriod !== "custom" || (Boolean(customStartDate) && Boolean(customEndDate) && customStartDate <= customEndDate);
+  const { data: learningSummary } = useQuery({
+    queryKey: ["learning-summary", summaryParams],
+    queryFn: () => userService.getLearningSummary(summaryParams),
+    enabled: canAccessFilterPeriod(filterPeriod, userPlanCode) && customReady,
+  });
+  const periodText = periodPhrase(filterPeriod);
+  const totals = learningSummary?.totals;
+  const formatCount = (n: number, unit: string) => `${n.toLocaleString("vi-VN")} ${unit}`;
+  const studyDurationText = totals ? formatStudyTime(totals.studySeconds) : "—";
+  const questionsPracticedText = totals ? formatCount(totals.questions, "câu") : "—";
+  const vocabLearnedText = totals ? formatCount(totals.vocabMastered, "từ") : "—";
+  const xpEarnedText = totals ? formatCount(totals.xp, "XP") : "—";
 
   const shieldCount = stats?.streakFreezes ?? 0;
 
-  // XP Earned Metric
-  const xpEarnedText = useMemo(() => {
-    if (filterPeriod === "today") {
-      return `${todayData?.summary?.earnedXp ?? 0} XP`;
-    }
-    if (filterPeriod === "week") {
-      return `${stats?.weeklyExp ?? 0} XP`;
-    }
-    if (filterPeriod === "month") {
-      return `${Math.max(stats?.weeklyExp ?? 0, Math.round((stats?.totalPoints ?? 0) * 0.4))} XP`;
-    }
-    if (filterPeriod === "custom") {
-      return `${Math.min(stats?.totalPoints ?? 0, Math.round(customDays * 45))} XP`;
-    }
-    return `${stats?.totalPoints ?? 0} XP`;
-  }, [filterPeriod, todayData?.summary?.earnedXp, stats?.weeklyExp, stats?.totalPoints, customDays]);
+  // The six tiles, each counting what it says (exams in "đề", lessons in "bài").
+  const tileIcons: Record<SkillKey, typeof FileText> = {
+    exam: FileText,
+    reading: BookOpen,
+    listening: Headphones,
+    speaking: Mic,
+    writing: PenTool,
+    vocab: Layers,
+  };
+  const breakdownData = SKILL_TILE_ORDER.map((key) => {
+    const cfg = SKILL_DETAIL_CONFIGS[key];
+    const skill = learningSummary?.skills?.[cfg.summaryKey];
+    return {
+      key,
+      label: cfg.label,
+      count: skill ? formatCount(skill.count, cfg.unit) : "—",
+      icon: tileIcons[key],
+      href: cfg.ctaHref,
+    };
+  });
 
-  // 6 Breakdown Skills / Practice Activities
-  const breakdownData = useMemo(() => {
-    const listening = skillsSummary?.skills?.find((s) => s.skill === "LISTENING");
-    const reading = skillsSummary?.skills?.find((s) => s.skill === "READING");
-    const speaking = skillsSummary?.skills?.find((s) => s.skill === "SPEAKING");
-    const writing = skillsSummary?.skills?.find((s) => s.skill === "WRITING");
-
-    const todayAct = todayData?.activities ?? [];
-
-    if (filterPeriod === "today") {
-      const examToday = todayAct.filter(
-        (a) => a.type?.includes("TOEIC") || a.type?.includes("EXAM")
-      ).length;
-      const readToday = todayAct.filter((a) => a.type?.includes("READING")).length;
-      const listenToday = todayAct.filter((a) => a.type?.includes("LISTENING")).length;
-      const speakToday = todayAct.filter((a) => a.type?.includes("SPEAKING")).length;
-      const writeToday = todayAct.filter((a) => a.type?.includes("WRITING")).length;
-      const vocabQuest = quests.find((q) => {
-        const type = (q.type ?? q.quest?.type ?? "").toUpperCase();
-        return type === "LEARN_VOCAB" || type === "DO_VOCAB";
-      });
-      const vocabToday = vocabQuest?.currentValue ?? 0;
-
-      return [
-        { key: "exam" as SkillKey, label: "Luyện đề", count: `${examToday} câu`, icon: FileText, href: "/exams" },
-        { key: "reading" as SkillKey, label: "Đọc", count: `${readToday} câu`, icon: BookOpen, href: "/reading" },
-        { key: "listening" as SkillKey, label: "Nghe", count: `${listenToday} câu`, icon: Headphones, href: "/listening" },
-        { key: "speaking" as SkillKey, label: "Nói", count: `${speakToday} lượt`, icon: Mic, href: "/speaking" },
-        { key: "writing" as SkillKey, label: "Viết", count: `${writeToday} bài`, icon: PenTool, href: "/writing" },
-        { key: "vocab" as SkillKey, label: "Flashcard", count: `${vocabToday} thẻ`, icon: Layers, href: "/flashcard" },
-      ];
-    }
-
-    if (filterPeriod === "week") {
-      return [
-        { key: "exam" as SkillKey, label: "Luyện đề", count: `${Math.min(stats?.totalToeicTestsDone ?? 0, 2)} câu`, icon: FileText, href: "/exams" },
-        { key: "reading" as SkillKey, label: "Đọc", count: `${Math.min(reading?.completedItems ?? 0, 4)} câu`, icon: BookOpen, href: "/reading" },
-        { key: "listening" as SkillKey, label: "Nghe", count: `${Math.min(listening?.completedItems ?? 0, 5)} câu`, icon: Headphones, href: "/listening" },
-        { key: "speaking" as SkillKey, label: "Nói", count: `${Math.min(speaking?.completedItems ?? 0, 3)} lượt`, icon: Mic, href: "/speaking" },
-        { key: "writing" as SkillKey, label: "Viết", count: `${Math.min(writing?.completedItems ?? 0, 2)} bài`, icon: PenTool, href: "/writing" },
-        { key: "vocab" as SkillKey, label: "Flashcard", count: `${Math.min(stats?.masteredVocabCount ?? 0, 15)} thẻ`, icon: Layers, href: "/flashcard" },
-      ];
-    }
-
-    if (filterPeriod === "month") {
-      return [
-        { key: "exam" as SkillKey, label: "Luyện đề", count: `${Math.min(stats?.totalToeicTestsDone ?? 0, 6)} câu`, icon: FileText, href: "/exams" },
-        { key: "reading" as SkillKey, label: "Đọc", count: `${Math.min(reading?.completedItems ?? 0, 12)} câu`, icon: BookOpen, href: "/reading" },
-        { key: "listening" as SkillKey, label: "Nghe", count: `${Math.min(listening?.completedItems ?? 0, 15)} câu`, icon: Headphones, href: "/listening" },
-        { key: "speaking" as SkillKey, label: "Nói", count: `${Math.min(speaking?.completedItems ?? 0, 10)} lượt`, icon: Mic, href: "/speaking" },
-        { key: "writing" as SkillKey, label: "Viết", count: `${Math.min(writing?.completedItems ?? 0, 8)} bài`, icon: PenTool, href: "/writing" },
-        { key: "vocab" as SkillKey, label: "Flashcard", count: `${Math.min(stats?.masteredVocabCount ?? 0, 45)} thẻ`, icon: Layers, href: "/flashcard" },
-      ];
-    }
-
-    if (filterPeriod === "custom") {
-      const scale = Math.min(1, customDays / 30);
-      return [
-        { key: "exam" as SkillKey, label: "Luyện đề", count: `${Math.round((stats?.totalToeicTestsDone ?? 0) * scale)} câu`, icon: FileText, href: "/exams" },
-        { key: "reading" as SkillKey, label: "Đọc", count: `${Math.round((reading?.completedItems ?? 0) * scale)} câu`, icon: BookOpen, href: "/reading" },
-        { key: "listening" as SkillKey, label: "Nghe", count: `${Math.round((listening?.completedItems ?? 0) * scale)} câu`, icon: Headphones, href: "/listening" },
-        { key: "speaking" as SkillKey, label: "Nói", count: `${Math.round((speaking?.completedItems ?? 0) * scale)} lượt`, icon: Mic, href: "/speaking" },
-        { key: "writing" as SkillKey, label: "Viết", count: `${Math.round((writing?.completedItems ?? 0) * scale)} bài`, icon: PenTool, href: "/writing" },
-        { key: "vocab" as SkillKey, label: "Flashcard", count: `${Math.round((stats?.masteredVocabCount ?? 0) * scale)} thẻ`, icon: Layers, href: "/flashcard" },
-      ];
-    }
-
-    return [
-      { key: "exam" as SkillKey, label: "Luyện đề", count: `${stats?.totalToeicTestsDone ?? 0} câu`, icon: FileText, href: "/exams" },
-      { key: "reading" as SkillKey, label: "Đọc", count: `${reading?.completedItems ?? 0} câu`, icon: BookOpen, href: "/reading" },
-      { key: "listening" as SkillKey, label: "Nghe", count: `${listening?.completedItems ?? 0} câu`, icon: Headphones, href: "/listening" },
-      { key: "speaking" as SkillKey, label: "Nói", count: `${speaking?.completedItems ?? 0} lượt`, icon: Mic, href: "/speaking" },
-      { key: "writing" as SkillKey, label: "Viết", count: `${writing?.completedItems ?? 0} bài`, icon: PenTool, href: "/writing" },
-      { key: "vocab" as SkillKey, label: "Flashcard", count: `${stats?.masteredVocabCount ?? 0} thẻ`, icon: Layers, href: "/flashcard" },
-    ];
-  }, [
-    filterPeriod,
-    skillsSummary?.skills,
-    todayData?.activities,
-    quests,
-    stats?.totalToeicTestsDone,
-    stats?.masteredVocabCount,
-    customDays,
-  ]);
-
-  const todayFormatted = useMemo(() => getVietnamFormattedDate(new Date()), []);
-
-  // Compute detailed metrics for currently active skill
+  // The open tile's detail, for the same period: time in its rooms, what was
+  // done, the days with either, and today's quest for the skill when there is one.
   const activeSkillData = useMemo(() => {
     if (!activeDetailKey) return null;
     const cfg = SKILL_DETAIL_CONFIGS[activeDetailKey];
-    if (!cfg) return null;
-
-    const todayAct = todayData?.activities ?? [];
-    const reading = skillsSummary?.skills?.find((s) => s.skill === "READING");
-    const speaking = skillsSummary?.skills?.find((s) => s.skill === "SPEAKING");
-    const writing = skillsSummary?.skills?.find((s) => s.skill === "WRITING");
-
-    let skillDurationSec = 0;
-    let count3 = 0;
-    let count4 = 0;
-    let target = cfg.defaultTarget;
-    let currentProgress = 0;
-
-    if (activeDetailKey === "listening") {
-      const act = todayAct.filter((a) => a.type?.includes("LISTENING") || a.type === "DICTATION");
-      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
-      count3 = act.filter((a) => a.type?.includes("LISTENING")).length;
-      count4 = act.filter((a) => a.type === "DICTATION" || a.type?.includes("DICTATION")).length;
-      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("LISTENING"));
-      if (q) {
-        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
-        currentProgress = q.currentValue ?? count3;
-      } else {
-        currentProgress = count3;
-      }
-    } else if (activeDetailKey === "reading") {
-      const act = todayAct.filter((a) => a.type?.includes("READING"));
-      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
-      count3 = act.length;
-      count4 = reading?.completedExercises ?? (count3 > 0 ? 1 : 0);
-      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("READING"));
-      if (q) {
-        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
-        currentProgress = q.currentValue ?? count3;
-      } else {
-        currentProgress = count3;
-      }
-    } else if (activeDetailKey === "speaking") {
-      const act = todayAct.filter((a) => a.type?.includes("SPEAKING"));
-      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
-      count3 = act.length;
-      count4 = speaking?.completedExercises ?? (count3 > 0 ? 1 : 0);
-      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("SPEAKING"));
-      if (q) {
-        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
-        currentProgress = q.currentValue ?? count3;
-      } else {
-        currentProgress = count3;
-      }
-    } else if (activeDetailKey === "writing") {
-      const act = todayAct.filter((a) => a.type?.includes("WRITING"));
-      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
-      count3 = act.length;
-      count4 = writing?.completedExercises ?? (count3 > 0 ? 1 : 0);
-      const q = quests.find((item) => (item.type ?? item.quest?.type ?? "").toUpperCase().includes("WRITING"));
-      if (q) {
-        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
-        currentProgress = q.currentValue ?? count3;
-      } else {
-        currentProgress = count3;
-      }
-    } else if (activeDetailKey === "vocab") {
-      const act = todayAct.filter((a) => a.type?.includes("VOCAB"));
-      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
-      count3 = act.length;
-      count4 = stats?.streakCount ? Math.max(0, 5) : 0;
-      const q = quests.find((item) => {
-        const t = (item.type ?? item.quest?.type ?? "").toUpperCase();
-        return t.includes("VOCAB");
-      });
-      if (q) {
-        target = q.targetValue ?? q.quest?.targetValue ?? cfg.defaultTarget;
-        currentProgress = q.currentValue ?? count3;
-      } else {
-        currentProgress = count3;
-      }
-    } else if (activeDetailKey === "exam") {
-      const act = todayAct.filter((a) => a.type?.includes("TOEIC") || a.type?.includes("EXAM"));
-      skillDurationSec = act.reduce((acc, a) => acc + (Number(a.metadata?.durationSec) || 0), 0);
-      count3 = act.length;
-      count4 = stats?.totalToeicTestsDone ?? 0;
-      currentProgress = count3;
-    }
-
-    const durationMinutes = Math.round(skillDurationSec / 60);
-    const goalPercent = clampPercentage(currentProgress, target);
-    const hasPracticed = currentProgress > 0 || count3 > 0;
-    const practiceDays = hasPracticed ? 1 : 0;
-
-    const partsData = cfg.parts.map((p) => {
-      const partCount = todayAct.filter((a) =>
-        matchPartActivity(activeDetailKey, p.id, a)
-      ).length;
-      return {
-        ...p,
-        count: partCount,
-      };
-    });
-
-    const maxPartCount = Math.max(...partsData.map((p) => p.count), 0);
-
-    const partsWithRatio = partsData.map((p) => ({
-      ...p,
-      ratio: maxPartCount > 0 ? Math.round((p.count / maxPartCount) * 100) : 0,
-    }));
-
+    const skill = learningSummary?.skills?.[cfg.summaryKey];
+    const quest = quests.find((q) => cfg.questTypes.includes((q.type ?? q.quest?.type ?? "").toUpperCase()));
+    const target = quest ? (quest.targetValue ?? quest.quest?.targetValue ?? 0) : 0;
+    const current = quest ? (quest.currentValue ?? 0) : 0;
     return {
       ...cfg,
-      goalText: `${currentProgress}/${target} ${cfg.targetUnit}`,
-      goalPercent,
-      durationMinutes,
-      count3,
-      count4,
-      practiceDays,
-      parts: partsWithRatio,
+      quest: quest && target > 0 ? { text: `${current}/${target}`, percent: clampPercentage(current, target) } : null,
+      timeText: skill ? formatStudyTime(skill.seconds) : "—",
+      countText: skill ? formatCount(skill.count, cfg.unit) : "—",
+      daysText: skill ? (learningSummary?.days ? `${skill.days}/${learningSummary.days} ngày` : `${skill.days} ngày`) : "—",
     };
-  }, [
-    activeDetailKey,
-    todayData?.activities,
-    skillsSummary?.skills,
-    quests,
-    stats?.streakCount,
-    stats?.totalToeicTestsDone,
-  ]);
+  }, [activeDetailKey, learningSummary, quests]);
 
   const allQuestsCompleted = quests.length > 0 && safeCompleted === safeTotal && safeTotal > 0;
 
@@ -1135,8 +881,8 @@ export default function DashboardPage() {
             >
               {/* Header */}
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                  CHI TIẾT · {activeSkillData.title}
+                <h3 className="text-sm font-black text-slate-800 dark:text-slate-200">
+                  Chi tiết · {activeSkillData.title}
                 </h3>
                 <button
                   type="button"
@@ -1147,135 +893,37 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              {/* 5 Mini Summary Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                {/* 1. Target */}
-                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                    Mục tiêu hôm nay
-                  </span>
-                  <div>
-                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.goalText}
-                    </div>
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                      <div
-                        className="bg-blue-600 dark:bg-blue-500 h-full rounded-full transition-all duration-300"
-                        style={{ width: `${activeSkillData.goalPercent}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Practice Time */}
-                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                    Thời gian luyện
-                  </span>
-                  <div>
-                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.durationMinutes}m <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">hôm nay</span>
-                    </div>
-                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
-                      {todayFormatted}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 3. Primary Count */}
-                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 truncate">
-                    {activeSkillData.statLabel3}
-                  </span>
-                  <div>
-                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.count3} <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">hôm nay</span>
-                    </div>
-                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
-                      {todayFormatted}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 4. Secondary Count */}
-                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400 truncate">
-                    {activeSkillData.statLabel4}
-                  </span>
-                  <div>
-                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.count4} <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">hôm nay</span>
-                    </div>
-                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
-                      {todayFormatted}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 5. Practice Days */}
-                <div className="col-span-2 sm:col-span-1 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
-                  <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                    Ngày có luyện
-                  </span>
-                  <div>
-                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
-                      {activeSkillData.practiceDays}/1 <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">ngày</span>
-                    </div>
-                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">
-                      {todayFormatted}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Parts Table */}
-              <div className="border border-slate-200/80 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900/60">
-                {/* Table Header */}
-                <div className="grid grid-cols-12 gap-2 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/50 border-b border-slate-200/80 dark:border-slate-800">
-                  <div className="col-span-5 sm:col-span-4">PHẦN</div>
-                  <div className="col-span-3 sm:col-span-3">
-                    {activeSkillData.actionHeader} · HÔM NAY
-                  </div>
-                  <div className="col-span-4 sm:col-span-3">SO VỚI PART NHIỀU NHẤT</div>
-                  <div className="hidden sm:block sm:col-span-2" />
-                </div>
-
-                {/* Table Rows */}
-                <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                  {activeSkillData.parts.map((part) => (
-                    <div
-                      key={part.id}
-                      className="grid grid-cols-12 gap-2 items-center px-4 py-3 text-xs font-semibold hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors"
-                    >
-                      <div className="col-span-5 sm:col-span-4 font-bold text-slate-800 dark:text-slate-200 truncate">
-                        {part.name}
+              {/* Figures of the chosen period (owner 2026-11-26: the made-up parts table went). */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                {activeSkillData.quest && (
+                  <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Nhiệm vụ hôm nay</span>
+                    <div>
+                      <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                        {activeSkillData.quest.text}
                       </div>
-                      <div className="col-span-3 sm:col-span-3 text-slate-600 dark:text-slate-400">
-                        {part.count} {activeSkillData.targetUnit}
-                      </div>
-                      <div className="col-span-4 sm:col-span-3 flex items-center gap-2">
-                        <div className="h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full flex-1 overflow-hidden">
-                          <div
-                            className="bg-blue-500 dark:bg-blue-400 h-full rounded-full transition-all"
-                            style={{ width: `${part.ratio}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium text-slate-600 w-6 text-right dark:text-slate-400">
-                          {part.ratio > 0 ? `${part.ratio}%` : "-"}
-                        </span>
-                      </div>
-                      <div className="col-span-12 sm:col-span-2 flex justify-end pt-1 sm:pt-0">
-                        <Link
-                          href={part.href}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition cursor-pointer"
-                        >
-                          <span>Bắt đầu</span>
-                          <ArrowRight size={13} aria-hidden="true" />
-                        </Link>
+                      <div className="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
+                        <div
+                          className="bg-blue-600 dark:bg-blue-500 h-full rounded-full transition-all duration-300"
+                          style={{ width: `${activeSkillData.quest.percent}%` }}
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+                {[
+                  { label: "Thời gian luyện", value: activeSkillData.timeText },
+                  { label: activeSkillData.doneLabel, value: activeSkillData.countText },
+                  { label: "Ngày có luyện", value: activeSkillData.daysText },
+                ].map((item) => (
+                  <div key={item.label} className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-3 flex flex-col justify-between">
+                    <span className="text-xs font-bold text-slate-600 dark:text-slate-400">{item.label}</span>
+                    <div className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 mt-1">
+                      {item.value}
+                    </div>
+                    <div className="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-0.5">{periodText}</div>
+                  </div>
+                ))}
               </div>
 
               {/* Bottom CTA Button */}

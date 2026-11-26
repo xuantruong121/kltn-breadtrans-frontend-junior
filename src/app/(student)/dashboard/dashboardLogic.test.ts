@@ -7,7 +7,9 @@ import {
   isSafeInternalRoute,
   canAccessFilterPeriod,
   SKILL_DETAIL_CONFIGS,
-  matchPartActivity,
+  periodPhrase,
+  learningSummaryParams,
+  SKILL_TILE_ORDER,
   getVietnamFormattedDate,
   resolveQuestAction,
   weekDayState,
@@ -194,130 +196,41 @@ test("canAccessFilterPeriod enforces subscription tier permissions", () => {
   assert.equal(canAccessFilterPeriod("custom", "PRO"), true);
 });
 
-test("SKILL_DETAIL_CONFIGS defines valid data for all 6 core skills", () => {
-  const keys = ["exam", "reading", "listening", "speaking", "writing", "vocab"] as const;
-  for (const k of keys) {
+test("SKILL_DETAIL_CONFIGS: one tile per skill, read from the learning summary", () => {
+  assert.deepEqual(SKILL_TILE_ORDER, ["exam", "reading", "listening", "speaking", "writing", "vocab"]);
+  for (const k of SKILL_TILE_ORDER) {
     const cfg = SKILL_DETAIL_CONFIGS[k];
-    assert.ok(cfg, `Config for ${k} must exist`);
     assert.equal(cfg.key, k);
-    assert.ok(cfg.title.length > 0);
-    assert.ok(cfg.statLabel3.length > 0);
-    assert.ok(cfg.statLabel4.length > 0);
-    assert.ok(cfg.ctaLabel.length > 0);
+    assert.ok(cfg.doneLabel.length > 0 && cfg.unit.length > 0);
     assert.ok(cfg.ctaHref.startsWith("/"));
-    assert.ok(cfg.parts.length > 0);
-    assert.ok(cfg.defaultTarget > 0);
   }
-
-  // Listening specific checks matching BreadTrans learning modes
-  const listening = SKILL_DETAIL_CONFIGS.listening;
-  assert.equal(listening.title, "NGHE");
-  assert.equal(listening.statLabel3, "Câu đã nghe");
-  assert.equal(listening.statLabel4, "Bài nghe chép");
-  assert.equal(listening.actionHeader, "ĐÃ NGHE");
-  assert.equal(listening.ctaLabel, "Luyện nghe tiếp");
-  assert.equal(listening.ctaHref, "/listening");
-  assert.equal(listening.parts.length, 3);
-  assert.deepEqual(listening.parts.map((p) => p.id), [
-    "listen-comprehension",
-    "listen-dictation",
-    "listen-dialogue",
-  ]);
-
-  // Flashcard specific checks matching BreadTrans system
-  const vocab = SKILL_DETAIL_CONFIGS.vocab;
-  assert.equal(vocab.label, "Flashcard");
-  assert.equal(vocab.title, "FLASHCARD");
-  assert.equal(vocab.ctaLabel, "Luyện Flashcard tiếp");
-  assert.equal(vocab.ctaHref, "/flashcard");
-  assert.equal(vocab.targetUnit, "thẻ");
-  assert.equal(vocab.parts.length, 4);
-
-  // Exam specific checks matching BreadTrans test formats
-  const exam = SKILL_DETAIL_CONFIGS.exam;
-  assert.equal(exam.title, "LUYỆN ĐỀ");
-  // Only papers the catalog has; there is no "mini" TOEIC product.
   assert.deepEqual(
-    exam.parts.map((p) => p.href),
-    ["/exams?paper=TOEIC_LR", "/exams?paper=TOEIC_SW", "/exams?paper=TOEIC_4_SKILLS"],
+    SKILL_TILE_ORDER.map((k) => SKILL_DETAIL_CONFIGS[k].summaryKey),
+    ["EXAM", "READING", "LISTENING", "SPEAKING", "WRITING", "VOCAB"],
   );
-
-  // Reading specific checks matching BreadTrans levels
-  const reading = SKILL_DETAIL_CONFIGS.reading;
-  assert.equal(reading.title, "ĐỌC");
-  assert.equal(reading.parts.length, 4);
-
-  // Speaking specific checks matching BreadTrans practice sets
-  const speaking = SKILL_DETAIL_CONFIGS.speaking;
-  assert.equal(speaking.title, "NÓI");
-  assert.equal(speaking.parts.length, 5);
-
-  // Writing specific checks matching BreadTrans topic categories
-  const writing = SKILL_DETAIL_CONFIGS.writing;
-  assert.equal(writing.title, "VIẾT");
-  assert.equal(writing.parts.length, 3);
+  // The units say what is counted (owner 2026-11-26: "Luyện đề x câu" counted exams).
+  assert.equal(SKILL_DETAIL_CONFIGS.exam.unit, "đề");
+  assert.equal(SKILL_DETAIL_CONFIGS.reading.unit, "bài");
+  assert.equal(SKILL_DETAIL_CONFIGS.listening.unit, "bài");
+  assert.equal(SKILL_DETAIL_CONFIGS.speaking.unit, "lượt");
+  assert.equal(SKILL_DETAIL_CONFIGS.vocab.unit, "từ");
+  // No daily quest trains exams, so no daily goal is shown for them.
+  assert.deepEqual(SKILL_DETAIL_CONFIGS.exam.questTypes, []);
+  assert.deepEqual(SKILL_DETAIL_CONFIGS.listening.questTypes, ["DO_LISTENING"]);
 });
 
-test("matchPartActivity correctly identifies activities across all 6 skills", () => {
-  // Listening
-  assert.equal(
-    matchPartActivity("listening", "listen-dictation", {
-      type: "LISTENING_PRACTICE_COMPLETED",
-      title: "Nghe chép A2: Du lịch và chỉ đường",
-    }),
-    true
-  );
-  assert.equal(
-    matchPartActivity("listening", "listen-comprehension", {
-      type: "LISTENING_PRACTICE_COMPLETED",
-      title: "Nghe hiểu B1: Đời sống thường ngày",
-    }),
-    true
-  );
-
-  // Reading
-  assert.equal(
-    matchPartActivity("reading", "read-basic", {
-      type: "READING_PRACTICE_COMPLETED",
-      title: "Reading A2: Notices & Messages",
-    }),
-    true
-  );
-  assert.equal(
-    matchPartActivity("reading", "read-grammar", {
-      type: "GRAMMAR_PRACTICE",
-      title: "Thì hiện tại hoàn thành",
-    }),
-    true
-  );
-
-  // Writing
-  assert.equal(
-    matchPartActivity("writing", "write-sentence", {
-      type: "WRITING_PRACTICE_COMPLETED",
-      title: "Writing A2-B1: Sentence Builder",
-    }),
-    true
-  );
-
-  // Vocab
-  assert.equal(
-    matchPartActivity("vocab", "vocab-toeic", {
-      type: "VOCABULARY_MASTERED",
-      title: "Office & Meetings",
-      detail: "600 từ vựng TOEIC",
-    }),
-    true
-  );
-
-  // Exam
-  assert.equal(
-    matchPartActivity("exam", "exam-lr", {
-      type: "TOEIC_LR_EXAM",
-      title: "TOEIC L&R: Đề thi chuẩn 01",
-    }),
-    true
-  );
+test("periodPhrase and learningSummaryParams follow the chosen period", () => {
+  assert.equal(periodPhrase("today"), "hôm nay");
+  assert.equal(periodPhrase("week"), "tuần này");
+  assert.equal(periodPhrase("month"), "tháng này");
+  assert.equal(periodPhrase("all"), "từ trước đến nay");
+  assert.equal(periodPhrase("custom"), "trong khoảng đã chọn");
+  assert.deepEqual(learningSummaryParams("week", "2026-11-01", "2026-11-15"), { period: "week" });
+  assert.deepEqual(learningSummaryParams("custom", "2026-11-01", "2026-11-15"), {
+    period: "custom",
+    from: "2026-11-01",
+    to: "2026-11-15",
+  });
 });
 
 test("getVietnamFormattedDate formats date as DD/MM", () => {

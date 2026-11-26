@@ -267,244 +267,115 @@ export function canAccessFilterPeriod(
 
 export type SkillKey = "exam" | "reading" | "listening" | "speaking" | "writing" | "vocab";
 
-export interface SkillPartInfo {
-  id: string;
-  name: string;
-  partNumber?: number;
-  href: string;
-}
-
+/** The tile and its detail, from GET /users/me/learning-summary (owner 2026-11-26). */
 export interface SkillDetailConfig {
   key: SkillKey;
+  /** The skill's entry in LearningSummary.skills. */
+  summaryKey: "EXAM" | "READING" | "LISTENING" | "SPEAKING" | "WRITING" | "VOCAB";
   label: string;
   title: string;
-  statLabel3: string;
-  statLabel4: string;
-  actionHeader: string;
+  /** What the count is: finished items, never a made-up figure. */
+  doneLabel: string;
+  unit: string;
+  /** The daily quest type that trains this skill, when there is one today. */
+  questTypes: string[];
   ctaLabel: string;
   ctaHref: string;
-  defaultTarget: number;
-  targetUnit: string;
-  parts: SkillPartInfo[];
 }
 
 export const SKILL_DETAIL_CONFIGS: Record<SkillKey, SkillDetailConfig> = {
   exam: {
     key: "exam",
+    summaryKey: "EXAM",
     label: "Luyện đề",
-    title: "LUYỆN ĐỀ",
-    statLabel3: "Đề đã luyện",
-    statLabel4: "Bài thi thử",
-    actionHeader: "ĐÃ LUYỆN",
+    title: "Luyện đề",
+    doneLabel: "Đề đã nộp",
+    unit: "đề",
+    questTypes: [],
     ctaLabel: "Luyện đề tiếp",
     ctaHref: "/exams",
-    defaultTarget: 1,
-    targetUnit: "đề",
-    parts: [
-      { id: "exam-lr", name: "TOEIC Listening & Reading (200 câu)", href: "/exams?paper=TOEIC_LR" },
-      { id: "exam-sw", name: "TOEIC Speaking & Writing (19 bài)", href: "/exams?paper=TOEIC_SW" },
-      { id: "exam-4s", name: "TOEIC 4 kỹ năng (Full Bundle)", href: "/exams?paper=TOEIC_4_SKILLS" },
-    ],
   },
   reading: {
     key: "reading",
+    summaryKey: "READING",
     label: "Đọc",
-    title: "ĐỌC",
-    statLabel3: "Câu đã đọc",
-    statLabel4: "Bài đọc hiểu",
-    actionHeader: "ĐÃ ĐỌC",
+    title: "Đọc",
+    doneLabel: "Bài đọc đã làm",
+    unit: "bài",
+    questTypes: ["DO_READING"],
     ctaLabel: "Luyện đọc tiếp",
     ctaHref: "/reading",
-    defaultTarget: 30,
-    targetUnit: "câu",
-    parts: [
-      { id: "read-basic", name: "Đọc hiểu Cơ bản", href: "/reading?difficulty=BASIC" },
-      { id: "read-intermediate", name: "Đọc hiểu Trung cấp", href: "/reading?difficulty=INTERMEDIATE" },
-      { id: "read-advanced", name: "Đọc hiểu Nâng cao", href: "/reading?difficulty=ADVANCED" },
-      { id: "read-grammar", name: "Ngữ pháp tiếng Anh (Grammar Foundation)", href: "/reading?category=grammar" },
-    ],
   },
   listening: {
     key: "listening",
+    summaryKey: "LISTENING",
     label: "Nghe",
-    title: "NGHE",
-    statLabel3: "Câu đã nghe",
-    statLabel4: "Bài nghe chép",
-    actionHeader: "ĐÃ NGHE",
+    title: "Nghe",
+    doneLabel: "Bài nghe đã làm",
+    unit: "bài",
+    questTypes: ["DO_LISTENING"],
     ctaLabel: "Luyện nghe tiếp",
     ctaHref: "/listening",
-    defaultTarget: 30,
-    targetUnit: "câu",
-    parts: [
-      { id: "listen-comprehension", name: "Nghe hiểu trắc nghiệm (Comprehension)", href: "/listening?mode=COMPREHENSION" },
-      { id: "listen-dictation", name: "Nghe chép", href: "/listening?mode=DICTATION" },
-      { id: "listen-dialogue", name: "Hội thoại phản xạ (Dialogue)", href: "/listening?mode=DIALOGUE" },
-    ],
   },
   speaking: {
     key: "speaking",
+    summaryKey: "SPEAKING",
     label: "Nói",
-    title: "NÓI",
-    statLabel3: "Lượt đã nói",
-    statLabel4: "Bài luyện phát âm",
-    actionHeader: "ĐÃ NÓI",
+    title: "Nói",
+    doneLabel: "Lượt đã nói",
+    unit: "lượt",
+    questTypes: ["PRACTICE_SPEAKING"],
     ctaLabel: "Luyện nói tiếp",
     ctaHref: "/speaking",
-    defaultTarget: 10,
-    targetUnit: "lượt",
-    parts: [
-      { id: "speak-read-aloud", name: "Đọc thành tiếng (Read Aloud)", href: "/speaking" },
-      { id: "speak-pronunciation", name: "Nền tảng phát âm (Pronunciation)", href: "/speaking" },
-      { id: "speak-question-response", name: "Phản hồi câu hỏi (Question & Response)", href: "/speaking" },
-      { id: "speak-opinion", name: "Trình bày quan điểm (Express Opinion)", href: "/speaking" },
-      { id: "speak-toeic", name: "Nhiệm vụ TOEIC Speaking", href: "/speaking" },
-    ],
   },
   writing: {
     key: "writing",
+    summaryKey: "WRITING",
     label: "Viết",
-    title: "VIẾT",
-    statLabel3: "Bài đã viết",
-    statLabel4: "Bài luận nộp",
-    actionHeader: "ĐÃ VIẾT",
+    title: "Viết",
+    doneLabel: "Bài viết đã nộp",
+    unit: "bài",
+    questTypes: ["DO_WRITING"],
     ctaLabel: "Luyện viết tiếp",
     ctaHref: "/writing",
-    defaultTarget: 3,
-    targetUnit: "bài",
-    parts: [
-      { id: "write-sentence", name: "Viết câu theo ngữ cảnh (Sentence Builder)", href: "/writing" },
-      { id: "write-email", name: "Viết email công sở (Professional Email)", href: "/writing" },
-      { id: "write-opinion", name: "Viết bài luận quan điểm (Opinion Essay)", href: "/writing" },
-    ],
   },
   vocab: {
     key: "vocab",
+    summaryKey: "VOCAB",
     label: "Flashcard",
-    title: "FLASHCARD",
-    statLabel3: "Thẻ đã học",
-    statLabel4: "Thẻ cần ôn tập",
-    actionHeader: "ĐÃ HỌC",
+    title: "Flashcard",
+    doneLabel: "Từ đã thuộc",
+    unit: "từ",
+    questTypes: ["LEARN_VOCAB", "DO_VOCAB"],
     ctaLabel: "Luyện Flashcard tiếp",
     ctaHref: "/flashcard",
-    defaultTarget: 20,
-    targetUnit: "thẻ",
-    parts: [
-      { id: "vocab-toeic", name: "600 từ vựng TOEIC (Văn phòng & Kinh doanh)", href: "/flashcard" },
-      { id: "vocab-daily", name: "Tiếng Anh giao tiếp hằng ngày (Đời sống & Thói quen)", href: "/flashcard" },
-      { id: "vocab-travel", name: "Giao tiếp thực tế & Du lịch (Di chuyển & Dịch vụ)", href: "/flashcard" },
-      { id: "vocab-tech", name: "Tiếng Anh công nghệ & Dự án (Chuyên ngành & IT)", href: "/flashcard" },
-    ],
   },
 };
 
-export function matchPartActivity(
-  skillKey: SkillKey,
-  partId: string,
-  activity: { type?: string; title?: string; detail?: string | null }
-): boolean {
-  const title = (activity.title || "").toLowerCase();
-  const type = (activity.type || "").toUpperCase();
-  const detail = (activity.detail || "").toLowerCase();
+/** The order of the six tiles under "Kết quả học tập". */
+export const SKILL_TILE_ORDER: SkillKey[] = ["exam", "reading", "listening", "speaking", "writing", "vocab"];
 
-  switch (skillKey) {
-    case "exam":
-      if (!type.includes("TOEIC") && !type.includes("EXAM") && !type.includes("QUIZ")) return false;
-      if (partId === "exam-lr") {
-        return title.includes("l&r") || title.includes("listening & reading") || title.includes("nghe & đọc");
-      }
-      if (partId === "exam-sw") {
-        return title.includes("s&w") || title.includes("speaking & writing") || title.includes("nói & viết");
-      }
-      if (partId === "exam-4s") {
-        return title.includes("4 kỹ năng") || title.includes("full bundle") || title.includes("4 skill");
-      }
-      return false;
-
-    case "reading":
-      if (!type.includes("READING") && !type.includes("GRAMMAR")) return false;
-      if (partId === "read-basic") {
-        return title.includes("a1") || title.includes("a2") || title.includes("cơ bản") || title.includes("basic");
-      }
-      if (partId === "read-intermediate") {
-        return title.includes("b1") || title.includes("b2") || title.includes("trung cấp") || title.includes("intermediate");
-      }
-      if (partId === "read-advanced") {
-        return title.includes("c1") || title.includes("c2") || title.includes("nâng cao") || title.includes("advanced");
-      }
-      if (partId === "read-grammar") {
-        return type.includes("GRAMMAR") || title.includes("ngữ pháp") || title.includes("grammar");
-      }
-      return false;
-
-    case "listening":
-      if (!type.includes("LISTENING") && !type.includes("DICTATION")) return false;
-      if (partId === "listen-comprehension") {
-        return (
-          title.includes("nghe hiểu") ||
-          title.includes("comprehension") ||
-          (!title.includes("chép") && !title.includes("dictation") && !title.includes("hội thoại") && !title.includes("dialogue"))
-        );
-      }
-      if (partId === "listen-dictation") {
-        return type.includes("DICTATION") || title.includes("chép") || title.includes("dictation");
-      }
-      if (partId === "listen-dialogue") {
-        return title.includes("hội thoại") || title.includes("dialogue");
-      }
-      return false;
-
-    case "speaking":
-      if (!type.includes("SPEAKING")) return false;
-      if (partId === "speak-read-aloud") {
-        return title.includes("read aloud") || title.includes("đọc thành tiếng") || title.includes("đọc to");
-      }
-      if (partId === "speak-pronunciation") {
-        return title.includes("pronunciation") || title.includes("phát âm");
-      }
-      if (partId === "speak-question-response") {
-        return title.includes("question response") || title.includes("phản hồi câu hỏi") || title.includes("hỏi đáp");
-      }
-      if (partId === "speak-opinion") {
-        return title.includes("opinion") || title.includes("quan điểm");
-      }
-      if (partId === "speak-toeic") {
-        return title.includes("toeic");
-      }
-      return false;
-
-    case "writing":
-      if (!type.includes("WRITING")) return false;
-      if (partId === "write-sentence") {
-        return title.includes("sentence") || title.includes("viết câu") || title.includes("builder");
-      }
-      if (partId === "write-email") {
-        return title.includes("email") || title.includes("thư");
-      }
-      if (partId === "write-opinion") {
-        return title.includes("opinion") || title.includes("quan điểm") || title.includes("luận");
-      }
-      return false;
-
-    case "vocab":
-      if (!type.includes("VOCAB")) return false;
-      if (partId === "vocab-toeic") {
-        return title.includes("600") || title.includes("toeic") || detail.includes("toeic");
-      }
-      if (partId === "vocab-daily") {
-        return title.includes("hằng ngày") || title.includes("daily") || title.includes("routine");
-      }
-      if (partId === "vocab-travel") {
-        return title.includes("du lịch") || title.includes("travel") || title.includes("thực tế");
-      }
-      if (partId === "vocab-tech") {
-        return title.includes("công nghệ") || title.includes("tech") || title.includes("project");
-      }
-      return false;
-
+/** How a period reads after a figure: "25 phút hôm nay", "3 bài tuần này". */
+export function periodPhrase(period: FilterPeriod): string {
+  switch (period) {
+    case "today":
+      return "hôm nay";
+    case "week":
+      return "tuần này";
+    case "month":
+      return "tháng này";
+    case "all":
+      return "từ trước đến nay";
     default:
-      return false;
+      return "trong khoảng đã chọn";
   }
 }
+
+/** Query of GET /users/me/learning-summary for the chosen period. */
+export function learningSummaryParams(period: FilterPeriod, from: string, to: string) {
+  return period === "custom" ? { period, from, to } : { period };
+}
+
 
 export function getVietnamFormattedDate(date: Date = new Date()): string {
   const formatter = new Intl.DateTimeFormat("en-GB", {
