@@ -23,7 +23,7 @@ const item = (overrides: Record<string, unknown> = {}) => ({
 test("vocabulary reminders open the exact flashcard topic and use a useful CTA", () => {
   const notification = item({ type: "vocab_review", url: "/flashcard/12" });
   assert.equal(resolveNotificationAction(notification), "/flashcard/12");
-  assert.equal(getNotificationActionLabel(notification), "Ôn tập ngay");
+  assert.equal(getNotificationActionLabel(notification), "Ôn tập");
 });
 
 test("canonical skill routes are allowed and legacy practice routes are rejected", () => {

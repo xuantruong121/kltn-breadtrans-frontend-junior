@@ -109,7 +109,7 @@ export function RecommendationItemCard({
             href={item.route}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 text-sm font-bold text-white hover:bg-blue-700"
           >
-            Luyện ngay
+            Luyện
             <ArrowRight size={15} aria-hidden="true" />
           </Link>
         )}
