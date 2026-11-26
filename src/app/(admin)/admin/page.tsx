@@ -87,7 +87,7 @@ const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
 const QUICK_ACTIONS: QuickActionItem[] = [
   {
     label: "Exam CMS",
-    detail: "Quản lý đề luyện thi TOEIC",
+    detail: "Quản lý đề luyện thi",
     href: "/admin/exams",
     icon: FilePlus2,
   },
