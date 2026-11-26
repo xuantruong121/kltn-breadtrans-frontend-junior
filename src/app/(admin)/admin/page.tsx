@@ -90,14 +90,17 @@ function Figure({
   value,
   previous,
   highlight = false,
+  part = false,
 }: {
   label: string;
   value: string;
   previous?: string;
   highlight?: boolean;
+  /** A part of the row above, indented under it. */
+  part?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
+    <div className={`flex items-baseline justify-between gap-3${part ? " pl-3" : ""}`}>
       <dt>{label}</dt>
       <dd className="shrink-0 text-right tabular-nums">
         <span
@@ -307,10 +310,12 @@ export default function AdminDashboardPage() {
                   value={number(data.stats.newStudents)}
                   previous={previousStats ? number(previousStats.newStudents) : undefined}
                 />
-                {/* Completions only: the entry assessment gives no level here. */}
+                {/* Completions only: the entry assessment gives no level here.
+                    A part of the new learners above (owner 2026-11-26: "1/2" read as a riddle). */}
                 <Figure
-                  label="Đã làm bài đánh giá đầu vào"
-                  value={`${number(data.stats.newStudentsWithDiagnostic)}/${number(data.stats.newStudents)}`}
+                  part
+                  label="Trong đó đã làm bài đánh giá đầu vào"
+                  value={number(data.stats.newStudentsWithDiagnostic)}
                 />
               </dl>
             </Link>
