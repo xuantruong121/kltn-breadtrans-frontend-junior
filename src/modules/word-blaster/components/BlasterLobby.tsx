@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Crosshair, Gauge, Heart, History } from "lucide-react";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
+import { useScrollFade } from "@/hooks/useScrollFade";
 import { wordBlasterService, type BlasterMode } from "@/lib/api/services/wordBlaster.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
@@ -48,6 +49,8 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const short = balance !== null && balance < stake ? stake - balance : 0;
+  // On a short screen the rules scroll inside the panel; the hidden edge fades so it reads as more below.
+  const [rulesScroller, rulesFadeStyle] = useScrollFade<HTMLDivElement>();
 
   const begin = async () => {
     if (isGuest) return onGuest();
@@ -68,8 +71,10 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
       <div className="flex flex-col lg:min-h-0">
         {/* The rules and choices scroll here when the window is short; the start button below stays in view.
             "relative": a screen-reader-only label inside is absolutely placed, and without a positioned
-            scroller it would stretch the page past the window. */}
-        <div className="relative lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1 lg:[scrollbar-width:thin]">
+            scroller it would stretch the page past the window. The content sits in one child, which
+            useScrollFade watches. */}
+        <div ref={rulesScroller} style={rulesFadeStyle} className="relative lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1 lg:[scrollbar-width:thin]">
+        <div>
         <h1 id="blaster-title" className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
           Pháo Bánh Mì
         </h1>
@@ -155,7 +160,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           Thưởng thắng từ Đấu trường tối đa 300 Bánh Mì mỗi ngày; thắng thì luôn được hoàn cược.
         </p>
         {error && <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-400">{error}</p>}
-
+        </div>
         </div>
         {/* Owner 2026-11-13: the balance beside "Mức cược" read as one more stake; it sits by
             the start button, named as the balance. */}
