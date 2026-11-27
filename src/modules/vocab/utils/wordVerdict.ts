@@ -71,13 +71,26 @@ export const GRADE_LABEL: Record<SrsGrade, string> = {
  * A word graded "Học lại" comes back at the end of the session, this many times
  * at most (owner 2026-11-27: a learner who kept missing one word could never
  * finish). After that it leaves the session; the server already planned it for
- * ten minutes later.
+ * ten minutes later, and its reminder job runs every five minutes.
+ *
+ * The goal within a session is one right recall, and the returns help when other
+ * words sit between them (successive relearning; Anki waits 10 minutes, Duolingo
+ * keeps mistakes for the end of a lesson). A whole deck has about ten words
+ * between two returns; a due-word review holds a few, so its "end of the session"
+ * comes almost at once and a second return would be the same question again.
  */
-export const MAX_RELEARNS = 2;
+export const MAX_RELEARNS = { deck: 2, dueReview: 1 } as const;
 
-/** `agains`: how many times the word was graded "Học lại" in this session, this one included. */
-export function comesBackThisSession(agains: number): boolean {
-  return agains <= MAX_RELEARNS;
+export function relearnLimit(dueReview: boolean): number {
+  return dueReview ? MAX_RELEARNS.dueReview : MAX_RELEARNS.deck;
+}
+
+/**
+ * `agains`: how many times the word was graded "Học lại" in this session, this one
+ * included; `limit`: relearnLimit of the room.
+ */
+export function comesBackThisSession(agains: number, limit: number = MAX_RELEARNS.deck): boolean {
+  return agains <= limit;
 }
 
 /** "Khó · ôn lại sau 1 ngày"; a word to relearn comes back in this session, or is left to the schedule. */

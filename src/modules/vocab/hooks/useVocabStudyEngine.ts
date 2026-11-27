@@ -20,6 +20,7 @@ import {
   NO_EVIDENCE,
   StepEvidence,
   comesBackThisSession,
+  relearnLimit,
   toReviewEvidence,
   withQuickCheck,
   withQuiz,
@@ -323,7 +324,7 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
             if (grade === "AGAIN") {
               const agains = (againsRef.current.get(pending.word.id) ?? 0) + 1;
               againsRef.current.set(pending.word.id, agains);
-              comesBack = comesBackThisSession(agains);
+              comesBack = comesBackThisSession(agains, relearnLimit(dueReview));
             }
             setVerdict({
               ...pending,
@@ -337,7 +338,7 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
         },
       );
     },
-    [reviewWord, setVerdict]
+    [reviewWord, setVerdict, dueReview]
   );
 
   const submitWord = useCallback(

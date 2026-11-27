@@ -4,6 +4,7 @@ import {
   MAX_RELEARNS,
   NO_EVIDENCE,
   comesBackThisSession,
+  relearnLimit,
   stepLines,
   toReviewEvidence,
   verdictHeadline,
@@ -102,7 +103,7 @@ test("a due-word review has no speaking line", () => {
 });
 
 test("a word to relearn comes back twice, then is left to the schedule", () => {
-  assert.equal(MAX_RELEARNS, 2);
+  assert.equal(MAX_RELEARNS.deck, 2);
   assert.equal(comesBackThisSession(1), true);
   assert.equal(comesBackThisSession(2), true);
   assert.equal(comesBackThisSession(3), false);
@@ -110,4 +111,14 @@ test("a word to relearn comes back twice, then is left to the schedule", () => {
   assert.equal(verdictHeadline("AGAIN", 0, false), "Học lại · hệ thống sẽ nhắc lại sau 10 phút");
   // The flag only matters for a word to relearn.
   assert.equal(verdictHeadline("GOOD", 1, false), verdictHeadline("GOOD", 1));
+});
+
+test("a due-word review lets a word to relearn come back once", () => {
+  assert.deepEqual(MAX_RELEARNS, { deck: 2, dueReview: 1 });
+  assert.equal(relearnLimit(false), 2);
+  assert.equal(relearnLimit(true), 1);
+  assert.equal(comesBackThisSession(1, relearnLimit(true)), true);
+  assert.equal(comesBackThisSession(2, relearnLimit(true)), false);
+  assert.equal(comesBackThisSession(2, relearnLimit(false)), true);
+  assert.equal(comesBackThisSession(3, relearnLimit(false)), false);
 });

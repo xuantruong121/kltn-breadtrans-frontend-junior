@@ -36,7 +36,7 @@ export function nextDueDeck(
 }
 
 /** The heading of the screen that ends a review, or opens on a deck with nothing due. */
-/** `left`: due words that left the session still to relearn (see MAX_RELEARNS in wordVerdict). */
+/** `left`: due words that left the session still to relearn (see relearnLimit in wordVerdict). */
 export function dueDoneHeading(done: number, left: number = 0): string {
   if (done > 0) return `Đã ôn xong ${done} từ đến hạn`;
   return left > 0 ? "Phiên ôn đã kết thúc" : "Bộ này chưa có từ nào đến hạn";
