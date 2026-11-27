@@ -15,6 +15,7 @@ import { QueueItem, StudyMode, QuizOption, StudySettings } from "../types/study"
 import { playWordAudio, playChime, stopCurrentAudio } from "../utils/audio";
 import { buildQuizOptions } from "../utils/quizOptions";
 import { addSessionXp } from "../utils/sessionXp";
+import { dueWordsOf } from "../utils/dueReview";
 import {
   NO_EVIDENCE,
   StepEvidence,
@@ -28,6 +29,8 @@ import {
 interface UseVocabStudyEngineProps {
   topicId: number;
   initialWords: VocabWord[];
+  /** The deck's due-word review: only the due words, asked before anything is shown. */
+  dueReview?: boolean;
 }
 
 /**
@@ -39,12 +42,24 @@ export interface WordVerdictState {
   word: VocabWord;
   evidence: ReviewEvidence;
   status: "PENDING" | "READY" | "ERROR";
+  /** A due word under review: it had no speaking step. */
+  review?: boolean;
   grade?: SrsGrade;
   intervalDays?: number;
 }
 
-export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngineProps) {
+export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }: UseVocabStudyEngineProps) {
   const queryClient = useQueryClient();
+  // The due words when the room opened. Each review refetches the deck, and a
+  // word just reviewed is no longer due, so the list must not follow the deck.
+  const [dueStart] = useState<VocabWord[]>(() => dueWordsOf(initialWords));
+  const startQueue = useCallback(
+    (): QueueItem[] =>
+      dueReview
+        ? dueStart.map((word) => ({ word, mode: "QUIZ" as StudyMode, stepCount: 1, review: true }))
+        : initialWords.map((word) => ({ word, mode: "FLASHCARD" as StudyMode, stepCount: 1 })),
+    [dueReview, dueStart, initialWords]
+  );
 
   // Settings
   const [settings, setSettings] = useState<StudySettings>({
@@ -64,14 +79,8 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   // Flashcard XP the server paid in this session (owner 2026-11-18).
   const [sessionXp, setSessionXp] = useState(0);
 
-  // Active study queue always starts with all initial words in order
-  const [queue, setQueue] = useState<QueueItem[]>(() =>
-    initialWords.map((word) => ({
-      word,
-      mode: "FLASHCARD" as StudyMode,
-      stepCount: 1,
-    }))
-  );
+  // A deck starts with all its words in order; a due-word review with the due ones.
+  const [queue, setQueue] = useState<QueueItem[]>(startQueue);
 
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [direction, setDirection] = useState<number>(1); // 1 = slide forward, -1 = slide back
@@ -138,6 +147,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   const currentItem = queue[currentIndex] as QueueItem | undefined;
   const currentWord = currentItem?.word;
   const currentMode = currentItem?.mode ?? "FLASHCARD";
+  const isReviewItem = Boolean(currentItem?.review);
 
   // After the server stored a word's progress: refresh what shows it.
   const refreshProgress = useCallback(() => {
@@ -298,7 +308,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   );
 
   const submitWord = useCallback(
-    (word: VocabWord) => {
+    (word: VocabWord, review = false) => {
       if (verdictRef.current || isCompleted) return;
       if (isRecording && recognitionRef.current) {
         try {
@@ -312,6 +322,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
         word,
         evidence: toReviewEvidence(evidenceOf(word.id)),
         status: "PENDING",
+        review,
       });
     },
     [isCompleted, isRecording, sendVerdict, evidenceOf]
@@ -438,10 +449,11 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     const normalizedTarget = currentWord.word.trim().toLowerCase();
     const correct = normalizedInput === normalizedTarget;
     record(currentWord.id, (e) => withTyping(e, correct, typingHintCount));
-    // After a quick check the typing is the last step.
+    // After a quick check, and for a due word under review, the typing is the last step.
     const word = currentWord;
+    const review = isReviewItem;
     const next = () =>
-      evidenceOf(word.id).quickCheck ? submitWord(word) : handleEscalateMode();
+      review || evidenceOf(word.id).quickCheck ? submitWord(word, review) : handleEscalateMode();
 
     if (correct) {
       playChime("success");
@@ -458,6 +470,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     typingFeedback,
     typingInput,
     typingHintCount,
+    isReviewItem,
     record,
     evidenceOf,
     handleEscalateMode,
@@ -589,6 +602,8 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   // Directly switch mode via stage pill tabs
   const handleSwitchMode = useCallback((mode: StudyMode) => {
     if (verdictRef.current) return;
+    // A due word under review is never shown first, and has no speaking step.
+    if (isReviewItem && (mode === "FLASHCARD" || mode === "SPEAKING")) return;
     resetModeInputs();
     setDirection(1);
     setQueue((prevQueue) => {
@@ -601,7 +616,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
       }
       return copy;
     });
-  }, [currentIndex, resetModeInputs]);
+  }, [currentIndex, isReviewItem, resetModeInputs]);
 
   // Jump directly to a specific word
   const handleJumpToWord = useCallback(
@@ -634,19 +649,13 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     resetModeInputs();
     attemptsRef.current.clear();
     setVerdict(null);
-    setQueue(
-      initialWords.map((word) => ({
-        word,
-        mode: "FLASHCARD" as StudyMode,
-        stepCount: 1,
-      }))
-    );
+    setQueue(startQueue());
     setCurrentIndex(0);
     setIsCompleted(false);
     setSessionMasteredIds(new Set());
     setReviewIds(new Set());
     setSessionXp(0);
-  }, [initialWords, resetModeInputs, setVerdict]);
+  }, [startQueue, resetModeInputs, setVerdict]);
 
   // Sync if topicId changes
   const prevTopicIdRef = useRef<number>(topicId);
@@ -743,7 +752,7 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
   ]);
 
   // Derived metrics for UI
-  const totalWordsCount = initialWords.length;
+  const totalWordsCount = dueReview ? dueStart.length : initialWords.length;
   const learnedCount = sessionMasteredIds.size;
   const reviewCount = reviewIds.size;
   const newCount = Math.max(0, totalWordsCount - learnedCount - reviewCount);
@@ -783,7 +792,8 @@ export function useVocabStudyEngine({ topicId, initialWords }: UseVocabStudyEngi
     setTypingInput,
     typingHintCount,
     typingFeedback,
-    isQuickCheck: Boolean(currentItem?.quickCheck),
+    isQuickCheck: Boolean(currentItem?.quickCheck) || isReviewItem,
+    isReviewItem,
     handleCheckTyping,
     handleRevealTypingHint,
     // Speaking state

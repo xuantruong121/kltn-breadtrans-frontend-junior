@@ -35,7 +35,7 @@ const TONE_ICON: Record<StepTone, React.ReactNode> = {
  */
 export const WordVerdict: React.FC<WordVerdictProps> = ({ verdict, onContinue, onRetry, onDefer }) => {
   const { word, evidence, status, grade, intervalDays } = verdict;
-  const lines = stepLines(evidence);
+  const lines = stepLines(evidence, { speaking: !verdict.review });
 
   return (
     <div className="flex flex-col items-center w-full max-w-2xl sm:max-w-3xl md:max-w-4xl mx-auto space-y-5 short:space-y-3">

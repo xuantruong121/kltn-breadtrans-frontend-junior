@@ -80,8 +80,11 @@ export interface StepLine {
   tone: StepTone;
 }
 
-/** One line per step, in the order the learner went through them. */
-export function stepLines(e: ReviewEvidence): StepLine[] {
+/**
+ * One line per step, in the order the learner went through them. A due-word
+ * review has no speaking step, so it gets no speaking line.
+ */
+export function stepLines(e: ReviewEvidence, opts: { speaking?: boolean } = {}): StepLine[] {
   const quiz: StepLine =
     e.quiz === "CORRECT"
       ? { label: "Trắc nghiệm", text: "đúng", tone: "ok" }
@@ -105,5 +108,5 @@ export function stepLines(e: ReviewEvidence): StepLine[] {
         : e.speaking === "UNAVAILABLE"
           ? { label: "Phát âm", text: "không dùng được micro", tone: "none" }
           : { label: "Phát âm", text: "bỏ qua", tone: "none" };
-  return [quiz, typing, speaking];
+  return opts.speaking === false ? [quiz, typing] : [quiz, typing, speaking];
 }

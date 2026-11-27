@@ -12,6 +12,8 @@ export interface VocabTopic {
   totalWords: number;
   learnedCount: number;
   needReviewCount: number;
+  /** Words whose review time has come (the deck's due-word review). */
+  dueCount?: number;
   isPro: boolean;
   isLocked?: boolean;
   iconUrl?: string;
@@ -45,6 +47,8 @@ export interface VocabWord {
   // Metadata cho user
   isStarred?: boolean;
   isMastered?: boolean;
+  /** Its review time has come. */
+  isDue?: boolean;
   /** Days until the next review for each self-rating; 0 means ten minutes. */
   reviewPreview?: Record<SrsGrade, number>;
 }

@@ -90,3 +90,11 @@ test("each step gets a line in plain words", () => {
     "không cần (kiểm tra nhanh)",
   );
 });
+
+test("a due-word review has no speaking line", () => {
+  const lines = stepLines(
+    { quiz: "CORRECT", typing: "CORRECT", typingHints: 0, speaking: "SKIPPED", quickCheck: false },
+    { speaking: false },
+  );
+  assert.deepEqual(lines.map((l) => l.label), ["Trắc nghiệm", "Gõ từ"]);
+});

@@ -143,3 +143,9 @@ test("a level-up line opens the ranking, a pet level-up opens the pet page", () 
   assert.equal(resolveNotificationAction(line("level_up:5", "/ranking")), "/ranking");
   assert.equal(resolveNotificationAction(line("pet_level_up:3", "/pet")), "/pet");
 });
+
+test("a vocabulary reminder may open the due-word review of its deck", () => {
+  const notification = item({ type: "vocab_review", url: "/flashcard/12?due=1" });
+  assert.equal(resolveNotificationAction(notification), "/flashcard/12?due=1");
+  assert.equal(getNotificationActionLabel(notification), "Ôn tập");
+});
