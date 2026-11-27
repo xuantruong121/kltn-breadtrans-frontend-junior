@@ -142,7 +142,7 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
               Hầm tự do
             </p>
             <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-              Hầm ngẫu nhiên, chơi bao nhiêu lượt cũng được. Có tối đa 6 câu là từ bạn hay quên khi học Từ vựng.
+              Hầm ngẫu nhiên, chơi bao nhiêu lượt cũng được. Có tối đa 6 câu là từ bạn hay quên khi học Từ vựng, mỗi từ một lần mỗi ngày.
             </p>
             {board?.me.bestFree != null && (
               <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Kỷ lục của bạn: tầng {board.me.bestFree}</p>

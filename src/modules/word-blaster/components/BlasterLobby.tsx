@@ -85,7 +85,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <li className="flex items-center gap-2"><Crosshair size={15} strokeWidth={2.25} aria-hidden="true" /> 20 khối, rơi dày và nhanh dần, về cuối có lúc hai khối cùng rơi. Qua hết mà còn mạng là thắng.</li>
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 3 mạng: mỗi khối chạm đất mất một mạng.</li>
           <li className="flex items-center gap-2"><BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" /> Gõ không dấu cũng được khi trả lời nghĩa tiếng Việt.</li>
-          <li className="flex items-center gap-2"><History size={15} strokeWidth={2.25} aria-hidden="true" /> Tối đa 6 khối là từ bạn hay quên khi học Từ vựng.</li>
+          <li className="flex items-center gap-2"><History size={15} strokeWidth={2.25} aria-hidden="true" /> Tối đa 6 khối là từ bạn hay quên khi học Từ vựng, mỗi từ một lần mỗi ngày.</li>
           <li className="flex items-center gap-2"><Gauge size={15} strokeWidth={2.25} aria-hidden="true" /> Cược càng cao, khối rơi càng nhanh.</li>
         </ul>
 
