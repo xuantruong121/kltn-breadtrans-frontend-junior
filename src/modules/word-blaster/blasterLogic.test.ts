@@ -2,7 +2,7 @@ import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
 import { blasterResultCopy } from "./blasterResult.ts";
-import { blockMarks, easeAngle, fillHint, fitsHint } from "./blasterLogic.ts";
+import { STAKE_PACE_PERCENT, blockMarks, easeAngle, fillHint, fitsHint, stakePaceLine } from "./blasterLogic.ts";
 import { aimTarget, clockOffset, fallProgress, gameProgress, gameTime, liveBlocks, localState, type ClientBlock } from "./blasterLogic.ts";
 
 const block = (id: number, spawnAtMs: number, fallMs: number, kind: ClientBlock["kind"] = "copy", prompt = `w${id}`): ClientBlock => ({
@@ -137,5 +137,18 @@ describe("easeAngle", () => {
     for (let i = 0; i < 60; i += 1) a = easeAngle(a, 40, 16);
     assert.equal(a, 40);
     assert.equal(easeAngle(10, 10, 16), 10);
+  });
+});
+
+describe("pace by stake (owner 2026-11-27)", () => {
+  test("each stake says how fast its blocks fall", () => {
+    assert.deepEqual(STAKE_PACE_PERCENT, { 20: 0, 50: 15, 100: 30 });
+    assert.equal(stakePaceLine(20), "Mức 20: khối rơi ở tốc độ thường.");
+    assert.equal(stakePaceLine(50), "Mức 50: khối rơi nhanh hơn 15%.");
+    assert.equal(stakePaceLine(100), "Mức 100: khối rơi nhanh hơn 30%.");
+  });
+
+  test("an unknown stake is read as the plain speed", () => {
+    assert.equal(stakePaceLine(70), "Mức 70: khối rơi ở tốc độ thường.");
   });
 });

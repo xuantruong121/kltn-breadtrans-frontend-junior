@@ -3,13 +3,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
-import { Crosshair, Heart, History } from "lucide-react";
+import { Crosshair, Gauge, Heart, History } from "lucide-react";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import { wordBlasterService, type BlasterMode } from "@/lib/api/services/wordBlaster.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { arenaSound } from "@/modules/arena/sound/arenaSound";
 import { BreadTurret } from "./BreadTurret";
-import { MODES } from "../blasterLogic";
+import { MODES, stakePaceLine } from "../blasterLogic";
 
 const STAKES = [20, 50, 100] as const;
 /** Three blocks falling in the preview, in the chosen mode. */
@@ -77,6 +77,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 3 mạng: mỗi khối chạm đất mất một mạng.</li>
           <li className="flex items-center gap-2"><BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" /> Gõ không dấu cũng được khi trả lời nghĩa tiếng Việt.</li>
           <li className="flex items-center gap-2"><History size={15} strokeWidth={2.25} aria-hidden="true" /> Tối đa 6 khối là từ bạn hay quên khi học Từ vựng.</li>
+          <li className="flex items-center gap-2"><Gauge size={15} strokeWidth={2.25} aria-hidden="true" /> Cược càng cao, khối rơi càng nhanh.</li>
         </ul>
 
         <fieldset className="mt-5" disabled={starting}>
@@ -121,6 +122,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
               </button>
             ))}
           </div>
+          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300" aria-live="polite">{stakePaceLine(stake)}</p>
           {short > 0 && !isGuest && <p className="mt-2 text-sm text-rose-700 dark:text-rose-400">Cần thêm {short.toLocaleString("vi-VN")} Bánh Mì cho mức này.</p>}
         </fieldset>
 
