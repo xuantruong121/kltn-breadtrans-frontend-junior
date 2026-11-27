@@ -1511,10 +1511,6 @@ export function ListeningComprehensionWorkspace({
                     Bài này không dùng hình minh họa. Hãy nghe kỹ nội dung và
                     chọn đáp án phù hợp ở bên phải.
                   </p>
-                  <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-sky-100 dark:border-sky-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-sky-700 dark:text-sky-300">
-                    <span className="size-1.5 rounded-full bg-sky-500" aria-hidden="true" />
-                    Audio là nội dung chính của bài luyện
-                  </div>
                 </div>
               </section>
             )}
