@@ -56,7 +56,7 @@ export function ArenaGameNav({
   }, [game, reduce]);
 
   return (
-    <nav aria-label="Trò chơi trong Đấu trường" className="lg:sticky lg:top-24">
+    <nav aria-label="Trò chơi trong Đấu trường" className="relative lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pb-16 lg:pr-1 lg:[scrollbar-width:thin]">
       <ul ref={listRef} className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 [scrollbar-width:none] lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 lg:pb-0">
         {ARENA_GAMES.map((g) => {
           const active = g.id === game;

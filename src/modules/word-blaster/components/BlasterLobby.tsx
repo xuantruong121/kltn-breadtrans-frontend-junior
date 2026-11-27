@@ -64,12 +64,16 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
   };
 
   return (
-    <section aria-labelledby="blaster-title" className="glass-face grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr]">
-      <div className="flex flex-col">
+    <section aria-labelledby="blaster-title" className="glass-face grid h-full gap-5 rounded-xl lg:min-h-0 border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr] lg:grid-cols-[1.3fr_1fr] lg:grid-rows-[minmax(0,1fr)]">
+      <div className="flex flex-col lg:min-h-0">
+        {/* The rules and choices scroll here when the window is short; the start button below stays in view.
+            "relative": a screen-reader-only label inside is absolutely placed, and without a positioned
+            scroller it would stretch the page past the window. */}
+        <div className="relative lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pr-1 lg:[scrollbar-width:thin]">
         <h1 id="blaster-title" className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
           Pháo Bánh Mì
         </h1>
-        <p className="mt-2 max-w-md text-base text-slate-700 dark:text-slate-300">
+        <p className="mt-2 max-w-xl text-base text-slate-700 dark:text-slate-300">
           Các khối chữ rơi xuống cánh đồng. Gõ chữ đầu để pháo bánh mì khoá mục tiêu, mỗi chữ đúng là một phát bắn, gõ đủ chữ là khối vỡ, không cần nhấn Enter.
         </p>
         <ul className="mt-4 space-y-1.5 text-sm text-slate-800 dark:text-slate-200">
@@ -80,7 +84,7 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           <li className="flex items-center gap-2"><Gauge size={15} strokeWidth={2.25} aria-hidden="true" /> Cược càng cao, khối rơi càng nhanh.</li>
         </ul>
 
-        <fieldset className="mt-5" disabled={starting}>
+        <fieldset className="mt-4" disabled={starting}>
           <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">Chế độ</legend>
           <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {MODES.map((m) => (
@@ -103,16 +107,18 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
           </div>
         </fieldset>
 
-        <fieldset className="mt-5" disabled={starting}>
+        <fieldset className="mt-4" disabled={starting}>
           <legend className="text-sm font-semibold text-slate-800 dark:text-slate-200">Mức cược</legend>
-          <div className="mt-2 flex gap-3">
+          {/* The stake, then what it changes, side by side: one row instead of three. */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div className="flex gap-3">
             {STAKES.map((s) => (
               <button
                 key={s}
                 type="button"
                 aria-pressed={stake === s}
                 onClick={() => setStake(s)}
-                className={`flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 transition-transform active:scale-95 sm:h-[72px] sm:w-[72px] ${
+                className={`flex h-16 w-16 flex-col items-center justify-center rounded-full border-2 transition-transform active:scale-95 ${
                   stake === s ? "border-amber-600 bg-amber-500 text-white" : "border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-400 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"
                 }`}
               >
@@ -122,34 +128,38 @@ export function BlasterLobby({ balance, isGuest, onGuest }: { balance: number | 
               </button>
             ))}
           </div>
-          <p className="mt-2 text-sm text-slate-700 dark:text-slate-300" aria-live="polite">{stakePaceLine(stake)}</p>
+            <div className="min-w-0 space-y-1">
+              <p className="text-sm text-slate-700 dark:text-slate-300" aria-live="polite">{stakePaceLine(stake)}</p>
+              <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-700 dark:text-slate-300">
+                <span className="inline-flex items-center gap-1">
+                  Thắng
+                  <strong className="inline-flex items-center gap-1 font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400">
+                    +{stake} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
+                  </strong>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">(nhận {stake * 2})</span>
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  Thua
+                  <strong className="inline-flex items-center gap-1 font-extrabold tabular-nums text-rose-700 dark:text-rose-400">
+                    −{stake} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
+                  </strong>
+                  <span className="text-xs text-slate-600 dark:text-slate-400">(mất cược)</span>
+                </span>
+              </p>
+            </div>
+          </div>
           {short > 0 && !isGuest && <p className="mt-2 text-sm text-rose-700 dark:text-rose-400">Cần thêm {short.toLocaleString("vi-VN")} Bánh Mì cho mức này.</p>}
         </fieldset>
 
-        <dl className="mt-5 grid grid-cols-2 divide-x divide-slate-200 rounded-lg border border-slate-200 text-center dark:divide-slate-800 dark:border-slate-800">
-          <div className="px-3 py-2.5">
-            <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thắng</dt>
-            <dd className="inline-flex items-center gap-1 text-lg font-extrabold tabular-nums text-emerald-700 dark:text-emerald-400">
-              +{stake} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
-            </dd>
-            <dd className="text-xs text-slate-600 dark:text-slate-400">nhận {stake * 2}</dd>
-          </div>
-          <div className="px-3 py-2.5">
-            <dt className="text-xs font-medium text-slate-600 dark:text-slate-400">Thua</dt>
-            <dd className="inline-flex items-center gap-1 text-lg font-extrabold tabular-nums text-rose-700 dark:text-rose-400">
-              −{stake} <BreadCoinIcon size={14} strokeWidth={2.25} aria-hidden="true" />
-            </dd>
-            <dd className="text-xs text-slate-600 dark:text-slate-400">mất cược</dd>
-          </div>
-        </dl>
         <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
           Thưởng thắng từ Đấu trường tối đa 300 Bánh Mì mỗi ngày; thắng thì luôn được hoàn cược.
         </p>
         {error && <p role="alert" className="mt-3 text-sm text-rose-700 dark:text-rose-400">{error}</p>}
 
+        </div>
         {/* Owner 2026-11-13: the balance beside "Mức cược" read as one more stake; it sits by
             the start button, named as the balance. */}
-        <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-6">
+        <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-3 pt-4">
           <button
             type="button"
             onClick={() => void begin()}
