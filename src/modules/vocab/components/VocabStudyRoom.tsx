@@ -169,7 +169,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic, dueReview
       {ambience.scene && <LofiForest reduce={reduceMotion} />}
       {/* 1. Top Navigation Bar with Pill Switcher & Live Progress */}
       <StudyTopHeader
-        topicTitle={dueReview ? `Ôn từ đến hạn · ${topic.title}` : topic.title}
+        topicTitle={dueReview ? `${topic.title} · Ôn từ đến hạn` : topic.title}
         learnedCount={learnedCount}
         totalWordsCount={totalWordsCount}
         completionPercentage={completionPercentage}
