@@ -90,7 +90,7 @@ test("each step gets a line in plain words", () => {
   );
   assert.equal(
     stepLines({ quiz: "CORRECT", typing: "WRONG", typingHints: 0, speaking: "SKIPPED", quickCheck: true })[2].text,
-    "không cần (kiểm tra nhanh)",
+    "không cần (bạn chọn Đã nhớ)",
   );
 });
 

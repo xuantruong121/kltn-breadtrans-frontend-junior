@@ -6,7 +6,7 @@ export interface QueueItem {
   word: VocabWord;
   mode: StudyMode;
   stepCount: number;
-  /** "Kiểm tra nhanh" (owner 2026-11-26): quiz and typing only, then the grade. */
+  /** "Đã nhớ" (owner 2026-11-26): quiz and typing only, then the grade. */
   quickCheck?: boolean;
   /** A due word under review (owner 2026-11-27): asked by the quiz and the typing, never shown first. */
   review?: boolean;

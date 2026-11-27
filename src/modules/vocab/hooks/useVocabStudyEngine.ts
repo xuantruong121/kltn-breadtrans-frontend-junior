@@ -433,7 +433,7 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
   }, [currentWord, isCompleted, currentMode, currentIndex, resetModeInputs]);
 
   // -------------------------------------------------------------
-  // ACTION: "KIỂM TRA NHANH" (the old "Đã thuộc", owner 2026-11-26):
+  // ACTION: "ĐÃ NHỚ" (the old "Đã thuộc", owner 2026-11-26; "Kiểm tra nhanh" until 2026-11-27):
   // the quiz and the typing still decide; the speaking step is not asked.
   // -------------------------------------------------------------
   const handleQuickCheck = useCallback(() => {

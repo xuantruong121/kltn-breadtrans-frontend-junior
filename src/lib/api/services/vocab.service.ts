@@ -144,7 +144,7 @@ export interface ReviewEvidence {
   typing: StepResult;
   typingHints: number;
   speaking: SpeakingResult;
-  /** "Kiểm tra nhanh": only the quiz and the typing were asked. */
+  /** "Đã nhớ": only the quiz and the typing were asked. */
   quickCheck: boolean;
 }
 

@@ -18,7 +18,7 @@ export interface StepEvidence {
   typing: "CORRECT" | "WRONG" | null;
   typingHints: number;
   speaking: SpeakingResult | null;
-  /** "Kiểm tra nhanh": the learner said they know the word; no speaking step. */
+  /** "Đã nhớ": the learner said they know the word; no speaking step. */
   quickCheck: boolean;
 }
 
@@ -132,7 +132,7 @@ export function stepLines(e: ReviewEvidence, opts: { speaking?: boolean } = {}):
         ? { label: "Gõ từ", text: "gõ sai", tone: "miss" }
         : { label: "Gõ từ", text: "bỏ qua", tone: "miss" };
   const speaking: StepLine = e.quickCheck
-    ? { label: "Phát âm", text: "không cần (kiểm tra nhanh)", tone: "none" }
+    ? { label: "Phát âm", text: "không cần (bạn chọn Đã nhớ)", tone: "none" }
     : e.speaking === "PASSED"
       ? { label: "Phát âm", text: "chính xác", tone: "ok" }
       : e.speaking === "FAILED"

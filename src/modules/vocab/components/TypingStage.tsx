@@ -12,7 +12,7 @@ interface TypingStageProps {
   onInputChange: (val: string) => void;
   onCheck: () => void;
   onRevealHint: () => void;
-  /** "Kiểm tra nhanh": the typing is the last step, no speaking follows. */
+  /** "Đã nhớ": the typing is the last step, no speaking follows. */
   quickCheck?: boolean;
 }
 
