@@ -36,14 +36,20 @@ export function nextDueDeck(
 }
 
 /** The heading of the screen that ends a review, or opens on a deck with nothing due. */
-export function dueDoneHeading(done: number): string {
-  return done > 0 ? `Đã ôn xong ${done} từ đến hạn` : "Bộ này chưa có từ nào đến hạn";
+/** `left`: due words that left the session still to relearn (see MAX_RELEARNS in wordVerdict). */
+export function dueDoneHeading(done: number, left: number = 0): string {
+  if (done > 0) return `Đã ôn xong ${done} từ đến hạn`;
+  return left > 0 ? "Phiên ôn đã kết thúc" : "Bộ này chưa có từ nào đến hạn";
 }
 
-export function dueDoneBody(done: number, topicTitle: string): string {
-  return done > 0
-    ? `Bộ ${topicTitle}. Mỗi từ đã có lịch ôn mới theo kết quả vừa rồi.`
-    : `Bộ ${topicTitle}. Từ sẽ có ở đây khi đến lịch ôn.`;
+export function dueDoneBody(done: number, topicTitle: string, left: number = 0): string {
+  if (done > 0) return `Bộ ${topicTitle}. Mỗi từ đã có lịch ôn mới theo kết quả vừa rồi.`;
+  return left > 0 ? `Bộ ${topicTitle}.` : `Bộ ${topicTitle}. Từ sẽ có ở đây khi đến lịch ôn.`;
+}
+
+/** The words not remembered in this review; null when there are none. */
+export function dueLeftLine(left: number): string | null {
+  return left > 0 ? `${left} từ chưa nhớ, hệ thống sẽ nhắc lại sau 10 phút.` : null;
 }
 
 export function nextDeckLabel(deck: DueDeck): string {

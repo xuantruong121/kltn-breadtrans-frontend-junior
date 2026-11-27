@@ -67,9 +67,28 @@ export const GRADE_LABEL: Record<SrsGrade, string> = {
   EASY: "Dễ",
 };
 
-/** "Khó · ôn lại sau 1 ngày"; a word to relearn comes back in this session. */
-export function verdictHeadline(grade: SrsGrade, intervalDays: number | undefined): string {
-  if (grade === "AGAIN") return "Học lại · từ này quay lại cuối phiên";
+/**
+ * A word graded "Học lại" comes back at the end of the session, this many times
+ * at most (owner 2026-11-27: a learner who kept missing one word could never
+ * finish). After that it leaves the session; the server already planned it for
+ * ten minutes later.
+ */
+export const MAX_RELEARNS = 2;
+
+/** `agains`: how many times the word was graded "Học lại" in this session, this one included. */
+export function comesBackThisSession(agains: number): boolean {
+  return agains <= MAX_RELEARNS;
+}
+
+/** "Khó · ôn lại sau 1 ngày"; a word to relearn comes back in this session, or is left to the schedule. */
+export function verdictHeadline(
+  grade: SrsGrade,
+  intervalDays: number | undefined,
+  comesBack: boolean = true,
+): string {
+  if (grade === "AGAIN") {
+    return comesBack ? "Học lại · từ này quay lại cuối phiên" : "Học lại · hệ thống sẽ nhắc lại sau 10 phút";
+  }
   return `${GRADE_LABEL[grade]} · ôn lại sau ${formatReviewInterval(intervalDays ?? 0)}`;
 }
 

@@ -79,6 +79,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic, dueReview
     totalWordsCount,
     learnedCount,
     reviewCount,
+    dueDoneCount,
+    leftCount,
     sessionXp,
     newCount,
     completionPercentage,
@@ -211,7 +213,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic, dueReview
                   <DueReviewDone
                     topicId={topicId}
                     topicTitle={topic.title}
-                    done={totalWordsCount}
+                    done={dueDoneCount}
+                    left={leftCount}
                     sessionXp={sessionXp}
                   />
                 ) : (

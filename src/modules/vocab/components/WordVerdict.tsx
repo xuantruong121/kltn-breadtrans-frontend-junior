@@ -56,7 +56,7 @@ export const WordVerdict: React.FC<WordVerdictProps> = ({ verdict, onContinue, o
           )}
           {status === "READY" && grade && (
             <p className={`text-xl sm:text-2xl font-black ${GRADE_TEXT[grade]}`}>
-              {verdictHeadline(grade, intervalDays)}
+              {verdictHeadline(grade, intervalDays, verdict.comesBack !== false)}
             </p>
           )}
           {status === "ERROR" && (

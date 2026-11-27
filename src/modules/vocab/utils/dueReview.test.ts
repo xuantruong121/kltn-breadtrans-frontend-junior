@@ -4,6 +4,7 @@ import {
   REVIEW_STAGES,
   dueDoneBody,
   dueDoneHeading,
+  dueLeftLine,
   dueReviewHref,
   dueWordsOf,
   nextDeckLabel,
@@ -62,4 +63,14 @@ test("a step is counted among the steps the word goes through", () => {
   assert.deepEqual(stageCounter("QUIZ", [...REVIEW_STAGES]), { step: 1, total: 2 });
   assert.deepEqual(stageCounter("TYPING", [...REVIEW_STAGES]), { step: 2, total: 2 });
   assert.deepEqual(stageCounter("FLASHCARD", ["QUIZ", "TYPING"]), { step: 1, total: 2 });
+});
+
+test("words left to relearn are said on the closing screen", () => {
+  assert.equal(dueLeftLine(0), null);
+  assert.equal(dueLeftLine(2), "2 từ chưa nhớ, hệ thống sẽ nhắc lại sau 10 phút.");
+  // Some known, some left: the heading counts the known ones.
+  assert.equal(dueDoneHeading(3, 1), "Đã ôn xong 3 từ đến hạn");
+  // None known: the review ended, the deck did have due words.
+  assert.equal(dueDoneHeading(0, 1), "Phiên ôn đã kết thúc");
+  assert.equal(dueDoneBody(0, "Travel", 1), "Bộ Travel.");
 });

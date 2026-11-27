@@ -19,6 +19,7 @@ import { dueWordsOf } from "../utils/dueReview";
 import {
   NO_EVIDENCE,
   StepEvidence,
+  comesBackThisSession,
   toReviewEvidence,
   withQuickCheck,
   withQuiz,
@@ -44,6 +45,8 @@ export interface WordVerdictState {
   status: "PENDING" | "READY" | "ERROR";
   /** A due word under review: it had no speaking step. */
   review?: boolean;
+  /** "Học lại" only: false when the word has come back enough and now leaves the session. */
+  comesBack?: boolean;
   grade?: SrsGrade;
   intervalDays?: number;
 }
@@ -76,6 +79,9 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
   // Mastered in THIS study session (for live progress bar and learned count)
   const [sessionMasteredIds, setSessionMasteredIds] = useState<Set<number>>(new Set());
   const [reviewIds, setReviewIds] = useState<Set<number>>(new Set());
+  // Words that left the session still to relearn, and how often each was graded "Học lại".
+  const [leftIds, setLeftIds] = useState<Set<number>>(new Set());
+  const againsRef = useRef(new Map<number, number>());
   // Flashcard XP the server paid in this session (owner 2026-11-18).
   const [sessionXp, setSessionXp] = useState(0);
 
@@ -269,6 +275,24 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
     }
   }, [currentWord, isCompleted, queue, currentIndex, advanceQueue]);
 
+  // Graded "Học lại" once too often: the word leaves the session, not known.
+  // The server planned it for ten minutes later, so it is not lost.
+  const leaveWord = useCallback(() => {
+    if (!currentWord || isCompleted) return;
+    playChime("step");
+    setDirection(1);
+    attemptsRef.current.delete(currentWord.id);
+    setLeftIds((prev) => new Set(prev).add(currentWord.id));
+    setReviewIds((prev) => new Set(prev).add(currentWord.id));
+    const remainingQueue = queue.filter((_, idx) => idx !== currentIndex);
+    setQueue(remainingQueue);
+    if (remainingQueue.length === 0) {
+      setIsCompleted(true);
+    } else {
+      advanceQueue(remainingQueue, currentIndex < remainingQueue.length ? currentIndex : 0);
+    }
+  }, [currentWord, isCompleted, queue, currentIndex, advanceQueue]);
+
   // The word goes to the end of the session, from its flashcard, steps forgotten.
   const requeueWord = useCallback(() => {
     if (!currentWord) return;
@@ -293,13 +317,22 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
       reviewWord(
         { wordId: pending.word.id, evidence: pending.evidence },
         {
-          onSuccess: (reply) =>
+          onSuccess: (reply) => {
+            const grade = reply?.grade ?? "GOOD";
+            let comesBack: boolean | undefined;
+            if (grade === "AGAIN") {
+              const agains = (againsRef.current.get(pending.word.id) ?? 0) + 1;
+              againsRef.current.set(pending.word.id, agains);
+              comesBack = comesBackThisSession(agains);
+            }
             setVerdict({
               ...pending,
               status: "READY",
-              grade: reply?.grade ?? "GOOD",
+              grade,
               intervalDays: reply?.intervalDays,
-            }),
+              comesBack,
+            });
+          },
           onError: () => setVerdict({ ...pending, status: "ERROR" }),
         },
       );
@@ -334,13 +367,17 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
     if (!v || v.status !== "READY") return;
     setVerdict(null);
     if (v.grade === "AGAIN") {
-      playChime("step");
-      requeueWord();
+      if (v.comesBack === false) {
+        leaveWord();
+      } else {
+        playChime("step");
+        requeueWord();
+      }
     } else {
       attemptsRef.current.delete(v.word.id);
       finishWord();
     }
-  }, [finishWord, requeueWord, setVerdict]);
+  }, [finishWord, leaveWord, requeueWord, setVerdict]);
 
   const handleRetryVerdict = useCallback(() => {
     const v = verdictRef.current;
@@ -654,6 +691,8 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
     setIsCompleted(false);
     setSessionMasteredIds(new Set());
     setReviewIds(new Set());
+    setLeftIds(new Set());
+    againsRef.current.clear();
     setSessionXp(0);
   }, [startQueue, resetModeInputs, setVerdict]);
 
@@ -755,6 +794,9 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
   const totalWordsCount = dueReview ? dueStart.length : initialWords.length;
   const learnedCount = sessionMasteredIds.size;
   const reviewCount = reviewIds.size;
+  // Of the due words this review opened with: those now known, and those left to relearn.
+  const dueDoneCount = dueStart.filter((w) => sessionMasteredIds.has(w.id)).length;
+  const leftCount = leftIds.size;
   const newCount = Math.max(0, totalWordsCount - learnedCount - reviewCount);
   const completionPercentage =
     totalWordsCount > 0
@@ -777,6 +819,8 @@ export function useVocabStudyEngine({ topicId, initialWords, dueReview = false }
     totalWordsCount,
     learnedCount,
     reviewCount,
+    dueDoneCount,
+    leftCount,
     newCount,
     sessionXp,
     completionPercentage,

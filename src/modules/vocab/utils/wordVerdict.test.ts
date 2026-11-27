@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  MAX_RELEARNS,
   NO_EVIDENCE,
+  comesBackThisSession,
   stepLines,
   toReviewEvidence,
   verdictHeadline,
@@ -97,4 +99,15 @@ test("a due-word review has no speaking line", () => {
     { speaking: false },
   );
   assert.deepEqual(lines.map((l) => l.label), ["Trắc nghiệm", "Gõ từ"]);
+});
+
+test("a word to relearn comes back twice, then is left to the schedule", () => {
+  assert.equal(MAX_RELEARNS, 2);
+  assert.equal(comesBackThisSession(1), true);
+  assert.equal(comesBackThisSession(2), true);
+  assert.equal(comesBackThisSession(3), false);
+  assert.equal(verdictHeadline("AGAIN", 0), "Học lại · từ này quay lại cuối phiên");
+  assert.equal(verdictHeadline("AGAIN", 0, false), "Học lại · hệ thống sẽ nhắc lại sau 10 phút");
+  // The flag only matters for a word to relearn.
+  assert.equal(verdictHeadline("GOOD", 1, false), verdictHeadline("GOOD", 1));
 });
