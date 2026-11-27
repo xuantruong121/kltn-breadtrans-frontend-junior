@@ -152,7 +152,7 @@ export function ListeningExerciseCard({
           {/* Tertiary inline metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-[13px] text-slate-600 dark:text-slate-400 font-medium">
             <span>
-              {catalogLevelLabel(quiz.cefrLevel ?? quiz.levels?.[0] ?? quiz.title, quiz.practiceLevel) ?? cefr.label}
+              {catalogLevelLabel(quiz.practiceLevel) ?? cefr.label}
             </span>
             <span>·</span>
             <span className="inline-flex items-center gap-1">

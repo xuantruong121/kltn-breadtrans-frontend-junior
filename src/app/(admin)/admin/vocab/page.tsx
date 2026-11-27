@@ -16,12 +16,14 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { VOCAB_LEVELS, vocabListBlocker } from "@/components/admin/vocab/vocabCms";
+import { vocabListBlocker } from "@/components/admin/vocab/vocabCms";
 import { Pagination } from "@/components/ui";
 import { useAdminList } from "@/components/admin/useAdminList";
 import { ADMIN_PAGE_SIZES } from "@/components/admin/adminList";
 import { AiCreateDialog } from "@/components/admin/AiCreateDialog";
 import VocabDocumentImport from "@/components/admin/vocab/VocabDocumentImport";
+import { PRACTICE_LEVEL_OPTIONS } from "@/lib/learning-path/practiceLevel";
+import { deckLevelLabel } from "@/modules/flashcard/flashcardLogic";
 
 type DeckSummary = {
   id: number;
@@ -96,7 +98,7 @@ export default function AdminVocabPage() {
           countLabel="Số từ"
           maxCount={30}
           defaultCount={15}
-          levels={VOCAB_LEVELS.map((level) => ({ value: level, label: level }))}
+          levels={[...PRACTICE_LEVEL_OPTIONS]}
           // QA 2026-11-22: the category was forced; the admin picks it, and
           // the list's category filter, when one is on, fills it in.
           category={{
@@ -132,7 +134,7 @@ export default function AdminVocabPage() {
           value: level,
           onChange: setLevel,
           options: [
-            ...VOCAB_LEVELS.map((value) => ({ value, label: value })),
+            ...PRACTICE_LEVEL_OPTIONS,
             { value: "NONE", label: "Chưa gắn" },
           ],
         }}
@@ -174,7 +176,7 @@ export default function AdminVocabPage() {
                 <div className="flex items-center gap-2">
                   {deck.level && (
                     <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold text-blue-800">
-                      {deck.level}
+                      {deckLevelLabel(deck.level)}
                     </span>
                   )}
                   <span className="truncate text-xs text-slate-600 dark:text-slate-400">{deck.categoryName}</span>

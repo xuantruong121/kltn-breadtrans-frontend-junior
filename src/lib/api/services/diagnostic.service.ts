@@ -56,7 +56,8 @@ export interface DiagnosticAdviceResource {
   requirement: string | null;
   /** Speaking: the practice set key, for the catalog's display title. */
   setKey?: string | null;
-  cefrLevel?: string | null;
+  /** Speaking: the set's practice level. */
+  practiceLevel?: string | null;
 }
 
 export interface DiagnosticAdviceFinding {

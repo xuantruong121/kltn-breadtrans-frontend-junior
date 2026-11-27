@@ -23,8 +23,6 @@ export interface WritingTopic {
   isLocked?: boolean;
   /** Lowest plan that opens this item: FREE, PLUS or PRO. */
   requiredPlan?: string;
-  /** Authored CEFR level the required plan is decided from ("B1", "B2-C1"). */
-  cefrLevel?: string | null;
   /** Graded tasks out of all tasks: none, some, all. */
   completionStatus?: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
   /** "Viết câu theo tranh" exercises: each picture with its two cue words. */

@@ -4,11 +4,13 @@
  */
 import { buildQuizOptions } from "../../../modules/vocab/utils/quizOptions.ts";
 import { checklistBlocker, listPublishBlocker, missingItems } from "../publishBlocker.ts";
+import { PRACTICE_LEVELS } from "../../../lib/learning-path/practiceLevel.ts";
 
 /** "10", "9:00", "3.5": flashcards teach words, not numbers. */
 export const isBareNumber = (word: string) => /^\d+([.,:]\d+)*$/.test(word.trim());
 
-export const VOCAB_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+/** A deck's level: one of the four practice levels (owner 2026-11-27). */
+export const VOCAB_LEVELS = PRACTICE_LEVELS;
 
 export const POS_OPTIONS = [
   "noun",
@@ -24,11 +26,9 @@ export const POS_OPTIONS = [
   "determiner",
 ] as const;
 
-/** The AI endpoints take the three-step scale, not CEFR. */
-export function cefrToScaleLevel(level?: string | null) {
-  if (level === "A1" || level === "A2") return "BEGINNER";
-  if (level === "C1" || level === "C2") return "ADVANCED";
-  return "INTERMEDIATE";
+/** The level an AI request takes: the deck's own, Cơ bản when it has none. */
+export function aiDeckLevel(level?: string | null) {
+  return level && (PRACTICE_LEVELS as readonly string[]).includes(level) ? level : "BASIC";
 }
 
 export type PastedWord = {

@@ -183,7 +183,7 @@ export function PracticeCard({
           {/* Metadata */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
             <span>
-              {catalogLevelLabel(exercise.cefrLevel ?? exercise.title, exercise.practiceLevel) ?? diffConfig.label}
+              {catalogLevelLabel(exercise.practiceLevel) ?? diffConfig.label}
             </span>
             <span>·</span>
             <span>~{estimatedMinutes} phút</span>

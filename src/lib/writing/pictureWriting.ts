@@ -20,7 +20,8 @@ type PictureQuizLike = {
   id: number;
   title?: string;
   taskType?: string | null;
-  cefrLevel?: string | null;
+  /** The practice level the API stores (STARTER … ADVANCED). */
+  practiceLevel?: string | null;
   isLocked?: boolean;
   isLevelLocked?: boolean;
   requiredPlan?: string;
@@ -59,7 +60,7 @@ export function pictureNeighbours<T extends PictureQuizLike>(
 ): { prev: string | null; next: string | null } {
   const isCurrent = (card: { quiz: T; task: PictureTaskSummary }) =>
     card.quiz.id === quizId && card.task.questionId === questionId;
-  const cards = sortByLevel(pictureCards(quizzes), DEFAULT_CATALOG_SORT, (card) => card.quiz.cefrLevel).filter(
+  const cards = sortByLevel(pictureCards(quizzes), DEFAULT_CATALOG_SORT, (card) => card.quiz.practiceLevel).filter(
     (card) => isCurrent(card) || !(card.quiz.isLocked || card.quiz.isLevelLocked),
   );
   const index = cards.findIndex(isCurrent);

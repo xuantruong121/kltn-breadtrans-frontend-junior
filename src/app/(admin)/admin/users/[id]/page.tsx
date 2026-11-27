@@ -22,6 +22,7 @@ import {
 import axiosClient from "@/lib/api/axiosClient";
 import { adminSubscriptionService } from "@/lib/api/services/admin-subscription.service";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
+import { levelLabel } from "@/lib/ui/displayLabels";
 
 type Row = Record<string, any>;
 type Tracking = {
@@ -277,7 +278,7 @@ export default function AdminLearnerTrackingPage() {
           {data.vocabulary.recent.length ? <div className="space-y-2">{data.vocabulary.recent.slice(0, 5).map((item: Row) => <ResultRow key={item.id} title={item.word} meta={item.isMastered ? "Đã thuần thục" : `${item.reviewCount} lượt ôn`} date={item.lastReviewedAt} />)}</div> : <EmptyState />}
         </SectionCard>
         <SectionCard title="Ngữ pháp" icon={<Brain size={18} />}>
-          {data.grammar.recent.length ? <div className="space-y-2">{data.grammar.recent.slice(0, 6).map((item: Row) => <ResultRow key={item.id} title={item.topic} meta={`${item.level} · Điểm: ${score(item.score)}`} date={item.attemptedAt} />)}</div> : <EmptyState />}
+          {data.grammar.recent.length ? <div className="space-y-2">{data.grammar.recent.slice(0, 6).map((item: Row) => <ResultRow key={item.id} title={item.topic} meta={`${levelLabel(String(item.level ?? ""))} · Điểm: ${score(item.score)}`} date={item.attemptedAt} />)}</div> : <EmptyState />}
         </SectionCard>
         <SectionCard title="Luyện đề / TOEIC" icon={<BookOpen size={18} />}>
           {data.exams.recent.length ? <div className="space-y-2">{data.exams.recent.slice(0, 6).map((item: Row) => <ResultRow key={item.id} title={item.exam} meta={`${item.mode} · ${item.status} · Điểm: ${score(item.totalScore)}`} date={item.submittedAt || item.attemptedAt} />)}</div> : <EmptyState />}

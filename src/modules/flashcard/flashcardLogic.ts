@@ -1,17 +1,11 @@
 import type { VocabTopic } from "../../lib/api/services/vocab.service.ts";
+import { PRACTICE_LEVEL_LABEL, isPracticeLevel } from "../../lib/learning-path/practiceLevel.ts";
 import { dueReviewHref } from "../vocab/utils/dueReview.ts";
 
-const DECK_LEVEL_LABELS: Record<string, string> = {
-  A1: "Mất gốc",
-  A2: "Cơ bản",
-  B1: "Trung cấp",
-  B2: "Nâng cao",
-};
-
-/** Learners see internal practice levels. A CEFR tag is a CMS tag, not a claim. */
+/** A deck's practice level as learners read it (owner 2026-11-27); "" with none. */
 export function deckLevelLabel(level?: string | null): string {
-  if (!level) return "";
-  return DECK_LEVEL_LABELS[level.trim().toUpperCase()] ?? "";
+  const value = level?.trim().toUpperCase();
+  return isPracticeLevel(value) ? PRACTICE_LEVEL_LABEL[value] : "";
 }
 
 export type FlashcardDeckStatus = "REVIEW_DUE" | "IN_PROGRESS" | "COMPLETED" | "NEW";
@@ -39,7 +33,7 @@ export interface FlashcardSummaryMetrics {
 export interface FilterOptions {
   searchQuery?: string;
   selectedCategory?: string;
-  /** CEFR level, or "ALL". */
+  /** Practice level, or "ALL". */
   selectedLevel?: string;
   statusFilter?: FlashcardStatusFilter;
   sortOption?: FlashcardSortOption;

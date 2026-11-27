@@ -20,11 +20,12 @@ import {
 } from "./flashcardLogic.ts";
 import type { VocabTopic } from "../../lib/api/services/vocab.service.ts";
 
-test("deckLevelLabel: learners never see a CEFR tag", () => {
-  assert.equal(deckLevelLabel("A1"), "Mất gốc");
-  assert.equal(deckLevelLabel("A2"), "Cơ bản");
-  assert.equal(deckLevelLabel("B1"), "Trung cấp");
-  assert.equal(deckLevelLabel("B2"), "Nâng cao");
+test("deckLevelLabel: a deck shows its practice level, never a CEFR code", () => {
+  assert.equal(deckLevelLabel("STARTER"), "Mất gốc");
+  assert.equal(deckLevelLabel("BASIC"), "Cơ bản");
+  assert.equal(deckLevelLabel("INTERMEDIATE"), "Trung cấp");
+  assert.equal(deckLevelLabel("ADVANCED"), "Nâng cao");
+  assert.equal(deckLevelLabel("A1"), "");
   assert.equal(deckLevelLabel("C1"), "");
   assert.equal(deckLevelLabel(null), "");
 });
@@ -315,14 +316,14 @@ describe("8. Responsive Grid Invariants & Card Width Budget", () => {
 });
 
 
-test("filterAndSortTopics: level filter keeps only decks of that CEFR level", () => {
+test("filterAndSortTopics: level filter keeps only decks of that practice level", () => {
   const topics = [
-    { id: 1, title: "A", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false, level: "B1" },
-    { id: 2, title: "B", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false, level: "A2" },
+    { id: 1, title: "A", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false, level: "INTERMEDIATE" },
+    { id: 2, title: "B", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false, level: "BASIC" },
     { id: 3, title: "C", categoryName: "X", totalWords: 10, learnedCount: 0, needReviewCount: 0, isPro: false },
   ];
   assert.deepEqual(
-    filterAndSortTopics(topics as any, { selectedLevel: "B1" }).map((t) => t.id),
+    filterAndSortTopics(topics as any, { selectedLevel: "INTERMEDIATE" }).map((t) => t.id),
     [1],
   );
   assert.equal(filterAndSortTopics(topics as any, { selectedLevel: "ALL" }).length, 3);

@@ -6,6 +6,7 @@
  */
 
 const LEVEL_LABELS: Record<string, string> = {
+  STARTER: "Mất gốc",
   BEGINNER: "Cơ bản",
   ELEMENTARY: "Cơ bản",
   BASIC: "Cơ bản",

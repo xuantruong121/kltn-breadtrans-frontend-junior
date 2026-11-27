@@ -14,9 +14,15 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { BTN_AI, BTN_DANGER, BTN_DARK, BTN_PRIMARY, BTN_SECONDARY, BTN_SUCCESS } from "./cmsButtons";
 import {
+  PRACTICE_LEVEL_LABEL,
+  PRACTICE_LEVEL_OPTIONS,
+  PRACTICE_LEVELS,
+  practiceLevelLabel,
+  type PracticeLevel,
+} from "@/lib/learning-path/practiceLevel";
+import {
   audioBadgeFor,
   CMS_LEVELS,
-  cmsLevelFromTitle,
   contentLevel,
   publishChecklist,
   writingCardLabel,
@@ -158,15 +164,8 @@ const meta: Record<Domain, { label: string; type: string }> = {
   writing: { label: "Viết", type: "WRITING_EMAIL" },
 };
 
-const CONTENT_LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-
-/** The CEFR tag authored at the head of a title ("Hội thoại C1 — ..."); quizzes have no level column. */
-function levelFromTitle(title?: string | null): string | null {
-  const level = cmsLevelFromTitle(title);
-  return level && (CONTENT_LEVEL_OPTIONS as readonly string[]).includes(level)
-    ? level
-    : null;
-}
+/** The four practice levels (owner 2026-11-27); quizzes store theirs in practiceLevel. */
+const CONTENT_LEVEL_OPTIONS = PRACTICE_LEVELS;
 
 const NO_FILTERS: Omit<ListFilters, "query" | "status"> = {
   level: "ALL",
@@ -456,7 +455,7 @@ export default function SkillCmsWorkspace({
   const [form, setForm] = useState({
     title: "",
     description: "",
-    level: "A2",
+    level: "BASIC",
     timeLimit: "15",
     passage: "",
     type: meta[domain].type,
@@ -728,7 +727,7 @@ export default function SkillCmsWorkspace({
         "/admin/reading/ai/suggest-passage",
         {
           topic,
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           targetLength: 180,
         },
       );
@@ -755,7 +754,7 @@ export default function SkillCmsWorkspace({
         "/admin/reading/ai/suggest-questions",
         {
           passage: form.passage.trim(),
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           count: Number(readingAiCount),
         },
       );
@@ -796,7 +795,7 @@ export default function SkillCmsWorkspace({
         listeningContentAiMode === "DIALOGUE"
           ? {
               mode: "DIALOGUE",
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               topic: form.title.trim() || undefined,
               currentTurns: transcriptForSave(dialogue).map(({ speaker, text, translation }) => ({
                 speaker,
@@ -806,7 +805,7 @@ export default function SkillCmsWorkspace({
             }
           : {
               mode: "DICTATION",
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               topic: form.title.trim() || undefined,
               currentText: question.prompt.trim() || undefined,
               currentTurns: [],
@@ -855,7 +854,7 @@ export default function SkillCmsWorkspace({
       const data = unwrap<any>(
         await axiosClient.post("/admin/listening/ai/full-draft", {
           topic,
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           mode: "COMPREHENSION",
           count,
         }),
@@ -897,7 +896,7 @@ export default function SkillCmsWorkspace({
         {
           mode: "DIALOGUE",
           sourceText,
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           count: Number(listeningQuestionsAiCount),
         },
       );
@@ -927,7 +926,7 @@ export default function SkillCmsWorkspace({
         "/admin/writing/ai/suggest-task",
         {
           taskType: question.taskType.trim() || "EMAIL",
-          level: question.level.trim() || form.level || "A2",
+          level: question.level.trim() || form.level || "BASIC",
           topic: form.title.trim() || undefined,
           currentPrompt: question.prompt.trim() || undefined,
           wordMin: question.wordMin ? Number(question.wordMin) : undefined,
@@ -962,7 +961,7 @@ export default function SkillCmsWorkspace({
         "/admin/listening/ai/dictation-lines",
         {
           topic: topic || "Theo tài liệu",
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           count: 20,
         },
       );
@@ -989,7 +988,7 @@ export default function SkillCmsWorkspace({
     const data = unwrap<any>(
       await axiosClient.post("/admin/listening/ai/dictation-lines", {
         topic: form.title.trim() || fullDraft.title,
-        level: fullDraft.level || form.level || "A2",
+        level: fullDraft.level || form.level || "BASIC",
         count,
         avoid: draftSentenceAvoid(fullDraft.sentences),
         brief: fullDraft.description.trim() || undefined,
@@ -1011,7 +1010,7 @@ export default function SkillCmsWorkspace({
       const data = unwrap<any>(
         await axiosClient.post("/admin/reading/ai/suggest-questions", {
           passage: fullDraft.passage,
-          level: fullDraft.level || form.level || "A2",
+          level: fullDraft.level || form.level || "BASIC",
           count: 1,
           avoid: draftAvoidList(fullDraft.questions.map((question) => question.prompt)),
         }),
@@ -1105,14 +1104,14 @@ export default function SkillCmsWorkspace({
               topic,
               // The admin's own description is the situation the draft plays out (owner 2026-11-25).
               brief: form.description.trim() || undefined,
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               targetLength: 180,
               count,
             }
           : {
               topic,
               brief: form.description.trim() || undefined,
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               // The form chosen in "Dạng bài", which the quiz is saved as
               // (inferring it from the question being edited once produced
               // dictation silently).
@@ -1145,7 +1144,7 @@ export default function SkillCmsWorkspace({
           title: topic || String(data.title),
           // The admin's own description stays too (owner 2026-11-25).
           description: draftDescription(form.description, data.description),
-          level: String(data.level || form.level || "A2"),
+          level: String(data.level || form.level || "BASIC"),
           passage: "",
           listeningMode: "DICTATION",
           questions: [],
@@ -1179,7 +1178,7 @@ export default function SkillCmsWorkspace({
         title: topic || String(data.title),
         // The admin's own description stays too (owner 2026-11-25).
         description: draftDescription(form.description, data.description),
-        level: String(data.level || form.level || "A2"),
+        level: String(data.level || form.level || "BASIC"),
         passage:
           domain === "reading"
             ? String(data.passage || "")
@@ -1265,7 +1264,7 @@ export default function SkillCmsWorkspace({
       setForm({
         title: body,
         description: data.description || "",
-        level: data.level || levelFromTitle(data.title) || "A2",
+        level: data.practiceLevel || "BASIC",
         timeLimit: String(data.timeLimit ?? 15),
         passage: data.passage || data.theoryContent || "",
         type: formTypeOf(data),
@@ -2050,7 +2049,7 @@ export default function SkillCmsWorkspace({
             countLabel="Số câu"
             maxCount={10}
             defaultCount={5}
-            levels={["A1", "A2", "B1", "B2", "C1"].map((level) => ({ value: level, label: level }))}
+            levels={[...PRACTICE_LEVEL_OPTIONS]}
             kinds={[
               { value: "EMAIL", label: "Viết email" },
               { value: "TRANSLATION", label: "Dịch câu" },
@@ -2123,7 +2122,7 @@ export default function SkillCmsWorkspace({
           level={{
             value: listFilters.level,
             onChange: (value) => setFilter("level", value),
-            options: levelsPresent.map((level) => ({ value: level, label: level })),
+            options: levelsPresent.map((level) => ({ value: level, label: practiceLevelLabel(level as PracticeLevel) })),
           }}
           track={{ value: trackFilter, onChange: setTrackFilter, tracks: adminTracks }}
           extra={
@@ -2163,8 +2162,8 @@ export default function SkillCmsWorkspace({
         <div className={ADMIN_CARD_GRID}>
           {visibleItems.map((content) => {
             const level = contentLevel(content);
-            // The same Vietnamese title learners read; the stored one keeps
-            // the level tag the API needs.
+            // The same Vietnamese title learners read; an old stored title keeps
+            // its level head, which titles are looked up by.
             const cardTitle = quizDisplayTitle(content.id, content.title ?? "");
             const published = content.publicationStatus === "PUBLISHED";
             const audio = audioBadgeFor(content);
@@ -2180,7 +2179,7 @@ export default function SkillCmsWorkspace({
                 <div className="flex items-center gap-2">
                   {level && (
                     <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-blue-800">
-                      {level}
+                      {practiceLevelLabel(level as PracticeLevel)}
                     </span>
                   )}
                   {domain === "writing" && (
@@ -2363,7 +2362,7 @@ export default function SkillCmsWorkspace({
   const checklist = publishChecklist({
     domain,
     title: form.title,
-    levelTagged: Boolean(cmsLevelFromTitle(item?.title)),
+    levelTagged: Boolean(item?.practiceLevel),
     questions,
     audioPublished: currentArtifact?.status === "PUBLISHED",
     listeningMode: selectedListeningMode,
@@ -2517,7 +2516,7 @@ export default function SkillCmsWorkspace({
                   <option value="">Theo trình độ của bài</option>
                   {CONTENT_LEVEL_OPTIONS.map((level) => (
                     <option key={level} value={level}>
-                      {level}
+                      {PRACTICE_LEVEL_LABEL[level]}
                     </option>
                   ))}
                 </select>
@@ -3082,7 +3081,7 @@ export default function SkillCmsWorkspace({
               >
                 {CONTENT_LEVEL_OPTIONS.map((level) => (
                   <option key={level} value={level}>
-                    {level}
+                    {PRACTICE_LEVEL_LABEL[level]}
                   </option>
                 ))}
               </select>
@@ -3897,7 +3896,7 @@ export default function SkillCmsWorkspace({
                   >
                     {CONTENT_LEVEL_OPTIONS.map((level) => (
                       <option key={level} value={level}>
-                        {level}
+                        {PRACTICE_LEVEL_LABEL[level]}
                       </option>
                     ))}
                   </select>
@@ -5076,7 +5075,7 @@ export default function SkillCmsWorkspace({
                 <span className="text-slate-600 dark:text-slate-400">
                   Trình độ:{" "}
                   <span className="font-semibold text-slate-700">
-                    {form.level || "A2"}
+                    {practiceLevelLabel((form.level || "BASIC") as PracticeLevel)}
                   </span>
                 </span>
                 <button

@@ -70,7 +70,7 @@ export function WritingTopicCard({
   const status = statusOverride || computedStatus;
 
   // The API's authored CEFR level; a missing level is never shown as Cơ bản.
-  const levelLabel = catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title, topic.practiceLevel);
+  const levelLabel = catalogLevelLabel(topic.practiceLevel ?? topic.level);
 
   const formatTag = resolveWritingFormatTag(topic);
   const pedagogicalDescription = resolveWritingPedagogicalDescription(topic);

@@ -81,6 +81,8 @@ export interface Quiz {
   type: string; // e.g. "LISTENING_PRACTICE"
   isPremiumContent?: boolean;
   isLocked?: boolean;
+  /** A standalone practice's level (STARTER … ADVANCED); null for an exam. */
+  practiceLevel?: string | null;
   bilingualContent?: {
     examFormat?: "TOEIC_LR" | "TOEIC_SW" | "TOEIC_4_SKILLS" | "TWO_SKILL" | "SPEAKING_WRITING" | "FOUR_SKILL";
     examSetId?: number;
@@ -172,8 +174,6 @@ export interface ListeningPracticeCatalogItem {
   mode: "COMPREHENSION" | "DICTATION" | "DIALOGUE";
   track?: string;
   levels?: string[];
-  /** Authored CEFR level the required plan is decided from ("B1", "B2-C1"). */
-  cefrLevel?: string | null;
   topics?: string[];
   accents?: string[];
   questionCount?: number;

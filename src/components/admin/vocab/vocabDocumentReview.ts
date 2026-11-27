@@ -14,7 +14,7 @@ export type ReviewWord = {
 export type ReviewDeck = {
   title: string;
   description: string;
-  /** A1-C2 as the AI proposed it, or "" for none; the admin may change it. */
+  /** The practice level the AI proposed (STARTER … ADVANCED), or "" for none; the admin may change it. */
   level: string;
   chosen: boolean;
   words: ReviewWord[];
@@ -27,7 +27,8 @@ type SuggestedDeck = {
   words: Array<Omit<ReviewWord, "chosen">>;
 };
 
-const DECK_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+/** The four practice levels (owner 2026-11-27). */
+const DECK_LEVELS: readonly string[] = ["STARTER", "BASIC", "INTERMEDIATE", "ADVANCED"];
 
 /** The deck's level kept from the AI (owner 2026-11-25: it was dropped), when it is a CMS level. */
 export const deckLevel = (level: string | null | undefined) => {

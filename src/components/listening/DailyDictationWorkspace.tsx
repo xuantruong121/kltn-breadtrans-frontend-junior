@@ -1164,7 +1164,7 @@ export function DailyDictationWorkspace({
     (currentQuestion?.content as any)?.translation ||
     activeTranscriptItem?.translation ||
     null;
-  const vocabLevel = level || quiz.bilingualContent?.skillLabel || "A1";
+  const vocabLevel = level || quiz.practiceLevel || quiz.bilingualContent?.skillLabel || undefined;
 
   const loadTranscript = useCallback(
     async (generation: number, forceReload = false) => {

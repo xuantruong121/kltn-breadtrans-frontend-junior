@@ -17,6 +17,7 @@ import {
   type ReviewDeck,
 } from "./vocabDocumentReview";
 import { VOCAB_LEVELS } from "./vocabCms";
+import { PRACTICE_LEVEL_LABEL } from "@/lib/learning-path/practiceLevel";
 
 const unwrap = <T,>(value: any): T => (value?.data ?? value) as T;
 
@@ -190,7 +191,7 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
                     <option value="">Chưa chọn</option>
                     {VOCAB_LEVELS.map((level) => (
                       <option key={level} value={level}>
-                        {level}
+                        {PRACTICE_LEVEL_LABEL[level]}
                       </option>
                     ))}
                   </select>

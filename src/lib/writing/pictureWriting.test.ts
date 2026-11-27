@@ -94,11 +94,11 @@ test("a correction is matched without case when the exact text is not there, and
 test("a picture moves to the pictures next to it in the list, not in its set (owner 2026-11-24)", () => {
   const task = (questionId: number) => ({ questionId, position: 1, imageUrl: "https://x/p.jpg", keywords: ["a", "b"], isGraded: false });
   const quizzes = [
-    { id: 126, taskType: "PICTURE_SENTENCE", cefrLevel: "B1", isLocked: true, pictureTasks: [task(481), task(482)] },
-    { id: 124, taskType: "PICTURE_SENTENCE", cefrLevel: "A2", pictureTasks: [task(466), task(470)] },
-    { id: 123, taskType: "PICTURE_SENTENCE", cefrLevel: "A2", pictureTasks: [task(461)] },
+    { id: 126, taskType: "PICTURE_SENTENCE", practiceLevel: "INTERMEDIATE", isLocked: true, pictureTasks: [task(481), task(482)] },
+    { id: 124, taskType: "PICTURE_SENTENCE", practiceLevel: "BASIC", pictureTasks: [task(466), task(470)] },
+    { id: 123, taskType: "PICTURE_SENTENCE", practiceLevel: "BASIC", pictureTasks: [task(461)] },
   ];
-  // A2 first (Dễ → Khó), then the locked B1 set, which is skipped.
+  // BASIC first (Dễ → Khó), then the locked INTERMEDIATE set, which is skipped.
   assert.deepEqual(pictureNeighbours(quizzes, 124, 466), { prev: null, next: "/writing/124?q=470" });
   assert.deepEqual(pictureNeighbours(quizzes, 124, 470), { prev: "/writing/124?q=466", next: "/writing/123?q=461" });
   assert.deepEqual(pictureNeighbours(quizzes, 123, 461), { prev: "/writing/124?q=470", next: null });

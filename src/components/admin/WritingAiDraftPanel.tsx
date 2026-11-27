@@ -15,6 +15,7 @@ import {
   writingTaskLabel,
   type WritingDraftTask,
 } from "./skillCmsStatus";
+import { practiceLevelLabel, type PracticeLevel } from "@/lib/learning-path/practiceLevel";
 
 type Draft = { title: string; description: string; tasks: WritingDraftTask[]; dropped: number };
 
@@ -162,7 +163,7 @@ export function WritingAiDraftPanel({
               Soạn bài {KIND_LABEL[kind]} bằng AI
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Chủ đề: <span className="font-semibold text-slate-800">{topic}</span> · Trình độ {level}
+              Chủ đề: <span className="font-semibold text-slate-800">{topic}</span> · Trình độ {practiceLevelLabel(level as PracticeLevel)}
             </p>
           </div>
           <button type="button" onClick={cancel} aria-label="Đóng" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">

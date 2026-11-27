@@ -169,7 +169,7 @@ function EditorBody({ set }: { set: SpeakingPracticeSet | null }) {
   const initialForm: SetForm = {
     title: set?.title ?? "",
     description: set?.description ?? "",
-    level: set?.level ?? "A1-A2",
+    level: set?.level ?? "BASIC",
   };
   const [savedForm, setSavedForm] = useState<SetForm>(initialForm);
   const [form, setForm] = useState<SetForm>(initialForm);

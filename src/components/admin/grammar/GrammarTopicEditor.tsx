@@ -109,7 +109,7 @@ function TopicBody({ topic }: { topic: Topic | null }) {
   const queryClient = useQueryClient();
   const initial: TopicForm = {
     title: topic?.title ?? "",
-    level: topic?.level ?? "BEGINNER",
+    level: topic?.level ?? "BASIC",
     video: topic?.videoYoutubeId ?? "",
     keyFormula: topic?.keyFormula ?? "",
     description: topic?.description ?? "",

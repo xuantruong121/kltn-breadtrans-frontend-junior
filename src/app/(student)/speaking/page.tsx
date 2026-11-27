@@ -48,7 +48,7 @@ type SpeakingPracticeSetCard = SpeakingExercise & {
 };
 
 /** A set's level is its practice set level, the same one access uses. */
-const speakingLevelOf = (set: SpeakingPracticeSetCard) => set.cefrLevel ?? set.title;
+const speakingLevelOf = (set: SpeakingPracticeSetCard) => set.practiceLevel;
 
 /** Completed exercises of a set, from persisted graded submissions. */
 function speakingSetStatus(set: SpeakingPracticeSetCard): LearningStatus {
@@ -207,7 +207,6 @@ export default function SpeakingExercisesPage() {
       const matchDifficulty = matchesDifficultyFilter(
         speakingLevelOf(ex),
         selectedDifficulty,
-        ex.practiceLevel,
       );
 
       const matchTrack = inTrackChip({ tracks: ex.practiceSet.tracks }, selectedTrack);

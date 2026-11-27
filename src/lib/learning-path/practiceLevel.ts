@@ -28,7 +28,31 @@ export const PRACTICE_SKILL_LABEL: Record<PracticeSkill, string> = {
 
 export const PRACTICE_SKILL_ORDER: PracticeSkill[] = ["LISTENING", "READING", "SPEAKING", "WRITING"];
 
-const LEVEL_ORDER: PracticeLevel[] = ["STARTER", "BASIC", "INTERMEDIATE", "ADVANCED"];
+/**
+ * The four levels in order. Since 2026-11-27 (owner) every content item, deck
+ * and grammar topic carries one of them; the admin picks from this list.
+ */
+export const PRACTICE_LEVELS: readonly PracticeLevel[] = ["STARTER", "BASIC", "INTERMEDIATE", "ADVANCED"];
+
+/** Options for a level select: value and Vietnamese label. */
+export const PRACTICE_LEVEL_OPTIONS: ReadonlyArray<{ value: PracticeLevel; label: string }> = PRACTICE_LEVELS.map(
+  (value) => ({ value, label: PRACTICE_LEVEL_LABEL[value] }),
+);
+
+export function isPracticeLevel(value: unknown): value is PracticeLevel {
+  return (PRACTICE_LEVELS as readonly unknown[]).includes(value);
+}
+
+/** Sort comparator, Mất gốc first; anything else last. */
+export function comparePracticeLevel(a: string | null | undefined, b: string | null | undefined): number {
+  const rank = (level: string | null | undefined) => {
+    const index = (PRACTICE_LEVELS as readonly string[]).indexOf(level ?? "");
+    return index < 0 ? PRACTICE_LEVELS.length : index;
+  };
+  return rank(a) - rank(b);
+}
+
+const LEVEL_ORDER = PRACTICE_LEVELS;
 
 /** Skills placed under the overall level: what the learner should work on first. */
 export function skillsBelowOverall(

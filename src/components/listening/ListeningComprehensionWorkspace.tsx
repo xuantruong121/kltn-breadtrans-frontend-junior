@@ -1181,7 +1181,8 @@ export function ListeningComprehensionWorkspace({
     setLookupWord(word);
   };
 
-  const levelTag = level || quiz.bilingualContent?.skillLabel || "A1 BEGINNER";
+  // The quiz's practice level; nothing when it has none (an exam part).
+  const levelTag = level || quiz.practiceLevel || quiz.bilingualContent?.skillLabel || undefined;
 
   if (isDictation) {
     return (

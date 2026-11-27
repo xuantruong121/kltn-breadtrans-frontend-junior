@@ -37,9 +37,8 @@ import { quizDisplayTitle, withoutLevelPhrase } from "@/lib/catalog/displayTitle
 const EMPTY_QUIZZES: ListeningPracticeCatalogItem[] = [];
 const LISTENING_MODES = ["COMPREHENSION", "DICTATION", "DIALOGUE"] as const;
 
-/** Authoritative level from the API, with the authored tag as fallback. */
-const listeningLevelOf = (q: ListeningPracticeCatalogItem) =>
-  q.cefrLevel ?? q.levels?.[0] ?? q.title;
+/** The practice level the API stores and decides access from. */
+const listeningLevelOf = (q: ListeningPracticeCatalogItem) => q.practiceLevel;
 
 type ListeningCatalogCardItem = ListeningPracticeCatalogItem & {
   isSpotlight?: boolean;
@@ -168,7 +167,6 @@ function ListeningCatalogContent() {
       const matchDifficulty = matchesDifficultyFilter(
         listeningLevelOf(q),
         selectedDifficulty,
-        q.practiceLevel,
       );
 
       // A listening attempt is stored only on submission: done or not yet.

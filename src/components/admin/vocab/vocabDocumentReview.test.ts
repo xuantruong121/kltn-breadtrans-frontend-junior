@@ -40,15 +40,15 @@ describe("vocab document review", () => {
 
   it("keeps the AI's level when it is a CMS level, and none otherwise", () => {
     const decks = toReviewDecks([
-      { title: "A", level: "b1", words: [word("x")] },
-      { title: "B", level: "Intermediate", words: [word("y")] },
+      { title: "A", level: "basic", words: [word("x")] },
+      { title: "B", level: "B1", words: [word("y")] },
       { title: "C", words: [word("z")] },
     ]);
     assert.deepEqual(
       decks.map((deck) => deck.level),
-      ["B1", "", ""],
+      ["BASIC", "", ""],
     );
-    assert.equal(deckLevel(" C2 "), "C2");
+    assert.equal(deckLevel(" intermediate "), "INTERMEDIATE");
   });
 
   it("flags a chosen deck with fewer than 4 chosen words", () => {

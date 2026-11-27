@@ -39,7 +39,7 @@ import VocabStagePreview from "./VocabStagePreview";
 import VocabWordForm, { type AdminVocabWord } from "./VocabWordForm";
 import {
   VOCAB_LEVELS,
-  cefrToScaleLevel,
+  aiDeckLevel,
   parseVocabPaste,
   phoneticsFromLookup,
   vocabDeckChecklist,
@@ -49,6 +49,7 @@ import {
   type DeckStats,
 } from "./vocabCms";
 import { draftAvoidList, replaceDraftItem } from "../skillCmsStatus";
+import { PRACTICE_LEVEL_LABEL } from "@/lib/learning-path/practiceLevel";
 
 type Deck = {
   id: number;
@@ -360,7 +361,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       const data = unwrap<any>(
         await axiosClient.post("/admin/vocab/ai/full-draft", {
           topic,
-          level: cefrToScaleLevel(form.level),
+          level: aiDeckLevel(form.level),
           context: form.description.trim() || undefined,
           count,
         }),
@@ -402,7 +403,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       const data = unwrap<any>(
         await axiosClient.post("/admin/vocab/ai/full-draft", {
           topic: form.title.trim(),
-          level: cefrToScaleLevel(form.level),
+          level: aiDeckLevel(form.level),
           context: form.description.trim() || undefined,
           count: 1,
           // The suggestions first: the API takes 40 items.
@@ -448,7 +449,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     const data = unwrap<any>(
       await axiosClient.post("/admin/vocab/ai/suggest-word", {
         word,
-        level: cefrToScaleLevel(form.level),
+        level: aiDeckLevel(form.level),
       }),
     );
     return {
@@ -701,7 +702,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 <option value="">Chưa chọn</option>
                 {VOCAB_LEVELS.map((level) => (
                   <option key={level} value={level}>
-                    {level}
+                    {PRACTICE_LEVEL_LABEL[level]}
                   </option>
                 ))}
               </select>

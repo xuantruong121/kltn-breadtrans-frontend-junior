@@ -10,8 +10,9 @@ export interface ReadingExercise {
   quizId: number;
   title: string;
   description?: string | null;
+  /** The quiz's practice level (STARTER … ADVANCED). */
   level: string;
-  difficulty: "BASIC" | "INTERMEDIATE" | "ADVANCED";
+  difficulty: "STARTER" | "BASIC" | "INTERMEDIATE" | "ADVANCED";
   questionCount: number;
   estimatedMinutes?: number | null;
   parentTopicId?: number | null;
@@ -26,8 +27,6 @@ export interface ReadingExercise {
   isLocked: boolean;
   /** Lowest plan that opens this item: FREE, PLUS or PRO. */
   requiredPlan?: string;
-  /** Authored CEFR level the required plan is decided from ("B1"). */
-  cefrLevel?: string | null;
   completionStatus: ReadingExerciseCompletionStatus;
   completedQuestionCount: number;
 }
