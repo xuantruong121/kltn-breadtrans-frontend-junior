@@ -15,6 +15,8 @@ import {
   extractUniqueCategories,
   filterAndSortTopics,
   deckLevelLabel,
+  deckHref,
+  dueWordsIn,
 } from "./flashcardLogic.ts";
 import type { VocabTopic } from "../../lib/api/services/vocab.service.ts";
 
@@ -45,14 +47,14 @@ function makeTopic(overrides: Partial<VocabTopic> = {}): VocabTopic {
 // ─── Test Suites ──────────────────────────────────────────────────────────────
 
 describe("1. Deck State Mapping & Priority", () => {
-  test("REVIEW_DUE: when needReviewCount > 0, state is REVIEW_DUE even if learned < total", () => {
-    const topic = makeTopic({ totalWords: 10, learnedCount: 5, needReviewCount: 3 });
+  test("REVIEW_DUE: when words are due, state is REVIEW_DUE even if learned < total", () => {
+    const topic = makeTopic({ totalWords: 10, learnedCount: 5, needReviewCount: 3, dueCount: 3 });
     const status = getDeckStatus(topic);
     assert.equal(status, "REVIEW_DUE");
   });
 
-  test("REVIEW_DUE: when needReviewCount > 0, state is REVIEW_DUE even if learned >= total", () => {
-    const topic = makeTopic({ totalWords: 10, learnedCount: 10, needReviewCount: 2 });
+  test("REVIEW_DUE: when words are due, state is REVIEW_DUE even if learned >= total", () => {
+    const topic = makeTopic({ totalWords: 10, learnedCount: 10, needReviewCount: 2, dueCount: 2 });
     const status = getDeckStatus(topic);
     assert.equal(status, "REVIEW_DUE");
   });
@@ -78,7 +80,7 @@ describe("1. Deck State Mapping & Priority", () => {
 
 describe("2. CTA Semantics & Badge Mapping", () => {
   test("CTA text matches exact learner action per state", () => {
-    assert.equal(getDeckCtaText("REVIEW_DUE"), "Ôn ngay");
+    assert.equal(getDeckCtaText("REVIEW_DUE"), "Ôn tập");
     assert.equal(getDeckCtaText("IN_PROGRESS"), "Tiếp tục học");
     assert.equal(getDeckCtaText("COMPLETED"), "Ôn lại");
     assert.equal(getDeckCtaText("NEW"), "Bắt đầu học");
@@ -138,11 +140,11 @@ describe("3. Progress Semantics & 20/10 Audit", () => {
 describe("4. Study Summary Metrics", () => {
   test("computes accurate totals from topic list", () => {
     const topics: VocabTopic[] = [
-      makeTopic({ id: 1, totalWords: 10, learnedCount: 5, needReviewCount: 3 }), // REVIEW_DUE, due=3, mastered=5
+      makeTopic({ id: 1, totalWords: 10, learnedCount: 5, needReviewCount: 3, dueCount: 3 }), // REVIEW_DUE, due=3, mastered=5
       makeTopic({ id: 2, totalWords: 10, learnedCount: 4, needReviewCount: 0 }), // IN_PROGRESS, due=0, mastered=4
       makeTopic({ id: 3, totalWords: 10, learnedCount: 10, needReviewCount: 0 }), // COMPLETED, due=0, mastered=10
       makeTopic({ id: 4, totalWords: 10, learnedCount: 0, needReviewCount: 0 }), // NEW, due=0, mastered=0
-      makeTopic({ id: 5, totalWords: 10, learnedCount: 2, needReviewCount: 1 }), // REVIEW_DUE, due=1, mastered=2
+      makeTopic({ id: 5, totalWords: 10, learnedCount: 2, needReviewCount: 1, dueCount: 1 }), // REVIEW_DUE, due=1, mastered=2
     ];
 
     const summary = computeFlashcardSummary(topics);
@@ -163,7 +165,7 @@ describe("4. Study Summary Metrics", () => {
 
 describe("5. Search & Filtering", () => {
   const catalog: VocabTopic[] = [
-    makeTopic({ id: 1, title: "Daily Routines", categoryName: "Tiếng Anh hằng ngày", needReviewCount: 2 }),
+    makeTopic({ id: 1, title: "Daily Routines", categoryName: "Tiếng Anh hằng ngày", needReviewCount: 2, dueCount: 2 }),
     makeTopic({ id: 2, title: "Office & Meetings", categoryName: "600 TỪ VỰNG TOEIC", learnedCount: 5 }),
     makeTopic({ id: 3, title: "Travel & Airport", categoryName: "Giao tiếp thực tế", learnedCount: 10 }),
     makeTopic({ id: 4, title: "Technology Projects", categoryName: "Tiếng Anh công nghệ" }),
@@ -210,7 +212,7 @@ describe("5. Search & Filtering", () => {
 describe("6. Sorting Strategy", () => {
   const catalog: VocabTopic[] = [
     makeTopic({ id: 1, title: "Zebra Phrases", learnedCount: 0, needReviewCount: 0 }), // NEW
-    makeTopic({ id: 2, title: "Apple Words", learnedCount: 0, needReviewCount: 4 }), // REVIEW_DUE
+    makeTopic({ id: 2, title: "Apple Words", learnedCount: 0, needReviewCount: 4, dueCount: 4 }), // REVIEW_DUE
     makeTopic({ id: 3, title: "Middle Project", learnedCount: 5, needReviewCount: 0 }), // IN_PROGRESS
     makeTopic({ id: 4, title: "Done Mastery", learnedCount: 10, needReviewCount: 0 }), // COMPLETED
   ];
@@ -324,4 +326,27 @@ test("filterAndSortTopics: level filter keeps only decks of that CEFR level", ()
     [1],
   );
   assert.equal(filterAndSortTopics(topics as any, { selectedLevel: "ALL" }).length, 3);
+});
+
+describe("due words of a deck", () => {
+  test("only words due by the schedule make a deck REVIEW_DUE", () => {
+    // Studied and not known yet, nothing due: the deck is in progress, not due.
+    assert.equal(getDeckStatus(makeTopic({ totalWords: 10, learnedCount: 0, needReviewCount: 3 })), "IN_PROGRESS");
+    assert.equal(getDeckStatus(makeTopic({ totalWords: 10, learnedCount: 4, needReviewCount: 3, dueCount: 0 })), "IN_PROGRESS");
+    // Everything known and two words due again.
+    assert.equal(getDeckStatus(makeTopic({ totalWords: 10, learnedCount: 10, needReviewCount: 0, dueCount: 2 })), "REVIEW_DUE");
+  });
+
+  test("the due count is never negative and missing means none", () => {
+    assert.equal(dueWordsIn({ dueCount: 3 }), 3);
+    assert.equal(dueWordsIn({ dueCount: -2 }), 0);
+    assert.equal(dueWordsIn({}), 0);
+  });
+
+  test("a deck with due words opens its due-word review, any other the whole deck", () => {
+    assert.equal(deckHref(7, "REVIEW_DUE"), "/flashcard/7?due=1");
+    assert.equal(deckHref(7, "IN_PROGRESS"), "/flashcard/7");
+    assert.equal(deckHref(7, "COMPLETED"), "/flashcard/7");
+    assert.equal(deckHref(7, "NEW"), "/flashcard/7");
+  });
 });

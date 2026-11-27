@@ -1,4 +1,5 @@
 import type { VocabTopic } from "../../lib/api/services/vocab.service.ts";
+import { dueReviewHref } from "../vocab/utils/dueReview.ts";
 
 const DECK_LEVEL_LABELS: Record<string, string> = {
   A1: "Mất gốc",
@@ -48,13 +49,27 @@ export interface FilterOptions {
  * Determines the primary learning state of a flashcard deck based on spaced repetition review
  * and mastery progress.
  */
-export function getDeckStatus(topic: Pick<VocabTopic, "totalWords" | "learnedCount" | "needReviewCount">): FlashcardDeckStatus {
-  const needReview = topic.needReviewCount || 0;
+/** Words of the deck whose review time has come. */
+export function dueWordsIn(topic: Pick<VocabTopic, "dueCount">): number {
+  return Math.max(0, Math.floor(topic.dueCount ?? 0));
+}
+
+/** Where the deck's button leads: its due-word review when words are due, else the whole deck. */
+export function deckHref(topicId: number, status: FlashcardDeckStatus): string {
+  return status === "REVIEW_DUE" ? dueReviewHref(topicId) : `/flashcard/${topicId}`;
+}
+
+export function getDeckStatus(
+  topic: Pick<VocabTopic, "totalWords" | "learnedCount" | "needReviewCount" | "dueCount">,
+): FlashcardDeckStatus {
+  const due = dueWordsIn(topic);
+  // Studied but not known yet: the deck is started even with nothing known.
+  const notKnown = topic.needReviewCount || 0;
   const learned = topic.learnedCount || 0;
   const total = topic.totalWords || 0;
 
   // Highest priority: spaced repetition reviews are due
-  if (needReview > 0) {
+  if (due > 0) {
     return "REVIEW_DUE";
   }
 
@@ -64,7 +79,7 @@ export function getDeckStatus(topic: Pick<VocabTopic, "totalWords" | "learnedCou
   }
 
   // In-progress: started learning, some words mastered but not all
-  if (learned > 0 && learned < total) {
+  if ((learned > 0 || notKnown > 0) && learned < total) {
     return "IN_PROGRESS";
   }
 
@@ -78,7 +93,7 @@ export function getDeckStatus(topic: Pick<VocabTopic, "totalWords" | "learnedCou
 export function getDeckCtaText(status: FlashcardDeckStatus): string {
   switch (status) {
     case "REVIEW_DUE":
-      return "Ôn ngay";
+      return "Ôn tập";
     case "IN_PROGRESS":
       return "Tiếp tục học";
     case "COMPLETED":
@@ -153,7 +168,7 @@ export function computeFlashcardSummary(topics: VocabTopic[]): FlashcardSummaryM
   let masteredWordsCount = 0;
 
   for (const t of topics) {
-    totalDueWords += t.needReviewCount || 0;
+    totalDueWords += dueWordsIn(t);
     masteredWordsCount += t.learnedCount || 0;
     const status = getDeckStatus(t);
     if (status === "IN_PROGRESS") {
@@ -232,7 +247,7 @@ export function filterAndSortTopics(topics: VocabTopic[], options: FilterOptions
   // 2. Sorting
   return filtered.slice().sort((a, b) => {
     if (sortOption === "REVIEW_FIRST") {
-      const diffReview = (b.needReviewCount || 0) - (a.needReviewCount || 0);
+      const diffReview = dueWordsIn(b) - dueWordsIn(a);
       if (diffReview !== 0) return diffReview;
       return (a.title || "").localeCompare(b.title || "", "vi");
     }
@@ -273,7 +288,7 @@ export function filterAndSortTopics(topics: VocabTopic[], options: FilterOptions
 
     // If both need review, sort by largest review count first
     if (statusA === "REVIEW_DUE" && statusB === "REVIEW_DUE") {
-      return (b.needReviewCount || 0) - (a.needReviewCount || 0);
+      return dueWordsIn(b) - dueWordsIn(a);
     }
 
     // If both in progress, sort by higher progress first

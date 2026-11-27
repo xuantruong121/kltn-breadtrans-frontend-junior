@@ -7,6 +7,8 @@ import {
   getDeckStatus,
   getDeckCtaText,
   getDeckBadgeInfo,
+  deckHref,
+  dueWordsIn,
   computeDeckProgress,
   FlashcardDeckStatus,
 } from "../flashcardLogic";
@@ -21,7 +23,8 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
   const [showPaywall, setShowPaywall] = useState(false);
   const isLocked = isVocabTopicLocked(topic);
   const status: FlashcardDeckStatus = getDeckStatus(topic);
-  const badge = getDeckBadgeInfo(status, topic.needReviewCount);
+  const dueWords = dueWordsIn(topic);
+  const badge = getDeckBadgeInfo(status, dueWords);
   const ctaText = isLocked ? "Mở khóa với Plus" : getDeckCtaText(status);
   const progress = computeDeckProgress(topic.learnedCount, topic.totalWords);
 
@@ -89,9 +92,9 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
           <span className="font-medium text-slate-600 dark:text-slate-400">
             Số lượng: <strong className="font-semibold text-slate-900 dark:text-slate-100">{topic.totalWords}</strong> từ
           </span>
-          {topic.needReviewCount > 0 ? (
+          {dueWords > 0 ? (
             <span className="inline-flex items-center gap-1 font-semibold text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300 px-2 py-0.5 rounded-md text-sm border border-amber-200/70">
-              {topic.needReviewCount} từ cần ôn
+              {dueWords} từ cần ôn
             </span>
           ) : (
             <span className="text-sm text-slate-600 dark:text-slate-400">Sẵn sàng ôn luyện</span>
@@ -143,7 +146,7 @@ export const FlashcardDeckCard: React.FC<FlashcardDeckCardProps> = ({ topic }) =
           </button>
         ) : (
           <Link
-            href={`/flashcard/${topic.id}`}
+            href={deckHref(topic.id, status)}
             className="mt-4 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl"
           >
             <span
