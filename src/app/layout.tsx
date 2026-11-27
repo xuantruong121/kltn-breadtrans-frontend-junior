@@ -7,6 +7,7 @@ import QueryProvider from "@/lib/providers/QueryProvider";
 import SocketProvider from "@/lib/providers/SocketProvider";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
 import { Toaster } from "react-hot-toast";
+import { ToastLimiter } from "@/components/ui/ToastLimiter";
 import { ReferralCapture } from "@/components/referral/ReferralCapture";
 import { AuthSyncProvider } from "@/components/auth/AuthSyncProvider";
 import { ConsentGate } from "@/components/auth/ConsentGate";
@@ -93,6 +94,7 @@ export default async function RootLayout({
               <Suspense fallback={null}>
                 <ConsentGate />
               </Suspense>
+              <ToastLimiter />
               <Toaster
                 position="top-center"
                 toastOptions={{
