@@ -1,7 +1,7 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { clockAt, fitsHint, floorLabel, heldLevelLabel, hpTone, MONSTER_NAME, offerLevelLabel, typedCells } from "./dungeonLogic.ts";
+import { clockAt, fitsHint, floorLabel, heldLevelLabel, hpTone, MONSTER_NAME, offerLevelLabel, typedCells, DESPERATE_PERCENT, recordLine, recordPassedLine, strikeLabel } from "./dungeonLogic.ts";
 
 describe("clockAt", () => {
   test("waits while the last outcome shows, then runs down", () => {
@@ -64,4 +64,36 @@ describe("topping level labels", () => {
     assert.equal(heldLevelLabel({ level: 1, max: 1 }), "Cấp 1/1");
     assert.equal(heldLevelLabel({ level: 3, max: 99 }), "Đã dùng 3 lần");
   });
+});
+
+test("the boss's strike is counted down, then called", () => {
+  assert.equal(strikeLabel(undefined), null);
+  assert.deepEqual(strikeLabel(2), { text: "Boss ra đòn sau 2 câu", now: false });
+  assert.deepEqual(strikeLabel(1), { text: "Boss ra đòn sau 1 câu", now: false });
+  assert.deepEqual(strikeLabel(0), { text: "Boss ra đòn! Đúng thì phá đòn", now: true });
+});
+
+test("the record to beat is named, then said to be passed", () => {
+  const today = { floor: 12, whose: "today" as const };
+  const mine = { floor: 7, whose: "mine" as const };
+  assert.equal(recordLine(null, 3), null);
+  assert.equal(recordLine({ floor: 0, whose: "mine" }, 3), null);
+  assert.equal(recordLine(today, 3), "Dẫn đầu hôm nay: tầng 12");
+  assert.equal(recordLine(today, 12), "Dẫn đầu hôm nay: tầng 12");
+  assert.equal(recordLine(today, 13), "Bạn đang dẫn đầu hôm nay");
+  assert.equal(recordLine(mine, 7), "Kỷ lục của bạn: tầng 7");
+  assert.equal(recordLine(mine, 8), "Kỷ lục mới của bạn");
+});
+
+test("passing the record is said once, on the floor that goes past it", () => {
+  const today = { floor: 12, whose: "today" as const };
+  assert.equal(recordPassedLine(today, 11, 12), null);
+  assert.equal(recordPassedLine(today, 12, 13), "Vượt mốc dẫn đầu hôm nay!");
+  assert.equal(recordPassedLine(today, 13, 14), null);
+  assert.equal(recordPassedLine({ floor: 7, whose: "mine" }, 7, 8), "Vượt kỷ lục của bạn!");
+  assert.equal(recordPassedLine(null, 7, 8), null);
+});
+
+test("low health says the same number the server applies", () => {
+  assert.equal(DESPERATE_PERCENT, 30);
 });

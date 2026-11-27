@@ -8,7 +8,7 @@ import { buzz } from "@/modules/arena/sound/arenaSound";
 import { playBlaster } from "@/modules/word-blaster/blasterSound";
 import { createFx, shake, spawnExplosion, spawnSparks, type FxState } from "@/modules/word-blaster/fx";
 import { FxLayer, type Aim } from "@/modules/word-blaster/components/FxLayer";
-import { clockAt, clockOffset } from "../dungeonLogic";
+import { clockAt, clockOffset, recordPassedLine } from "../dungeonLogic";
 import { monsterLine, saysOnHit } from "../dungeonStory";
 import { overlayArea, stageMode, type Rect } from "../stageLayout";
 import { FloorMap } from "./FloorMap";
@@ -72,6 +72,7 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
   const aimRef = useRef<Aim>(null);
   const floatId = useRef(0);
   const timedOutFor = useRef<number | null>(null);
+  const floorSeen = useRef(initial.floor);
 
   // The HUD's height and where the answers sit, for the layout and the
   // topping list (owner 2026-11-10: phones cut the answers off).
@@ -157,7 +158,9 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
         if (o.right) {
           setHitKey((k) => k + 1);
           spawnSparks(fxRef.current, at.x, at.y, Math.random, reduce ? 0.5 : 1.5);
-          float(o.crit ? `Chí mạng −${o.damage}` : `−${o.damage}`, o.crit ? "crit" : "hit", "monster");
+          // A strike broken reads louder than a plain hit (owner 2026-11-27).
+          float(o.strike ? `Phá đòn −${o.damage}` : o.crit ? `Chí mạng −${o.damage}` : `−${o.damage}`, o.strike || o.crit ? "crit" : "hit", "monster");
+          if (o.strike) spawnSparks(fxRef.current, at.x, at.y, Math.random, reduce ? 0.5 : 2.4);
           playBlaster("shoot");
           if (res.combo >= 2) playBlaster("combo", res.combo);
           if (o.killed)
@@ -176,12 +179,13 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
             playBlaster("miss");
           } else {
             setHurt((n) => n + 1);
-            shake(fxRef.current, t, 9, 260);
-            float(o.timedOut ? `Hết giờ −${o.taken}` : `−${o.taken}`, "hurt", "me");
+            shake(fxRef.current, t, o.strike ? 16 : 9, o.strike ? 420 : 260);
+            float(o.strike ? `Trúng đòn −${o.taken}` : o.timedOut ? `Hết giờ −${o.taken}` : `−${o.taken}`, "hurt", "me");
             playBlaster("lifeLost");
             buzz(120);
           }
           if (o.revived) float("Trứng ốp la: hồi sinh", "info", "me");
+          if (o.lastBreath) float("Hơi thở cuối: còn 1 máu", "info", "me");
           if (asked.type === "typed") setTypeShake((n) => n + 1);
         }
         setShown({ question: asked, picked: choice, typed: text, outcome: o });
@@ -194,6 +198,10 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
         const result = res.result;
         window.setTimeout(() => onDone(result), o?.died ? DEATH_REVEAL_MS : 300);
       }
+      // Going past the record is said once, as the new floor opens.
+      const passed = recordPassedLine(res.record, floorSeen.current, res.floor);
+      if (passed) float(passed, "info", "me");
+      floorSeen.current = res.floor;
       setView(res);
     },
     [float, onDone, reduce]
@@ -266,6 +274,13 @@ export function DungeonGame({ initial, onDone }: { initial: DungeonView; onDone:
     <div className="fixed inset-0 z-40 overflow-hidden bg-[#1a100c] text-white">
       <div ref={fieldRef} className="absolute inset-0 isolate flex flex-col overflow-hidden">
         <DungeonScene boss={view.monster.boss} reduce={reduce} />
+        {/* Low health: the edges of the cellar close in. */}
+        {view.desperate && view.phase === "fight" && (
+          <div
+            aria-hidden="true"
+            className={`pointer-events-none absolute inset-0 z-[5] shadow-[inset_0_0_140px_rgba(244,63,94,0.5)] ${reduce ? "" : "animate-pulse"}`}
+          />
+        )}
 
         {/* Scrolls only when a screen is too short for its content; short screens are laid out to fit first. */}
         <div className="relative flex-1 overflow-y-auto overscroll-contain" data-dungeon-scroll>

@@ -117,3 +117,33 @@ export function hpTone(hp: number, max: number): { share: number; tone: "ok" | "
   const share = max > 0 ? Math.max(0, Math.min(1, hp / max)) : 0;
   return { share, tone: share <= 0.25 ? "critical" : share <= 0.5 ? "low" : "ok" };
 }
+
+// ---------------------------------------------------------------- tense moments (owner 2026-11-27)
+
+/** How much harder a right answer hits at low health, in percent; the server applies it (DESPERATE_BOOST). */
+export const DESPERATE_PERCENT = 30;
+
+/** The boss's wind-up as the learner reads it; null off a boss question. */
+export function strikeLabel(strikeIn: number | undefined): { text: string; now: boolean } | null {
+  if (typeof strikeIn !== "number") return null;
+  if (strikeIn <= 0) return { text: "Boss ra đòn! Đúng thì phá đòn", now: true };
+  return { text: `Boss ra đòn sau ${strikeIn} câu`, now: false };
+}
+
+/** The record under the floor number: whose it is, or that the learner is past it. */
+export function recordLine(record: { floor: number; whose: "today" | "mine" } | null | undefined, floor: number): string | null {
+  if (!record || record.floor <= 0) return null;
+  if (floor > record.floor) return record.whose === "today" ? "Bạn đang dẫn đầu hôm nay" : "Kỷ lục mới của bạn";
+  return record.whose === "today" ? `Dẫn đầu hôm nay: tầng ${record.floor}` : `Kỷ lục của bạn: tầng ${record.floor}`;
+}
+
+/** Said once, on the floor that first goes past the record. */
+export function recordPassedLine(
+  record: { floor: number; whose: "today" | "mine" } | null | undefined,
+  before: number,
+  now: number,
+): string | null {
+  if (!record || record.floor <= 0) return null;
+  if (!(before <= record.floor && now > record.floor)) return null;
+  return record.whose === "today" ? "Vượt mốc dẫn đầu hôm nay!" : "Vượt kỷ lục của bạn!";
+}

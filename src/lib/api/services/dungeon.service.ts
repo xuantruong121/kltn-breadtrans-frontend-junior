@@ -57,7 +57,11 @@ export type DungeonQuestion = (
       /** Letters shown at the start (a topping). */
       revealed: string;
     }
-) & { oftenForgotten?: boolean };
+) & {
+  oftenForgotten?: boolean;
+  /** Boss floors: questions before the boss strikes; 0 means this one is the strike. */
+  strikeIn?: number;
+};
 
 export interface DungeonOutcome {
   right: boolean;
@@ -70,6 +74,12 @@ export interface DungeonOutcome {
   died: boolean;
   revived: boolean;
   answer: string;
+  /** This question was the boss's strike: broken when right, a heavier hit when missed. */
+  strike?: boolean;
+  /** The right answer came at low health and hit harder. */
+  desperate?: boolean;
+  /** A lethal hit left 1 health: the run's one last breath. */
+  lastBreath?: boolean;
 }
 
 export interface DungeonResult {
@@ -129,6 +139,17 @@ export interface DungeonView {
   last: DungeonOutcome | null;
   stats: { answered: number; correct: number; bossesDown: number };
   result: DungeonResult | null;
+  /** At or under a quarter of health: right answers hit harder. Missing on replies from an older server. */
+  desperate?: boolean;
+  /** The run's one last breath is still unused. */
+  lastBreathLeft?: boolean;
+  /** The floor to beat: today's leading floor (day's dungeon) or the learner's own best (free run). */
+  record?: DungeonRecord | null;
+}
+
+export interface DungeonRecord {
+  floor: number;
+  whose: "today" | "mine";
 }
 
 export interface DungeonBoard {
