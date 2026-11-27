@@ -137,7 +137,7 @@ test("a skill-practice quest never opens the exam pages", () => {
     plan("WRITING", "/writing/3"),
   ];
   assert.deepEqual(resolveQuestAction({ type: "COMPLETE_QUIZ" }, planned), {
-    actionLabel: "Luyện kỹ năng ngay",
+    actionLabel: "Luyện kỹ năng",
     actionUrl: "/writing/3",
   });
   // A planned route that does not open the planned skill is not followed.
@@ -262,7 +262,7 @@ test("each daily quest opens practice of the kind it counts", () => {
   // Free speech for "Luyện Speaking", read-aloud for "Thực hành phát âm".
   assert.equal(go("DO_SPEAKING").actionUrl, "/speaking/16");
   assert.equal(go("PRACTICE_SPEAKING").actionUrl, "/speaking/129");
-  assert.equal(go("PRACTICE_SPEAKING").actionLabel, "Luyện phát âm ngay");
+  assert.equal(go("PRACTICE_SPEAKING").actionLabel, "Luyện phát âm");
   // Without a fitting planned item, the skill catalog, never an exam page.
   for (const type of ["DO_LISTENING", "DO_READING", "DO_WRITING", "PERFECT_QUIZ", "DO_SPEAKING", "PRACTICE_SPEAKING"]) {
     const url = resolveQuestAction({ type, actionUrl: "/exams" }).actionUrl;

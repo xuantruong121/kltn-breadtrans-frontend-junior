@@ -72,13 +72,13 @@ const QUEST_SKILLS: Record<string, PlannerSkill[]> = {
 };
 
 const PLANNED_LABEL: Record<string, string> = {
-  DO_LISTENING: "Luyện nghe ngay",
-  DO_READING: "Luyện đọc ngay",
-  DO_WRITING: "Luyện viết ngay",
-  PERFECT_QUIZ: "Luyện ngay",
-  COMPLETE_QUIZ: "Luyện kỹ năng ngay",
-  DO_SPEAKING: "Luyện nói ngay",
-  PRACTICE_SPEAKING: "Luyện phát âm ngay",
+  DO_LISTENING: "Luyện nghe",
+  DO_READING: "Luyện đọc",
+  DO_WRITING: "Luyện viết",
+  PERFECT_QUIZ: "Luyện",
+  COMPLETE_QUIZ: "Luyện kỹ năng",
+  DO_SPEAKING: "Luyện nói",
+  PRACTICE_SPEAKING: "Luyện phát âm",
 };
 
 /**
