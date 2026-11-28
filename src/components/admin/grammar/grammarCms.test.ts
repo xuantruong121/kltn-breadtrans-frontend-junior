@@ -4,12 +4,23 @@ import {
   GRAMMAR_PASTE_SAMPLE,
   grammarChecklist,
   grammarListBlocker,
+  grammarUnsavedNotice,
   parseGrammarPaste,
   pasteToAdd,
   publishBlocker,
   questionProblems,
   youtubeIdFrom,
 } from "./grammarCms.ts";
+
+test("grammarUnsavedNotice says what waits for Lưu: the topic fields, the held questions, or both", () => {
+  assert.equal(grammarUnsavedNotice(true, 0), "Tên, công thức hoặc lý thuyết có thay đổi chưa được lưu.");
+  assert.equal(grammarUnsavedNotice(false, 5), "5 câu hỏi đang chờ, sẽ được thêm khi lưu.");
+  assert.equal(
+    grammarUnsavedNotice(true, 3),
+    "Tên, công thức hoặc lý thuyết có thay đổi chưa được lưu. 3 câu hỏi đang chờ, sẽ được thêm khi lưu.",
+  );
+  assert.equal(grammarUnsavedNotice(false, 0), "");
+});
 
 test("youtubeIdFrom reads links and bare ids, and rejects anything else", () => {
   assert.equal(youtubeIdFrom("https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=10"), "dQw4w9WgXcQ");

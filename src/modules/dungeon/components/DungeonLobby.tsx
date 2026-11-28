@@ -82,7 +82,7 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
 
   const played = board?.me.playedToday ?? false;
   return (
-    <section aria-labelledby="dungeon-title" className="glass-face grid h-full gap-5 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr] [&>*]:min-w-0">
+    <section aria-labelledby="dungeon-title" className="glass-face grid gap-5 rounded-xl lg:min-h-full border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-6 md:grid-cols-[1.05fr_1fr] [&>*]:min-w-0">
       <div className="flex flex-col">
         <h1 id="dungeon-title" className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
           Hầm Bánh Mì
@@ -91,8 +91,8 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
           Xuống từng tầng hầm lò bánh và đánh quái bằng từ vựng. Trả lời đúng và nhanh thì đòn mạnh, sai thì bị đánh lại. Qua mỗi tầng chọn một topping tăng sức mạnh; hết máu là kết thúc lượt.
         </p>
         <ul className="mt-4 space-y-1.5 text-sm text-slate-800 dark:text-slate-200">
-          <li className="flex items-center gap-2"><Crown size={15} strokeWidth={2.25} aria-hidden="true" /> Mỗi 5 tầng có boss: gõ từ tiếng Anh theo nghĩa để hạ.</li>
-          <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 100 máu; từ trả lời sai sẽ quay lại vài câu sau.</li>
+          <li className="flex items-center gap-2"><Crown size={15} strokeWidth={2.25} aria-hidden="true" /> Mỗi 5 tầng có boss: gõ từ tiếng Anh theo nghĩa để hạ. Cứ câu thứ ba boss ra đòn: đúng thì phá đòn, sai thì mất nhiều máu.</li>
+          <li className="flex items-center gap-2"><Heart size={15} strokeWidth={2.25} className="text-rose-600" aria-hidden="true" /> 100 máu; từ trả lời sai sẽ quay lại vài câu sau. Máu thấp thì đòn mạnh hơn; đòn chí tử đầu tiên để lại 1 máu.</li>
           <li className="flex items-center gap-2"><BreadCoinIcon size={15} strokeWidth={2.25} aria-hidden="true" /> Vé {TICKET} Bánh Mì. Hạ boss tầng 5 thì hoàn vé, mỗi boss thêm 10 (thưởng Đấu trường tối đa 300 mỗi ngày).</li>
         </ul>
         <button
@@ -141,7 +141,9 @@ export function DungeonLobby({ balance, isGuest, onGuest }: { balance: number | 
               <Shuffle size={16} strokeWidth={2.25} aria-hidden="true" />
               Hầm tự do
             </p>
-            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">Hầm ngẫu nhiên, chơi bao nhiêu lượt cũng được.</p>
+            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+              Hầm ngẫu nhiên, chơi bao nhiêu lượt cũng được. Có tối đa 6 câu là từ bạn hay quên khi học Từ vựng, mỗi từ một lần mỗi ngày.
+            </p>
             {board?.me.bestFree != null && (
               <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-200">Kỷ lục của bạn: tầng {board.me.bestFree}</p>
             )}

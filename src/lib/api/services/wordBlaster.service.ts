@@ -14,6 +14,8 @@ export interface BlasterBlock {
   lane: number;
   /** Word-to-meaning mode: one "_" per letter of the meaning, spaces kept. */
   hint: string | null;
+  /** One of the learner's hard flashcard words (thesis supervisor 2026-11-26). */
+  oftenForgotten?: boolean;
 }
 
 export interface BlasterResult {
@@ -27,6 +29,8 @@ export interface BlasterResult {
   net: number;
   bonusCapped: number;
   xp: number;
+  /** Hard flashcard words broken out of those in the game; counts only. */
+  hardWords?: { hit: number; total: number };
 }
 
 export interface BlasterView {

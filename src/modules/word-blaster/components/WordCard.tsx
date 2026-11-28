@@ -4,6 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { fillHint, type ClientBlock } from "../blasterLogic";
 import { letters } from "../typing";
+import { HARD_WORD_LABEL } from "../../arena/hardWords";
 
 /**
  * One falling block as a dark glass card. Every letter is its own cell
@@ -52,6 +53,10 @@ export function WordCard({
           danger && !reduce ? "animate-pulse" : ""
         }`}
       >
+        {/* One of the learner's hard flashcard words (thesis supervisor 2026-11-26). */}
+        {block.oftenForgotten && (
+          <p className="mb-1 text-xs font-semibold leading-none text-amber-300">{HARD_WORD_LABEL}</p>
+        )}
         {meaning ? (
           <>
             <p className={`break-words font-bold leading-tight text-white ${block.kind === "vi_to_en" ? "text-base sm:text-lg" : "text-lg tracking-wide sm:text-xl"}`}>

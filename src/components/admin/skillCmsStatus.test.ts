@@ -40,6 +40,8 @@ import {
   draftSaveHint,
   dictationDraftState,
   draftSentenceAvoid,
+  draftAvoidList,
+  replaceDraftItem,
   fillDraftSentences,
   replaceDraftSentence,
 } from "./skillCmsStatus.ts";
@@ -425,9 +427,9 @@ test("a Nghe hiểu AI candidate keeps its sentence and saves like a hand-writte
 });
 
 const items = [
-  { id: 1, title: "Hội thoại B1 — Ordering food", publicationStatus: "PUBLISHED", _count: { questions: 5 }, listeningAudioArtifacts: [{ version: 2, status: "PUBLISHED" }] },
-  { id: 2, title: "Hội thoại C1 — A visit", publicationStatus: "DRAFT", _count: { questions: 3 } },
-  { id: 3, title: "Nghe chép A1 — Daily messages", publicationStatus: "DRAFT", _count: { questions: 20 }, listeningAudioArtifacts: [{ version: 1, status: "PREVIEW_READY" }] },
+  { id: 1, title: "Hội thoại B1 — Ordering food", practiceLevel: "INTERMEDIATE", publicationStatus: "PUBLISHED", _count: { questions: 5 }, listeningAudioArtifacts: [{ version: 2, status: "PUBLISHED" }] },
+  { id: 2, title: "Hội thoại C1 — A visit", practiceLevel: "ADVANCED", publicationStatus: "DRAFT", _count: { questions: 3 } },
+  { id: 3, title: "Nghe chép A1 — Daily messages", practiceLevel: "STARTER", publicationStatus: "DRAFT", _count: { questions: 20 }, listeningAudioArtifacts: [{ version: 1, status: "PREVIEW_READY" }] },
 ];
 const all = { query: "", status: "ALL", level: "ALL", audio: "ALL", sort: "NEWEST" } as const;
 
@@ -437,7 +439,7 @@ test("cmsLevelFromTitle reads the tag at the head only", () => {
 });
 
 test("filterSkillContent: level, audio and status narrow the list", () => {
-  assert.deepEqual(filterSkillContent(items, { ...all, level: "C1" }).map((i) => i.id), [2]);
+  assert.deepEqual(filterSkillContent(items, { ...all, level: "ADVANCED" }).map((i) => i.id), [2]);
   assert.deepEqual(filterSkillContent(items, { ...all, audio: "none" }).map((i) => i.id), [2]);
   assert.deepEqual(filterSkillContent(items, { ...all, audio: "pending" }).map((i) => i.id), [3]);
   assert.deepEqual(filterSkillContent(items, { ...all, status: "DRAFT", query: "visit" }).map((i) => i.id), [2]);
@@ -588,8 +590,8 @@ test("AI drafts exist for email and Dịch câu only (owner 2026-11-19)", () => 
 
 test("a picked AI task saves as a question of its kind", () => {
   assert.deepEqual(
-    writingDraftQuestion({ taskType: "REQUEST", prompt: "Ask for a day off.", wordRange: [60, 100], explanation: "Nêu lý do." }, "B1"),
-    { type: "WRITING", prompt: "Ask for a day off.", taskType: "REQUEST", level: "B1", wordRange: [60, 100], explanation: "Nêu lý do." },
+    writingDraftQuestion({ taskType: "REQUEST", prompt: "Ask for a day off.", wordRange: [60, 100], explanation: "Nêu lý do." }, "INTERMEDIATE"),
+    { type: "WRITING", prompt: "Ask for a day off.", taskType: "REQUEST", level: "INTERMEDIATE", wordRange: [60, 100], explanation: "Nêu lý do." },
   );
   assert.deepEqual(
     writingDraftQuestion({
@@ -731,4 +733,20 @@ test("Nghe chép draft review: replacements fill dropped sentences and nothing i
     ],
   );
   assert.deepEqual(dictationDraftState(Array.from({ length: 10 }, () => ({ text: "x" }))), { kept: 10, dropped: 0, missing: 0 });
+});
+
+test("draftAvoidList: every draft item once, trimmed, at most 40 of 300 characters", () => {
+  assert.deepEqual(draftAvoidList(["  What is  the idea? ", "what is the idea?", "", null, undefined, "Why?"]), [
+    "What is the idea?",
+    "Why?",
+  ]);
+  assert.equal(draftAvoidList(Array.from({ length: 50 }, (_, i) => `q${i}`)).length, 40);
+  assert.equal(draftAvoidList(["x".repeat(400)])[0].length, 300);
+});
+
+test("replaceDraftItem: one item replaced in place, the others untouched", () => {
+  const items = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const next = replaceDraftItem(items, 1, { id: 9 });
+  assert.deepEqual(next, [{ id: 1 }, { id: 9 }, { id: 3 }]);
+  assert.equal(next[0], items[0]);
 });

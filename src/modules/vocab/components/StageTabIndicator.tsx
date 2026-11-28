@@ -7,6 +7,8 @@ import { StudyMode } from "../types/study";
 interface StageTabIndicatorProps {
   currentMode: StudyMode;
   onSelectMode: (mode: StudyMode) => void;
+  /** The steps this word goes through; all four when left out. */
+  stages?: readonly StudyMode[];
 }
 
 const STAGES: Array<{
@@ -23,13 +25,15 @@ const STAGES: Array<{
 export const StageTabIndicator: React.FC<StageTabIndicatorProps> = ({
   currentMode,
   onSelectMode,
+  stages,
 }) => {
+  const shown = stages ? STAGES.filter((stage) => stages.includes(stage.id)) : STAGES;
   return (
     <nav
       className="flex items-center justify-center gap-2 sm:gap-2.5 overflow-x-auto pb-1 scrollbar-none"
       aria-label="Các giai đoạn làm chủ từ vựng"
     >
-      {STAGES.map((stage) => {
+      {shown.map((stage) => {
         const Icon = stage.icon;
         const isActive = currentMode === stage.id;
 

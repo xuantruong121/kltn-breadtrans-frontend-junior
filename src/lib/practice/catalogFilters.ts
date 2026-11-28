@@ -1,21 +1,12 @@
 /**
  * Shared difficulty, status and sort rules for the four skill catalogs
- * (Listening, Reading, Speaking, Writing). The level comes from the API's
- * `cefrLevel` ("B1", "B2-C1"), the same authored tag the server uses to decide
- * the required plan, so a card's label, the filter and the lock agree.
- *
- * Bands: A1–A2 Cơ bản, B1–B2 Trung cấp, C1–C2 Nâng cao. A range is shown in
- * the band of its highest level (B2–C1 → Nâng cao), so content that reaches
- * B1 is never presented as Cơ bản.
- *
- * The API's `practiceLevel` is the level access locks on (its lowest, so an
- * A2–B1 item opens at Cơ bản). When sent, the label and filter follow it, so
- * a card never names a level other than the one that opens it.
+ * (Listening, Reading, Speaking, Writing). Every item carries the API's
+ * `practiceLevel` (owner 2026-11-27: Mất gốc, Cơ bản, Trung cấp, Nâng cao),
+ * the level the server stores and decides the plan and the lock from, so a
+ * card's label, the filter, the order and the lock agree.
  */
 import type { PracticeLevel } from "../learning-path/practiceLevel.ts";
 
-export const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-export type LevelBand = "BASIC" | "INTERMEDIATE" | "ADVANCED";
 export type DifficultyFilter = "ALL" | PracticeLevel;
 export type CatalogSort = "EASY_TO_HARD" | "HARD_TO_EASY";
 export type LearningStatus = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
@@ -65,50 +56,27 @@ export const STATUS_LABEL: Record<LearningStatus, string> = {
   COMPLETED: "Đã hoàn thành",
 };
 
-const TAG = /\b([ABC][12])(?:\s*[–-]\s*([ABC][12]))?\b/;
+const LEVEL_ORDER: readonly string[] = DIFFICULTY_PARAMS;
 
-export type CefrRange = { min: number; max: number };
-
-/** "B1" → {2,2}; "B2-C1" / "B2–C1" → {3,4}; anything else → null. */
-export function parseCefrLevel(value?: string | null): CefrRange | null {
-  if (!value) return null;
-  // A title carries its tag before " — "; a level field is the whole value.
-  const match = TAG.exec(value.split(" — ")[0].toUpperCase());
-  if (!match) return null;
-  const a = CEFR_ORDER.indexOf(match[1] as (typeof CEFR_ORDER)[number]);
-  const b = CEFR_ORDER.indexOf((match[2] ?? match[1]) as (typeof CEFR_ORDER)[number]);
-  return { min: Math.min(a, b), max: Math.max(a, b) };
+/** The practice level a value names, or null ("B1" and other old codes are not levels). */
+function practiceLevelOf(value?: string | null): PracticeLevel | null {
+  const level = (value ?? "").trim().toUpperCase();
+  return LEVEL_ORDER.includes(level) ? (level as PracticeLevel) : null;
 }
 
-export function levelBand(range: CefrRange): LevelBand {
-  if (range.max <= 1) return "BASIC";
-  if (range.max <= 3) return "INTERMEDIATE";
-  return "ADVANCED";
+/** "Mất gốc", "Trung cấp"; null when the item has no practice level. */
+export function catalogLevelLabel(level?: string | null): string | null {
+  const known = practiceLevelOf(level);
+  return known ? BAND_LABEL[known] : null;
 }
 
-/** "Trung cấp", "Nâng cao"; null when the level is unknown. */
-export function catalogLevelLabel(
-  value?: string | null,
-  practiceLevel?: PracticeLevel | null,
-): string | null {
-  const range = parseCefrLevel(value);
-  if (!range) return null;
-  return BAND_LABEL[practiceLevel ?? levelBand(range)];
-}
-
-export function catalogLevelBand(value?: string | null): LevelBand | null {
-  const range = parseCefrLevel(value);
-  return range ? levelBand(range) : null;
-}
-
-/** An item without a known level only shows under "Tất cả". */
+/** An item without a practice level only shows under "Tất cả". */
 export function matchesDifficultyFilter(
-  value: string | null | undefined,
+  level: string | null | undefined,
   filter: DifficultyFilter,
-  practiceLevel?: PracticeLevel | null,
 ): boolean {
   if (filter === "ALL") return true;
-  return (practiceLevel ?? catalogLevelBand(value)) === filter;
+  return practiceLevelOf(level) === filter;
 }
 
 export function matchesStatusFilter(
@@ -119,8 +87,9 @@ export function matchesStatusFilter(
 }
 
 /**
- * Whole-catalog level order (A1 → C2, or reversed), stable: items at the same
- * level keep the order the API returned. Unknown levels go last either way.
+ * Whole-catalog level order (Mất gốc → Nâng cao, or reversed), stable: items
+ * at the same level keep the order the API returned. Items without a level go
+ * last either way.
  */
 export function sortByLevel<T>(
   items: readonly T[],
@@ -129,17 +98,16 @@ export function sortByLevel<T>(
 ): T[] {
   const dir = sort === "HARD_TO_EASY" ? -1 : 1;
   return items
-    .map((item, index) => ({ item, index, range: parseCefrLevel(levelOf(item)) }))
+    .map((item, index) => {
+      const level = practiceLevelOf(levelOf(item));
+      return { item, index, rank: level ? LEVEL_ORDER.indexOf(level) : null };
+    })
     .sort((a, b) => {
-      if (!a.range || !b.range) {
-        if (a.range || b.range) return a.range ? -1 : 1;
+      if (a.rank === null || b.rank === null) {
+        if (a.rank !== null || b.rank !== null) return a.rank !== null ? -1 : 1;
         return a.index - b.index;
       }
-      return (
-        dir * (a.range.min - b.range.min) ||
-        dir * (a.range.max - b.range.max) ||
-        a.index - b.index
-      );
+      return dir * (a.rank - b.rank) || a.index - b.index;
     })
     .map((entry) => entry.item);
 }

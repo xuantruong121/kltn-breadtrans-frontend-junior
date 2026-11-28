@@ -262,7 +262,11 @@ const FloatingCompanionPetInner: React.FC = () => {
         feedDisabled={feedMutation.isPending || !feedEligibility.allowed}
       />
 
-      {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe bottom sheet) */}
+      {/* 2. EXPANDED STATE: Full Popover Card (Desktop popover, Mobile-safe bottom sheet).
+          From sm the card hangs above the pet, so its height is the window less the app
+          header (81px), a gap, and what sits under it: the pet (56px), its margin (12px)
+          and the offset of this corner (72px, 24px from md, 32px from lg). Taller than
+          that, it slid under the header and its close button could not be reached. */}
       {uiState === "EXPANDED" && (
         <>
           {/* Mobile backdrop scrim */}
@@ -275,7 +279,7 @@ const FloatingCompanionPetInner: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="floating-pet-dialog-title"
-            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-card dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:border-slate-200 dark:sm:border-slate-800 sm:p-5 sm:max-h-[calc(100dvh-6rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
+            className="fixed inset-x-0 bottom-0 rounded-t-3xl bg-card dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-2xl p-5 max-h-[85dvh] pb-[calc(1.5rem+env(safe-area-inset-bottom))] overflow-y-auto z-50 animate-in slide-in-from-bottom duration-300 sm:inset-auto sm:absolute sm:bottom-full sm:right-0 sm:mb-3 sm:w-88 sm:rounded-2xl sm:border sm:border-slate-200 dark:sm:border-slate-800 sm:p-5 sm:max-h-[calc(100dvh-14.5rem)] md:max-h-[calc(100dvh-11.5rem)] lg:max-h-[calc(100dvh-12rem)] sm:pb-5 sm:animate-in sm:fade-in sm:zoom-in-95 sm:duration-200"
           >
           {/* Header */}
           <div className="flex items-start justify-between pb-3 border-b border-slate-100 dark:border-slate-800 mb-3.5">

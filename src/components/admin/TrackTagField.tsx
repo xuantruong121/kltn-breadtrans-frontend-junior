@@ -28,6 +28,7 @@ export function TrackTagField({
   tracks,
   listKey,
   variant = "card",
+  onPendingChange,
 }: {
   domain: string;
   id?: string | number | null;
@@ -35,12 +36,20 @@ export function TrackTagField({
   /** The admin list query to refresh after a save. */
   listKey: string;
   variant?: "card" | "inline";
+  /**
+   * An item not saved yet: the choice is kept here and tagged on its first
+   * save, as the Speaking editor does (owner 2026-11-25: the buttons stayed
+   * hidden and left a blank space until the item was saved).
+   */
+  onPendingChange?: (tracks: string[]) => void;
 }) {
   const queryClient = useQueryClient();
   const trackList = useAdminLearningTracks();
   const [selected, setSelected] = useState(tracks);
   const [saving, setSaving] = useState(false);
-  const locked = id === undefined || id === null || id === "";
+  const unsaved = id === undefined || id === null || id === "";
+  const pending = unsaved && Boolean(onPendingChange);
+  const locked = unsaved && !pending;
 
   const toggle = async (track: string) => {
     if (locked) return;
@@ -49,6 +58,10 @@ export function TrackTagField({
       ? selected.filter((value) => value !== track)
       : [...selected, track];
     setSelected(next);
+    if (pending) {
+      onPendingChange?.(next);
+      return;
+    }
     setSaving(true);
     try {
       await axiosClient.put(`/admin/skill-content/${domain}/${id}/tracks`, {
@@ -65,7 +78,8 @@ export function TrackTagField({
     }
   };
 
-  const buttons = trackList.isLoading ? (
+  // A locked field shows its note only: hidden buttons left a blank space.
+  const buttons = locked ? null : trackList.isLoading ? (
     <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Đang tải...</p>
   ) : trackList.isError ? (
     <p className="mt-2 text-sm text-rose-700 dark:text-rose-400">
@@ -84,7 +98,7 @@ export function TrackTagField({
             active
               ? "border-blue-600 bg-blue-50 text-blue-800"
               : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-          } ${locked ? "invisible" : ""}`}
+          }`}
         >
           {label}
         </button>
@@ -93,7 +107,7 @@ export function TrackTagField({
   );
   const hint = (
     <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-      {locked ? TRACK_FIELD_COPY.lockedHint : TRACK_FIELD_COPY.hint}
+      {locked ? TRACK_FIELD_COPY.lockedHint : pending ? TRACK_FIELD_COPY.pendingHint : TRACK_FIELD_COPY.hint}
     </p>
   );
 

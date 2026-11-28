@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 import type { DungeonOutcome, DungeonQuestion } from "@/lib/api/services/dungeon.service";
+import { HARD_WORD_LABEL } from "../../arena/hardWords";
 
 type Choice = Extract<DungeonQuestion, { type: "choice" }>;
 
@@ -59,6 +60,10 @@ export function QuestionPanel({
           style={{ width: `${(started ? share : 1) * 100}%` }}
         />
       </div>
+      {/* One of the learner's hard flashcard words (thesis supervisor 2026-11-26). */}
+      {question.oftenForgotten && (
+        <p className="mb-1 text-center text-xs font-semibold text-amber-300">{HARD_WORD_LABEL}</p>
+      )}
       <p className={`text-center font-bold leading-snug text-white ${compact ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}>{question.prompt}</p>
       {question.ipa && <p className="mt-1 text-center text-sm text-white/70">/{question.ipa}/</p>}
       <div className={`grid gap-2 ${compact ? "mt-3 grid-cols-2" : "mt-4 sm:grid-cols-2"}`}>

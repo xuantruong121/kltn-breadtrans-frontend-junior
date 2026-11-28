@@ -14,6 +14,7 @@ import { CatalogPagination, useCatalogPage } from "@/components/practice/Catalog
 import { FlashcardDeckCard } from "../components/FlashcardDeckCard";
 import { FlashcardStudySummary } from "../components/FlashcardStudySummary";
 import { FlashcardFilterBar } from "../components/FlashcardFilterBar";
+import { comparePracticeLevel } from "@/lib/learning-path/practiceLevel";
 import {
   computeFlashcardSummary,
   extractUniqueCategories,
@@ -66,7 +67,7 @@ export const FlashcardScreen: React.FC = () => {
   const uniqueCategories = useMemo(() => extractUniqueCategories(topics), [topics]);
   const uniqueLevels = useMemo(
     () =>
-      [...new Set(topics.map((topic) => topic.level).filter(Boolean) as string[])].sort(),
+      [...new Set(topics.map((topic) => topic.level).filter(Boolean) as string[])].sort(comparePracticeLevel),
     [topics],
   );
 

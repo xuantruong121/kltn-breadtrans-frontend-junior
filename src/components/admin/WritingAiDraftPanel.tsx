@@ -7,7 +7,15 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { BTN_AI, BTN_SECONDARY } from "./cmsButtons";
-import { aiShortfallNotice, writingDraftQuestion, writingTaskLabel, type WritingDraftTask } from "./skillCmsStatus";
+import {
+  aiShortfallNotice,
+  draftAvoidList,
+  replaceDraftItem,
+  writingDraftQuestion,
+  writingTaskLabel,
+  type WritingDraftTask,
+} from "./skillCmsStatus";
+import { practiceLevelLabel, type PracticeLevel } from "@/lib/learning-path/practiceLevel";
 
 type Draft = { title: string; description: string; tasks: WritingDraftTask[]; dropped: number };
 
@@ -21,6 +29,7 @@ const KIND_LABEL = { EMAIL: "Viết email", TRANSLATION: "Dịch câu" } as cons
 export function WritingAiDraftPanel({
   quizId,
   topic,
+  brief,
   level,
   kind,
   initialCount,
@@ -28,9 +37,12 @@ export function WritingAiDraftPanel({
   onUseDescription,
   onClose,
   onSaved,
+  onCancelEmpty,
 }: {
   quizId: number;
   topic: string;
+  /** The admin's own description: the situation the tasks play out (owner 2026-11-25). */
+  brief?: string;
   level: string;
   kind: "EMAIL" | "TRANSLATION";
   initialCount: number;
@@ -38,6 +50,8 @@ export function WritingAiDraftPanel({
   onUseDescription?: (description: string) => void;
   onClose: () => void;
   onSaved: () => Promise<void> | void;
+  /** Closed with nothing added from this panel (owner 2026-11-25: the empty bài stayed). */
+  onCancelEmpty?: () => void;
 }) {
   const [count, setCount] = useState(Math.min(10, Math.max(1, initialCount)));
   const [busy, setBusy] = useState<"draft" | "save" | null>(null);
@@ -46,12 +60,19 @@ export function WritingAiDraftPanel({
   // How many tasks the last request asked for: the AI may send fewer (QA 2026-11-22).
   const [requested, setRequested] = useState(0);
   const started = useRef(false);
+  // Any task saved from this panel, even in a run that stopped part-way.
+  const savedAny = useRef(false);
+  const cancel = () => {
+    onClose();
+    if (!savedAny.current) onCancelEmpty?.();
+  };
 
   const requestDraft = async () => {
     setBusy("draft");
     try {
       const data = (await axiosClient.post("/admin/writing/ai/full-draft", {
         topic,
+        brief: brief?.trim() || undefined,
         level,
         kind,
         count,
@@ -63,6 +84,36 @@ export function WritingAiDraftPanel({
       toast.error(getApiErrorMessage(error, "AI chưa soạn được bài lúc này."));
     } finally {
       setBusy(null);
+    }
+  };
+
+  // "Tạo câu khác" (owner 2026-11-25): the index of the task being rewritten.
+  const [replacing, setReplacing] = useState<number | null>(null);
+  const replaceTask = async (index: number) => {
+    if (!draft || replacing !== null || busy) return;
+    setReplacing(index);
+    try {
+      const data = (await axiosClient.post("/admin/writing/ai/full-draft", {
+        topic,
+        brief: brief?.trim() || undefined,
+        level,
+        kind,
+        count: 1,
+        // Every task in the draft, picked or not, is one the AI must not repeat.
+        avoid: draftAvoidList(draft.tasks.map((task) => task.prompt)),
+      })) as unknown as Draft;
+      const [task] = data?.tasks ?? [];
+      if (!task) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      setDraft((current) => (current ? { ...current, tasks: replaceDraftItem(current.tasks, index, task) } : current));
+      setPicked((current) => current.map((value, at) => (at === index ? true : value)));
+      toast.success(`Đã thay câu ${index + 1}.`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setReplacing(null);
     }
   };
 
@@ -85,6 +136,7 @@ export function WritingAiDraftPanel({
       for (const task of chosen) {
         await axiosClient.post(`/admin/skill-content/writing/${quizId}/questions`, writingDraftQuestion(task, level));
         saved += 1;
+        savedAny.current = true;
       }
       toast.success(`Đã thêm ${saved} câu vào bài.`);
       await onSaved();
@@ -111,10 +163,10 @@ export function WritingAiDraftPanel({
               Soạn bài {KIND_LABEL[kind]} bằng AI
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Chủ đề: <span className="font-semibold text-slate-800">{topic}</span> · Trình độ {level}
+              Chủ đề: <span className="font-semibold text-slate-800">{topic}</span> · Trình độ {practiceLevelLabel(level as PracticeLevel)}
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Đóng" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
+          <button type="button" onClick={cancel} aria-label="Đóng" className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100">
             <X size={18} aria-hidden="true" />
           </button>
         </div>
@@ -154,7 +206,7 @@ export function WritingAiDraftPanel({
                       type="button"
                       onClick={() => {
                         onUseDescription(draft.description);
-                        toast.success("Đã điền mô tả. Bấm Lưu nội dung để giữ lại.");
+                        toast.success("Đã điền mô tả, chưa lưu. Bấm Lưu để giữ lại.");
                       }}
                       className="mt-1 font-semibold text-blue-700 hover:underline"
                     >
@@ -175,8 +227,8 @@ export function WritingAiDraftPanel({
               )}
               <ul className="divide-y divide-slate-100 rounded-lg border border-slate-200">
                 {draft.tasks.map((task, index) => (
-                  <li key={index}>
-                    <label className="flex cursor-pointer gap-3 p-3 hover:bg-slate-50">
+                  <li key={index} className="flex items-start gap-2 pr-3 hover:bg-slate-50">
+                    <label className="flex min-w-0 flex-1 cursor-pointer gap-3 p-3">
                       <input
                         type="checkbox"
                         checked={picked[index] ?? false}
@@ -207,6 +259,15 @@ export function WritingAiDraftPanel({
                         {task.explanation && <span className="block text-slate-600">{task.explanation}</span>}
                       </span>
                     </label>
+                    <button
+                      type="button"
+                      onClick={() => void replaceTask(index)}
+                      disabled={replacing !== null || busy !== null}
+                      className="mt-3 inline-flex flex-none items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {replacing === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                      {replacing === index ? "Đang tạo…" : "Tạo câu khác"}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -215,13 +276,13 @@ export function WritingAiDraftPanel({
         </div>
 
         <div className="flex justify-end gap-2 border-t border-slate-200 p-4">
-          <button type="button" onClick={onClose} disabled={busy === "save"} className={BTN_SECONDARY}>
+          <button type="button" onClick={cancel} disabled={busy === "save"} className={BTN_SECONDARY}>
             Hủy
           </button>
           {/* No faded button before there is something to add (anti-slop rule). */}
           {draft &&
             (chosen.length ? (
-              <button type="button" onClick={() => void save()} disabled={busy !== null} className={BTN_AI}>
+              <button type="button" onClick={() => void save()} disabled={busy !== null || replacing !== null} className={BTN_AI}>
                 {busy === "save" && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
                 Thêm {chosen.length} câu đã chọn
               </button>

@@ -29,10 +29,10 @@ export function resolveNotificationAction(item: NotificationItem): string | null
 
 export function getNotificationActionLabel(item: NotificationItem): string | null {
   if (!resolveNotificationAction(item)) return null;
-  if (item.type === "vocab_review") return "Ôn tập ngay";
-  if (item.type === "streak") return "Học ngay";
-  if (item.type === "streak_shield_used") return "Học ngay";
-  if (item.type === "study_reminder") return "Học ngay";
+  if (item.type === "vocab_review") return "Ôn tập";
+  if (item.type === "streak") return "Học";
+  if (item.type === "streak_shield_used") return "Học";
+  if (item.type === "study_reminder") return "Học";
   return "Xem chi tiết";
 }
 

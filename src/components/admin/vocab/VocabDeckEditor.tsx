@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
+import { vocabService } from "@/lib/api/services/vocab.service";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pagination } from "@/components/ui";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -38,13 +39,17 @@ import VocabStagePreview from "./VocabStagePreview";
 import VocabWordForm, { type AdminVocabWord } from "./VocabWordForm";
 import {
   VOCAB_LEVELS,
-  cefrToScaleLevel,
+  aiDeckLevel,
   parseVocabPaste,
+  phoneticsFromLookup,
   vocabDeckChecklist,
   vocabPublishBlocker,
   vocabPublishConfirm,
+  wordsWithoutIpa,
   type DeckStats,
 } from "./vocabCms";
+import { draftAvoidList, replaceDraftItem } from "../skillCmsStatus";
+import { PRACTICE_LEVEL_LABEL } from "@/lib/learning-path/practiceLevel";
 
 type Deck = {
   id: number;
@@ -174,6 +179,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   const [aiWords, setAiWords] = useState<DraftWord[]>([]);
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
+  /** "Lấy phiên âm cho N từ còn thiếu" running: "3/12". */
+  const [ipaProgress, setIpaProgress] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<AdminVocabWord | null>(
     null,
   );
@@ -234,7 +241,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   ];
   const firstIndex = (page - 1) * PAGE_SIZE;
 
-  const saveDeck = async () => {
+  /** `aiCount`: a new deck goes on to ask the AI for that many words (owner 2026-11-25). */
+  const saveDeck = async (aiCount?: number) => {
     if (!form.title.trim()) {
       toast.error("Cần nhập tên bộ từ.");
       return;
@@ -258,9 +266,10 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           await axiosClient.post("/admin/vocab/topics", dto),
         );
         setSavedForm(form);
-        toast.success("Đã tạo bộ từ. Giờ thêm từ vào bộ.");
+        toast.success(aiCount ? "Đã lưu bộ từ. AI đang gợi ý từ." : "Đã lưu bộ từ. Giờ thêm từ vào bộ.");
         queryClient.invalidateQueries({ queryKey: ["admin-vocab-topics"] });
-        router.replace(`/admin/vocab/${created.id}`);
+        // from=new: the admin filled this form, so the deck stays if the AI fails.
+        router.replace(`/admin/vocab/${created.id}${aiCount ? `?ai=${aiCount}&from=new` : ""}`);
       }
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể lưu bộ từ."));
@@ -284,8 +293,11 @@ function DeckBody({ deck }: { deck: Deck | null }) {
   const aiStarted = useRef(false);
   useEffect(() => {
     if (!deck || aiStarted.current) return;
-    const count = Number(new URLSearchParams(window.location.search).get("ai"));
+    const params = new URLSearchParams(window.location.search);
+    const count = Number(params.get("ai"));
     if (!count) return;
+    // Saved from the new-deck form: the admin's deck stays whatever the AI does.
+    const fromForm = params.get("from") === "new";
     aiStarted.current = true;
     window.history.replaceState(null, "", window.location.pathname);
     // eslint-disable-next-line react-hooks/set-state-in-effect -- opens the AI panel once when the page is reached with ?ai=
@@ -294,7 +306,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     void askAi(count).then((answered) => {
       // QA 2026-11-22: the list made this deck for the AI; when the AI
       // fails it stays empty, so it goes and the admin is told.
-      if (!answered && !deck.stats.total) void removeEmptyDeck(deck.id);
+      if (!answered && !deck.stats.total && !fromForm) void removeEmptyDeck(deck.id);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on arrival
   }, [deck]);
@@ -323,8 +335,11 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       }
       toast.success(`Đã thêm ${added} từ.`);
     } catch (err: any) {
+      // The server's reason, then where the run stopped (owner 2026-11-25:
+      // the reason replaced the "dừng ở từ thứ N" part).
       toast.error(
-        getApiErrorMessage(err, `Dừng ở từ thứ ${added + 1}; ${added} từ đã thêm.`),
+        `${getApiErrorMessage(err, "Không thể thêm từ.")} Dừng ở từ thứ ${added + 1} ("${rows[added]?.word ?? ""}"); ${added} từ đã thêm.`,
+        { duration: 8000 },
       );
     } finally {
       setProgress(null);
@@ -346,7 +361,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       const data = unwrap<any>(
         await axiosClient.post("/admin/vocab/ai/full-draft", {
           topic,
-          level: cefrToScaleLevel(form.level),
+          level: aiDeckLevel(form.level),
           context: form.description.trim() || undefined,
           count,
         }),
@@ -372,6 +387,133 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       return false;
     } finally {
       setBusy(false);
+    }
+  };
+
+  /**
+   * "Tạo từ khác" on one suggested word (owner 2026-11-25): one new word for
+   * the deck, never one the suggestions or the deck already hold.
+   */
+  const [wordAiBusy, setWordAiBusy] = useState<number | null>(null);
+  const replaceAiWord = async (index: number) => {
+    if (wordAiBusy !== null || busy) return;
+    setWordAiBusy(index);
+    try {
+      const deckWords = await loadAllWordNames();
+      const data = unwrap<any>(
+        await axiosClient.post("/admin/vocab/ai/full-draft", {
+          topic: form.title.trim(),
+          level: aiDeckLevel(form.level),
+          context: form.description.trim() || undefined,
+          count: 1,
+          // The suggestions first: the API takes 40 items.
+          avoid: draftAvoidList([...aiWords.map((row) => row.word), ...deckWords]),
+        }),
+      );
+      const taken = new Set([...aiWords.map((row) => row.word), ...deckWords].map((word) => word.trim().toLowerCase()));
+      const next = (data?.words ?? []).find(
+        (word: any) => String(word?.word ?? "").trim() && !taken.has(String(word.word).trim().toLowerCase()),
+      );
+      if (!next) {
+        toast.error("AI chưa tạo được từ mới. Thử lại sau.");
+        return;
+      }
+      setAiWords((rows) =>
+        replaceDraftItem(rows, index, {
+          word: String(next.word),
+          meaning: String(next.meaning ?? ""),
+          pos: next.pos,
+          ipaUs: next.ipaUs,
+          ipaUk: next.ipaUk,
+          exampleEn: next.exampleEn,
+          exampleVi: next.exampleVi,
+          chosen: true,
+        }),
+      );
+      toast.success(`Đã thay từ ${index + 1}.`);
+    } catch (err: any) {
+      toast.error(getApiErrorMessage(err, "AI chưa tạo được từ mới. Thử lại sau."));
+    } finally {
+      setWordAiBusy(null);
+    }
+  };
+
+  /** The learner dictionary first (as "Lấy phiên âm" in the word form), then the AI word helper. */
+  const findPhonetics = async (word: string) => {
+    try {
+      const found = phoneticsFromLookup(await vocabService.lookupWord(word));
+      if (found.ipaUs) return found;
+    } catch {
+      // The dictionary did not answer: the AI may still know the word.
+    }
+    const data = unwrap<any>(
+      await axiosClient.post("/admin/vocab/ai/suggest-word", {
+        word,
+        level: aiDeckLevel(form.level),
+      }),
+    );
+    return {
+      ipaUs: String(data?.ipaUs ?? "").trim(),
+      ipaUk: String(data?.ipaUk ?? "").trim(),
+    };
+  };
+
+  /**
+   * Fills the US phonetics of every word that has none (owner 2026-11-25: a
+   * deck is published only when every word has them, and the admin had to
+   * look each word up by hand). Words found are saved one by one; words
+   * neither source knows are named for the admin to fill in.
+   */
+  const fillMissingPhonetics = async () => {
+    if (!deck) return;
+    setBusy(true);
+    setIpaProgress("…");
+    let filled = 0;
+    const notFound: string[] = [];
+    try {
+      const all: AdminVocabWord[] = [];
+      for (let p = 1; ; p++) {
+        const result = unwrap<WordPage>(
+          await axiosClient.get(`/admin/vocab/topics/${deck.id}/words`, {
+            params: { page: p, pageSize: 100 },
+          }),
+        );
+        all.push(...result.items);
+        if (p * 100 >= result.total) break;
+      }
+      const missing = wordsWithoutIpa(all);
+      for (const [index, word] of missing.entries()) {
+        setIpaProgress(`${index + 1}/${missing.length}`);
+        let found = { ipaUs: "", ipaUk: "" };
+        try {
+          found = await findPhonetics(word.word);
+        } catch {
+          // Counted below as not found.
+        }
+        if (!found.ipaUs) {
+          notFound.push(word.word);
+          continue;
+        }
+        await axiosClient.patch(`/admin/vocab/topics/${deck.id}/words/${word.id}`, {
+          ipaUs: found.ipaUs,
+          ...(found.ipaUk && !word.ipaUk?.trim() ? { ipaUk: found.ipaUk } : {}),
+        });
+        filled++;
+      }
+      if (filled) toast.success(`Đã điền phiên âm cho ${filled} từ. Kiểm tra lại trong danh sách.`);
+      if (notFound.length)
+        toast.error(
+          `Chưa tìm được phiên âm cho ${notFound.length} từ: ${notFound.slice(0, 5).join(", ")}${notFound.length > 5 ? "…" : ""}. Bấm Sửa ở từng từ để điền tay.`,
+          { duration: 8000 },
+        );
+    } catch (err: any) {
+      toast.error(
+        getApiErrorMessage(err, `Dừng lại sau ${filled} từ đã điền phiên âm.`),
+      );
+    } finally {
+      setIpaProgress(null);
+      setBusy(false);
+      refresh();
     }
   };
 
@@ -464,7 +606,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
               disabled={busy}
               className={BTN_SECONDARY}
             >
-              <Save size={16} /> {deck ? "Lưu" : "Tạo bộ từ"}
+              <Save size={16} /> Lưu
             </button>
             {deck && !isSystem && !blocker && (
               <button
@@ -503,7 +645,39 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           400px rail with the checklist and the 4-step preview (24px gap). */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px] xl:items-start [&>*]:min-w-0">
         <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm xl:col-start-1">
-          <h2 className="font-semibold text-slate-950">Thông tin bộ từ</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-semibold text-slate-950">Thông tin bộ từ</h2>
+            {/* The new page drafts with AI too, like the other pages (owner
+                2026-11-25): the deck is saved, then the AI suggests words. */}
+            {!deck && (
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                  Số từ
+                  <select
+                    aria-label="Số từ AI gợi ý"
+                    value={aiCount}
+                    onChange={(event) => setAiCount(Number(event.target.value))}
+                    className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                  >
+                    {[5, 10, 15, 20, 25, 30].map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void saveDeck(aiCount)}
+                  title="Lưu bộ với tên và trình độ bên dưới, rồi AI gợi ý từ để bạn chọn."
+                  className={BTN_AI}
+                >
+                  Soạn bằng AI
+                </button>
+              </div>
+            )}
+          </div>
           <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
             <label className="text-sm font-medium text-slate-800">
               Tên bộ từ
@@ -528,7 +702,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 <option value="">Chưa chọn</option>
                 {VOCAB_LEVELS.map((level) => (
                   <option key={level} value={level}>
-                    {level}
+                    {PRACTICE_LEVEL_LABEL[level]}
                   </option>
                 ))}
               </select>
@@ -606,6 +780,25 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 </li>
               ))}
             </ul>
+            {deck && stats.withIpa < stats.total && (
+              <div className="mt-4 border-t border-slate-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => void fillMissingPhonetics()}
+                  disabled={busy}
+                  title="Tra từ điển của học viên trước, rồi nhờ AI với từ từ điển chưa có."
+                  className={BTN_SECONDARY}
+                >
+                  {ipaProgress && <Loader2 size={14} className="animate-spin" aria-hidden="true" />}
+                  {ipaProgress
+                    ? `Đang lấy phiên âm ${ipaProgress}`
+                    : `Lấy phiên âm cho ${stats.total - stats.withIpa} từ còn thiếu`}
+                </button>
+                <p className="mt-1.5 text-sm text-slate-600">
+                  Từ nào không tra được thì sửa tay ở danh sách bên dưới.
+                </p>
+              </div>
+            )}
           </section>
 
           )}
@@ -654,7 +847,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
 
           {!deck ? (
             <p className="mt-4 text-sm text-slate-600">
-              Tạo bộ từ trước, sau đó thêm từ ngay tại đây: từng từ, dán cả danh
+              Lưu bộ từ trước, sau đó thêm từ ngay tại đây: từng từ, dán cả danh
               sách, hoặc nhờ AI gợi ý.
             </p>
           ) : (
@@ -875,8 +1068,8 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                       <>
                         <ul className="mt-3 max-h-80 space-y-1 overflow-y-auto text-sm">
                           {aiWords.map((row, index) => (
-                            <li key={`${row.word}-${index}`}>
-                              <label className="flex cursor-pointer items-baseline gap-2">
+                            <li key={`${row.word}-${index}`} className="flex items-baseline gap-2">
+                              <label className="flex min-w-0 flex-1 cursor-pointer items-baseline gap-2">
                                 <input
                                   type="checkbox"
                                   checked={row.chosen}
@@ -891,12 +1084,22 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                                 <span className="text-slate-700">{row.meaning}</span>
                                 <span className="text-xs text-slate-600 dark:text-slate-400">{row.pos}</span>
                               </label>
+                              <button
+                                type="button"
+                                onClick={() => void replaceAiWord(index)}
+                                disabled={wordAiBusy !== null || busy}
+                                className="inline-flex flex-none items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                              >
+                                {wordAiBusy === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                                {wordAiBusy === index ? "Đang tạo…" : "Tạo từ khác"}
+                              </button>
                             </li>
                           ))}
                         </ul>
                         <button
                           type="button"
-                          disabled={busy}
+                          // A word still being replaced by the AI waits for its answer.
+                          disabled={busy || wordAiBusy !== null}
                           onClick={async () => {
                             if (
                               await addWords(

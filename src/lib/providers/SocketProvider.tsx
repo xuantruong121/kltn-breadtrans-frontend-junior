@@ -14,6 +14,15 @@ import { socketBaseUrl, SOCKET_TRANSPORTS } from "@/lib/realtime/socketUrl";
 import { PLAN_UPDATE_QUERY_KEYS, PROGRESS_QUERY_KEYS } from "@/lib/realtime/progressRefresh";
 import { refreshAccessToken } from "@/lib/auth/refreshSession";
 
+/**
+ * Connection and event logs, in development only (owner 2026-11-26): a built
+ * app printed the socket id and event payloads (chat messages, Bánh Mì) to
+ * every learner's console, where they end up in screenshots and shared logs.
+ */
+const devLog = (...args: unknown[]) => {
+  if (process.env.NODE_ENV !== "production") console.log(...args);
+};
+
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
@@ -101,7 +110,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
     socketInstance.on("connect", () => {
       setSocket(socketInstance);
       setIsConnected(true);
-      console.log("[WebSocket] Connected to server successfully! ID:", socketInstance.id);
+      devLog("[WebSocket] Connected to server successfully! ID:", socketInstance.id);
 
       // Join Room cá nhân ngay khi kết nối
       if (user?.id) {
@@ -115,12 +124,12 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
     socketInstance.on("disconnect", () => {
       setIsConnected(false);
-      console.log("[WebSocket] Disconnected from server!");
+      devLog("[WebSocket] Disconnected from server!");
     });
 
     // 1. Lắng nghe sự kiện cộng/trừ Bánh Mì Real-time
     socketInstance.on("user:currency_updated", (data: any) => {
-      console.log("[WebSocket] user:currency_updated received:", data);
+      devLog("[WebSocket] user:currency_updated received:", data);
 
       if (user?.id && data.userId === user.id) {
         // Cập nhật số dư tức thì trong Store
@@ -180,7 +189,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
     // 2. Lắng nghe sự kiện duyệt đơn Đổi Quà Real-time
     socketInstance.on("market:order_updated", (data: any) => {
-      console.log("[WebSocket] market:order_updated received:", data);
+      devLog("[WebSocket] market:order_updated received:", data);
 
       if (user?.id && data.userId === user.id) {
         queryClient.invalidateQueries({ queryKey: ["market-orders"] });
@@ -200,7 +209,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
     // 3. Lắng nghe sự kiện Tin Nhắn Chat Mới Real-time
     socketInstance.on("chat:new_message", (payload: any) => {
-      console.log("[WebSocket] chat:new_message received:", payload);
+      devLog("[WebSocket] chat:new_message received:", payload);
       const { studentId, studentName, studentEmail, studentAvatar, message, fromRole, targetUserId } = payload;
       const chatStore = useChatAssistantStore.getState();
       queryClient.invalidateQueries({ queryKey: ["admin-support"] });
@@ -233,7 +242,7 @@ export default function SocketProvider({ children }: { children: React.ReactNode
 
     // 4. Lắng nghe sự kiện Chuyển Đổi Chế Độ Chat Real-time
     socketInstance.on("chat:mode_updated", (payload: any) => {
-      console.log("[WebSocket] chat:mode_updated received:", payload);
+      devLog("[WebSocket] chat:mode_updated received:", payload);
       const { studentId, mode, systemMessage } = payload;
       useChatAssistantStore.getState().setThreadMode(studentId, mode, systemMessage);
       queryClient.invalidateQueries({ queryKey: ["admin-support"] });

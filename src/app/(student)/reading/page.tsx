@@ -45,8 +45,8 @@ const CATEGORY_OPTIONS: Array<{ id: ExerciseCategory; label: string }> = [
   { id: "GRAMMAR", label: "Ngữ pháp" },
 ];
 
-/** Authoritative level from the API, with the stored level as fallback. */
-const readingLevelOf = (item: ReadingTopicItem) => item.cefrLevel ?? item.level;
+/** The practice level the API stores and decides access from. */
+const readingLevelOf = (item: ReadingTopicItem) => item.practiceLevel;
 
 function ReadingTopicsContent() {
   const router = useRouter();
@@ -160,7 +160,6 @@ function ReadingTopicsContent() {
       quizId: exercise.quizId,
       title: quizDisplayTitle(exercise.quizId, exercise.title),
       name: quizDisplayTitle(exercise.quizId, exercise.title),
-      cefrLevel: exercise.cefrLevel,
       description: exercise.description ? withoutLevelPhrase(exercise.description) : undefined,
       level: exercise.level,
       topicName: exercise.topicName,
@@ -206,7 +205,7 @@ function ReadingTopicsContent() {
         .toLowerCase();
       return (
         (!q || searchable.includes(q)) &&
-        matchesDifficultyFilter(readingLevelOf(exercise), selectedDifficulty, exercise.practiceLevel) &&
+        matchesDifficultyFilter(readingLevelOf(exercise), selectedDifficulty) &&
         matchesStatusFilter(exercise.completionStatus ?? "NOT_STARTED", selectedStatus)
       );
     });

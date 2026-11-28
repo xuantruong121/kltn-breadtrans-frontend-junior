@@ -191,14 +191,14 @@ export function GrammarCatalog({
                       <button
                         type="button"
                         onClick={() => onStart(topic)}
-                        aria-label={`${done ? "Ôn lại" : "Học ngay"} chủ đề ${title}`}
+                        aria-label={`${done ? "Ôn lại" : "Học"} chủ đề ${title}`}
                         className={`inline-flex min-h-9 shrink-0 items-center gap-1 rounded-lg px-3 text-sm font-semibold transition-colors cursor-pointer ${
                           done
                             ? "border border-emerald-300 bg-white text-emerald-800 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
                             : "bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50"
                         }`}
                       >
-                        {done ? "Ôn lại" : "Học ngay"}
+                        {done ? "Ôn lại" : "Học"}
                         <ArrowRight
                           size={14}
                           strokeWidth={2}

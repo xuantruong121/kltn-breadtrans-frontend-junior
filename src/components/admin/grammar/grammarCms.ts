@@ -5,12 +5,10 @@ import {
   missingItems,
   type ChecklistEntry,
 } from "../publishBlocker.ts";
+import { PRACTICE_LEVEL_OPTIONS } from "../../../lib/learning-path/practiceLevel.ts";
 
-export const GRAMMAR_LEVELS = [
-  { value: "BEGINNER", label: "Cơ bản" },
-  { value: "INTERMEDIATE", label: "Trung cấp" },
-  { value: "ADVANCED", label: "Nâng cao" },
-] as const;
+/** The four practice levels (owner 2026-11-27; Mất gốc is new for grammar). */
+export const GRAMMAR_LEVELS = PRACTICE_LEVEL_OPTIONS;
 
 export const grammarLevelLabel = (value?: string | null) =>
   GRAMMAR_LEVELS.find((level) => level.value === value)?.label ?? value ?? "";
@@ -118,6 +116,19 @@ export function publishBlocker(
   unsaved: boolean,
 ): string | null {
   return checklistBlocker(checklist, unsaved);
+}
+
+/**
+ * The notice above the editor while something waits for Lưu (owner
+ * 2026-11-25: after "Soạn bằng AI" the questions were saved at once but the
+ * theory was not, and only a grey "có thay đổi chưa lưu" said so).
+ */
+export function grammarUnsavedNotice(dirty: boolean, pendingQuestions: number): string {
+  const parts: string[] = [];
+  if (dirty) parts.push("Tên, công thức hoặc lý thuyết có thay đổi chưa được lưu.");
+  if (pendingQuestions > 0)
+    parts.push(`${pendingQuestions} câu hỏi đang chờ, sẽ được thêm khi lưu.`);
+  return parts.join(" ");
 }
 
 /**

@@ -127,6 +127,9 @@ export function useArenaSocket() {
   const abortedSeenRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // No token yet (the page is still restoring the session, or a guest): no
+    // connection, since the gateway refuses it with a "please sign in" error.
+    if (!hasToken) return;
     const socket = io(`${socketBaseUrl()}/arena`, {
       ...SOCKET_TRANSPORTS,
       auth: (cb) => cb({ token: useAuthStore.getState().accessToken }),

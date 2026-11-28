@@ -149,9 +149,11 @@ function ArenaLobby() {
     <div className={soundPrefs.scene ? "dark scene-glass relative isolate" : ""}>
       {soundPrefs.scene && <CityNight reduce={reduceMotion} />}
       <ArenaMusicDock />
-    <div className="grid items-start gap-6 pb-24 lg:grid-cols-[260px_1fr] lg:pb-12 [&>*]:min-w-0">
+    {/* From lg the lobby is one screen tall (owner 2026-11-27): 9.25rem is the header (81px), the page's top
+        padding (32px) and its bottom padding (32px). The game list and the panel scroll inside. */}
+    <div className="grid items-start gap-6 pb-24 lg:h-[calc(100dvh-9.25rem)] lg:min-h-[30rem] lg:grid-cols-[260px_1fr] lg:items-stretch lg:pb-0 [&>*]:min-w-0 lg:[&>*]:min-h-0">
       <ArenaGameNav game={game} onPick={pick} isGuest={isGuest} arenaStats={arenaStats} />
-      <div className="space-y-6">
+      <div className="relative space-y-6 lg:h-full lg:overflow-y-auto lg:[scrollbar-width:thin]">
       {abortedNotice && (
         <div
           role="status"

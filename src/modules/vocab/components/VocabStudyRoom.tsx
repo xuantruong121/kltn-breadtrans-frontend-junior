@@ -11,10 +11,13 @@ import { FlashcardStage } from "./FlashcardStage";
 import { QuizStage } from "./QuizStage";
 import { TypingStage } from "./TypingStage";
 import { SpeakingStage } from "./SpeakingStage";
+import { WordVerdict } from "./WordVerdict";
 import { StudyFooter } from "./StudyFooter";
 import { WordListDrawer } from "./WordListDrawer";
 import { StudySettingsModal } from "./StudySettingsModal";
 import { CompletionCelebration } from "./CompletionCelebration";
+import { DueReviewDone } from "./DueReviewDone";
+import { REVIEW_STAGES } from "../utils/dueReview";
 import { playChime, playWordAudio } from "../utils/audio";
 import { LofiForest } from "./LofiForest";
 import { studySound } from "../sound/studySound";
@@ -24,6 +27,8 @@ import { VocabTopic, VocabTopicDetail } from "@/lib/api/services/vocab.service";
 
 interface VocabStudyRoomProps {
   topic: VocabTopic | VocabTopicDetail;
+  /** The deck's due-word review (owner 2026-11-27) instead of the whole deck. */
+  dueReview?: boolean;
 }
 
 const slideVariants = {
@@ -49,7 +54,7 @@ const slideVariants = {
   }),
 };
 
-export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
+export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic, dueReview = false }) => {
   const [isWordListOpen, setIsWordListOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -59,6 +64,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
   const engine = useVocabStudyEngine({
     topicId: topicId,
     initialWords: words,
+    dueReview,
   });
 
   const {
@@ -73,6 +79,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     totalWordsCount,
     learnedCount,
     reviewCount,
+    dueDoneCount,
+    leftCount,
     sessionXp,
     newCount,
     completionPercentage,
@@ -86,6 +94,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     setTypingInput,
     typingHintCount,
     typingFeedback,
+    isQuickCheck,
+    isReviewItem,
     handleCheckTyping,
     handleRevealTypingHint,
     isRecording,
@@ -95,9 +105,13 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
     isSpeakingSkipped,
     handleToggleRecordSpeech,
     handleSkipSpeaking,
-    handleSrsRate,
+    handleContinueSpeaking,
+    verdict,
+    handleContinue,
+    handleRetryVerdict,
+    handleDeferVerdict,
     handlePlayAudio,
-    handleMarkMastered,
+    handleQuickCheck,
     handleEscalateMode,
     handleSwitchMode,
     handleJumpToWord,
@@ -126,7 +140,9 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
   // recording; the rainy forest behind the cards when the scene is on.
   const ambience = useAmbiencePrefs();
   const reduceMotion = Boolean(useReducedMotion());
-  useStudyAmbience(!isCompleted, isRecording);
+  // Opened on a deck with nothing due: no word to ask, only where to go next.
+  const nothingDue = dueReview && totalWordsCount === 0;
+  useStudyAmbience(!isCompleted && !nothingDue, isRecording);
   const wasCompleted = useRef(isCompleted);
   useEffect(() => {
     if (isCompleted && !wasCompleted.current) studySound.play("done");
@@ -155,7 +171,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
       {ambience.scene && <LofiForest reduce={reduceMotion} />}
       {/* 1. Top Navigation Bar with Pill Switcher & Live Progress */}
       <StudyTopHeader
-        topicTitle={topic.title}
+        topicTitle={dueReview ? `${topic.title} · Ôn từ đến hạn` : topic.title}
         learnedCount={learnedCount}
         totalWordsCount={totalWordsCount}
         completionPercentage={completionPercentage}
@@ -164,21 +180,26 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
       />
 
       {/* 2. Main Active Canvas (Pulled up closer to header, no excessive vertical blank space) */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-12 short:pt-3 short:pb-4 flex flex-col items-center">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 pt-4 sm:pt-6 pb-12 short:pt-3 short:pb-4 phone-land:pt-2 phone-land:pb-4 flex flex-col items-center">
         {/* Sequential Stage Tab Pills */}
-        {!isCompleted && (
-          <div className="w-full mb-6 short:mb-3">
+        {!isCompleted && !nothingDue && (
+          <div className="w-full mb-6 short:mb-3 phone-land:mb-2">
             <StageTabIndicator
               currentMode={currentMode}
               onSelectMode={(mode) => handleSwitchMode(mode)}
+              stages={isReviewItem ? REVIEW_STAGES : undefined}
             />
           </div>
         )}
 
         {/* Dynamic Animated Stage Container */}
-        <div className="w-full flex items-center justify-center min-h-[440px] short:min-h-0">
+        <div className="w-full flex items-center justify-center min-h-[440px] short:min-h-0 phone-land:min-h-0">
           <AnimatePresence mode="wait" custom={direction}>
-            {isCompleted ? (
+            {nothingDue ? (
+              <div className="w-full">
+                <DueReviewDone topicId={topicId} topicTitle={topic.title} done={0} sessionXp={0} />
+              </div>
+            ) : isCompleted ? (
               <motion.div
                 key="completion-screen"
                 custom={direction}
@@ -188,12 +209,39 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                 exit="exit"
                 className="w-full"
               >
-                <CompletionCelebration
-                  totalWordsCount={totalWordsCount}
-                  learnedCount={learnedCount}
-                  reviewCount={reviewCount}
-                  sessionXp={sessionXp}
-                  onRestart={handleRestart}
+                {dueReview ? (
+                  <DueReviewDone
+                    topicId={topicId}
+                    topicTitle={topic.title}
+                    done={dueDoneCount}
+                    left={leftCount}
+                    sessionXp={sessionXp}
+                  />
+                ) : (
+                  <CompletionCelebration
+                    totalWordsCount={totalWordsCount}
+                    learnedCount={learnedCount}
+                    reviewCount={reviewCount}
+                    sessionXp={sessionXp}
+                    onRestart={handleRestart}
+                  />
+                )}
+              </motion.div>
+            ) : verdict ? (
+              <motion.div
+                key={`${verdict.word.id}-verdict`}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                className="w-full"
+              >
+                <WordVerdict
+                  verdict={verdict}
+                  onContinue={handleContinue}
+                  onRetry={handleRetryVerdict}
+                  onDefer={handleDeferVerdict}
                 />
               </motion.div>
             ) : currentWord ? (
@@ -215,7 +263,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                       playChime("flip");
                     }}
                     onPlayAudio={handlePlayAudio}
-                    onMarkMastered={handleMarkMastered}
+                    onQuickCheck={handleQuickCheck}
                     onEscalate={handleEscalateMode}
                     isSaved={Boolean(savedRow)}
                     saveBusy={savedWords.busy}
@@ -243,6 +291,7 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                     onInputChange={setTypingInput}
                     onCheck={handleCheckTyping}
                     onRevealHint={handleRevealTypingHint}
+                    quickCheck={isQuickCheck}
                   />
                 )}
 
@@ -256,9 +305,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
                     isSkipped={isSpeakingSkipped}
                     onToggleRecord={handleToggleRecordSpeech}
                     onPlayAudio={handlePlayAudio}
-                    onRateSrs={handleSrsRate}
                     onSkipSpeaking={handleSkipSpeaking}
-                    onSkip={handleMarkMastered}
+                    onContinue={handleContinueSpeaking}
                   />
                 )}
               </motion.div>
@@ -278,6 +326,8 @@ export const VocabStudyRoom: React.FC<VocabStudyRoomProps> = ({ topic }) => {
         learnedCount={learnedCount}
         reviewCount={reviewCount}
         glass={ambience.scene}
+        stages={isReviewItem ? REVIEW_STAGES : undefined}
+        dueReview={dueReview}
       />
 
       {/* Slide-over Word List Drawer */}

@@ -3,6 +3,7 @@
  * card and the checklist beside the editor. No I/O, so they are unit-tested.
  */
 import { TERMS } from "../../lib/ui/terms.ts";
+import { PRACTICE_LEVELS } from "../../lib/learning-path/practiceLevel.ts";
 import { listeningExchangeText } from "../../lib/listening/listeningExchange.ts";
 
 export type AudioBadge = {
@@ -77,6 +78,7 @@ export const TRACK_FIELD_COPY = {
   label: TERMS.track,
   hint: "Bài được ưu tiên đề xuất cho học viên chọn lĩnh vực này. Tự lưu khi bấm.",
   lockedHint: "Lưu bài trước, sau đó chọn lĩnh vực.",
+  pendingHint: "Bài được ưu tiên đề xuất cho học viên chọn lĩnh vực này. Lĩnh vực được gắn khi lưu bài.",
   untagged: "Chưa gắn lĩnh vực",
   saveError: "Chưa lưu được lĩnh vực",
 } as const;
@@ -155,7 +157,7 @@ const translationComplete = (content: any) => {
 export function publishChecklist(input: {
   domain: string;
   title: string;
-  /** The saved title carries the level tag ("Listening B1 — "), which the server reads. */
+  /** The saved item has a practice level, which the server reads. */
   levelTagged: boolean;
   questions: ChecklistQuestion[];
   /** The quiz's recording matches its transcript and is published. */
@@ -292,10 +294,11 @@ export function questionSaveProblem(
 }
 
 /**
- * The saved title is "Listening B1 — Ordering food": the server adds the head
- * from the level picked. The editor shows and edits the part after it, keeps
- * the head aside and puts it back on save, so a range head ("A1–A2") or a
- * custom one ("Hội thoại C1") is not rewritten. The AI topic is the part
+ * An old saved title is "Listening B1 — Ordering food" (before 2026-11-27 the
+ * server added a level head; the level is its own field now and new titles
+ * have none). The editor shows and edits the part after it, keeps the head
+ * aside and puts it back on save: learner titles and the starter roadmap look
+ * titles up by their text. The AI topic is the part
  * after the head too (QA 2026-11-22: "Writing B1 — [QA] …" went to Gemini).
  */
 export function splitTitleHead(title?: string | null): { head: string; body: string } {
@@ -325,10 +328,10 @@ export function fullDraftCountRange(listeningMode?: string) {
 export const clampDraftCount = (count: number, range: { min: number; max: number }) =>
   Math.min(range.max, Math.max(range.min, Math.round(Number(count) || range.min)));
 
-/** CEFR tags in the order a learner meets them. */
-export const CMS_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+/** The practice levels in order (owner 2026-11-27). */
+export const CMS_LEVELS = PRACTICE_LEVELS;
 
-/** The CEFR tag authored at the head of a title ("Hội thoại C1 — ..."). */
+/** The old level code at the head of a title ("Hội thoại C1 — ..."), kept for titles only. */
 export function cmsLevelFromTitle(title?: string | null): string | null {
   const head = (title ?? "").split(" — ")[0].toUpperCase();
   return /\b([ABC][12])\b/.exec(head)?.[1] ?? null;
@@ -349,6 +352,8 @@ type ListItem = {
   title?: string | null;
   description?: string | null;
   level?: string | null;
+  /** The item's practice level (STARTER … ADVANCED). */
+  practiceLevel?: string | null;
   type?: string | null;
   publicationStatus?: string | null;
   _count?: { questions?: number };
@@ -359,8 +364,8 @@ type ListItem = {
   dialogueAudio?: boolean;
 };
 
-export const contentLevel = (item: ListItem) =>
-  cmsLevelFromTitle(item.title) ?? item.level ?? null;
+/** The level a card shows and the list filters on: the stored practice level. */
+export const contentLevel = (item: ListItem) => item.practiceLevel ?? null;
 
 /** The title as a card shows it: without the "Hội thoại C1 — " head. */
 export const displayTitle = (item: { title?: string | null }) => {
@@ -765,6 +770,30 @@ export type DraftSentence = { text: string; excluded?: boolean };
  */
 export function draftSentenceAvoid(sentences: DraftSentence[]): string[] {
   return sentences.map((sentence) => sentence.text.trim()).filter(Boolean);
+}
+
+/**
+ * "Tạo câu khác" on the other draft reviews (owner 2026-11-25): every item
+ * the draft holds, kept or dropped, as the AI's list to avoid. Trimmed, one
+ * line, no blanks or repeats, at most 40 of 300 characters (the API limit).
+ */
+export function draftAvoidList(items: Array<string | null | undefined>): string[] {
+  const seen = new Set<string>();
+  const list: string[] = [];
+  for (const item of items) {
+    const line = String(item ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
+    const key = line.toLowerCase();
+    if (!line || seen.has(key)) continue;
+    seen.add(key);
+    list.push(line);
+    if (list.length === 40) break;
+  }
+  return list;
+}
+
+/** One draft item replaced in place; the others keep their place and state. */
+export function replaceDraftItem<T>(items: T[], index: number, next: T): T[] {
+  return items.map((item, at) => (at === index ? next : item));
 }
 
 /** Kept sentences, dropped ones, and how many more a publishable lesson needs. */

@@ -4,14 +4,33 @@ import {
   addDraftExercises,
   draftExerciseProblem,
   draftFailureToast,
+  formAfterDraft,
   takeOnce,
 } from "./speakingDraftLogic.ts";
+
+test("formAfterDraft: the typed name and description stay, the draft fills empty boxes, the level is the admin's", () => {
+  const drafted = { title: "Đọc thành tiếng — Công sở", description: "Đọc thông báo công sở.", level: "INTERMEDIATE" };
+  assert.deepEqual(
+    formAfterDraft({ title: "Họp nhóm buổi sáng", description: "Nói khi họp nhóm.", level: "BASIC" }, drafted),
+    { title: "Họp nhóm buổi sáng", description: "Nói khi họp nhóm.", level: "BASIC" },
+  );
+  assert.deepEqual(formAfterDraft({ title: "Họp nhóm", description: "  ", level: "BASIC" }, drafted), {
+    title: "Họp nhóm",
+    description: "Đọc thông báo công sở.",
+    level: "BASIC",
+  });
+  assert.deepEqual(formAfterDraft({ title: "", description: "", level: "STARTER" }, drafted), {
+    title: "Đọc thành tiếng — Công sở",
+    description: "Đọc thông báo công sở.",
+    level: "STARTER",
+  });
+});
 
 const drafted = (over: Record<string, unknown> = {}) => ({
   title: "Greeting",
   targetText: "Hello, nice to meet you.",
   taskType: "READ_ALOUD",
-  difficulty: "BEGINNER",
+  difficulty: "BASIC",
   ...over,
 });
 

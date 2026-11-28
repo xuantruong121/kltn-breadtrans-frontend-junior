@@ -114,7 +114,7 @@ function NavSheet({
 }
 
 const TAB =
-  "flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-colors";
+  "flex min-h-[44px] min-w-0 flex-1 flex-col items-center justify-center gap-0.5 py-1 transition-colors phone-land:min-h-9 phone-land:flex-row phone-land:gap-1.5";
 const tabTone = (active: boolean) =>
   active
     ? "text-amber-700 dark:text-amber-400 font-bold"
@@ -170,7 +170,7 @@ export function MobileBottomNav() {
 
       <nav
         aria-label="Điều hướng di động dưới cùng"
-        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/90 dark:border-slate-800/90 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] px-1 min-[360px]:px-2 flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.04)] md:hidden transition-colors duration-150"
+        className="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-lg border-t border-slate-200/90 dark:border-slate-800/90 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] phone-land:pt-1 phone-land:pb-[max(0.25rem,env(safe-area-inset-bottom))] px-1 min-[360px]:px-2 flex items-center justify-around shadow-[0_-4px_16px_rgba(0,0,0,0.04)] md:hidden transition-colors duration-150"
       >
         <Link href={user ? "/dashboard" : "/"} aria-current={isHome ? "page" : undefined} className={`${TAB} ${tabTone(isHome)}`}>
           <Home size={20} aria-hidden="true" className={isHome ? "stroke-[2.5]" : "stroke-2"} />

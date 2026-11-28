@@ -30,7 +30,12 @@ import toast from "react-hot-toast";
 import { Pagination } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { PASSWORD_MIN_LENGTH } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_PLACEHOLDER, PASSWORD_RULE_MESSAGE } from "@/lib/auth/passwordPolicy";
+import {
+  DIRECT_PASSWORD_PAYLOAD,
+  directPasswordProblem,
+  resetLinkNotice,
+} from "@/components/admin/userPasswordReset";
 
 type UserData = {
   id: number;
@@ -71,6 +76,9 @@ export default function AdminUsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<UserData | null>(null);
   const [showCreatePassword, setShowCreatePassword] = useState(false);
   const [showEditPassword, setShowEditPassword] = useState(false);
+  // The password of another person is sent by its own buttons, never with the
+  // form: a browser that fills the box must not change it on "Lưu thay đổi".
+  const [directPassword, setDirectPassword] = useState("");
 
   // Forms
   const [createForm, setCreateForm] = useState({
@@ -85,7 +93,6 @@ export default function AdminUsersPage() {
     fullName: "",
     phone: "",
     role: "STUDENT" as "STUDENT" | "ADMIN",
-    password: "",
   });
 
   // Query Users
@@ -137,15 +144,11 @@ export default function AdminUsersPage() {
   // Update User Mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: typeof editForm }) => {
-      const payload: any = {
+      return axiosClient.patch(`/admin/users/${id}`, {
         fullName: data.fullName,
         phone: data.phone,
         role: data.role,
-      };
-      if (data.password.trim()) {
-        payload.password = data.password.trim();
-      }
-      return axiosClient.patch(`/admin/users/${id}`, payload);
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-users"] });
@@ -156,6 +159,35 @@ export default function AdminUsersPage() {
       toast.error(
         getApiErrorMessage(err, "Lỗi khi cập nhật tài khoản."),
       ),
+  });
+
+  // Send the reset link: the learner sets the password, the admin never sees it.
+  const sendResetMutation = useMutation({
+    mutationFn: async (user: UserData) =>
+      (await axiosClient.post(`/admin/users/${user.id}/send-password-reset`)) as {
+        status?: string;
+        email?: string;
+      },
+    onSuccess: (result, user) => {
+      const notice = resetLinkNotice(result?.status, result?.email ?? user.email);
+      if (notice.tone === "success") toast.success(notice.text);
+      else if (notice.tone === "warning") toast(notice.text);
+      else toast.error(notice.text);
+    },
+    onError: (err: any) =>
+      toast.error(getApiErrorMessage(err, "Không gửi được email đặt lại mật khẩu.")),
+  });
+
+  // Set the password directly: for accounts that cannot receive mail.
+  const directPasswordMutation = useMutation({
+    mutationFn: async ({ id, password }: { id: number; password: string }) =>
+      axiosClient.patch(`/admin/users/${id}`, DIRECT_PASSWORD_PAYLOAD(password)),
+    onSuccess: () => {
+      setDirectPassword("");
+      toast.success("Đã đặt mật khẩu mới. Người dùng bị đăng xuất khỏi mọi thiết bị.");
+    },
+    onError: (err: any) =>
+      toast.error(getApiErrorMessage(err, "Không đặt được mật khẩu mới.")),
   });
 
   // Delete User Mutation
@@ -183,8 +215,9 @@ export default function AdminUsersPage() {
       fullName: user.profile?.fullName || "",
       phone: user.profile?.phone || "",
       role: user.role,
-      password: "",
     });
+    setDirectPassword("");
+    setShowEditPassword(false);
   };
 
   const filteredUsers = users?.filter(
@@ -540,6 +573,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="text"
+                    autoComplete="off"
                     placeholder="VD: Nguyễn Văn A"
                     value={createForm.fullName}
                     onChange={(e) =>
@@ -554,6 +588,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="email"
+                    autoComplete="off"
                     placeholder="email@example.com"
                     value={createForm.email}
                     onChange={(e) =>
@@ -569,7 +604,8 @@ export default function AdminUsersPage() {
                   <div className="relative">
                     <input
                       type={showCreatePassword ? "text" : "password"}
-                      placeholder={`Ít nhất ${PASSWORD_MIN_LENGTH} ký tự`}
+                      autoComplete="new-password"
+                      placeholder={PASSWORD_PLACEHOLDER}
                       value={createForm.password}
                       onChange={(e) =>
                         setCreateForm({
@@ -602,6 +638,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="tel"
+                    autoComplete="off"
                     placeholder="0912345678"
                     value={createForm.phone}
                     onChange={(e) =>
@@ -703,6 +740,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="text"
+                    autoComplete="off"
                     value={editForm.fullName}
                     onChange={(e) =>
                       setEditForm({ ...editForm, fullName: e.target.value })
@@ -716,6 +754,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="tel"
+                    autoComplete="off"
                     value={editForm.phone}
                     onChange={(e) =>
                       setEditForm({ ...editForm, phone: e.target.value })
@@ -744,40 +783,85 @@ export default function AdminUsersPage() {
                     <option value="ADMIN">Quản trị viên (Admin)</option>
                   </select>
                 </div>
-                <div>
-                  <label className="block text-slate-600 mb-1">
-                    Đặt lại Mật khẩu mới (Để trống nếu không đổi)
-                  </label>
-                  <div className="relative">
-                    <Lock
-                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
-                      size={16}
-                    />{" "}
-                    <input
-                      type={showEditPassword ? "text" : "password"}
-                      placeholder="Nhập mật khẩu mới..."
-                      value={editForm.password}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, password: e.target.value })
-                      }
-                      className="w-full pl-10 pr-12 py-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 text-slate-800"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowEditPassword((value) => !value)}
-                      aria-label={
-                        showEditPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
-                      }
-                      aria-pressed={showEditPassword}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400"
-                    >
-                      {showEditPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
+                <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+                  <p className="text-slate-600">Mật khẩu</p>
+                  <p className="text-xs font-medium text-slate-600">
+                    Người dùng nhận email có liên kết dùng một lần, hết hạn sau 15 phút, rồi tự đặt mật khẩu mới.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => sendResetMutation.mutate(editingUser)}
+                    disabled={sendResetMutation.isPending}
+                    className="w-full py-2.5 rounded-xl border-2 border-blue-600 text-blue-700 hover:bg-blue-50 font-black flex items-center justify-center gap-2 text-sm disabled:cursor-wait"
+                  >
+                    {sendResetMutation.isPending && (
+                      <Loader2 size={16} className="animate-spin" />
+                    )}
+                    Gửi email đặt lại mật khẩu
+                  </button>
+                  <details className="pt-1">
+                    <summary className="cursor-pointer text-slate-600 text-xs">
+                      Đặt mật khẩu trực tiếp (khi người dùng không nhận được email)
+                    </summary>
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                        Người này sẽ bị đăng xuất khỏi mọi thiết bị. {PASSWORD_RULE_MESSAGE}
+                      </p>
+                      <div className="relative">
+                        <Lock
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+                          size={16}
+                        />
+                        <input
+                          type={showEditPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          placeholder="Nhập mật khẩu mới..."
+                          value={directPassword}
+                          onChange={(e) => setDirectPassword(e.target.value)}
+                          className="w-full pl-10 pr-12 py-2.5 border-2 border-slate-200 rounded-xl outline-none focus:border-blue-500 text-slate-800"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowEditPassword((value) => !value)}
+                          aria-label={
+                            showEditPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                          }
+                          aria-pressed={showEditPassword}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400"
+                        >
+                          {showEditPassword ? (
+                            <EyeOff size={18} />
+                          ) : (
+                            <Eye size={18} />
+                          )}
+                        </button>
+                      </div>
+                      {directPassword && directPasswordProblem(directPassword) && (
+                        <p className="text-xs font-medium text-rose-700 dark:text-rose-400">
+                          {directPasswordProblem(directPassword)}
+                        </p>
                       )}
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          directPasswordMutation.mutate({
+                            id: editingUser.id,
+                            password: directPassword,
+                          })
+                        }
+                        disabled={
+                          directPasswordMutation.isPending ||
+                          directPasswordProblem(directPassword) !== null
+                        }
+                        className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-black flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {directPasswordMutation.isPending && (
+                          <Loader2 size={16} className="animate-spin" />
+                        )}
+                        Đặt mật khẩu
+                      </button>
+                    </div>
+                  </details>
                 </div>
               </div>
 

@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Backpack, Flame, Heart, LogOut } from "lucide-react";
 import type { DungeonView } from "@/lib/api/services/dungeon.service";
 import { SoundToggle } from "@/modules/arena/components/SoundToggle";
-import { MONSTER_NAME, hpTone } from "../dungeonLogic";
+import { DESPERATE_PERCENT, MONSTER_NAME, hpTone, recordLine, strikeLabel } from "../dungeonLogic";
 import type { OverlayArea } from "../stageLayout";
 import { ToppingChips, ToppingPanel } from "./HeldToppings";
 
@@ -36,6 +36,7 @@ export function DungeonHud({
   const me = hpTone(view.hp, view.maxHp);
   const [listOpen, setListOpen] = useState(false);
   const held = view.toppingsHeld ?? [];
+  const record = recordLine(view.record, view.floor);
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 px-2 pt-2 sm:px-4 sm:pt-3">
       <div data-dungeon-hud className="pointer-events-auto mx-auto flex max-w-5xl items-center gap-2 rounded-2xl border border-white/10 bg-black/55 px-3 py-2 text-white shadow-[0_8px_30px_rgba(0,0,0,0.4)] sm:gap-5 sm:px-4">
@@ -46,6 +47,8 @@ export function DungeonHud({
               <span className="tabular-nums">
                 {Math.max(0, view.hp)}/{view.maxHp}
               </span>
+              {/* Low health (owner 2026-11-27): the learner fights "liều mạng", right answers hit harder. */}
+              {view.desperate && <span className="ml-1 text-rose-300">Liều mạng: đòn +{DESPERATE_PERCENT}%</span>}
             </span>
             <span className="whitespace-nowrap text-amber-200">
               {/* The boss badge is on the monster's plate too; narrow phones keep only the floor. */}
@@ -56,6 +59,7 @@ export function DungeonHud({
           <div className="mt-1">
             <Bar share={me.share} tone={me.tone} label="Máu của bạn" />
           </div>
+          {record && <p className="mt-1 text-[11px] font-semibold text-amber-200/90">{record}</p>}
           <ToppingChips held={held} area={area} />
         </div>
 
@@ -127,6 +131,24 @@ export function MonsterPlate({ view }: { view: DungeonView }) {
       <p className="mt-0.5 text-xs font-semibold tabular-nums text-white/70">
         {Math.max(0, view.monster.hp)}/{view.monster.maxHp}
       </p>
+      <StrikeCount strikeIn={view.question?.strikeIn} />
+    </div>
+  );
+}
+
+/** A boss's wind-up (owner 2026-11-27): three marks fill as its strike comes, then the strike is called. */
+function StrikeCount({ strikeIn }: { strikeIn: number | undefined }) {
+  const label = strikeLabel(strikeIn);
+  if (!label || typeof strikeIn !== "number") return null;
+  const filled = 3 - Math.min(2, Math.max(0, strikeIn));
+  return (
+    <div className="mt-1.5 flex items-center justify-center gap-2" role="status">
+      <span className="flex gap-1" aria-hidden="true">
+        {[1, 2, 3].map((n) => (
+          <span key={n} className={`h-1.5 w-5 rounded-full ${n <= filled ? (label.now ? "bg-rose-400" : "bg-amber-300") : "bg-white/20"}`} />
+        ))}
+      </span>
+      <span className={`text-xs font-bold ${label.now ? "text-rose-200" : "text-amber-100/90"}`}>{label.text}</span>
     </div>
   );
 }

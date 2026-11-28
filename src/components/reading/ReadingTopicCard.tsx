@@ -185,7 +185,7 @@ export function ReadingTopicCard({
             <span>{formatTag}</span>
             <span>·</span>
             <span>
-              {catalogLevelLabel(topic.cefrLevel ?? topic.level ?? topic.title, topic.practiceLevel) ?? diffConfig.label}
+              {catalogLevelLabel(topic.practiceLevel ?? topic.level) ?? diffConfig.label}
             </span>
             <span>·</span>
             <span>{questionCount} câu hỏi</span>

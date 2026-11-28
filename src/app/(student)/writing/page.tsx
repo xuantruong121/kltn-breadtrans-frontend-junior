@@ -39,8 +39,8 @@ import { quizDisplayTitle } from "@/lib/catalog/displayTitles";
 import { PictureWritingCatalog } from "@/components/writing/PictureWritingCatalog";
 import { isPictureQuiz, pictureCards } from "@/lib/writing/pictureWriting";
 
-/** Authoritative level from the API, with the authored tag as fallback. */
-const writingLevelOf = (t: WritingTopicItem) => t.cefrLevel ?? t.title;
+/** The practice level the API stores and decides access from. */
+const writingLevelOf = (t: WritingTopicItem) => t.practiceLevel;
 
 export default function WritingTopicsPage() {
   const router = useRouter();
@@ -145,7 +145,7 @@ export default function WritingTopicsPage() {
       const desc = (t.description || "").toLowerCase();
       const matchSearch = !q || title.includes(q) || desc.includes(q);
 
-      const matchDifficulty = matchesDifficultyFilter(writingLevelOf(t), selectedDifficulty, t.practiceLevel);
+      const matchDifficulty = matchesDifficultyFilter(writingLevelOf(t), selectedDifficulty);
 
       // Graded tasks out of all tasks, from the API (same rule as completion).
       const matchStatus = matchesStatusFilter(

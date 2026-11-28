@@ -65,6 +65,8 @@ export type ExamAiCandidate = {
   failedUnits: ExamAiFailedUnit[];
   flaggedCount: number;
   appliedCandidateKeys: string[];
+  /** Questions each planned L&R Part needs and has. */
+  partCoverage?: Array<{ part: number; expected: number; drafted: number }>;
 };
 
 export type ExamAiJobStatus = {
@@ -80,6 +82,8 @@ export type ExamAiJobStatus = {
     | "PUBLISHED"
     | "CANCELLED";
   examId?: number | null;
+  /** The exam the job writes into; the status API sends this, not examId. */
+  exam?: { id: number; title?: string | null; publicationStatus?: string | null } | null;
   progress?: unknown;
   error?: string | null;
   /** e.g. GENERATING_TEXT, WAITING_QUOTA (every AI provider out, resumes at resumeAt). */

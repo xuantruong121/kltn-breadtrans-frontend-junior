@@ -6,12 +6,14 @@ export interface VocabTopic {
   title: string;
   /** Short line the CMS writes for the deck card. */
   description?: string | null;
-  /** CEFR tag (A1–C2), when the deck has one. */
+  /** Practice level (STARTER … ADVANCED), when the deck has one. */
   level?: string | null;
   categoryName: string;
   totalWords: number;
   learnedCount: number;
   needReviewCount: number;
+  /** Words whose review time has come (the deck's due-word review). */
+  dueCount?: number;
   isPro: boolean;
   isLocked?: boolean;
   iconUrl?: string;
@@ -45,6 +47,8 @@ export interface VocabWord {
   // Metadata cho user
   isStarred?: boolean;
   isMastered?: boolean;
+  /** Its review time has come. */
+  isDue?: boolean;
   /** Days until the next review for each self-rating; 0 means ten minutes. */
   reviewPreview?: Record<SrsGrade, number>;
 }
@@ -126,8 +130,28 @@ function getLookupScope(): string {
   return auth.accessToken || (auth.user ? `user:${auth.user.id}` : "guest");
 }
 
-/** What a review or a mark returns; the study room reads the XP only. */
+/** What a review returns; the study room reads the XP and the grade. */
 export type WordProgressReply = { isMastered?: boolean; xpEarned?: number };
+
+/** How one check of the flashcard room went (thesis supervisor 2026-11-26). */
+export type StepResult = "CORRECT" | "WRONG" | "SKIPPED";
+/** PASSED only for a real speech recognition match. */
+export type SpeakingResult = "PASSED" | "FAILED" | "UNAVAILABLE" | "SKIPPED";
+
+/** What happened in the room's steps; the server decides the grade from it. */
+export interface ReviewEvidence {
+  quiz: StepResult;
+  typing: StepResult;
+  typingHints: number;
+  speaking: SpeakingResult;
+  /** "Đã nhớ": only the quiz and the typing were asked. */
+  quickCheck: boolean;
+}
+
+export type WordReviewReply = WordProgressReply & {
+  grade?: SrsGrade;
+  intervalDays?: number;
+};
 
 export const vocabService = {
   getTopics: async (): Promise<VocabTopicsResponse> => {
@@ -142,17 +166,13 @@ export const vocabService = {
     return await axiosClient.post(`/vocab/words/${id}/star`, { isStarred });
   },
 
-  /** `xpEarned`: flashcard XP for a word known for the first time (2, or 0). */
-  masterWord: async (id: number, isMastered: boolean): Promise<WordProgressReply> => {
-    return await axiosClient.post(`/vocab/words/${id}/master`, { isMastered });
-  },
-
-  /** One self-rated review; the server keeps the word's own schedule. */
-  reviewWord: async (id: number, grade: SrsGrade): Promise<WordProgressReply> => {
-    return await axiosClient.post(`/vocab/words/${id}/review`, {
-      grade,
-      isCorrect: grade !== "AGAIN",
-    });
+  /**
+   * One review: the room reports its steps, the server decides the grade,
+   * keeps the word's own schedule and says the grade and the new interval.
+   * `xpEarned`: flashcard XP for a word known for the first time (2, or 0).
+   */
+  reviewWord: async (id: number, evidence: ReviewEvidence): Promise<WordReviewReply> => {
+    return await axiosClient.post(`/vocab/words/${id}/review`, { evidence });
   },
 
   getSavedWords: async (): Promise<SavedWord[]> => {

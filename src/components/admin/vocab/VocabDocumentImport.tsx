@@ -9,11 +9,15 @@ import { getApiErrorMessage } from "@/lib/utils/apiError";
 import DocumentImportButton from "@/components/admin/DocumentImportButton";
 import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "@/components/admin/cmsButtons";
 import {
+  DECK_MIN_WORDS,
   chosenWordCount,
+  deckTooSmall,
   decksToCreate,
   toReviewDecks,
   type ReviewDeck,
 } from "./vocabDocumentReview";
+import { VOCAB_LEVELS } from "./vocabCms";
+import { PRACTICE_LEVEL_LABEL } from "@/lib/learning-path/practiceLevel";
 
 const unwrap = <T,>(value: any): T => (value?.data ?? value) as T;
 
@@ -59,6 +63,7 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
           await axiosClient.post("/admin/vocab/topics", {
             title: deck.title.trim(),
             description: deck.description.trim(),
+            ...(deck.level ? { level: deck.level } : {}),
             categoryName: "Từ tài liệu",
             isPro: false,
           }),
@@ -69,6 +74,7 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
             word: word.word,
             meaning: word.meaning,
             pos: word.pos || "noun",
+            ipaUs: word.ipaUs?.trim() || undefined,
             exampleEn: word.exampleEn || undefined,
             exampleVi: word.exampleVi || undefined,
           });
@@ -174,7 +180,28 @@ export default function VocabDocumentImport({ onClose }: { onClose: () => void }
                     }
                     className="min-h-10 flex-1 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-900"
                   />
+                  <select
+                    aria-label={`Trình độ của bộ ${deck.title}`}
+                    value={deck.level}
+                    onChange={(event) =>
+                      update(deckIndex, (row) => ({ ...row, level: event.target.value }))
+                    }
+                    className="min-h-10 rounded-lg border border-slate-200 px-2 text-sm text-slate-900"
+                  >
+                    <option value="">Chưa chọn</option>
+                    {VOCAB_LEVELS.map((level) => (
+                      <option key={level} value={level}>
+                        {PRACTICE_LEVEL_LABEL[level]}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                {deckTooSmall(deck) && (
+                  <p className="mt-2 text-sm text-amber-800">
+                    Bộ này chỉ có {deck.words.filter((word) => word.chosen).length} từ: cần ít nhất{" "}
+                    {DECK_MIN_WORDS} từ nghĩa khác nhau mới xuất bản được. Có thể tạo rồi thêm từ sau.
+                  </p>
+                )}
                 <ul className="mt-2 grid gap-1 sm:grid-cols-2">
                   {deck.words.map((word, wordIndex) => (
                     <li key={word.word}>

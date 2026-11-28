@@ -34,6 +34,21 @@ export function draftExerciseProblem(exercise: DraftExercise): string | null {
   return null;
 }
 
+type SetFields = { title: string; description: string; level: string };
+
+/**
+ * The set fields after "Áp dụng bản nháp" (owner 2026-11-25: the draft
+ * replaced the name and description the admin had typed). What the admin
+ * typed stays; the draft fills only empty boxes. The level is the admin's.
+ */
+export function formAfterDraft(form: SetFields, drafted: SetFields): SetFields {
+  return {
+    title: form.title.trim() ? form.title : drafted.title,
+    description: form.description.trim() ? form.description : drafted.description,
+    level: form.level,
+  };
+}
+
 export type DraftFailure = { title: string; reason: string };
 
 type AddableExercise = {

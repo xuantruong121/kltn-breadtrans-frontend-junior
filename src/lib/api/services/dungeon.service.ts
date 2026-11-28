@@ -33,8 +33,12 @@ export type MonsterKind =
   | "pandan_jelly"
   | "yeast_frog";
 
-/** A question as the server sends it: no answer. */
-export type DungeonQuestion =
+/**
+ * A question as the server sends it: no answer. `oftenForgotten`: one of the
+ * learner's hard flashcard words (free dungeon only, thesis supervisor
+ * 2026-11-26).
+ */
+export type DungeonQuestion = (
   | {
       type: "choice";
       kind: "fill_blank" | "meaning_to_word" | "word_to_meaning";
@@ -52,7 +56,12 @@ export type DungeonQuestion =
       hint: string;
       /** Letters shown at the start (a topping). */
       revealed: string;
-    };
+    }
+) & {
+  oftenForgotten?: boolean;
+  /** Boss floors: questions before the boss strikes; 0 means this one is the strike. */
+  strikeIn?: number;
+};
 
 export interface DungeonOutcome {
   right: boolean;
@@ -65,6 +74,12 @@ export interface DungeonOutcome {
   died: boolean;
   revived: boolean;
   answer: string;
+  /** This question was the boss's strike: broken when right, a heavier hit when missed. */
+  strike?: boolean;
+  /** The right answer came at low health and hit harder. */
+  desperate?: boolean;
+  /** A lethal hit left 1 health: the run's one last breath. */
+  lastBreath?: boolean;
 }
 
 export interface DungeonResult {
@@ -81,6 +96,8 @@ export interface DungeonResult {
   xp: number;
   record: boolean;
   dailyRank: number | null;
+  /** Hard flashcard words right the first time, out of those asked (free dungeon). */
+  hardWords?: { hit: number; total: number };
 }
 
 /** A number a topping moves, before and after taking it, as the server words it. */
@@ -122,6 +139,17 @@ export interface DungeonView {
   last: DungeonOutcome | null;
   stats: { answered: number; correct: number; bossesDown: number };
   result: DungeonResult | null;
+  /** At or under a quarter of health: right answers hit harder. Missing on replies from an older server. */
+  desperate?: boolean;
+  /** The run's one last breath is still unused. */
+  lastBreathLeft?: boolean;
+  /** The floor to beat: today's leading floor (day's dungeon) or the learner's own best (free run). */
+  record?: DungeonRecord | null;
+}
+
+export interface DungeonRecord {
+  floor: number;
+  whose: "today" | "mine";
 }
 
 export interface DungeonBoard {

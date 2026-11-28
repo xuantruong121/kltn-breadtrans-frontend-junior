@@ -1,4 +1,5 @@
 /** Speaking CMS types, constants and labels shared by the list and the set editor. */
+import { PRACTICE_LEVEL_LABEL, PRACTICE_LEVELS } from "../../../lib/learning-path/practiceLevel.ts";
 
 export interface SpeakingExercise {
   id: number;
@@ -42,10 +43,11 @@ export interface SpeakingPracticeSet {
   updatedAt?: string;
 }
 
-// Levels inside one learner-facing group (Cơ bản / Trung cấp / Nâng cao), as the
-// catalog, the plan matrix and the recommender read them.
-export const LEVELS = ["A1-A2", "A1", "A2", "B1-B2", "B1", "B2", "C1-C2", "C1", "C2"];
-export const EXERCISE_LEVELS = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
+// A set's level and an exercise's difficulty are both one of the four practice
+// levels (owner 2026-11-27), as the catalog, the plan matrix and the recommender
+// read them.
+export const LEVELS: readonly string[] = PRACTICE_LEVELS;
+export const EXERCISE_LEVELS: readonly string[] = PRACTICE_LEVELS;
 export const TASK_TYPES: Array<{ value: SpeakingTaskType; label: string }> = [
   { value: "READ_ALOUD", label: "Đọc thành tiếng" },
   { value: "DESCRIBE_PICTURE", label: "Mô tả hình ảnh" },
@@ -54,30 +56,10 @@ export const TASK_TYPES: Array<{ value: SpeakingTaskType; label: string }> = [
   { value: "EXPRESS_OPINION", label: "Trình bày ý kiến" },
   { value: "PRONUNCIATION_DRILL", label: "Bài luyện phát âm" },
 ];
-export const LEVEL_LABELS: Record<string, string> = {
-  "A1-A2": "Cơ bản · A1 – A2",
-  A1: "Cơ bản · A1",
-  A2: "Cơ bản · A2",
-  "B1-B2": "Trung cấp · B1 – B2",
-  B1: "Trung cấp · B1",
-  B2: "Trung cấp · B2",
-  "C1-C2": "Nâng cao · C1 – C2",
-  C1: "Nâng cao · C1",
-  C2: "Nâng cao · C2",
-  "A1-B1": "A1 – B1",
-  "A2-B1": "A2 – B1",
-  "A2-B2": "A2 – B2",
-  "B1-C1": "B1 – C1",
-};
+export const LEVEL_LABELS: Record<string, string> = PRACTICE_LEVEL_LABEL;
 export const STATUS_LABELS = { DRAFT: "Bản nháp", PUBLISHED: "Đã xuất bản" } as const;
-export const levelLabel = (level?: string | null) =>
-  LEVEL_LABELS[level || ""] || level?.replace("-", " – ") || "Chưa phân loại";
-export const difficultyLabel = (difficulty?: string | null) =>
-  ({ BEGINNER: "Cơ bản", INTERMEDIATE: "Trung cấp", ADVANCED: "Nâng cao" })[
-    difficulty || ""
-  ] ||
-  difficulty ||
-  "Chưa phân loại";
+export const levelLabel = (level?: string | null) => LEVEL_LABELS[level || ""] || "Chưa phân loại";
+export const difficultyLabel = levelLabel;
 
 export type SpeakingExerciseForm = {
   title: string;

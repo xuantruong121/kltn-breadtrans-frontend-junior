@@ -1,5 +1,5 @@
 /** Recommendation items from /learning-path (F6). Labels only; no I/O. */
-import type { PracticeLevel, PracticeSkill } from "./practiceLevel.ts";
+import { PRACTICE_SKILL_LABEL, type PracticeLevel, type PracticeSkill } from "./practiceLevel.ts";
 import { planName } from "../ui/terms.ts";
 import { formatGoalDate } from "./goalEditor.ts";
 
@@ -25,10 +25,37 @@ export type RecommendationItem = {
   saved: boolean;
 };
 
+/**
+ * One slot of today's frame: one item per skill (thesis supervisor
+ * 2026-11-26). DONE: the skill was practised today; EMPTY: no item exists.
+ */
+export type TodaySlot = {
+  skill: PracticeSkill;
+  state: "TODO" | "DONE" | "EMPTY";
+  /** The suggested item (TODO), or today's last item of the skill (DONE). */
+  item: RecommendationItem | null;
+  done: { items: number; scorePercent: number | null } | null;
+  /** Suggested because another skill was practised a lot today. */
+  nudged: boolean;
+};
+
+/** One skill practised a lot today, and the skills not touched yet. */
+export type TodayBalance = {
+  skill: PracticeSkill;
+  minutes: number;
+  items: number;
+  suggest: PracticeSkill[];
+};
+
 export type TodayPlan = {
+  dayKey?: string;
   minutesPerDay: number;
+  /** Open picks still to do (older clients read this list). */
   items: RecommendationItem[];
-  /** Other open items, beyond the daily minutes, for the learner to choose from. */
+  /** The frame: Nghe, Đọc, Nói, Viết. */
+  slots?: TodaySlot[];
+  balance?: TodayBalance | null;
+  /** Other open items, beyond the frame, for the learner to choose from. */
   more?: RecommendationItem[];
   /** Vocabulary and grammar to study next. */
   foundation?: FoundationItem[];
@@ -142,6 +169,52 @@ export function estimateText(estimate: WeekPlan["estimate"], formatDate: (iso: s
   return base;
 }
 
-export function totalMinutes(items: Array<Pick<RecommendationItem, "minutes">>): number {
-  return items.reduce((n, i) => n + i.minutes, 0);
+/** Minutes of the open items still to do today. */
+export function remainingMinutes(slots: TodaySlot[]): number {
+  return slots.reduce(
+    (n, s) => (s.state === "TODO" && s.item?.status === "OPEN" ? n + s.item.minutes : n),
+    0,
+  );
+}
+
+/** The frame's corner: what is left today, or that every skill is done. */
+export function frameStatus(slots: TodaySlot[]): string {
+  const withContent = slots.filter((s) => s.state !== "EMPTY");
+  if (withContent.length > 0 && withContent.every((s) => s.state === "DONE")) {
+    return `Đã xong ${withContent.length} kỹ năng hôm nay`;
+  }
+  const left = remainingMinutes(slots);
+  return left > 0 ? `Còn khoảng ${left} phút` : "";
+}
+
+/** "Đã làm hôm nay · 80%", or the count when several items were done. */
+export function doneLine(done: TodaySlot["done"]): string {
+  if (!done) return "Đã làm hôm nay";
+  const score = done.scorePercent === null ? "" : `${done.scorePercent}%`;
+  if (done.items > 1) {
+    return score ? `Đã làm ${done.items} bài hôm nay · bài gần nhất ${score}` : `Đã làm ${done.items} bài hôm nay`;
+  }
+  return score ? `Đã làm hôm nay · ${score}` : "Đã làm hôm nay";
+}
+
+export function nudgeReason(skill: PracticeSkill): string {
+  return `Bạn chưa luyện ${PRACTICE_SKILL_LABEL[skill]} hôm nay`;
+}
+
+/** "Nghe", "Nghe và Nói", "Nghe, Nói và Viết". */
+function joinSkills(skills: PracticeSkill[]): string {
+  const names = skills.map((s) => PRACTICE_SKILL_LABEL[s]);
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} và ${names[names.length - 1]}`;
+}
+
+/** The balance nudge in one sentence. */
+export function balanceText(b: TodayBalance): string {
+  const what =
+    b.minutes > 0 && b.items > 0
+      ? `${b.minutes} phút, ${b.items} bài`
+      : b.minutes > 0
+        ? `${b.minutes} phút`
+        : `${b.items} bài`;
+  return `Hôm nay bạn đã luyện ${PRACTICE_SKILL_LABEL[b.skill]} ${what}. Thử thêm ${joinSkills(b.suggest)} để các kỹ năng đi đều nhau.`;
 }

@@ -49,7 +49,7 @@ export default function SpeakingExerciseForm({
     title: exercise?.title ?? "",
     targetText: exercise?.targetText ?? "",
     imageUrl: exercise?.imageUrl ?? "",
-    difficulty: exercise?.difficulty || "BEGINNER",
+    difficulty: exercise?.difficulty || "BASIC",
     taskType: exercise?.taskType || "READ_ALOUD",
     stimulusId: exercise?.stimulusId ?? null,
   }));
@@ -125,7 +125,7 @@ export default function SpeakingExerciseForm({
       axiosClient.post("/admin/speaking/ai/suggest-exercises", {
         practiceSetTitle: set.title,
         practiceSetDescription: set.description || undefined,
-        level: set.level || "BEGINNER",
+        level: set.level || "BASIC",
         track: aiTrack,
         currentTitle: form.title || undefined,
         currentTargetText: form.targetText || undefined,

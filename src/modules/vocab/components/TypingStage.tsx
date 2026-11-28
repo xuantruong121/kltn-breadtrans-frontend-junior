@@ -12,6 +12,8 @@ interface TypingStageProps {
   onInputChange: (val: string) => void;
   onCheck: () => void;
   onRevealHint: () => void;
+  /** "Đã nhớ": the typing is the last step, no speaking follows. */
+  quickCheck?: boolean;
 }
 
 export const TypingStage: React.FC<TypingStageProps> = ({
@@ -22,6 +24,7 @@ export const TypingStage: React.FC<TypingStageProps> = ({
   onInputChange,
   onCheck,
   onRevealHint,
+  quickCheck = false,
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -108,7 +111,7 @@ export const TypingStage: React.FC<TypingStageProps> = ({
         {feedback === "CORRECT" && (
           <div className="flex items-center justify-center gap-2 text-base font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl py-2.5 animate-fadeIn">
             <Check size={18} />
-            <span>Chính xác! Chuẩn bị chuyển qua luyện phát âm.</span>
+            <span>{quickCheck ? "Chính xác!" : "Chính xác! Chuẩn bị chuyển qua luyện phát âm."}</span>
           </div>
         )}
 

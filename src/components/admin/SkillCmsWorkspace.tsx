@@ -14,9 +14,15 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { BTN_AI, BTN_DANGER, BTN_DARK, BTN_PRIMARY, BTN_SECONDARY, BTN_SUCCESS } from "./cmsButtons";
 import {
+  PRACTICE_LEVEL_LABEL,
+  PRACTICE_LEVEL_OPTIONS,
+  PRACTICE_LEVELS,
+  practiceLevelLabel,
+  type PracticeLevel,
+} from "@/lib/learning-path/practiceLevel";
+import {
   audioBadgeFor,
   CMS_LEVELS,
-  cmsLevelFromTitle,
   contentLevel,
   publishChecklist,
   writingCardLabel,
@@ -60,6 +66,9 @@ import {
   draftSentenceAvoid,
   fillDraftSentences,
   replaceDraftSentence,
+  TRACK_FIELD_COPY,
+  draftAvoidList,
+  replaceDraftItem,
 } from "./skillCmsStatus";
 import {
   dialogueForSave,
@@ -155,15 +164,8 @@ const meta: Record<Domain, { label: string; type: string }> = {
   writing: { label: "Viết", type: "WRITING_EMAIL" },
 };
 
-const CONTENT_LEVEL_OPTIONS = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-
-/** The CEFR tag authored at the head of a title ("Hội thoại C1 — ..."); quizzes have no level column. */
-function levelFromTitle(title?: string | null): string | null {
-  const level = cmsLevelFromTitle(title);
-  return level && (CONTENT_LEVEL_OPTIONS as readonly string[]).includes(level)
-    ? level
-    : null;
-}
+/** The four practice levels (owner 2026-11-27); quizzes store theirs in practiceLevel. */
+const CONTENT_LEVEL_OPTIONS = PRACTICE_LEVELS;
 
 const NO_FILTERS: Omit<ListFilters, "query" | "status"> = {
   level: "ALL",
@@ -453,7 +455,7 @@ export default function SkillCmsWorkspace({
   const [form, setForm] = useState({
     title: "",
     description: "",
-    level: "A2",
+    level: "BASIC",
     timeLimit: "15",
     passage: "",
     type: meta[domain].type,
@@ -496,6 +498,11 @@ export default function SkillCmsWorkspace({
       questionType?: string;
     }>
   >([]);
+  // Reading candidates wait between openings of the AI dialog, for this bài only.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clears the previous bài's candidates
+    setReadingAiCandidates([]);
+  }, [id]);
 
   // Contextual AI state: Listening / Writing. Suggestions remain local until the existing save action.
   const [isListeningContentAiOpen, setIsListeningContentAiOpen] =
@@ -547,6 +554,8 @@ export default function SkillCmsWorkspace({
   const [fullDraftBusy, setFullDraftBusy] = useState(false);
   // A "Nghe chép" draft sentence being rewritten by the AI: its index, or "fill" for several.
   const [sentenceAiBusy, setSentenceAiBusy] = useState<number | "fill" | null>(null);
+  // A Reading draft question being rewritten by the AI: its index.
+  const [questionAiBusy, setQuestionAiBusy] = useState<number | null>(null);
   const [dictationTopic, setDictationTopic] = useState("");
   const [isDictationAiLoading, setIsDictationAiLoading] = useState(false);
   // The "new question" editor is opened on demand; editing happens in place.
@@ -557,7 +566,11 @@ export default function SkillCmsWorkspace({
     mode !== "list" && !id && (domain === "listening" || domain === "reading") && searchParams.get("ai") === "1";
   // Writing AI (owner 2026-11-19): the create dialog on the list, the draft panel in the editor.
   const [writingAiCreating, setWritingAiCreating] = useState(false);
-  const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean } | null>(null);
+  const [writingAi, setWritingAi] = useState<{ count: number; auto: boolean; keep?: boolean } | null>(null);
+  // "Số câu" beside the Writing "Soạn bằng AI" button, new page included (owner 2026-11-25).
+  const [writingAiCount, setWritingAiCount] = useState(5);
+  /** Lĩnh vực chosen on a new bài, tagged on its first save (owner 2026-11-25). */
+  const [pendingTracks, setPendingTracks] = useState<string[]>([]);
   const [questionPreview, setQuestionPreview] = useState<{
     questionId: number;
     url: string;
@@ -714,7 +727,7 @@ export default function SkillCmsWorkspace({
         "/admin/reading/ai/suggest-passage",
         {
           topic,
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           targetLength: 180,
         },
       );
@@ -741,7 +754,7 @@ export default function SkillCmsWorkspace({
         "/admin/reading/ai/suggest-questions",
         {
           passage: form.passage.trim(),
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           count: Number(readingAiCount),
         },
       );
@@ -782,7 +795,7 @@ export default function SkillCmsWorkspace({
         listeningContentAiMode === "DIALOGUE"
           ? {
               mode: "DIALOGUE",
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               topic: form.title.trim() || undefined,
               currentTurns: transcriptForSave(dialogue).map(({ speaker, text, translation }) => ({
                 speaker,
@@ -792,7 +805,7 @@ export default function SkillCmsWorkspace({
             }
           : {
               mode: "DICTATION",
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               topic: form.title.trim() || undefined,
               currentText: question.prompt.trim() || undefined,
               currentTurns: [],
@@ -841,7 +854,7 @@ export default function SkillCmsWorkspace({
       const data = unwrap<any>(
         await axiosClient.post("/admin/listening/ai/full-draft", {
           topic,
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           mode: "COMPREHENSION",
           count,
         }),
@@ -883,7 +896,7 @@ export default function SkillCmsWorkspace({
         {
           mode: "DIALOGUE",
           sourceText,
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           count: Number(listeningQuestionsAiCount),
         },
       );
@@ -913,7 +926,7 @@ export default function SkillCmsWorkspace({
         "/admin/writing/ai/suggest-task",
         {
           taskType: question.taskType.trim() || "EMAIL",
-          level: question.level.trim() || form.level || "A2",
+          level: question.level.trim() || form.level || "BASIC",
           topic: form.title.trim() || undefined,
           currentPrompt: question.prompt.trim() || undefined,
           wordMin: question.wordMin ? Number(question.wordMin) : undefined,
@@ -948,7 +961,7 @@ export default function SkillCmsWorkspace({
         "/admin/listening/ai/dictation-lines",
         {
           topic: topic || "Theo tài liệu",
-          level: form.level || "A2",
+          level: form.level || "BASIC",
           count: 20,
         },
       );
@@ -975,7 +988,7 @@ export default function SkillCmsWorkspace({
     const data = unwrap<any>(
       await axiosClient.post("/admin/listening/ai/dictation-lines", {
         topic: form.title.trim() || fullDraft.title,
-        level: fullDraft.level || form.level || "A2",
+        level: fullDraft.level || form.level || "BASIC",
         count,
         avoid: draftSentenceAvoid(fullDraft.sentences),
         brief: fullDraft.description.trim() || undefined,
@@ -984,6 +997,43 @@ export default function SkillCmsWorkspace({
     return (Array.isArray(data?.sentences) ? data.sentences : [])
       .map((line: unknown) => String(line ?? "").trim())
       .filter(Boolean);
+  };
+
+  /**
+   * "Tạo câu khác" on one question of a Reading draft (owner 2026-11-25):
+   * one new question on the same passage, never one the draft already holds.
+   */
+  const replaceReadingDraftQuestion = async (index: number) => {
+    if (!fullDraft || fullDraft.domain !== "reading" || questionAiBusy !== null) return;
+    setQuestionAiBusy(index);
+    try {
+      const data = unwrap<any>(
+        await axiosClient.post("/admin/reading/ai/suggest-questions", {
+          passage: fullDraft.passage,
+          level: fullDraft.level || form.level || "BASIC",
+          count: 1,
+          avoid: draftAvoidList(fullDraft.questions.map((question) => question.prompt)),
+        }),
+      );
+      const [candidate] = Array.isArray(data?.candidates) ? data.candidates : [];
+      if (!candidate || !aiCandidateReady(candidate, false)) {
+        toast.error("AI chưa tạo được câu mới. Thử lại sau.");
+        return;
+      }
+      const next: QuestionDraft = {
+        ...emptyQuestion("reading"),
+        ...aiCandidateQuestionFields(candidate),
+        questionType: normalizeReadingQuestionType(candidate.questionType),
+      };
+      setFullDraft((current) =>
+        current ? { ...current, questions: replaceDraftItem(current.questions, index, next) } : current,
+      );
+      toast.success(`Đã thay câu ${index + 1}.`);
+    } catch (error: any) {
+      toast.error(getApiErrorMessage(error, "AI chưa tạo được câu mới. Thử lại sau."));
+    } finally {
+      setQuestionAiBusy(null);
+    }
   };
 
   /** "Tạo câu khác": one sentence rewritten in place. */
@@ -1054,14 +1104,14 @@ export default function SkillCmsWorkspace({
               topic,
               // The admin's own description is the situation the draft plays out (owner 2026-11-25).
               brief: form.description.trim() || undefined,
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               targetLength: 180,
               count,
             }
           : {
               topic,
               brief: form.description.trim() || undefined,
-              level: form.level || "A2",
+              level: form.level || "BASIC",
               // The form chosen in "Dạng bài", which the quiz is saved as
               // (inferring it from the question being edited once produced
               // dictation silently).
@@ -1094,7 +1144,7 @@ export default function SkillCmsWorkspace({
           title: topic || String(data.title),
           // The admin's own description stays too (owner 2026-11-25).
           description: draftDescription(form.description, data.description),
-          level: String(data.level || form.level || "A2"),
+          level: String(data.level || form.level || "BASIC"),
           passage: "",
           listeningMode: "DICTATION",
           questions: [],
@@ -1128,7 +1178,7 @@ export default function SkillCmsWorkspace({
         title: topic || String(data.title),
         // The admin's own description stays too (owner 2026-11-25).
         description: draftDescription(form.description, data.description),
-        level: String(data.level || form.level || "A2"),
+        level: String(data.level || form.level || "BASIC"),
         passage:
           domain === "reading"
             ? String(data.passage || "")
@@ -1214,7 +1264,7 @@ export default function SkillCmsWorkspace({
       setForm({
         title: body,
         description: data.description || "",
-        level: data.level || levelFromTitle(data.title) || "A2",
+        level: data.practiceLevel || "BASIC",
         timeLimit: String(data.timeLimit ?? 15),
         passage: data.passage || data.theoryContent || "",
         type: formTypeOf(data),
@@ -1234,7 +1284,12 @@ export default function SkillCmsWorkspace({
       }
       // Created from "Tạo bằng AI": the draft panel opens and asks the AI at once.
       if (domain === "writing" && Number(searchParams.get("ai")) > 0) {
-        setWritingAi({ count: Number(searchParams.get("ai")), auto: true });
+        setWritingAi({
+          count: Number(searchParams.get("ai")),
+          auto: true,
+          // Made from the new-bài form, not by "Tạo bằng AI": cancelling keeps it.
+          keep: searchParams.get("from") === "new",
+        });
         router.replace(`/admin/writing/${data.id}`, { scroll: false });
       }
     } catch (error: any) {
@@ -1251,7 +1306,7 @@ export default function SkillCmsWorkspace({
   }, [domain, mode, id]);
 
   /** `addQuestion`: a new Writing exercise is saved, then its first question opens (owner 2026-11-19). */
-  const saveContent = async (options: { addQuestion?: boolean } = {}) => {
+  const saveContent = async (options: { addQuestion?: boolean; aiCount?: number } = {}) => {
     if (!form.title.trim()) {
       setTitleError(true);
       document.getElementById("cms-title")?.focus();
@@ -1297,6 +1352,18 @@ export default function SkillCmsWorkspace({
           )
         : await axiosClient.post(`/admin/skill-content/${domain}`, payload);
       const savedItem = unwrap<any>(saved);
+      // Lĩnh vực chosen before the first save is tagged now (owner
+      // 2026-11-25). The bài exists either way: a refusal is only reported.
+      if (!id && pendingTracks.length) {
+        try {
+          await axiosClient.put(`/admin/skill-content/${domain}/${savedItem.id}/tracks`, {
+            tracks: pendingTracks,
+          });
+          setPendingTracks([]);
+        } catch (error) {
+          toast.error(getApiErrorMessage(error, TRACK_FIELD_COPY.saveError));
+        }
+      }
       // A dialogue's turns go onto every MCQ, as published quizzes store
       // them. Saved one by one so the questions keep the draft's order.
       for (const draft of pendingFullDraftQuestions) {
@@ -1313,7 +1380,16 @@ export default function SkillCmsWorkspace({
       const makeAudio = domain === "listening" && pendingFullDraftQuestions.length > 0;
       setPendingFullDraftQuestions([]);
       router.push(
-        `/admin/${domain}/${savedItem.id}${options.addQuestion ? "?add=1" : makeAudio && !id ? "?audio=1" : ""}`,
+        `/admin/${domain}/${savedItem.id}${
+          options.addQuestion
+            ? "?add=1"
+            : options.aiCount && !id
+              ? // from=new: the admin filled this form, so cancelling keeps the bài.
+                `?ai=${options.aiCount}&from=new`
+              : makeAudio && !id
+                ? "?audio=1"
+                : ""
+        }`,
       );
       // Saved in place: the route does not change, so reload the stored item.
       if (id) {
@@ -1495,6 +1571,60 @@ export default function SkillCmsWorkspace({
       setBusy(false);
     }
     await loadItem();
+  };
+
+  /**
+   * Every reviewed reading candidate goes in at once (owner 2026-11-25: one
+   * candidate went to the form and the others were lost on closing).
+   */
+  const addReadingAiCandidates = async () => {
+    if (!id) return;
+    const ready = readingAiCandidates.filter((candidate) => aiCandidateReady(candidate, false));
+    if (!ready.length) return;
+    setBusy(true);
+    let added = 0;
+    try {
+      for (const candidate of ready) {
+        await axiosClient.post(
+          `/admin/skill-content/reading/${id}/questions`,
+          questionDraftPayload({
+            ...emptyQuestion("reading"),
+            ...aiCandidateQuestionFields(candidate),
+            questionType: normalizeReadingQuestionType(candidate.questionType),
+          }),
+        );
+        added++;
+      }
+      toast.success(`Đã thêm ${added} câu vào bài.`);
+      setReadingAiCandidates([]);
+      setIsQuestionsAiOpen(false);
+    } catch (error: any) {
+      // The saved ones leave the list, so a retry adds only the rest.
+      const saved = new Set(ready.slice(0, added));
+      setReadingAiCandidates((current) => current.filter((candidate) => !saved.has(candidate)));
+      toast.error(getApiErrorMessage(error, `Đã thêm ${added} câu; câu tiếp theo chưa lưu được.`));
+    } finally {
+      setBusy(false);
+    }
+    await loadItem();
+  };
+
+  /**
+   * "Tạo bằng AI" on the Writing list makes the bài before the AI runs; when
+   * the admin cancels without adding a task, the empty bài goes. Checked on
+   * the server first: a bài with any question, or one learners did, stays.
+   */
+  const discardEmptyAiWriting = async () => {
+    if (!id || domain !== "writing") return;
+    try {
+      const fresh = unwrap<any>(await axiosClient.get(`/admin/skill-content/writing/${id}`));
+      if ((fresh?.questions?.length ?? 0) > 0 || Number(fresh?._count?.submissions) > 0) return;
+      await axiosClient.delete(`/admin/skill-content/writing/${id}`);
+      toast("Đã huỷ: bài trống vừa tạo cho AI đã được xoá.");
+      router.push("/admin/writing");
+    } catch {
+      toast.error("Bài trống vẫn còn trong danh sách: soạn tay hoặc xoá ở đó.");
+    }
   };
 
   const removeItem = async () => {
@@ -1919,7 +2049,7 @@ export default function SkillCmsWorkspace({
             countLabel="Số câu"
             maxCount={10}
             defaultCount={5}
-            levels={["A1", "A2", "B1", "B2", "C1"].map((level) => ({ value: level, label: level }))}
+            levels={[...PRACTICE_LEVEL_OPTIONS]}
             kinds={[
               { value: "EMAIL", label: "Viết email" },
               { value: "TRANSLATION", label: "Dịch câu" },
@@ -1992,7 +2122,7 @@ export default function SkillCmsWorkspace({
           level={{
             value: listFilters.level,
             onChange: (value) => setFilter("level", value),
-            options: levelsPresent.map((level) => ({ value: level, label: level })),
+            options: levelsPresent.map((level) => ({ value: level, label: practiceLevelLabel(level as PracticeLevel) })),
           }}
           track={{ value: trackFilter, onChange: setTrackFilter, tracks: adminTracks }}
           extra={
@@ -2032,8 +2162,8 @@ export default function SkillCmsWorkspace({
         <div className={ADMIN_CARD_GRID}>
           {visibleItems.map((content) => {
             const level = contentLevel(content);
-            // The same Vietnamese title learners read; the stored one keeps
-            // the level tag the API needs.
+            // The same Vietnamese title learners read; an old stored title keeps
+            // its level head, which titles are looked up by.
             const cardTitle = quizDisplayTitle(content.id, content.title ?? "");
             const published = content.publicationStatus === "PUBLISHED";
             const audio = audioBadgeFor(content);
@@ -2049,7 +2179,7 @@ export default function SkillCmsWorkspace({
                 <div className="flex items-center gap-2">
                   {level && (
                     <span className="flex-none rounded-md bg-blue-50 px-1.5 py-0.5 text-xs font-semibold tabular-nums text-blue-800">
-                      {level}
+                      {practiceLevelLabel(level as PracticeLevel)}
                     </span>
                   )}
                   {domain === "writing" && (
@@ -2232,7 +2362,7 @@ export default function SkillCmsWorkspace({
   const checklist = publishChecklist({
     domain,
     title: form.title,
-    levelTagged: Boolean(cmsLevelFromTitle(item?.title)),
+    levelTagged: Boolean(item?.practiceLevel),
     questions,
     audioPublished: currentArtifact?.status === "PUBLISHED",
     listeningMode: selectedListeningMode,
@@ -2386,7 +2516,7 @@ export default function SkillCmsWorkspace({
                   <option value="">Theo trình độ của bài</option>
                   {CONTENT_LEVEL_OPTIONS.map((level) => (
                     <option key={level} value={level}>
-                      {level}
+                      {PRACTICE_LEVEL_LABEL[level]}
                     </option>
                   ))}
                 </select>
@@ -2686,7 +2816,7 @@ export default function SkillCmsWorkspace({
             {item?.title ? quizDisplayTitle(item.id, item.title) : title}
           </h1>
           <p className="mt-1 text-sm text-slate-600">
-            Trạng thái: {publicationStatusLabel(item?.publicationStatus)} ·{" "}
+            {id ? publicationStatusLabel(item?.publicationStatus) : "Bài mới, chưa lưu"} ·{" "}
             {checklist.filter((entry) => entry.done).length}/{checklist.length}{" "}
             mục sẵn sàng
           </p>
@@ -2764,10 +2894,40 @@ export default function SkillCmsWorkspace({
                 Nhập tiêu đề (chủ đề) và trình độ bên dưới, rồi bấm “Soạn cả bài bằng AI”.
               </p>
             )}
-            {isWriting && id && writingDraftKind(form.type) && (
-              <button type="button" onClick={() => setWritingAi({ count: 5, auto: false })} className={BTN_AI}>
-                <FileStack size={16} aria-hidden="true" /> Soạn bằng AI
-              </button>
+            {/* On the new page too (owner 2026-11-25): the bài is saved first,
+                then the draft panel opens and asks the AI, as "Tạo bằng AI" on
+                the list does. A "Viết câu theo tranh" bài has no AI draft. */}
+            {isWriting && writingDraftKind(form.type) && (
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-1.5 text-sm font-semibold text-slate-600">
+                  Số câu
+                  <select
+                    aria-label="Số câu trong bản nháp Viết"
+                    value={writingAiCount}
+                    onChange={(event) => setWritingAiCount(Number(event.target.value))}
+                    className="min-h-10 rounded-lg border border-slate-300 bg-white px-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-slate-400"
+                  >
+                    {Array.from({ length: 10 }, (_, index) => index + 1).map((value) => (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() =>
+                    id
+                      ? setWritingAi({ count: writingAiCount, auto: false })
+                      : void saveContent({ aiCount: writingAiCount })
+                  }
+                  title={id ? undefined : "Lưu bài với tiêu đề và trình độ bên dưới, rồi AI soạn các câu."}
+                  className={BTN_AI}
+                >
+                  <FileStack size={16} aria-hidden="true" /> Soạn bằng AI
+                </button>
+              </div>
             )}
             {(isListening || domain === "reading") && (
               <div className="flex flex-wrap items-center gap-2">
@@ -2861,20 +3021,20 @@ export default function SkillCmsWorkspace({
               Bài đã có câu hỏi — dùng ‘Thêm câu hỏi bằng AI’ ở mục Câu hỏi.
             </p>
           )}
-          {isListening && pendingDraft && !draftLocked && (
+          {pendingDraft && !draftLocked && (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               {/* A dialogue's turns are in the conversation, not a question of their own. */}
-              Đã áp dụng {pendingFullDraftQuestions.length}{" "}
-              câu từ bản nháp AI, dạng{" "}
-              {LISTENING_MODE_LABEL[selectedListeningMode]}. Bấm Lưu để lưu bài, hoặc{" "}
+              Đã áp dụng {pendingFullDraftQuestions.length} câu từ bản nháp AI
+              {isListening ? `, dạng ${LISTENING_MODE_LABEL[selectedListeningMode]}` : ""}. Bấm Lưu để
+              lưu bài, hoặc{" "}
               <button
                 type="button"
                 onClick={() => setPendingFullDraftQuestions([])}
                 className="cursor-pointer rounded-md font-semibold text-slate-900 underline underline-offset-4 hover:text-slate-700 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
               >
                 bỏ bản nháp
-              </button>{" "}
-              để đổi dạng bài.
+              </button>
+              {isListening ? " để đổi dạng bài." : "."}
             </p>
           )}
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -2921,7 +3081,7 @@ export default function SkillCmsWorkspace({
               >
                 {CONTENT_LEVEL_OPTIONS.map((level) => (
                   <option key={level} value={level}>
-                    {level}
+                    {PRACTICE_LEVEL_LABEL[level]}
                   </option>
                 ))}
               </select>
@@ -2944,6 +3104,8 @@ export default function SkillCmsWorkspace({
               id={item?.id}
               tracks={item?.tracks ?? []}
               listKey={`admin-skill-content-${domain}`}
+              // A new bài keeps the choice and is tagged on its first save.
+              onPendingChange={item?.id ? undefined : setPendingTracks}
             />
             {isWriting && (
               <label className="text-sm font-medium">
@@ -3337,7 +3499,7 @@ export default function SkillCmsWorkspace({
                 <button
                   type="button"
                   onClick={() => {
-                    setReadingAiCandidates([]);
+                    // Candidates not yet added wait here, so editing one in the form loses none.
                     setAiQuestionsShortfall(null);
                     setIsQuestionsAiOpen(true);
                   }}
@@ -3372,12 +3534,18 @@ export default function SkillCmsWorkspace({
           </div>
 
           <div className="mt-4 space-y-3">
-            {answered.length === 0 && (
-              <p className="text-sm text-slate-600">
-                Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
-                tiên cho bài {isListening ? "nghe" : isWriting ? "viết" : "đọc"}.
-              </p>
-            )}
+            {answered.length === 0 &&
+              (pendingDraft ? (
+                // The applied draft's questions are not saved yet (owner 2026-11-25).
+                <p className="text-sm text-amber-900">
+                  {pendingFullDraftQuestions.length} câu từ bản nháp AI sẽ được thêm khi bấm Lưu.
+                </p>
+              ) : (
+                <p className="text-sm text-slate-600">
+                  Chưa có câu hỏi nào. Dùng biểu mẫu bên dưới để thêm câu hỏi đầu
+                  tiên cho bài {isListening ? "nghe" : isWriting ? "viết" : "đọc"}.
+                </p>
+              ))}
             {/* A legacy turns question's turns are in the conversation above. */}
             {(isListening && selectedListeningMode === "DIALOGUE" ? answered : questions).map((current: any, index: number) => (
               <div
@@ -3654,6 +3822,7 @@ export default function SkillCmsWorkspace({
           quizId={Number(id)}
           // The title without its level head ("Writing B1 — "): the AI's topic.
           topic={form.title.trim()}
+          brief={form.description}
           level={form.level}
           kind={writingDraftKind(form.type) as "EMAIL" | "TRANSLATION"}
           initialCount={writingAi.count}
@@ -3661,6 +3830,8 @@ export default function SkillCmsWorkspace({
           onUseDescription={(description) => setForm((current) => ({ ...current, description }))}
           onClose={() => setWritingAi(null)}
           onSaved={() => loadItem()}
+          // Made by "Tạo bằng AI" on the list: cancelling removes the empty bài (owner 2026-11-25).
+          onCancelEmpty={writingAi.auto && !writingAi.keep ? () => void discardEmptyAiWriting() : undefined}
         />
       )}
       {fullDraft && (
@@ -3725,7 +3896,7 @@ export default function SkillCmsWorkspace({
                   >
                     {CONTENT_LEVEL_OPTIONS.map((level) => (
                       <option key={level} value={level}>
-                        {level}
+                        {PRACTICE_LEVEL_LABEL[level]}
                       </option>
                     ))}
                   </select>
@@ -3911,7 +4082,9 @@ export default function SkillCmsWorkspace({
                     )
                   </h4>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    Có thể sửa từng câu, hoặc khôi phục câu đã loại.
+                    {fullDraft.domain === "reading"
+                      ? "Có thể sửa từng câu, bấm “Tạo câu khác” để AI viết câu thay thế, hoặc loại câu không dùng."
+                      : "Có thể sửa từng câu, hoặc khôi phục câu đã loại."}
                   </p>
                 </div>
               </div>
@@ -3925,8 +4098,21 @@ export default function SkillCmsWorkspace({
                       <span className="text-xs font-semibold text-slate-600">
                         Câu {index + 1}
                       </span>
+                      <span className="flex items-center gap-3">
+                      {fullDraft.domain === "reading" && (
+                        <button
+                          type="button"
+                          onClick={() => void replaceReadingDraftQuestion(index)}
+                          disabled={questionAiBusy !== null}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 underline-offset-2 hover:text-slate-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {questionAiBusy === index && <Loader2 size={12} className="animate-spin" aria-hidden="true" />}
+                          {questionAiBusy === index ? "Đang tạo…" : "Tạo câu khác"}
+                        </button>
+                      )}
                       <button
                         type="button"
+                        disabled={questionAiBusy === index}
                         onClick={() =>
                           setFullDraft((current) =>
                             current
@@ -3946,6 +4132,7 @@ export default function SkillCmsWorkspace({
                       >
                         {candidate.excluded ? "Khôi phục" : "Loại câu này"}
                       </button>
+                      </span>
                     </div>
                     {fullDraft.listeningMode === "COMPREHENSION" && (
                       <label className="mt-3 block text-xs font-semibold text-slate-700">
@@ -4138,8 +4325,8 @@ export default function SkillCmsWorkspace({
               <button
                 type="button"
                 onClick={() => {
-                  // A sentence still being rewritten by the AI waits for its answer.
-                  if (sentenceAiBusy !== null) return;
+                  // A sentence or question still being rewritten by the AI waits for its answer.
+                  if (sentenceAiBusy !== null || questionAiBusy !== null) return;
                   // "Nghe chép": each kept sentence becomes one dictation item.
                   const activeQuestions = fullDraft.sentences
                     ? fullDraft.sentences
@@ -4706,25 +4893,8 @@ export default function SkillCmsWorkspace({
                       className={`${inputClassName()} min-h-32`}
                     />
                   </label>
-                  <label className="text-sm font-semibold text-slate-700">
-                    Bối cảnh / người nhận
-                    <input
-                      value={
-                        writingAiSuggestion.context ||
-                        writingAiSuggestion.recipient ||
-                        writingAiSuggestion.scenario ||
-                        ""
-                      }
-                      onChange={(event) =>
-                        setWritingAiSuggestion((current) =>
-                          current
-                            ? { ...current, context: event.target.value }
-                            : current,
-                        )
-                      }
-                      className={inputClassName()}
-                    />
-                  </label>
+                  {/* "Bối cảnh / người nhận" went (owner 2026-11-25): no field
+                      of the question keeps it; the situation is in the prompt. */}
                   <div className="grid grid-cols-2 gap-3">
                     <label className="text-sm font-semibold text-slate-700">
                       Từ tối thiểu
@@ -4769,27 +4939,32 @@ export default function SkillCmsWorkspace({
                       />
                     </label>
                   </div>
+                  {/* Two boxes, as the question keeps them (owner 2026-11-25:
+                      one box mixed them and saved every line as a keyword). */}
                   <label className="text-sm font-semibold text-slate-700">
-                    Từ khoá / câu mẫu
+                    Từ khoá
                     <textarea
-                      value={[
-                        ...(writingAiSuggestion.keywords || []),
-                        ...(writingAiSuggestion.sampleSentences || []),
-                      ].join("\n")}
+                      value={(writingAiSuggestion.keywords || []).join("\n")}
                       onChange={(event) =>
                         setWritingAiSuggestion((current) =>
-                          current
-                            ? {
-                                ...current,
-                                keywords: event.target.value
-                                  .split("\n")
-                                  .filter(Boolean),
-                              }
-                            : current,
+                          current ? { ...current, keywords: event.target.value.split("\n") } : current,
+                        )
+                      }
+                      className={`${inputClassName()} min-h-16`}
+                      placeholder="Mỗi dòng một từ khoá"
+                    />
+                  </label>
+                  <label className="text-sm font-semibold text-slate-700">
+                    Câu mẫu
+                    <textarea
+                      value={(writingAiSuggestion.sampleSentences || []).join("\n")}
+                      onChange={(event) =>
+                        setWritingAiSuggestion((current) =>
+                          current ? { ...current, sampleSentences: event.target.value.split("\n") } : current,
                         )
                       }
                       className={`${inputClassName()} min-h-24`}
-                      placeholder="Mỗi dòng một từ khoá hoặc câu mẫu"
+                      placeholder="Mỗi dòng một câu mẫu"
                     />
                   </label>
                 </>
@@ -4823,9 +4998,10 @@ export default function SkillCmsWorkspace({
                         ? String(suggestion.wordRange[1])
                         : current.wordMax,
                       keywords:
-                        suggestion.keywords?.join("\n") || current.keywords,
+                        (suggestion.keywords ?? []).map((line) => line.trim()).filter(Boolean).join("\n") ||
+                        current.keywords,
                       sampleSentences:
-                        suggestion.sampleSentences?.join("\n") ||
+                        (suggestion.sampleSentences ?? []).map((line) => line.trim()).filter(Boolean).join("\n") ||
                         current.sampleSentences,
                     }));
                     setIsWritingAiOpen(false);
@@ -4899,7 +5075,7 @@ export default function SkillCmsWorkspace({
                 <span className="text-slate-600 dark:text-slate-400">
                   Trình độ:{" "}
                   <span className="font-semibold text-slate-700">
-                    {form.level || "A2"}
+                    {practiceLevelLabel((form.level || "BASIC") as PracticeLevel)}
                   </span>
                 </span>
                 <button
@@ -5168,14 +5344,16 @@ export default function SkillCmsWorkspace({
                             questionType: normalizeReadingQuestionType(candidate.questionType),
                           });
                           setIsAddingQuestion(true);
+                          // The others stay for "Thêm câu hỏi bằng AI" (owner 2026-11-25).
+                          setReadingAiCandidates((prev) => prev.filter((_, i) => i !== idx));
                           setIsQuestionsAiOpen(false);
                           toast.success(
                             "Đã điền câu hỏi vào biểu mẫu. Kiểm tra rồi bấm Thêm câu hỏi.",
                           );
                         }}
-                        className="rounded bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                        className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
                       >
-                        Áp dụng vào biểu mẫu
+                        Sửa trong biểu mẫu
                       </button>
                     </div>
                   </div>
@@ -5183,7 +5361,7 @@ export default function SkillCmsWorkspace({
               )}
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setIsQuestionsAiOpen(false)}
@@ -5191,6 +5369,21 @@ export default function SkillCmsWorkspace({
               >
                 Đóng
               </button>
+              {/* Shown only when there is something complete to add, as in Listening. */}
+              {(() => {
+                const ready = readingAiCandidates.filter((candidate) => aiCandidateReady(candidate, false)).length;
+                return ready > 0 && id ? (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void addReadingAiCandidates()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-wait"
+                  >
+                    {busy && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
+                    {busy ? "Đang thêm…" : `Thêm ${ready} câu vào bài`}
+                  </button>
+                ) : null;
+              })()}
             </div>
           </div>
         </div>

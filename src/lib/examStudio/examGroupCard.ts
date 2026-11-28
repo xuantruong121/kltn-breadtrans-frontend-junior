@@ -110,3 +110,22 @@ export function editContentLabel(part: number): string {
   if (part <= 4) return "Sửa audio và lời thoại";
   return "Sửa đoạn văn";
 }
+
+/**
+ * A Part 5 AI candidate that can be added as it is: a sentence, four filled
+ * options and a key among them (the add-all button skips any other).
+ */
+export function part5CandidateReady(candidate: {
+  prompt: string;
+  options: string[];
+  correctIndex: number;
+}): boolean {
+  return (
+    Boolean(candidate.prompt.trim()) &&
+    candidate.options.length === 4 &&
+    candidate.options.every((option) => option.trim()) &&
+    Number.isInteger(candidate.correctIndex) &&
+    candidate.correctIndex >= 0 &&
+    candidate.correctIndex < 4
+  );
+}

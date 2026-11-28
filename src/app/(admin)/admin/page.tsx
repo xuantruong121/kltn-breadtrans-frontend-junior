@@ -3,26 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertTriangle,
-  ArrowRight,
-  ArrowUpRight,
-  CheckCircle2,
-  Coins,
-  CreditCard,
-  FilePlus2,
-  Flag,
-  Inbox,
-  MessageSquare,
-  RefreshCw,
-  ShoppingBag,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, RefreshCw } from "lucide-react";
 import axiosClient from "@/lib/api/axiosClient";
 import AdminAnalyticsChart from "@/components/admin/AdminAnalyticsChart";
 import AdminContentBreakdown from "@/components/admin/AdminContentBreakdown";
-import { getRangeLabel } from "@/components/admin/adminDashboardChartUtils";
+import {
+  getPreviousRangeLabel,
+  getRangeLabel,
+  signedCount,
+  waitedFor,
+  type ContentBreakdown,
+} from "@/components/admin/adminDashboardChartUtils";
 import { formatVnd } from "@/modules/subscription/planLogic";
 
 type DashboardRange = "30d" | "6m" | "12m";
@@ -31,51 +22,63 @@ type DashboardStats = {
   range: DashboardRange;
   stats: {
     totalStudents: number;
+    /** Learners who learned in the range; a sign-in alone does not count. */
     activeStudents: number;
+    newStudents?: number;
+    /** New learners who completed the entry assessment (a count, no level). */
+    newStudentsWithDiagnostic?: number;
     pendingPayments: number;
     unreadSupportMessages: number;
     pendingSuggestions: number;
     openIssueReports: number;
+    /** The same figures over the period just before the chosen one. */
+    previous?: { activeStudents: number; newStudents: number };
   };
+  /** When the oldest item of each "Cần xử lý" row came in. */
+  waitingSince?: Partial<Record<AttentionKey, string | null>>;
+  /** Revenue and purchases of the chosen range; subscriptions live now. */
   finance?: {
     totalRevenueVnd: number;
     completedPurchasesCount: number;
     activeSubscriptionsCount: number;
+    /** Learners whose paid plan ends within 7 days with nothing after it. */
+    plansEndingSoon?: number;
+    previous?: { totalRevenueVnd: number; completedPurchasesCount: number };
   };
   monthlyTrends?: {
     month: string;
     activityCount: number;
     revenueVnd?: number;
   }[];
-  contentBreakdown?: {
-    vocab: number;
-    grammar: number;
-    quizzes: number;
-    speaking: number;
-    media: number;
-  };
+  contentBreakdown?: Partial<ContentBreakdown>;
+  /** Orders of the chosen range; pending orders and the Bánh Mì held are current. */
   gamification?: {
     totalBreads: number;
     totalOrders: number;
     approvedOrders: number;
     pendingOrders: number;
+    /**
+     * Learners' Bánh Mì of the range, netted per source (a game's stake and
+     * return, a purchase and its refund); admin top-ups kept apart.
+     */
+    flow?: { issued: number; spent: number; adminAdjusted: number };
   };
 };
 
+type AttentionKey =
+  | "pendingPayments"
+  | "pendingOrders"
+  | "openIssueReports"
+  | "unreadSupportMessages"
+  | "pendingSuggestions";
+
 interface AttentionItem {
+  key: AttentionKey;
   count: number;
   label: string;
   href: string;
-  icon: LucideIcon;
   badgeColor: string;
   actionLabel: string;
-}
-
-interface QuickActionItem {
-  label: string;
-  detail: string;
-  href: string;
-  icon: LucideIcon;
 }
 
 const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
@@ -84,41 +87,52 @@ const RANGE_OPTIONS: { value: DashboardRange; label: string }[] = [
   { value: "12m", label: "12 tháng" },
 ];
 
-const QUICK_ACTIONS: QuickActionItem[] = [
-  {
-    label: "Exam CMS",
-    detail: "Quản lý đề luyện thi TOEIC",
-    href: "/admin/exams",
-    icon: FilePlus2,
-  },
-  {
-    label: "Quản lý học viên",
-    detail: "Tra cứu hồ sơ & tiến độ học",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    label: "Hộp thư hỗ trợ",
-    detail: "Giải đáp thắc mắc người học",
-    href: "/admin/messages",
-    icon: Inbox,
-  },
-  {
-    label: "Chi phí & Hiệu năng",
-    detail: "Giám sát AI tokens & TTS",
-    href: "/admin/costs",
-    icon: Coins,
-  },
-  {
-    label: "Cửa hàng & Quà tặng",
-    detail: "Duyệt đổi quà & quản lý vật phẩm",
-    href: "/admin/market",
-    icon: ShoppingBag,
-  },
-];
+/**
+ * One figure of a card's footer, with the same figure of the period before
+ * when there is one: a plain number, no percentage (2026-11-26).
+ */
+function Figure({
+  label,
+  value,
+  previous,
+  highlight = false,
+  part = false,
+}: {
+  label: string;
+  value: string;
+  previous?: string;
+  highlight?: boolean;
+  /** A part of the row above, indented under it. */
+  part?: boolean;
+}) {
+  return (
+    <div className={`flex items-baseline justify-between gap-3${part ? " pl-3" : ""}`}>
+      <dt>{label}</dt>
+      <dd className="shrink-0 text-right tabular-nums">
+        <span
+          className={
+            highlight
+              ? "font-semibold text-amber-700 dark:text-amber-400"
+              : "font-medium text-slate-800 dark:text-slate-200"
+          }
+        >
+          {value}
+        </span>
+        {previous !== undefined && (
+          <span className="ml-1.5 text-slate-600 dark:text-slate-400">· kỳ trước {previous}</span>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+const FIGURES = "mt-4 space-y-1.5 border-t border-slate-100 dark:border-slate-800 pt-3 text-sm text-slate-600 dark:text-slate-400";
+
+const CARD =
+  "flex flex-col justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition hover:border-slate-300 dark:hover:border-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600";
 
 export default function AdminDashboardPage() {
-  const [range, setRange] = useState<DashboardRange>("6m");
+  const [range, setRange] = useState<DashboardRange>("30d");
   const { data, isLoading, isFetching, isError, refetch } = useQuery<DashboardStats>({
     queryKey: ["admin-dashboard", range],
     queryFn: async () => {
@@ -128,54 +142,58 @@ export default function AdminDashboardPage() {
       return (response as { data?: DashboardStats }).data ?? (response as DashboardStats);
     },
   });
-
+  const rangeText = getRangeLabel(data?.range ?? range).toLowerCase();
+  const previousRangeText = getPreviousRangeLabel(data?.range ?? range);
+  // "30 ngày", short enough for a row label beside its figure.
+  const shortRangeText = (RANGE_OPTIONS.find((option) => option.value === (data?.range ?? range))?.label ?? "").toLowerCase();
+  const number = (value?: number) => (value ?? 0).toLocaleString("vi-VN");
+  const previousStats = data?.stats.previous;
+  const previousFinance = data?.finance?.previous;
 
   const rawAttentionItems: AttentionItem[] = [
     {
+      key: "pendingPayments",
       count: data?.stats.pendingPayments ?? 0,
       label: "giao dịch nâng cấp gói cần đối soát",
       href: "/admin/plan-purchases",
-      icon: CreditCard,
       badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800",
       actionLabel: "Duyệt đơn",
     },
     {
+      key: "pendingOrders",
       count: data?.gamification?.pendingOrders ?? 0,
       label: "yêu cầu đổi quà bưu điện/voucher chờ duyệt",
       href: "/admin/market",
-      icon: ShoppingBag,
       badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800",
       actionLabel: "Xử lý kho",
     },
     {
+      key: "openIssueReports",
       count: data?.stats.openIssueReports ?? 0,
       label: "báo cáo sự cố từ người học cần xử lý",
       href: "/admin/issue-reports",
-      icon: Flag,
       badgeColor: "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200 dark:border-rose-800",
       actionLabel: "Kiểm tra",
     },
     {
+      key: "unreadSupportMessages",
       count: data?.stats.unreadSupportMessages ?? 0,
       label: "tin nhắn hỗ trợ học viên chưa đọc",
       href: "/admin/messages",
-      icon: Inbox,
       badgeColor: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200 dark:border-blue-800",
       actionLabel: "Phản hồi",
     },
     {
+      key: "pendingSuggestions",
       count: data?.stats.pendingSuggestions ?? 0,
       label: "đề xuất & góp ý từ học viên đang chờ",
       href: "/admin/suggestions",
-      icon: MessageSquare,
       badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700",
       actionLabel: "Đọc góp ý",
     },
   ];
 
   const attentionItems = rawAttentionItems.filter((item) => item.count > 0);
-
-
   const attentionTotal = attentionItems.reduce((sum, item) => sum + item.count, 0);
 
   return (
@@ -187,12 +205,12 @@ export default function AdminDashboardPage() {
             Tổng quan vận hành
           </h1>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Theo dõi dữ liệu thực tế hệ thống, tình hình tài chính và xử lý các tác vụ tồn đọng.
+            Theo dõi dữ liệu thực tế hệ thống, tình hình tài chính và xử lý các tác vụ tồn đọng. Kỳ trước là{" "}
+            {previousRangeText}.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Segmented Control Range */}
           <div
             role="group"
             aria-label="Khoảng thời gian dữ liệu"
@@ -218,7 +236,6 @@ export default function AdminDashboardPage() {
             })}
           </div>
 
-          {/* Refresh Button */}
           <button
             type="button"
             onClick={() => refetch()}
@@ -227,11 +244,7 @@ export default function AdminDashboardPage() {
             title="Làm mới dữ liệu"
             className="inline-flex size-9 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 shadow-xs transition hover:bg-slate-50 dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-wait"
           >
-            <RefreshCw
-              size={15}
-              className={isFetching ? "animate-spin text-blue-600" : ""}
-              aria-hidden="true"
-            />
+            <RefreshCw size={15} className={isFetching ? "animate-spin text-blue-600" : ""} aria-hidden="true" />
           </button>
         </div>
       </header>
@@ -239,8 +252,8 @@ export default function AdminDashboardPage() {
       {/* 2. LOADING STATE */}
       {isLoading ? (
         <div className="space-y-6" aria-label="Đang tải dữ liệu tổng quan">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }, (_, idx) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }, (_, idx) => (
               <div
                 key={idx}
                 className="h-36 animate-pulse rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50"
@@ -280,118 +293,86 @@ export default function AdminDashboardPage() {
         </section>
       ) : (
         <>
-          {/* 3. FOUR CORE OPERATIONAL PILLARS */}
-          <section
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-            aria-label="Chỉ số vận hành trọng yếu"
-          >
-            {/* PILLAR 1: HỌC VIÊN */}
-            <Link
-              href="/admin/users"
-              className="group flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
+          {/* 3. THREE KEY FIGURES: plain labels, no icon tiles (owner 2026-11-26). */}
+          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Chỉ số vận hành trọng yếu">
+            <Link href="/admin/users" className={CARD}>
               <div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Học viên hệ thống
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Học viên</p>
+                <p className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tabular-nums text-slate-950 dark:text-slate-100">
+                    {number(data.stats.totalStudents)}
                   </span>
-                  <div className="flex size-8 items-center justify-center rounded-lg border border-blue-100 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
-                    <Users size={16} />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
-                    {data.stats.totalStudents.toLocaleString("vi-VN")}
-                  </span>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">tài khoản</span>
-                </div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">tài khoản</span>
+                </p>
               </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {data.stats.activeStudents.toLocaleString("vi-VN")}
-                </span>{" "}
-                hoạt động trong {getRangeLabel(range).toLowerCase()}
-              </div>
+              <dl className={FIGURES}>
+                <Figure
+                  label={`Hoạt động trong ${shortRangeText}`}
+                  value={number(data.stats.activeStudents)}
+                  previous={previousStats ? number(previousStats.activeStudents) : undefined}
+                />
+                <Figure
+                  label="Học viên mới"
+                  value={number(data.stats.newStudents)}
+                  previous={previousStats ? number(previousStats.newStudents) : undefined}
+                />
+                {/* Completions only: the entry assessment gives no level here.
+                    A part of the new learners above (owner 2026-11-26: "1/2" read as a riddle). */}
+                <Figure
+                  part
+                  label="Trong đó đã làm bài đánh giá đầu vào"
+                  value={number(data.stats.newStudentsWithDiagnostic)}
+                />
+              </dl>
             </Link>
 
-            {/* PILLAR 2: DOANH THU & GÓI HỌC */}
-            <Link
-              href="/admin/plan-purchases"
-              className="group flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
+            <Link href="/admin/plan-purchases" className={CARD}>
               <div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Doanh thu gói nâng cấp
-                  </span>
-                  <div className="flex size-8 items-center justify-center rounded-lg border border-emerald-100 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400">
-                    <CreditCard size={16} />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
-                    {formatVnd(data.finance?.totalRevenueVnd ?? 0)}
-                  </span>
-                </div>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                  Doanh thu gói nâng cấp, {rangeText}
+                </p>
+                <p className="mt-2 text-3xl font-semibold tabular-nums text-slate-950 dark:text-slate-100">
+                  {formatVnd(data.finance?.totalRevenueVnd ?? 0)}
+                </p>
+                {previousFinance && (
+                  <p className="mt-1 text-sm tabular-nums text-slate-600 dark:text-slate-400">
+                    Kỳ trước {formatVnd(previousFinance.totalRevenueVnd)}
+                  </p>
+                )}
               </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {(data.finance?.activeSubscriptionsCount ?? 0).toLocaleString("vi-VN")}
-                </span>{" "}
-                gói Plus/Pro kích hoạt ·{" "}
-                <span
-                  className={
-                    data.stats.pendingPayments > 0
-                      ? "font-semibold text-amber-700 dark:text-amber-400"
-                      : "text-slate-600 dark:text-slate-400"
-                  }
-                >
-                  {data.stats.pendingPayments > 0
-                    ? `${data.stats.pendingPayments} đơn chờ duyệt`
-                    : "0 đơn chờ duyệt"}
-                </span>
-              </div>
+              {/* Waiting payments are counted once, in "Cần xử lý" below. */}
+              <dl className={FIGURES}>
+                <Figure
+                  label="Lượt mua"
+                  value={number(data.finance?.completedPurchasesCount)}
+                  previous={previousFinance ? number(previousFinance.completedPurchasesCount) : undefined}
+                />
+                <Figure label="Gói đang hoạt động" value={number(data.finance?.activeSubscriptionsCount)} />
+                <Figure
+                  label="Hết hạn trong 7 ngày, chưa gia hạn"
+                  value={number(data.finance?.plansEndingSoon)}
+                  highlight={(data.finance?.plansEndingSoon ?? 0) > 0}
+                />
+              </dl>
             </Link>
 
-
-            {/* PILLAR 4: KINH TẾ BÁNH MÌ & CỬA HÀNG */}
-            <Link
-              href="/admin/market"
-              className="group flex flex-col justify-between rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs transition hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-            >
+            <Link href="/admin/market" className={CARD}>
               <div>
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    Bánh Mì lưu hành
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Bánh Mì học viên đang giữ</p>
+                <p className="mt-2 flex items-baseline gap-2">
+                  <span className="text-3xl font-semibold tabular-nums text-slate-950 dark:text-slate-100">
+                    {number(data.gamification?.totalBreads)}
                   </span>
-                  <div className="flex size-8 items-center justify-center rounded-lg border border-amber-100 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400">
-                    <ShoppingBag size={16} />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="font-mono text-3xl font-bold tracking-tight tabular-nums text-slate-950 dark:text-slate-100">
-                    {(data.gamification?.totalBreads ?? 0).toLocaleString("vi-VN")}
-                  </span>
-                  <span className="text-xs text-slate-600 dark:text-slate-400">Bánh Mì</span>
-                </div>
+                  <span className="text-sm text-slate-600 dark:text-slate-400">Bánh Mì</span>
+                </p>
               </div>
-              <div className="mt-4 border-t border-slate-100 dark:border-slate-800/80 pt-3 text-xs text-slate-600 dark:text-slate-400">
-                <span className="font-medium text-slate-700 dark:text-slate-300">
-                  {(data.gamification?.totalOrders ?? 0).toLocaleString("vi-VN")}
-                </span>{" "}
-                lượt đổi quà ·{" "}
-                <span
-                  className={
-                    (data.gamification?.pendingOrders ?? 0) > 0
-                      ? "font-semibold text-amber-700 dark:text-amber-400"
-                      : "text-slate-600 dark:text-slate-400"
-                  }
-                >
-                  {(data.gamification?.pendingOrders ?? 0) > 0
-                    ? `${data.gamification?.pendingOrders} đơn chờ duyệt`
-                    : "0 đơn tồn đọng"}
-                </span>
-              </div>
+              <dl className={FIGURES}>
+                {/* Earned and spent by learners, admin top-ups on their own row (owner 2026-11-26). */}
+                <Figure label={`Nhận trong ${shortRangeText}`} value={number(data.gamification?.flow?.issued)} />
+                <Figure label={`Tiêu trong ${shortRangeText}`} value={number(data.gamification?.flow?.spent)} />
+                <Figure label="Quản trị viên điều chỉnh" value={signedCount(data.gamification?.flow?.adminAdjusted)} />
+                <Figure label={`Lượt đổi quà trong ${shortRangeText}`} value={number(data.gamification?.totalOrders)} />
+              </dl>
             </Link>
           </section>
 
@@ -399,21 +380,12 @@ export default function AdminDashboardPage() {
           <section
             id="needs-attention"
             aria-labelledby="needs-attention-heading"
-            className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs overflow-hidden"
+            className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden"
           >
-            <header className="flex items-center justify-between gap-3 border-b border-slate-200/80 dark:border-slate-800 px-5 py-3.5">
-              <div className="flex items-center gap-2.5">
-                <span className="size-2 rounded-full bg-amber-500 animate-pulse" />
-                <h2
-                  id="needs-attention-heading"
-                  className="text-sm font-bold tracking-tight text-slate-950 dark:text-slate-100"
-                >
-                  Cần xử lý
-                </h2>
-                <span className="text-xs text-slate-600 dark:text-slate-400 hidden sm:inline">
-                  — Danh sách tác vụ ưu tiên theo nghiệp vụ
-                </span>
-              </div>
+            <header className="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 px-5 py-3.5">
+              <h2 id="needs-attention-heading" className="text-base font-semibold text-slate-950 dark:text-slate-100">
+                Cần xử lý
+              </h2>
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                   attentionTotal > 0
@@ -427,117 +399,49 @@ export default function AdminDashboardPage() {
 
             {attentionItems.length > 0 ? (
               <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
-                {attentionItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="group flex min-h-14 items-center justify-between gap-4 px-5 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
-                    >
-                      <div className="flex items-center gap-3.5">
-                        <div className="flex size-8 items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:text-slate-950 dark:group-hover:text-slate-100">
-                          <Icon size={16} aria-hidden="true" />
-                        </div>
-                        <div className="text-sm text-slate-700 dark:text-slate-300">
-                          <span
-                            className={`inline-block mr-2 rounded-md px-2 py-0.5 text-xs font-mono font-bold border tabular-nums ${item.badgeColor}`}
-                          >
-                            {item.count}
-                          </span>
-                          <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {item.label}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 group-hover:underline">
-                        <span>{item.actionLabel}</span>
-                        <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
-                      </div>
-                    </Link>
-                  );
-                })}
+                {attentionItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="group flex min-h-14 items-center justify-between gap-4 px-5 py-3 transition hover:bg-slate-50 dark:hover:bg-slate-800/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-600"
+                  >
+                    <p className="text-sm text-slate-900 dark:text-slate-100">
+                      <span
+                        className={`mr-2 inline-block rounded-md border px-2 py-0.5 text-xs font-semibold tabular-nums ${item.badgeColor}`}
+                      >
+                        {item.count}
+                      </span>
+                      {item.label}
+                      {waitedFor(data.waitingSince?.[item.key]) && (
+                        <span className="ml-1.5 text-slate-600 dark:text-slate-400">
+                          · cũ nhất chờ {waitedFor(data.waitingSince?.[item.key])}
+                        </span>
+                      )}
+                    </p>
+                    <span className="flex shrink-0 items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 group-hover:underline">
+                      {item.actionLabel}
+                      <ArrowRight size={14} aria-hidden="true" />
+                    </span>
+                  </Link>
+                ))}
               </div>
             ) : (
-              <div className="flex items-center gap-3 px-5 py-5 text-sm text-slate-600 dark:text-slate-300">
-                <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>Hệ thống vận hành ổn định — không có tác vụ tồn đọng cần xử lý lúc này.</span>
-              </div>
+              <p className="flex items-center gap-3 px-5 py-5 text-sm text-slate-600 dark:text-slate-300">
+                <CheckCircle2 size={18} className="shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                Không có việc nào đang chờ xử lý.
+              </p>
             )}
           </section>
 
-          {/* 5. MAIN DATA SECTION: CHART & BREAKDOWN (8 cols) + ACTIVITY & SHORTCUTS (4 cols) */}
+          {/* 5. TRENDS (8 cols) + CONTENT ON THE SYSTEM (4 cols). The shortcut
+              list went: the sidebar already has every page (owner 2026-11-26). */}
           <div className="grid items-start gap-6 xl:grid-cols-12">
-            {/* LEFT COLUMN: TRENDS & CURRICULUM */}
-            <div className="space-y-6 xl:col-span-8">
-              {/* INTERACTIVE METRIC CHART */}
-              <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs">
-                <AdminAnalyticsChart
-                  data={data.monthlyTrends}
-                  range={data.range ?? range}
-                />
-              </div>
-
-              {/* CURRICULUM CONTENT BREAKDOWN */}
-              <div className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-xs">
-                <AdminContentBreakdown data={data.contentBreakdown} />
-              </div>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm xl:col-span-8">
+              <AdminAnalyticsChart data={data.monthlyTrends} range={data.range ?? range} />
             </div>
-
-            {/* RIGHT COLUMN: RECENT ACTIVITY & QUICK ACTIONS */}
-            <aside className="space-y-6 xl:col-span-4 xl:sticky xl:top-6">
-              {/* RECENT ACTIVITY CARD */}
-              {/* QUICK LAUNCHPAD SHORTCUTS */}
-              <section
-                aria-labelledby="quick-actions-heading"
-                className="rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-xs"
-              >
-                <div className="mb-3.5">
-                  <h2
-                    id="quick-actions-heading"
-                    className="text-base font-bold text-slate-950 dark:text-slate-100"
-                  >
-                    Lối tắt tác vụ
-                  </h2>
-                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
-                    Các phân hệ quản trị vận hành thường dùng
-                  </p>
-                </div>
-
-                <div className="grid gap-2">
-                  {QUICK_ACTIONS.map((action) => {
-                    const Icon = action.icon;
-                    return (
-                      <Link
-                        key={action.href}
-                        href={action.href}
-                        className="group flex items-center justify-between gap-3 rounded-lg border border-slate-200/70 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-800/40 p-3 transition hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-7 items-center justify-center rounded-md bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 shadow-2xs group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                            <Icon size={15} aria-hidden="true" />
-                          </div>
-                          <div>
-                            <span className="block text-xs font-semibold text-slate-900 dark:text-slate-100">
-                              {action.label}
-                            </span>
-                            <span className="block text-xs text-slate-600 dark:text-slate-400">
-                              {action.detail}
-                            </span>
-                          </div>
-                        </div>
-                        <ArrowUpRight
-                          size={14}
-                          className="shrink-0 text-slate-500 transition group-hover:text-slate-700 dark:group-hover:text-slate-200"
-                          aria-hidden="true"
-                        />
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
-            </aside>
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm xl:col-span-4">
+              <AdminContentBreakdown data={data.contentBreakdown} />
+            </div>
           </div>
         </>
       )}

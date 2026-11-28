@@ -11,6 +11,8 @@ export type ClientBlock = {
   fallMs: number;
   lane: number;
   hint?: string | null;
+  /** One of the learner's hard flashcard words; the card says so. */
+  oftenForgotten?: boolean;
 };
 
 /** Same as the server: a shot this long after landing still counts. */
@@ -157,4 +159,18 @@ export function blockMarks(blocks: ClientBlock[], hits: Record<number, number>, 
 export function easeAngle(shown: number, target: number, dtMs: number): number {
   const next = shown + (target - shown) * (1 - Math.exp(-Math.max(0, dtMs) / 45));
   return Math.abs(target - next) < 0.05 ? target : next;
+}
+
+/**
+ * How much faster the blocks fall at each stake, in percent (owner 2026-11-27).
+ * The server decides the real speed (BLASTER_PACE in word-blaster.logic.ts: 1,
+ * 1.15, 1.3); this only tells the learner before the game starts.
+ */
+export const STAKE_PACE_PERCENT: Record<number, number> = { 20: 0, 50: 15, 100: 30 };
+
+export function stakePaceLine(stake: number): string {
+  const percent = STAKE_PACE_PERCENT[stake] ?? 0;
+  return percent > 0
+    ? `Mức ${stake}: khối rơi nhanh hơn ${percent}%.`
+    : `Mức ${stake}: khối rơi ở tốc độ thường.`;
 }

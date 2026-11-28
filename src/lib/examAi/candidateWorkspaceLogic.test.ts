@@ -65,3 +65,36 @@ test("Candidate Workspace: toggleKey adds then removes", () => {
   selected = toggleKey(selected, "A");
   assert.equal(selected.has("A"), false);
 });
+
+test("candidateKeyLabel names a draft key in words, and keeps an unknown key", async () => {
+  const { candidateKeyLabel } = await import("./candidateWorkspaceLogic.ts");
+  assert.equal(candidateKeyLabel("LR:P3:G2"), "Part 3 · Nhóm 2");
+  assert.equal(candidateKeyLabel("SPEAKING:TASK4"), "Speaking · Task 4");
+  assert.equal(candidateKeyLabel("WRITING"), "Writing");
+  assert.equal(candidateKeyLabel("OTHER:1"), "OTHER:1");
+});
+
+test("shortParts lists only the Parts with fewer questions than planned", async () => {
+  const { shortParts } = await import("./candidateWorkspaceLogic.ts");
+  assert.deepEqual(
+    shortParts([
+      { part: 5, expected: 30, drafted: 30 },
+      { part: 7, expected: 54, drafted: 49 },
+    ]),
+    [{ part: 7, expected: 54, drafted: 49 }],
+  );
+  assert.deepEqual(shortParts(undefined), []);
+});
+
+test("a question warning makes its group flagged, and applied items are not counted to check", async () => {
+  const { hasIssues, matchesCandidateFilter, toCheckCount, candidateGroupState, selectAllValidKeys } = await import(
+    "./candidateWorkspaceLogic.ts"
+  );
+  const questionWarning = { issues: [], applied: false, questions: [{ issues: ["Chưa có đáp án đúng hợp lệ"] }] };
+  assert.equal(hasIssues(questionWarning), true);
+  assert.equal(matchesCandidateFilter(questionWarning, "FLAGGED"), true);
+  assert.equal(candidateGroupState(questionWarning), "warning");
+  assert.deepEqual(selectAllValidKeys([{ ...questionWarning, candidateKey: "LR:P5:G1" }]), []);
+  const appliedWarning = { issues: ["Chưa có e-mail cần trả lời"], applied: true };
+  assert.equal(toCheckCount([appliedWarning, appliedWarning, questionWarning, { issues: [], applied: false }]), 1);
+});

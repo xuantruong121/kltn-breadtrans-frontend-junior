@@ -6,6 +6,7 @@ import { ChevronLeft, Disc3, Image as ImageIcon, Pause, Play, SkipForward, Slide
 import { arenaSound } from "../sound/arenaSound";
 import { LOBBY_PLAYLIST } from "../sound/arenaSoundLogic";
 import { useArenaTrack, useSoundPrefs } from "../sound/useArenaSound";
+import { dockStartsFolded } from "../dockLayout";
 
 const DOCK_KEY = "breadtrans.arena.dock";
 
@@ -17,7 +18,7 @@ function readCollapsed(): boolean {
   } catch {
     /* storage blocked */
   }
-  return window.innerWidth < 640;
+  return dockStartsFolded(window.innerWidth, window.innerHeight);
 }
 
 function Switch({ on, label, onChange }: { on: boolean; label: string; onChange: (v: boolean) => void }) {
@@ -174,7 +175,7 @@ export function ArenaMusicDock() {
             exit={{ opacity: 0, y: 8 }}
             role="dialog"
             aria-label="Âm thanh và cảnh nền"
-            className="absolute bottom-full left-0 mb-2 w-72 space-y-3 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-2xl"
+            className="absolute bottom-full left-0 mb-2 w-72 max-h-[calc(100dvh-9rem)] overflow-y-auto space-y-3 rounded-2xl border border-white/15 bg-slate-950/95 p-4 text-white shadow-2xl"
           >
             <div>
               <p className="mb-1.5 flex items-center gap-1.5 text-sm font-bold">

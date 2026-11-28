@@ -55,12 +55,12 @@ export function PictureWritingCatalog({
       sortByLevel(
         cards.filter(
           (card) =>
-            matchesDifficultyFilter(card.quiz.cefrLevel ?? card.quiz.title, difficulty, card.quiz.practiceLevel) &&
+            matchesDifficultyFilter(card.quiz.practiceLevel, difficulty) &&
             matchesStatusFilter(card.task.isGraded ? "COMPLETED" : "NOT_STARTED", status) &&
             (pair === "ALL" || card.pair === pair),
         ),
         sort,
-        (card) => card.quiz.cefrLevel ?? card.quiz.title,
+        (card) => card.quiz.practiceLevel,
       ),
     [cards, difficulty, status, pair, sort],
   );
@@ -119,7 +119,7 @@ export function PictureWritingCatalog({
             const locked = Boolean(quiz.isLocked);
             const levelLocked = isAuthenticated && Boolean(quiz.isLevelLocked);
             const plan = unlockPlanFor("WRITING", quiz.requiredPlan);
-            const level = catalogLevelLabel(quiz.cefrLevel ?? quiz.title, quiz.practiceLevel);
+            const level = catalogLevelLabel(quiz.practiceLevel);
             return (
               <article
                 key={key}

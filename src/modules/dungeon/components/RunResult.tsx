@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { BreadCoinIcon } from "@/components/ui/BreadCoinIcon";
 import type { DungeonResult } from "@/lib/api/services/dungeon.service";
+import { hardWordsLine } from "../../arena/hardWords";
 
 /** The end of a run: how deep, what it earned, and a record or a place on today's board. */
 export function RunResult({ result, onAgain, onExit }: { result: DungeonResult; onAgain: () => void; onExit: () => void }) {
@@ -20,6 +21,7 @@ export function RunResult({ result, onAgain, onExit }: { result: DungeonResult; 
   const againRef = useRef<HTMLButtonElement>(null);
   useEffect(() => againRef.current?.focus(), []);
   const accuracy = result.answered ? Math.round((result.correct / result.answered) * 100) : 0;
+  const hardLine = hardWordsLine("Đúng", result.hardWords);
   const stats = [
     { icon: Footprints, label: "Tầng đạt", value: `${result.floor}` },
     { icon: Crown, label: "Boss đã hạ", value: `${result.bossesDown}` },
@@ -95,6 +97,10 @@ export function RunResult({ result, onAgain, onExit }: { result: DungeonResult; 
             {result.bossesDown > 0 ? "Đã hoàn vé vì hạ được boss tầng 5" : "Hạ boss tầng 5 để được hoàn vé"}
             {result.bonusCapped > 0 ? ". Hôm nay đã đủ 300 Bánh Mì thưởng từ Đấu trường." : "."}
           </p>
+          {/* The learner's hard flashcard words asked in this run: a count, never the words. */}
+          {hardLine && (
+            <p className="mt-2 text-center text-sm font-semibold text-amber-700 dark:text-amber-300">{hardLine}</p>
+          )}
           <div className="mt-6 flex flex-col gap-2">
             <button
               ref={againRef}

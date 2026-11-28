@@ -1,6 +1,7 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2, Lock, ArrowRight, AlertCircle, LogIn } from "lucide-react";
 import Link from "next/link";
@@ -9,9 +10,11 @@ import { isPremiumVocabForbiddenError } from "@/lib/api/services/plan.service";
 import { BackButton } from "@/components/ui";
 import { VocabStudyRoom } from "@/modules/vocab/components/VocabStudyRoom";
 
-export default function VocabPracticePage() {
+function VocabPracticeContent() {
   const { id } = useParams();
   const topicId = Number(id);
+  // "?due=1": the deck's due-word review (owner 2026-11-27).
+  const dueReview = useSearchParams().get("due") === "1";
 
   const {
     data: topic,
@@ -129,5 +132,21 @@ export default function VocabPracticePage() {
     );
   }
 
-  return <VocabStudyRoom topic={topic} />;
+  // Keyed: a review and the whole deck are two sessions, and so are two decks.
+  return <VocabStudyRoom key={`${topicId}-${dueReview ? "due" : "all"}`} topic={topic} dueReview={dueReview} />;
+}
+
+export default function VocabPracticePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col justify-center items-center h-96 gap-3">
+          <Loader2 className="animate-spin text-sky-500" size={40} />
+          <span className="text-xs font-bold text-slate-500">Đang chuẩn bị phòng học từ vựng...</span>
+        </div>
+      }
+    >
+      <VocabPracticeContent />
+    </Suspense>
+  );
 }

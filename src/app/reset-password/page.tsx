@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { PASSWORD_HINT, PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_HINT, PASSWORD_PLACEHOLDER, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 import { resetLinkProblem } from "@/lib/auth/resetLink";
 
 function ResetPasswordForm() {
@@ -87,7 +87,7 @@ function ResetPasswordForm() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={submit} className="mt-6 space-y-4">
+        <form onSubmit={submit} noValidate className="mt-6 space-y-4">
           {error && (
             <div role="alert" className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
               <CircleAlert size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -105,11 +105,10 @@ function ResetPasswordForm() {
                   id={`reset-${field}`}
                   type={showPassword ? "text" : "password"}
                   required
-                  minLength={PASSWORD_MIN_LENGTH}
                   autoComplete="new-password"
                   value={field === "password" ? password : confirmPassword}
                   onChange={(event) => field === "password" ? setPassword(event.target.value) : setConfirmPassword(event.target.value)}
-                  placeholder={`Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`}
+                  placeholder={PASSWORD_PLACEHOLDER}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/70 py-3 pl-10 pr-11 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:bg-slate-800"
                 />
                 <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} className="absolute inset-y-0 right-0 flex min-h-11 min-w-11 items-center justify-center text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 dark:text-slate-400">

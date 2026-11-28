@@ -1,15 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  balanceText,
+  doneLine,
   estimateText,
   filterBySkill,
+  frameStatus,
   lockLabel,
+  nudgeReason,
   otherSuggestions,
   progressLine,
+  remainingMinutes,
   skillsWithItems,
-  totalMinutes,
   visibleReasons,
   weekPercent,
+  type RecommendationItem,
+  type TodaySlot,
 } from "./recommendation.ts";
 
 test("lock badges name the reason; open items have none", () => {
@@ -24,7 +30,56 @@ test("reasons drop the lock line and keep at most two", () => {
     visibleReasons({ reasons: ["Vừa sức mức Cơ bản của bạn", "Chủ đề Công nghệ thông tin", "Ôn lại bài chưa đạt", "Cần gói Plus hoặc Pro"] }),
     ["Vừa sức mức Cơ bản của bạn", "Chủ đề Công nghệ thông tin"],
   );
-  assert.equal(totalMinutes([{ minutes: 10 }, { minutes: 15 }]), 25);
+});
+
+// ---- Today's frame: one item per skill (thesis supervisor 2026-11-26)
+const item = (minutes: number, status: RecommendationItem["status"] = "OPEN") =>
+  ({ minutes, status }) as RecommendationItem;
+const slot = (over: Partial<TodaySlot>): TodaySlot => ({
+  skill: "LISTENING",
+  state: "TODO",
+  item: item(10),
+  done: null,
+  nudged: false,
+  ...over,
+});
+
+test("the corner counts the open items still to do, then says the day is done", () => {
+  const slots = [
+    slot({ skill: "LISTENING", state: "DONE", done: { items: 1, scorePercent: 80 } }),
+    slot({ skill: "READING", item: item(10) }),
+    slot({ skill: "SPEAKING", item: item(10, "LOCKED_PLAN") }),
+    slot({ skill: "WRITING", item: item(15) }),
+  ];
+  assert.equal(remainingMinutes(slots), 25);
+  assert.equal(frameStatus(slots), "Còn khoảng 25 phút");
+  const done = slots.map((s) =>
+    s.skill === "SPEAKING" ? slot({ skill: "SPEAKING", state: "EMPTY", item: null }) : slot({ ...s, state: "DONE" }),
+  );
+  assert.equal(frameStatus(done), "Đã xong 3 kỹ năng hôm nay");
+});
+
+test("a done slot says how it went", () => {
+  assert.equal(doneLine({ items: 1, scorePercent: 80 }), "Đã làm hôm nay · 80%");
+  assert.equal(doneLine({ items: 2, scorePercent: 60 }), "Đã làm 2 bài hôm nay · bài gần nhất 60%");
+  assert.equal(doneLine({ items: 1, scorePercent: null }), "Đã làm hôm nay");
+  assert.equal(doneLine(null), "Đã làm hôm nay");
+});
+
+test("the balance nudge names the busy skill and the ones to try", () => {
+  assert.equal(nudgeReason("SPEAKING"), "Bạn chưa luyện Nói hôm nay");
+  assert.equal(
+    balanceText({ skill: "LISTENING", minutes: 25, items: 0, suggest: ["SPEAKING", "WRITING"] }),
+    "Hôm nay bạn đã luyện Nghe 25 phút. Thử thêm Nói và Viết để các kỹ năng đi đều nhau.",
+  );
+  assert.equal(
+    balanceText({ skill: "READING", minutes: 12, items: 3, suggest: ["LISTENING", "SPEAKING", "WRITING"] }),
+    "Hôm nay bạn đã luyện Đọc 12 phút, 3 bài. Thử thêm Nghe, Nói và Viết để các kỹ năng đi đều nhau.",
+  );
+  assert.equal(
+    balanceText({ skill: "READING", minutes: 0, items: 3, suggest: ["WRITING"] }),
+    "Hôm nay bạn đã luyện Đọc 3 bài. Thử thêm Viết để các kỹ năng đi đều nhau.",
+  );
 });
 
 test("the skill filter keeps only that skill; ALL keeps everything", () => {

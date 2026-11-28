@@ -9,7 +9,7 @@ import { useGamificationStore } from "@/stores/gamificationStore";
 import { useQueryClient } from "@tanstack/react-query";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { PASSWORD_MIN_LENGTH, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_PLACEHOLDER, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 import { ConsentCheckbox } from "@/components/auth/ConsentCheckbox";
 
 interface QuickRegisterModalProps {
@@ -167,7 +167,7 @@ export function QuickRegisterModal({
           </span>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-3">
+        <form onSubmit={handleRegister} noValidate className="space-y-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
               Họ và tên <span className="text-rose-700 dark:text-rose-400">*</span>
@@ -219,7 +219,7 @@ export function QuickRegisterModal({
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={`Tối thiểu ${PASSWORD_MIN_LENGTH} ký tự`}
+                placeholder={PASSWORD_PLACEHOLDER}
                 className="w-full pl-9 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-sm font-medium text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-slate-50/50 dark:bg-slate-800/60"
               />
               <button

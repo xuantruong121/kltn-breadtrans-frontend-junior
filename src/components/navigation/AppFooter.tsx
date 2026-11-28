@@ -4,7 +4,7 @@ import { BrandLogo } from "@/components/brand";
 
 export function AppFooter() {
   return (
-    <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 pt-14 pb-10 text-slate-600 dark:text-slate-400 transition-colors duration-150">
+    <footer className="w-full border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 pt-14 pb-[calc(13.5rem+env(safe-area-inset-bottom))] md:pb-10 text-slate-600 dark:text-slate-400 transition-colors duration-150">
       <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-10">
           {/* Brand Col */}
@@ -107,7 +107,8 @@ export function AppFooter() {
           <div className="mb-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
             <Link href="/terms" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Điều khoản dịch vụ</Link>
             <Link href="/privacy" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">Chính sách bảo mật</Link>
-            <Link href="/help" className="inline-flex min-h-6 items-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">FAQ</Link>
+            {/* min-w-6: the word alone was 23 px wide, under the 24 px tap target (mobile check 2026-11-26). */}
+            <Link href="/help" className="inline-flex min-h-6 min-w-6 items-center justify-center hover:text-amber-700 dark:hover:text-amber-400 transition-colors">FAQ</Link>
           </div>
           <p>© {new Date().getFullYear()} BreadTrans — Nền tảng tự học tiếng Anh tương tác. Thiết kế lấy người học làm trung tâm.</p>
         </div>

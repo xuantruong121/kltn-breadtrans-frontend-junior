@@ -43,7 +43,7 @@ export const SKILLS: LandingItem<SkillKey>[] = [
   },
   {
     key: "skill-luyen-de",
-    name: "Luyện đề TOEIC",
+    name: "Luyện đề",
     fact: "Đề Nghe & Đọc theo cấu trúc TOEIC do BreadTrans biên soạn: 200 câu trong 120 phút, hoặc chọn từng Part để luyện.",
   },
   {

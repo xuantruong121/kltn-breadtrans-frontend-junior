@@ -26,6 +26,7 @@ import {
 } from "@/components/admin/exam/ExamGroupCard";
 import {
   examGroupLabel,
+  part5CandidateReady,
   partFilterAfterAdd,
   type GroupAction,
 } from "@/lib/examStudio/examGroupCard";
@@ -334,12 +335,61 @@ export default function AdminExamsPage() {
     }>
   >([]);
 
+  const [isAiPart5Adding, setIsAiPart5Adding] = useState(false);
+
+  /**
+   * Every reviewed Part 5 candidate goes into the group at once (owner
+   * 2026-11-25: one went to the form and the others were lost), numbered
+   * after the exam's last question as a single add is.
+   */
+  const addAiPart5Candidates = async () => {
+    if (!selectedExamId || !aiPart5TargetGroup) return;
+    const ready = aiPart5Candidates.filter(part5CandidateReady);
+    if (!ready.length) return;
+    setIsAiPart5Adding(true);
+    const numbers = (examDetail?.groups ?? []).flatMap((group) =>
+      (group.questions ?? []).map((question) => question.questionNumber),
+    );
+    let next = numbers.length ? Math.max(...numbers) + 1 : 1;
+    let added = 0;
+    try {
+      for (const candidate of ready) {
+        await axiosClient.post(
+          `/admin/exams/${selectedExamId}/groups/${aiPart5TargetGroup.id}/questions`,
+          {
+            questionNumber: next,
+            text: candidate.prompt.trim(),
+            options: candidate.options.map((option) => option.trim()),
+            correctIndex: candidate.correctIndex,
+            explanation: candidate.explanation.trim(),
+          },
+        );
+        next++;
+        added++;
+      }
+      toast.success(`Đã thêm ${added} câu vào nhóm #${aiPart5TargetGroup.groupOrder}.`);
+      setAiPart5Candidates([]);
+      setIsAiPart5ModalOpen(false);
+    } catch (err: any) {
+      // The saved ones leave the list, so a retry adds only the rest.
+      const saved = new Set(ready.slice(0, added));
+      setAiPart5Candidates((current) => current.filter((candidate) => !saved.has(candidate)));
+      toast.error(getApiErrorMessage(err, `Đã thêm ${added} câu; câu tiếp theo chưa lưu được.`));
+    } finally {
+      setIsAiPart5Adding(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-exam-detail", selectedExamId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-exams"] });
+    }
+  };
+
   const handleGenerateAiPart5 = async () => {
     setIsAiPart5Loading(true);
     try {
       const res: any = await axiosClient.post("/admin/exams/ai/suggest-part5", {
         topic: aiPart5Topic.trim() || examDetail?.title || undefined,
         grammarFocus: aiPart5GrammarFocus.trim() || undefined,
+        // New items match the exam's difficulty (owner 2026-11-25).
+        difficulty: examDetail?.difficulty || undefined,
         count: Number(aiPart5Count),
       });
       const data = res?.data || res;
@@ -841,8 +891,9 @@ export default function AdminExamsPage() {
     if (action === "deleteGroup")
       setPendingDeleteGroup({ id: group.id, part: group.part });
     if (action === "suggestQuestion") {
+      // The same group finds the candidates not yet added.
+      if (aiPart5TargetGroup?.id !== group.id) setAiPart5Candidates([]);
       setAiPart5TargetGroup(group);
-      setAiPart5Candidates([]);
       setIsAiPart5ModalOpen(true);
     }
   };
@@ -2356,15 +2407,17 @@ export default function AdminExamsPage() {
                               correctIndex: candidate.correctIndex,
                               explanation: candidate.explanation,
                             });
+                            // The others stay for the next opening of this dialog.
+                            setAiPart5Candidates((prev) => prev.filter((_, i) => i !== idx));
                             setIsAiPart5ModalOpen(false);
                             setIsQuestionModalOpen(true);
                             toast.success(
-                              "Đã áp dụng câu hỏi Part 5 vào form. Bạn có thể kiểm tra và bấm Thêm câu hỏi.",
+                              "Đã điền câu hỏi Part 5 vào biểu mẫu. Kiểm tra rồi bấm Thêm câu hỏi.",
                             );
                           }}
-                          className="rounded bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800 transition-colors"
+                          className="rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 transition-colors"
                         >
-                          Áp dụng vào form
+                          Sửa trong biểu mẫu
                         </button>
                       </div>
                     </div>
@@ -2372,7 +2425,7 @@ export default function AdminExamsPage() {
                 )}
               </div>
 
-              <div className="flex items-center justify-end pt-3 border-t border-slate-100">
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => setIsAiPart5ModalOpen(false)}
@@ -2380,6 +2433,19 @@ export default function AdminExamsPage() {
                 >
                   Đóng
                 </button>
+                {aiPart5Candidates.some(part5CandidateReady) && (
+                  <button
+                    type="button"
+                    disabled={isAiPart5Adding}
+                    onClick={() => void addAiPart5Candidates()}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700 disabled:cursor-wait transition-colors"
+                  >
+                    {isAiPart5Adding && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
+                    {isAiPart5Adding
+                      ? "Đang thêm…"
+                      : `Thêm ${aiPart5Candidates.filter(part5CandidateReady).length} câu vào nhóm`}
+                  </button>
+                )}
               </div>
             </div>
           </div>
