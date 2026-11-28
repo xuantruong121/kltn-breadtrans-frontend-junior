@@ -189,51 +189,17 @@ export interface DiagnosticTaskWeighting {
   limitedEvidence?: boolean;
 }
 
-export interface DiagnosticSkillProfile {
-  skill: string;
-  correctCount: number;
-  totalCount: number;
-  percentage: number | null;
-  evidence: "SUFFICIENT" | "INSUFFICIENT";
-}
-
-export interface DiagnosticPracticeRecommendation {
-  id: string;
-  skill: string;
-  title: string;
-  description: string;
-  route: string;
-  badge: string;
-}
-
-export interface CanonicalDiagnosticBlueprint {
-  version: string;
-  totalItems: number;
-  objectiveCount: number;
-  productiveCount: number;
-  sections: Record<string, {
-    name: string;
-    total: number;
-    objective: number;
-    productive?: number;
-    skills: string[];
-  }>;
-}
-
 export interface DiagnosticResult {
   attemptId: number;
-  canonicalBlueprint?: CanonicalDiagnosticBlueprint;
   correctCount: number;
   totalCount: number;
   totalTaskCount?: number;
   percentage: number;
   level: string;
-  referenceLevel?: string;
   objectiveTotalCount?: number;
   productiveTaskCount?: number;
   productiveUnavailable?: boolean;
   productivePending?: boolean;
-  objectiveCoreScore?: number;
   speakingEvidenceCount?: number;
   speakingScore?: number | null;
   speakingEvidenceConfidence?: string;
@@ -253,10 +219,6 @@ export interface DiagnosticResult {
   advice?: DiagnosticAdvice | null;
   submittedAt?: string;
   completedAt?: string;
-  skillProfiles?: DiagnosticSkillProfile[];
-  strengths?: string[];
-  weaknesses?: string[];
-  practiceRecommendations?: DiagnosticPracticeRecommendation[];
   questionsResult: Array<{
     questionId: number;
     selectedOption?: number;
@@ -310,7 +272,6 @@ export interface DiagnosticAssessment {
   id: number;
   title: string;
   description: string | null;
-  canonicalBlueprint?: CanonicalDiagnosticBlueprint;
   hasCompleted?: boolean;
   questions: DiagnosticQuestion[];
   latestAttempt: {

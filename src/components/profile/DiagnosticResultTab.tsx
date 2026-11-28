@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
-  BookOpen,
   Calendar,
   CheckCircle2,
   ExternalLink,
@@ -17,10 +16,9 @@ import {
 } from "lucide-react";
 import {
   diagnosticService,
-  DiagnosticPracticeRecommendation,
   DiagnosticResult,
 } from "@/lib/api/services/diagnostic.service";
-import { formatPlacementLevel, formatSkillName, resultPollInterval, summarizeSkillStanding } from "@/lib/diagnostic/diagnosticUiLogic";
+import { formatSkillName, resultPollInterval, summarizeSkillStanding } from "@/lib/diagnostic/diagnosticUiLogic";
 import { ObservedResultPanel } from "@/components/diagnostic/ObservedResultPanel";
 import {
   describeForm,
@@ -234,9 +232,6 @@ export function DiagnosticResultTab() {
       })
     : "Gần đây";
 
-  const practiceItems: DiagnosticPracticeRecommendation[] =
-    result.practiceRecommendations || [];
-
   return (
     <div className="space-y-6">
       {/* Overview Card */}
@@ -255,30 +250,26 @@ export function DiagnosticResultTab() {
             <h2 className="mt-5 text-2xl font-black text-slate-900 dark:text-slate-100">Kết quả đánh giá đầu vào</h2>
             <ObservedResultPanel observed={fourSkill.observed} compact />
           </>
-        ) : (
+        ) : fourSkill ? (
         <div className="mt-5 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-sm font-black uppercase tracking-wider text-teal-700 dark:text-teal-400">
-              {fourSkill ? "Kết quả theo bốn kỹ năng" : "Mức năng lực tham khảo"}
+              Kết quả theo bốn kỹ năng
             </span>
             <h2 className="mt-1 text-3xl sm:text-4xl font-black text-slate-900 dark:text-slate-100">
-              {fourSkill
-                ? fourSkill.overall !== null
-                  ? `${fourSkill.overall}/100`
-                  : "Chưa có điểm tổng"
-                : formatPlacementLevel(result.referenceLevel ?? result.level)}
+              {fourSkill.overall !== null
+                ? `${fourSkill.overall}/100`
+                : "Chưa có điểm tổng"}
             </h2>
-            {fourSkill && (
-              <p className="mt-2 text-base font-bold text-slate-700 dark:text-slate-300">
-                {(["LISTENING", "READING", "SPEAKING", "WRITING"] as const)
-                  .map((key) => {
-                    const skill = fourSkill.skills[key];
-                    const label = { LISTENING: "Nghe", READING: "Đọc", SPEAKING: "Nói", WRITING: "Viết" }[key];
-                    return `${label}: ${skill?.score !== null && skill?.score !== undefined ? `${skill.score}/100` : describeSkillState(skill?.state).label}`;
-                  })
-                  .join(" · ")}
-              </p>
-            )}
+            <p className="mt-2 text-base font-bold text-slate-700 dark:text-slate-300">
+              {(["LISTENING", "READING", "SPEAKING", "WRITING"] as const)
+                .map((key) => {
+                  const skill = fourSkill.skills[key];
+                  const label = { LISTENING: "Nghe", READING: "Đọc", SPEAKING: "Nói", WRITING: "Viết" }[key];
+                  return `${label}: ${skill?.score !== null && skill?.score !== undefined ? `${skill.score}/100` : describeSkillState(skill?.state).label}`;
+                })
+                .join(" · ")}
+            </p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-xl">
               Đây là ước lượng nội bộ để gợi ý bài luyện phù hợp, không phải chứng chỉ CEFR và không khóa nội dung học tập.
             </p>
@@ -294,10 +285,17 @@ export function DiagnosticResultTab() {
             </span>
           </div>
         </div>
+        ) : (
+          <>
+            <h2 className="mt-5 text-2xl font-black text-slate-900 dark:text-slate-100">Kết quả đánh giá đầu vào</h2>
+            <p role="status" className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300">
+              Kết quả này chưa hiển thị được. Hãy báo quản trị viên để được hỗ trợ.
+            </p>
+          </>
         )}
 
-        {/* Speaking / Writing Evidence Note */}
-        {result.productiveTaskCount && !fourSkill?.observed ? (
+        {/* Speaking / Writing Evidence Note (four-skill results without the observed panel) */}
+        {result.productiveTaskCount && fourSkill && !fourSkill.observed ? (
           <div className="mt-6 rounded-2xl border border-teal-100 bg-teal-50/70 p-4 text-sm leading-6 text-teal-900 dark:border-teal-900/60 dark:bg-teal-950/30 dark:text-teal-200">
             <div className="flex items-center gap-2 font-black text-teal-800 dark:text-teal-300">
               <Mic size={16} /> Bài Nói và Viết
@@ -307,9 +305,7 @@ export function DiagnosticResultTab() {
                 <span className="font-bold">Nói: </span>
                 {result.speakingEvidenceCount && result.speakingEvidenceCount > 0
                   ? `Đã chấm ${result.speakingEvidenceCount}/${speakingTaskCount} bài${result.speakingScore !== null && result.speakingScore !== undefined ? ` (điểm Nói: ${result.speakingScore}/100)` : ""}.`
-                  : fourSkill
-                    ? "Đang chờ hoặc chưa đủ dữ liệu để chấm kỹ năng Nói."
-                    : `Đang chờ hoặc chưa đủ dữ liệu để nhận xét kỹ năng Nói; mức tham khảo vẫn dựa trên ${result.totalCount} câu trắc nghiệm khách quan.`}
+                  : "Đang chờ hoặc chưa đủ dữ liệu để chấm kỹ năng Nói."}
               </p>
               <p>
                 <span className="font-bold">Viết: </span>
@@ -324,32 +320,6 @@ export function DiagnosticResultTab() {
             </div>
           </div>
         ) : null}
-
-        {/* Skill Profiles Breakdown */}
-        {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Kết quả theo kỹ năng
-            </h3>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {result.skillProfiles.map((profile) => (
-                <div
-                  key={profile.skill}
-                  className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-850"
-                >
-                  <p className="text-sm font-black text-slate-800 dark:text-slate-200">
-                    {formatSkillName(profile.skill)}
-                  </p>
-                  <p className="mt-1 text-base font-extrabold text-slate-900 dark:text-slate-100">
-                    {profile.percentage !== null
-                      ? `${profile.percentage}% (${profile.correctCount}/${profile.totalCount})`
-                      : "Chưa đủ dữ liệu"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {/* Strengths & Weaknesses (four-skill results: from the advice profile) */}
         <div className="mt-6 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
@@ -379,47 +349,6 @@ export function DiagnosticResultTab() {
           </div>
         </div>
       </div>
-
-      {/* Practice Recommendations */}
-      {practiceItems.length > 0 && (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 sm:p-8">
-          <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-teal-600 dark:text-teal-400" />
-            <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">
-              Bài luyện đề xuất
-            </h3>
-          </div>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Được gợi ý riêng theo kết quả phân tích điểm mạnh và điểm cần củng cố của bạn.
-          </p>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {practiceItems.map((rec) => (
-              <Link
-                key={rec.id}
-                href={rec.route}
-                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white p-4 transition-all hover:border-teal-500 hover:shadow-sm dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
-              >
-                <div>
-                  <span className="inline-block rounded-md bg-teal-100 px-2 py-0.5 text-xs font-black uppercase tracking-wider text-teal-700 dark:bg-teal-950 dark:text-teal-300">
-                    {rec.badge}
-                  </span>
-                  <h4 className="mt-2 text-base font-black text-slate-900 group-hover:text-teal-600 dark:text-slate-100 dark:group-hover:text-teal-400">
-                    {rec.title}
-                  </h4>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-6">
-                    {rec.description}
-                  </p>
-                </div>
-                <div className="mt-4 flex items-center gap-1 text-sm font-bold text-teal-700 dark:text-teal-400">
-                  <span>Luyện tập ngay</span>
-                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Answer Review Link CTA */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">

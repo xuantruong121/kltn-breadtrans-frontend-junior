@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Award,
-  BookOpen,
   CheckCircle2,
   Loader2,
   Maximize,
@@ -36,8 +35,6 @@ import { DiagnosticAdvicePanel as AdvicePanel } from "@/components/diagnostic/Di
 import { ObservedResultPanel } from "@/components/diagnostic/ObservedResultPanel";
 import { PracticePlacementPanel } from "@/components/diagnostic/PracticePlacementPanel";
 import {
-  formatPlacementLevel,
-  formatSkillName,
   getUnansweredQuestionIndexes,
   resolveReviewAnswer,
   resultPollInterval,
@@ -1066,8 +1063,6 @@ function DiagnosticResultView({
   const speakingTaskIds = assessment.questions.filter(isSpeakingTask).map((q) => q.id);
   const writingTaskIds = assessment.questions.filter(isWritingTask).map((q) => q.id);
 
-  const practiceItems = result.practiceRecommendations || [];
-
   // Filter review items
   const filteredReviews = useMemo(() => {
     return result.questionsResult.filter((item) => {
@@ -1125,24 +1120,11 @@ function DiagnosticResultView({
         ) : (
           <>
             <h1 className="mt-4 text-3xl font-black text-slate-900 dark:text-slate-100 sm:text-4xl">
-              Mức năng lực tham khảo: {formatPlacementLevel(result.referenceLevel ?? result.level)}
+              Kết quả đánh giá đầu vào
             </h1>
-
-            <div className="mt-3 rounded-2xl border border-slate-100 bg-slate-50 p-4.5 dark:border-slate-800 dark:bg-slate-850">
-              <p className="text-base font-extrabold text-slate-800 dark:text-slate-200">
-                Phần trắc nghiệm khách quan:{" "}
-                <span className="text-emerald-700 dark:text-emerald-400">
-                  {result.correctCount}/{result.totalCount} câu đúng
-                </span>{" "}
-                ({result.percentage}%)
-              </p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 leading-6">
-                Mức tham khảo được tính từ {result.totalCount} câu trắc nghiệm khách quan.
-                {speakingTaskIds.length + writingTaskIds.length > 0
-                  ? " Các bài Nói và Viết được nhận xét riêng để gợi ý luyện tập; chúng không thay đổi mức này."
-                  : ""}
-              </p>
-            </div>
+            <p role="status" className="mt-3 text-base leading-7 text-slate-700 dark:text-slate-300">
+              Kết quả này chưa hiển thị được. Hãy báo quản trị viên để được hỗ trợ.
+            </p>
           </>
         )}
 
@@ -1234,101 +1216,9 @@ function DiagnosticResultView({
           </div>
         )}
 
-        {/* Skill Profiles Breakdown */}
-        {!fourSkill && result.skillProfiles && result.skillProfiles.length > 0 && (
-          <div className="mt-7">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              Kết quả theo kỹ năng
-            </h3>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {result.skillProfiles.map((p) => (
-                <div
-                  key={p.skill}
-                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-850"
-                >
-                  <p className="text-sm font-black text-slate-700 dark:text-slate-300">
-                    {formatSkillName(p.skill)}
-                  </p>
-                  <p className="mt-1 text-base font-black text-slate-900 dark:text-slate-100">
-                    {p.percentage !== null
-                      ? `${p.percentage}% (${p.correctCount}/${p.totalCount})`
-                      : "Chưa đủ dữ liệu"}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Strengths & Weaknesses (V1 results; V2 shows the D1 advice) */}
-        {!result.advice && (
-        <div className="mt-7 grid gap-4 border-t border-slate-100 pt-6 sm:grid-cols-2 dark:border-slate-800">
-          <div>
-            <h3 className="text-sm font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-              Điểm mạnh
-            </h3>
-            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
-              {result.strengths && result.strengths.length > 0
-                ? result.strengths.map(formatSkillName).join(", ")
-                : "Chưa ghi nhận kỹ năng nổi trội từ kết quả hiện tại."}
-            </p>
-          </div>
-          <div>
-            <h3 className="text-sm font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">
-              Nên củng cố
-            </h3>
-            <p className="mt-1 text-base font-bold text-slate-800 dark:text-slate-200">
-              {result.weaknesses && result.weaknesses.length > 0
-                ? result.weaknesses.map(formatSkillName).join(", ")
-                : "Chưa ghi nhận kỹ năng cần ưu tiên cải thiện."}
-            </p>
-          </div>
-        </div>
-        )}
       </section>
 
       {result.advice && <AdvicePanel advice={result.advice} />}
-
-      {/* 2. Concrete Practice Recommendations */}
-      {practiceItems.length > 0 && (
-        <section className="rounded-3xl border border-slate-200 border-t-4 border-t-teal-500 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-teal-500 dark:bg-slate-900 sm:p-9">
-          <div className="flex items-center gap-2">
-            <BookOpen size={20} className="text-teal-600 dark:text-teal-400" />
-            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
-              Bài luyện đề xuất
-            </h2>
-          </div>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Dựa trên phân tích kết quả bài kiểm tra, hệ thống gợi ý các lộ trình luyện tập mục tiêu cho bạn:
-          </p>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {practiceItems.map((rec) => (
-              <Link
-                key={rec.id}
-                href={rec.route}
-                className="group flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-slate-50 p-4.5 transition-all hover:border-teal-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-850 dark:hover:border-teal-500"
-              >
-                <div>
-                  <span className="inline-block rounded-md bg-teal-100 px-2.5 py-0.5 text-xs font-black uppercase tracking-wider text-teal-700 dark:bg-teal-950 dark:text-teal-300">
-                    {rec.badge}
-                  </span>
-                  <h3 className="mt-2 text-base font-black text-slate-900 group-hover:text-teal-600 dark:text-slate-100 dark:group-hover:text-teal-400">
-                    {rec.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 line-clamp-2 leading-6">
-                    {rec.description}
-                  </p>
-                </div>
-                <div className="mt-4 flex items-center gap-1 text-sm font-extrabold text-teal-700 dark:text-teal-400">
-                  <span>Luyện tập ngay</span>
-                  <ArrowRight size={13} className="transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* 3. Filterable Grouped Answer Review */}
       <section className="rounded-3xl border border-slate-200 border-t-4 border-t-slate-400 bg-white p-6 shadow-xs dark:border-slate-800 dark:border-t-slate-500 dark:bg-slate-900 sm:p-9">
