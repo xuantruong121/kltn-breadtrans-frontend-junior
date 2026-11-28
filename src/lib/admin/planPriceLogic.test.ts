@@ -59,7 +59,8 @@ test("the price history of a term lists published prices, newest first, and skip
     v({ id: 103, version: 4, durationDays: 180, priceVnd: 331000 }),
   ]);
   const thirty = rows.find((r) => r.days === 30)!;
-  assert.deepEqual(thirty.history.map((h) => [h.priceVnd, h.isCurrent]), [[79000, true], [69000, false], [69000, false]]);
+  // The two 69.000 versions are one line, from the earlier date: nothing changed between them.
+  assert.deepEqual(thirty.history.map((h) => [h.priceVnd, h.isCurrent, h.since.slice(0, 10)]), [[79000, true, "2026-11-20"], [69000, false, "2026-10-01"]]);
   const oneEighty = rows.find((r) => r.days === 180)!;
   assert.deepEqual(oneEighty.history.map((h) => h.versionId), [103]); // v5 was never published
 });

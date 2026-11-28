@@ -45,7 +45,7 @@ export function termRows(versions: PriceVersion[]): TermRow[] {
     .map((days) => {
       const ofTerm = versions.filter((version) => version.durationDays === days);
       const current = ofTerm.filter(onSale).sort((a, b) => b.version - a.version)[0] ?? null;
-      const history = ofTerm
+      const published = ofTerm
         .filter((version) => version.status !== "DRAFT" && version.publishedAt && typeof version.priceVnd === "number")
         .sort((a, b) => new Date(b.publishedAt as string).getTime() - new Date(a.publishedAt as string).getTime())
         .map((version) => ({
@@ -54,6 +54,14 @@ export function termRows(versions: PriceVersion[]): TermRow[] {
           since: version.publishedAt as string,
           isCurrent: current?.id === version.id,
         }));
+      // A version made again at the same price (a re-seed, a grant change) is not a
+      // price change: consecutive equal prices are one line, from the earliest date.
+      const history: PriceHistoryEntry[] = [];
+      for (const entry of published) {
+        const last = history[history.length - 1];
+        if (last && last.priceVnd === entry.priceVnd) last.since = entry.since;
+        else history.push({ ...entry });
+      }
       return { days, current, history };
     });
 }
