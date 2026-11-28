@@ -78,7 +78,6 @@ type DeckForm = {
   description: string;
   level: string;
   categoryName: string;
-  isPro: boolean;
 };
 
 type DraftWord = {
@@ -132,7 +131,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     description: deck?.description ?? "",
     level: deck?.level ?? "",
     categoryName: deck?.categoryName ?? "",
-    isPro: deck?.isPro ?? false,
   };
   const [savedForm, setSavedForm] = useState(initial);
   const [form, setForm] = useState(initial);
@@ -253,7 +251,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
       description: form.description.trim(),
       ...(form.level ? { level: form.level } : {}),
       categoryName: form.categoryName.trim() || "600 TỪ VỰNG TOEIC",
-      isPro: form.isPro,
     };
     try {
       if (deck) {
@@ -707,7 +704,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 ))}
               </select>
             </label>
-            <label className="text-sm font-medium text-slate-800">
+            <label className="text-sm font-medium text-slate-800 md:col-span-2">
               Chuyên mục
               <input
                 list="vocab-categories"
@@ -723,17 +720,6 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                   <option key={category} value={category} />
                 ))}
               </datalist>
-            </label>
-            <label className="flex items-end gap-2 pb-2 text-sm font-medium text-slate-800">
-              <input
-                type="checkbox"
-                checked={form.isPro}
-                onChange={(event) =>
-                  setForm({ ...form, isPro: event.target.checked })
-                }
-                className="size-4 rounded border-slate-300"
-              />
-              Chỉ cho gói Pro
             </label>
             <label className="text-sm font-medium text-slate-800 md:col-span-2">
               Mô tả ngắn (hiện trên thẻ bộ từ của học viên)
