@@ -10,6 +10,7 @@ import { SpeakingStage } from "@/modules/vocab/components/SpeakingStage";
 import { playWordAudio } from "@/modules/vocab/utils/audio";
 import { buildQuizOptions } from "@/modules/vocab/utils/quizOptions";
 import { wordStageReadiness, type StageReadiness } from "./vocabCms";
+import { STUDY_WIDTH, nextScale } from "./previewScale";
 
 type AdminWord = {
   id: number;
@@ -23,8 +24,6 @@ type AdminWord = {
   exampleEn?: string | null;
   exampleVi?: string | null;
 };
-
-const STUDY_WIDTH = 560;
 
 const asLearnerWord = (word: AdminWord): VocabWord => ({
   id: word.id,
@@ -72,8 +71,10 @@ export default function VocabStagePreview({
   useEffect(() => {
     const element = frame.current;
     if (!element) return;
+    // Follows only a change that matters (previewScale.ts): the rail's own
+    // scrollbar once made this loop and the whole column flicker.
     const observer = new ResizeObserver(([entry]) =>
-      setScale(Math.min(1, entry.contentRect.width / STUDY_WIDTH)),
+      setScale((previous) => nextScale(previous, entry.contentRect.width)),
     );
     observer.observe(element);
     return () => observer.disconnect();

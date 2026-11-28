@@ -24,7 +24,36 @@ export const POS_OPTIONS = [
   "conjunction",
   "pronoun",
   "determiner",
+  "article",
+  "number",
+  "modal verb",
+  "proper noun",
 ] as const;
+
+/** What each part of speech is called to the admin: "noun (danh từ)". Only the label; the stored value stays English. */
+export const POS_LABEL_VI: Record<(typeof POS_OPTIONS)[number], string> = {
+  noun: "danh từ",
+  verb: "động từ",
+  adjective: "tính từ",
+  adverb: "trạng từ",
+  phrase: "cụm từ",
+  "phrasal verb": "cụm động từ",
+  idiom: "thành ngữ",
+  preposition: "giới từ",
+  conjunction: "liên từ",
+  pronoun: "đại từ",
+  determiner: "hạn định từ",
+  article: "mạo từ",
+  number: "số từ",
+  "modal verb": "động từ khuyết thiếu",
+  "proper noun": "danh từ riêng",
+};
+
+/** "noun" becomes "noun (danh từ)"; a part of speech outside the list (from an external dictionary) is shown as it is. */
+export function posLabel(pos: string): string {
+  const vi = (POS_LABEL_VI as Record<string, string | undefined>)[pos];
+  return vi ? `${pos} (${vi})` : pos;
+}
 
 /** The level an AI request takes: the deck's own, Cơ bản when it has none. */
 export function aiDeckLevel(level?: string | null) {
@@ -143,23 +172,6 @@ export type DeckStats = {
 export const wordsWithoutIpa = <T extends { ipaUs?: string | null }>(words: T[]) =>
   words.filter((word) => !filled(word.ipaUs));
 
-type LookupPhonetics = { ipaUs?: string | null; ipaUk?: string | null };
-
-/**
- * The phonetics a learner-dictionary lookup found: the dictionary entry
- * first, then the word store. Empty strings when it found none.
- */
-export function phoneticsFromLookup(
-  result: { entries?: LookupPhonetics[] | null; matches?: LookupPhonetics[] | null } | null | undefined,
-): { ipaUs: string; ipaUk: string } {
-  const entry = result?.entries?.[0];
-  const local = result?.matches?.[0];
-  return {
-    ipaUs: String(entry?.ipaUs || local?.ipaUs || "").trim(),
-    ipaUk: String(entry?.ipaUk || local?.ipaUk || "").trim(),
-  };
-}
-
 /** From the server's deck summary, so a large deck needs no full load. */
 export function vocabDeckChecklist(deck: {
   title: string;
@@ -175,7 +187,7 @@ export function vocabDeckChecklist(deck: {
     { label: `Phiên âm ${withIpa}/${n} từ`, done: withIpa === n },
     { label: `Câu ví dụ ${withExample}/${n} từ`, done: withExample === n },
     {
-      label: "Ít nhất 4 nghĩa khác nhau cho bước Trắc nghiệm",
+      label: "Có ít nhất 4 từ khác nghĩa nhau",
       done: distinctMeanings >= 4,
     },
   );

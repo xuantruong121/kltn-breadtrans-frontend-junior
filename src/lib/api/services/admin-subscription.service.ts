@@ -120,6 +120,9 @@ export const adminPlanCatalogService = {
       `/admin/plan-catalog/versions/${versionId}/entitlements/${entitlementId}`,
       input,
     ),
+  /** Change the price of one term of a plan; the old price stays in the history. */
+  changePrice: (code: string, durationDays: number, priceVnd: number) =>
+    axiosClient.put(`/admin/plan-catalog/plans/${code}/prices/${durationDays}`, { priceVnd }),
   publish: (id: number) =>
     axiosClient.post(`/admin/plan-catalog/versions/${id}/publish`),
   retire: (id: number) =>

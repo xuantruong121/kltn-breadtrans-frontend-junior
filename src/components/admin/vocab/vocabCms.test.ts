@@ -1,9 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  POS_LABEL_VI,
+  POS_OPTIONS,
   entryToWord,
   parseVocabPaste,
-  phoneticsFromLookup,
+  posLabel,
   sharedEntryNote,
   vocabDeckChecklist,
   vocabListBlocker,
@@ -24,21 +26,6 @@ test("wordsWithoutIpa lists the words whose missing US phonetics block publishin
     wordsWithoutIpa(words).map((word) => word.id),
     [2, 3, 4],
   );
-});
-
-test("phoneticsFromLookup prefers the dictionary entry, then the word store, else empty", () => {
-  assert.deepEqual(
-    phoneticsFromLookup({
-      entries: [{ ipaUs: "/ˈmiːtɪŋ/", ipaUk: null }],
-      matches: [{ ipaUs: "/x/", ipaUk: "/ˈmiːtɪŋ/" }],
-    }),
-    { ipaUs: "/ˈmiːtɪŋ/", ipaUk: "/ˈmiːtɪŋ/" },
-  );
-  assert.deepEqual(phoneticsFromLookup({ entries: [], matches: [{ ipaUs: " /x/ " }] }), {
-    ipaUs: "/x/",
-    ipaUk: "",
-  });
-  assert.deepEqual(phoneticsFromLookup(null), { ipaUs: "", ipaUk: "" });
 });
 
 test("parseVocabPaste reads spreadsheet rows, pipes, dashes and commas", () => {
@@ -76,7 +63,7 @@ test("vocabDeckChecklist reads the server counts", () => {
   const done = Object.fromEntries(items.map((i) => [i.label, i.done]));
   assert.equal(done["Phiên âm 1/2 từ"], false);
   assert.equal(done["Câu ví dụ 2/2 từ"], true);
-  assert.equal(done["Ít nhất 4 nghĩa khác nhau cho bước Trắc nghiệm"], false);
+  assert.equal(done["Có ít nhất 4 từ khác nghĩa nhau"], false);
 });
 
 // QA 2026-11-22: "Kiểm tra & xuất bản" showed on an empty deck and at 2/5.
@@ -93,7 +80,7 @@ test("vocabPublishBlocker: every checklist item blocks, in the server's words", 
   // The same text the server's vocabDeckProblems gives.
   assert.equal(
     vocabPublishBlocker(half, false),
-    "Còn thiếu: phiên âm 1/3 từ; câu ví dụ 2/3 từ; ít nhất 4 nghĩa khác nhau cho bước Trắc nghiệm.",
+    "Còn thiếu: phiên âm 1/3 từ; câu ví dụ 2/3 từ; có ít nhất 4 từ khác nghĩa nhau.",
   );
   const ready = vocabDeckChecklist({
     title: "Họp",
@@ -154,4 +141,31 @@ test("entryToWord gives the word form a store entry in its own shape", () => {
   assert.equal(word.meaning, "chương trình họp");
   assert.equal(word.ipaUs, "/əˈdʒendə/");
   assert.equal(word.usedInDecks, 2);
+});
+
+test("every part of speech in the list has a Vietnamese label", () => {
+  for (const pos of POS_OPTIONS) {
+    assert.equal(typeof POS_LABEL_VI[pos], "string");
+    assert.ok(POS_LABEL_VI[pos].length > 0);
+    assert.equal(posLabel(pos), `${pos} (${POS_LABEL_VI[pos]})`);
+  }
+});
+
+test("posLabel keeps the English word and shows the Vietnamese one in brackets", () => {
+  assert.equal(posLabel("noun"), "noun (danh từ)");
+  assert.equal(posLabel("phrasal verb"), "phrasal verb (cụm động từ)");
+});
+
+test("a part of speech outside the list is shown as it is", () => {
+  assert.equal(posLabel("interjection"), "interjection");
+});
+
+test("the parts of speech the store really holds all have a Vietnamese name", () => {
+  for (const pos of ["article", "number", "modal verb", "proper noun"]) {
+    assert.equal((POS_OPTIONS as readonly string[]).includes(pos), true);
+  }
+  assert.equal(posLabel("article"), "article (mạo từ)");
+  assert.equal(posLabel("number"), "number (số từ)");
+  assert.equal(posLabel("modal verb"), "modal verb (động từ khuyết thiếu)");
+  assert.equal(posLabel("proper noun"), "proper noun (danh từ riêng)");
 });

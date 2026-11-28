@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { playWordAudio } from "@/modules/vocab/utils/audio";
-import { vocabService } from "@/lib/api/services/vocab.service";
 import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "../cmsButtons";
 import AudioClipField from "../AudioClipField";
 import {
@@ -16,9 +15,12 @@ import {
   aiDeckLevel,
   entryToWord,
   isBareNumber,
+  posLabel,
   sharedEntryNote,
   type DictionaryEntry,
 } from "./vocabCms";
+import { findTakenEntry, takenMessage } from "./dictionaryDuplicate";
+import { fillFromPhonetics, type PhoneticsAnswer } from "./phoneticsFill";
 
 /** IPA symbols that are not on a keyboard, inserted at the cursor. */
 const IPA_SYMBOLS = [
@@ -86,6 +88,7 @@ export default function VocabWordForm({
   save: saveWord,
   onSaved,
   onCancel,
+  onOpenExisting,
 }: {
   topicId?: number;
   word: AdminVocabWord | null;
@@ -93,6 +96,8 @@ export default function VocabWordForm({
   save?: (payload: WordPayload, isNew: boolean) => Promise<unknown>;
   onSaved: (keepOpen: boolean) => void;
   onCancel: () => void;
+  /** The dictionary page: open the entry that already holds the typed word. */
+  onOpenExisting?: (entry: DictionaryEntry) => void;
 }) {
   const [form, setForm] = useState<Form>(() => fromWord(word));
   const [collocations, setCollocations] = useState(word?.collocations ?? null);
@@ -100,6 +105,9 @@ export default function VocabWordForm({
   const [suggestions, setSuggestions] = useState<DictionaryEntry[]>([]);
   const [picked, setPicked] = useState<DictionaryEntry | null>(null);
   const [saving, setSaving] = useState(false);
+  // Set at once on the first press, before React redraws and the button is
+  // disabled: a double click or a held Enter sends one request, not two.
+  const inFlight = useRef(false);
   const [suggesting, setSuggesting] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const firstField = useRef<HTMLInputElement>(null);
@@ -137,6 +145,31 @@ export default function VocabWordForm({
     };
   }, [searching, typed]);
 
+  // The dictionary page's add form: say at once that the word and part of
+  // speech are already in the store, instead of after Lưu (owner 2026-11-28).
+  const checkTaken = !word && Boolean(saveWord) && typed.length >= 1;
+  const [takenFound, setTakenFound] = useState<DictionaryEntry | null>(null);
+  const taken = checkTaken ? findTakenEntry(takenFound ? [takenFound] : [], typed, form.pos) : null;
+  useEffect(() => {
+    if (!checkTaken) return;
+    let live = true;
+    const timer = setTimeout(async () => {
+      try {
+        const res: any = await axiosClient.get("/admin/dictionary", {
+          params: { q: typed, pageSize: 25 },
+        });
+        const items: DictionaryEntry[] = (res?.data ?? res)?.items ?? [];
+        if (live) setTakenFound(findTakenEntry(items, typed, form.pos));
+      } catch {
+        if (live) setTakenFound(null);
+      }
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [checkTaken, typed, form.pos]);
+
   const pick = (entry: DictionaryEntry) => {
     setPicked(entry);
     setSuggestions([]);
@@ -152,6 +185,11 @@ export default function VocabWordForm({
   };
 
   const save = async (keepOpen: boolean) => {
+    if (inFlight.current) return;
+    if (taken) {
+      toast.error(takenMessage(taken));
+      return;
+    }
     if (!form.word.trim() || !form.meaning.trim()) {
       toast.error("Cần nhập từ và nghĩa tiếng Việt.");
       return;
@@ -160,6 +198,7 @@ export default function VocabWordForm({
       toast.error("Số không dùng làm từ vựng flashcard.");
       return;
     }
+    inFlight.current = true;
     setSaving(true);
     const payload = {
       word: form.word.trim(),
@@ -202,6 +241,7 @@ export default function VocabWordForm({
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không thể lưu từ."));
     } finally {
+      inFlight.current = false;
       setSaving(false);
     }
   };
@@ -237,7 +277,12 @@ export default function VocabWordForm({
     }
   };
 
-  /** Phonetics and pronunciation audio from the learner's dictionary lookup. */
+  /**
+   * US/UK phonetics and audio from the external dictionary (owner 2026-11-28).
+   * It asks the dictionary itself, whatever the store holds for the word, and
+   * writes nothing into the store; only the empty boxes are filled, and the
+   * message says what was filled (phoneticsFill.ts).
+   */
   const lookupPhonetics = async () => {
     if (!form.word.trim()) {
       toast.error("Nhập từ trước.");
@@ -245,23 +290,24 @@ export default function VocabWordForm({
     }
     setLookingUp(true);
     try {
-      const result = await vocabService.lookupWord(form.word.trim());
-      const entry = result.entries?.[0];
-      const local = result.matches?.[0];
-      const ipaUs = entry?.ipaUs || local?.ipaUs || "";
-      const ipaUk = entry?.ipaUk || local?.ipaUk || "";
-      if (!ipaUs && !ipaUk) {
-        toast.error("Từ điển chưa có phiên âm cho từ này. Thử 'Gợi ý bằng AI'.");
-        return;
-      }
+      const res: any = await axiosClient.get("/admin/dictionary/phonetics", {
+        params: { word: form.word.trim(), pos: form.pos },
+      });
+      const outcome = fillFromPhonetics(
+        { ipaUs: form.ipaUs, ipaUk: form.ipaUk, audioUs: form.audioUs, audioUk: form.audioUk },
+        (res?.data ?? res) as PhoneticsAnswer,
+      );
+      // Only a box still empty now takes the answer: the admin may have typed meanwhile.
       setForm((current) => ({
         ...current,
-        ipaUs: ipaUs || current.ipaUs,
-        ipaUk: ipaUk || current.ipaUk,
-        audioUs: current.audioUs || entry?.audio?.us || "",
-        audioUk: current.audioUk || entry?.audio?.uk || "",
+        ipaUs: current.ipaUs.trim() ? current.ipaUs : outcome.next.ipaUs,
+        ipaUk: current.ipaUk.trim() ? current.ipaUk : outcome.next.ipaUk,
+        audioUs: current.audioUs.trim() ? current.audioUs : outcome.next.audioUs,
+        audioUk: current.audioUk.trim() ? current.audioUk : outcome.next.audioUk,
       }));
-      toast.success("Đã điền phiên âm từ từ điển. Kiểm tra lại trước khi lưu.");
+      if (outcome.kind === "error") toast.error(outcome.message);
+      else if (outcome.kind === "info") toast(outcome.message);
+      else toast.success(outcome.message, { duration: 6000 });
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không tra được từ điển lúc này."));
     } finally {
@@ -368,6 +414,20 @@ export default function VocabWordForm({
               </ul>
             </div>
           )}
+          {taken && (
+            <p role="alert" className="mt-1 text-xs font-medium text-amber-900">
+              {takenMessage(taken)}{" "}
+              {onOpenExisting && (
+                <button
+                  type="button"
+                  onClick={() => onOpenExisting(taken)}
+                  className="cursor-pointer font-semibold text-blue-700 underline-offset-4 hover:underline"
+                >
+                  Sửa mục này
+                </button>
+              )}
+            </p>
+          )}
         </div>
         <label className="text-sm font-medium text-slate-800">
           Loại từ
@@ -383,7 +443,7 @@ export default function VocabWordForm({
               ...POS_OPTIONS,
             ].map((pos) => (
               <option key={pos} value={pos}>
-                {pos}
+                {posLabel(pos)}
               </option>
             ))}
           </select>
@@ -507,14 +567,14 @@ export default function VocabWordForm({
         )}
       </fieldset>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button type="submit" disabled={saving} className={BTN_PRIMARY}>
+        <button type="submit" disabled={saving || Boolean(taken)} className={BTN_PRIMARY}>
           {saving && <Loader2 size={14} className="animate-spin" />}
           {word ? "Lưu từ" : "Lưu & thêm từ tiếp"}
         </button>
         {!word && (
           <button
             type="button"
-            disabled={saving}
+            disabled={saving || Boolean(taken)}
             onClick={() => void save(false)}
             className={BTN_SECONDARY}
           >

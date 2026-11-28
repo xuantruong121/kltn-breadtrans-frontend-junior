@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CircleAlert, Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -8,7 +8,7 @@ import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { PASSWORD_HINT, PASSWORD_PLACEHOLDER, newPasswordProblem } from "@/lib/auth/passwordPolicy";
-import { resetLinkProblem } from "@/lib/auth/resetLink";
+import { resetCheckProblem, resetLinkProblem } from "@/lib/auth/resetLink";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -22,6 +22,28 @@ function ResetPasswordForm() {
   // A link that cannot work: no form, a new link instead (owner 2026-11-21).
   const [expired, setExpired] = useState<string | null>(null);
   const linkProblem = resetLinkProblem(token) ?? expired;
+  // Ask the server once on opening, so a link that expired or was used shows
+  // that at once instead of after a password was typed (owner 2026-11-28).
+  // The check does not use the link up. An unclear answer leaves the form.
+  const needsCheck = resetLinkProblem(token) === null;
+  const [checking, setChecking] = useState(needsCheck);
+
+  useEffect(() => {
+    if (!needsCheck) return;
+    let cancelled = false;
+    axiosClient
+      .post("/auth/reset-password/check", { token })
+      .then((answer: unknown) => {
+        if (!cancelled) setExpired(resetCheckProblem(answer));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, needsCheck]);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,6 +108,10 @@ function ResetPasswordForm() {
             Quay lại đăng nhập
           </Link>
         </div>
+      ) : checking ? (
+        <p role="status" className="mt-6 flex items-center justify-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+          <Loader2 size={18} className="animate-spin" aria-hidden="true" /> Đang kiểm tra liên kết...
+        </p>
       ) : (
         <form onSubmit={submit} noValidate className="mt-6 space-y-4">
           {error && (
