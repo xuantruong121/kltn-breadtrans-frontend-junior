@@ -24,7 +24,6 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
-import { vocabService } from "@/lib/api/services/vocab.service";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Pagination } from "@/components/ui";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
@@ -36,12 +35,13 @@ import {
   BTN_SUCCESS,
 } from "../cmsButtons";
 import VocabStagePreview from "./VocabStagePreview";
+import CategoryCombobox from "../CategoryCombobox";
+import { bulkPhonetics, type PhoneticsAnswer } from "./phoneticsFill";
 import VocabWordForm, { type AdminVocabWord } from "./VocabWordForm";
 import {
   VOCAB_LEVELS,
   aiDeckLevel,
   parseVocabPaste,
-  phoneticsFromLookup,
   vocabDeckChecklist,
   vocabPublishBlocker,
   vocabPublishConfirm,
@@ -435,10 +435,16 @@ function DeckBody({ deck }: { deck: Deck | null }) {
     }
   };
 
-  /** The learner dictionary first (as "Lấy phiên âm" in the word form), then the AI word helper. */
-  const findPhonetics = async (word: string) => {
+  /**
+   * The external dictionary first (as "Lấy phiên âm" in the word form: it asks
+   * the dictionary itself and writes nothing into the store), then the AI word helper.
+   */
+  const findPhonetics = async (word: string, pos?: string | null) => {
     try {
-      const found = phoneticsFromLookup(await vocabService.lookupWord(word));
+      const res: any = await axiosClient.get("/admin/dictionary/phonetics", {
+        params: { word, ...(pos ? { pos } : {}) },
+      });
+      const found = bulkPhonetics((res?.data ?? res) as PhoneticsAnswer);
       if (found.ipaUs) return found;
     } catch {
       // The dictionary did not answer: the AI may still know the word.
@@ -483,7 +489,7 @@ function DeckBody({ deck }: { deck: Deck | null }) {
         setIpaProgress(`${index + 1}/${missing.length}`);
         let found = { ipaUs: "", ipaUk: "" };
         try {
-          found = await findPhonetics(word.word);
+          found = await findPhonetics(word.word, word.pos);
         } catch {
           // Counted below as not found.
         }
@@ -633,8 +639,9 @@ function DeckBody({ deck }: { deck: Deck | null }) {
 
       {published && !isSystem && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Bộ đang hiển thị cho học viên: sửa từ có hiệu lực ngay. Từ đã có học
-          viên học thì không đổi được chữ và nghĩa.
+          Bộ đang mở cho học viên, nên chỉnh sửa có hiệu lực ngay. Từ nào đã có học
+          viên học thì không đổi được chữ, loại từ và nghĩa của từ đó; phiên âm,
+          ví dụ và audio vẫn sửa được.
         </p>
       )}
 
@@ -704,23 +711,13 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 ))}
               </select>
             </label>
-            <label className="text-sm font-medium text-slate-800 md:col-span-2">
-              Chuyên mục
-              <input
-                list="vocab-categories"
+            <div className="md:col-span-2">
+              <CategoryCombobox
                 value={form.categoryName}
-                onChange={(event) =>
-                  setForm({ ...form, categoryName: event.target.value })
-                }
-                placeholder="Chọn hoặc gõ chuyên mục mới"
-                className={FIELD}
+                onChange={(next) => setForm({ ...form, categoryName: next })}
+                options={categories}
               />
-              <datalist id="vocab-categories">
-                {categories.map((category) => (
-                  <option key={category} value={category} />
-                ))}
-              </datalist>
-            </label>
+            </div>
             <label className="text-sm font-medium text-slate-800 md:col-span-2">
               Mô tả ngắn (hiện trên thẻ bộ từ của học viên)
               <textarea
@@ -772,6 +769,12 @@ function DeckBody({ deck }: { deck: Deck | null }) {
                 </li>
               ))}
             </ul>
+            {stats.total > 0 &&
+              checklist.some((item) => item.label === "Có ít nhất 4 từ khác nghĩa nhau" && !item.done) && (
+                <p className="mt-3 text-xs leading-5 text-slate-600">
+                  Bước Trắc nghiệm lấy 3 đáp án sai từ nghĩa của các từ khác trong bộ. Hãy thêm từ, hoặc sửa ô Nghĩa tiếng Việt cho khác nhau.
+                </p>
+              )}
             {deck && stats.withIpa < stats.total && (
               <div className="mt-4 border-t border-slate-100 pt-3">
                 <button

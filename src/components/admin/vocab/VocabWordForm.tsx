@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 import axiosClient from "@/lib/api/axiosClient";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 import { playWordAudio } from "@/modules/vocab/utils/audio";
-import { vocabService } from "@/lib/api/services/vocab.service";
 import { BTN_AI, BTN_PRIMARY, BTN_SECONDARY } from "../cmsButtons";
 import AudioClipField from "../AudioClipField";
 import {
@@ -21,6 +20,7 @@ import {
   type DictionaryEntry,
 } from "./vocabCms";
 import { findTakenEntry, takenMessage } from "./dictionaryDuplicate";
+import { fillFromPhonetics, type PhoneticsAnswer } from "./phoneticsFill";
 
 /** IPA symbols that are not on a keyboard, inserted at the cursor. */
 const IPA_SYMBOLS = [
@@ -277,7 +277,12 @@ export default function VocabWordForm({
     }
   };
 
-  /** Phonetics and pronunciation audio from the learner's dictionary lookup. */
+  /**
+   * US/UK phonetics and audio from the external dictionary (owner 2026-11-28).
+   * It asks the dictionary itself, whatever the store holds for the word, and
+   * writes nothing into the store; only the empty boxes are filled, and the
+   * message says what was filled (phoneticsFill.ts).
+   */
   const lookupPhonetics = async () => {
     if (!form.word.trim()) {
       toast.error("Nhập từ trước.");
@@ -285,27 +290,24 @@ export default function VocabWordForm({
     }
     setLookingUp(true);
     try {
-      const result = await vocabService.lookupWord(form.word.trim());
-      const entry = result.entries?.[0];
-      const local = result.matches?.[0];
-      const ipaUs = entry?.ipaUs || local?.ipaUs || "";
-      const ipaUk = entry?.ipaUk || local?.ipaUk || "";
-      if (!ipaUs && !ipaUk) {
-        toast.error("Từ điển chưa có phiên âm cho từ này. Thử 'Gợi ý bằng AI'.");
-        return;
-      }
+      const res: any = await axiosClient.get("/admin/dictionary/phonetics", {
+        params: { word: form.word.trim(), pos: form.pos },
+      });
+      const outcome = fillFromPhonetics(
+        { ipaUs: form.ipaUs, ipaUk: form.ipaUk, audioUs: form.audioUs, audioUk: form.audioUk },
+        (res?.data ?? res) as PhoneticsAnswer,
+      );
+      // Only a box still empty now takes the answer: the admin may have typed meanwhile.
       setForm((current) => ({
         ...current,
-        ipaUs: ipaUs || current.ipaUs,
-        ipaUk: ipaUk || current.ipaUk,
-        audioUs: current.audioUs || entry?.audio?.us || "",
-        audioUk: current.audioUk || entry?.audio?.uk || "",
+        ipaUs: current.ipaUs.trim() ? current.ipaUs : outcome.next.ipaUs,
+        ipaUk: current.ipaUk.trim() ? current.ipaUk : outcome.next.ipaUk,
+        audioUs: current.audioUs.trim() ? current.audioUs : outcome.next.audioUs,
+        audioUk: current.audioUk.trim() ? current.audioUk : outcome.next.audioUk,
       }));
-      toast.success(
-        entry?.audio?.us || entry?.audio?.uk
-          ? "Đã điền phiên âm và audio từ từ điển. Kiểm tra lại trước khi lưu."
-          : "Đã điền phiên âm. Từ điển không có audio dùng được: học viên sẽ nghe giọng máy của trình duyệt.",
-      );
+      if (outcome.kind === "error") toast.error(outcome.message);
+      else if (outcome.kind === "info") toast(outcome.message);
+      else toast.success(outcome.message, { duration: 6000 });
     } catch (err: any) {
       toast.error(getApiErrorMessage(err, "Không tra được từ điển lúc này."));
     } finally {
