@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  PASSWORD_EXAMPLE,
   PASSWORD_HINT,
   PASSWORD_MIN_LENGTH,
+  PASSWORD_PLACEHOLDER,
   newPasswordProblem,
   passwordMissing,
 } from "./passwordPolicy.ts";
@@ -51,11 +53,13 @@ test("at most 128 characters", () => {
   assert.match(newPasswordProblem(`A1!${"a".repeat(126)}`) ?? "", /tối đa 128/);
 });
 
-test("the hint states the rule and gives no example password to copy", () => {
-  assert.match(PASSWORD_HINT, /Ít nhất 8 ký tự/);
-  assert.match(PASSWORD_HINT, /chữ hoa, số và ký tự đặc biệt/);
-  assert.match(PASSWORD_HINT, /trình quản lý mật khẩu/);
-  // The symbols are a kind of character, not a password: no quoted phrase, no "ví dụ".
-  assert.doesNotMatch(PASSWORD_HINT, /["“”'‘’]/);
-  assert.doesNotMatch(PASSWORD_HINT, /ví dụ/i);
+test("the hint states the rule in one short line", () => {
+  assert.equal(PASSWORD_HINT, "Ít nhất 8 ký tự, gồm chữ hoa, số và ký tự đặc biệt.");
+  assert.ok(PASSWORD_HINT.length < 70);
+});
+
+test("the placeholder is an example password and the example satisfies the rule", () => {
+  assert.equal(PASSWORD_PLACEHOLDER, `Ví dụ: ${PASSWORD_EXAMPLE}`);
+  assert.deepEqual(passwordMissing(PASSWORD_EXAMPLE), []);
+  assert.equal(newPasswordProblem(PASSWORD_EXAMPLE), null);
 });

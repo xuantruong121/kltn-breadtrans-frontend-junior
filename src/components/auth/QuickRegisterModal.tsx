@@ -167,7 +167,7 @@ export function QuickRegisterModal({
           </span>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-3">
+        <form onSubmit={handleRegister} noValidate className="space-y-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
               Họ và tên <span className="text-rose-700 dark:text-rose-400">*</span>

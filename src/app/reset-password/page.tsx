@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import axiosClient from "@/lib/api/axiosClient";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { PASSWORD_HINT, PASSWORD_MIN_LENGTH, PASSWORD_PLACEHOLDER, newPasswordProblem } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_HINT, PASSWORD_PLACEHOLDER, newPasswordProblem } from "@/lib/auth/passwordPolicy";
 import { resetLinkProblem } from "@/lib/auth/resetLink";
 
 function ResetPasswordForm() {
@@ -87,7 +87,7 @@ function ResetPasswordForm() {
           </Link>
         </div>
       ) : (
-        <form onSubmit={submit} className="mt-6 space-y-4">
+        <form onSubmit={submit} noValidate className="mt-6 space-y-4">
           {error && (
             <div role="alert" className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-200">
               <CircleAlert size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
@@ -105,7 +105,6 @@ function ResetPasswordForm() {
                   id={`reset-${field}`}
                   type={showPassword ? "text" : "password"}
                   required
-                  minLength={PASSWORD_MIN_LENGTH}
                   autoComplete="new-password"
                   value={field === "password" ? password : confirmPassword}
                   onChange={(event) => field === "password" ? setPassword(event.target.value) : setConfirmPassword(event.target.value)}
