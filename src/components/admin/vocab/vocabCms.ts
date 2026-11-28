@@ -24,6 +24,10 @@ export const POS_OPTIONS = [
   "conjunction",
   "pronoun",
   "determiner",
+  "article",
+  "number",
+  "modal verb",
+  "proper noun",
 ] as const;
 
 /** What each part of speech is called to the admin: "noun (danh từ)". Only the label; the stored value stays English. */
@@ -39,6 +43,10 @@ export const POS_LABEL_VI: Record<(typeof POS_OPTIONS)[number], string> = {
   conjunction: "liên từ",
   pronoun: "đại từ",
   determiner: "hạn định từ",
+  article: "mạo từ",
+  number: "số từ",
+  "modal verb": "động từ khuyết thiếu",
+  "proper noun": "danh từ riêng",
 };
 
 /** "noun" becomes "noun (danh từ)"; a part of speech outside the list (from an external dictionary) is shown as it is. */

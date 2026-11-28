@@ -159,3 +159,13 @@ test("posLabel keeps the English word and shows the Vietnamese one in brackets",
 test("a part of speech outside the list is shown as it is", () => {
   assert.equal(posLabel("interjection"), "interjection");
 });
+
+test("the parts of speech the store really holds all have a Vietnamese name", () => {
+  for (const pos of ["article", "number", "modal verb", "proper noun"]) {
+    assert.equal((POS_OPTIONS as readonly string[]).includes(pos), true);
+  }
+  assert.equal(posLabel("article"), "article (mạo từ)");
+  assert.equal(posLabel("number"), "number (số từ)");
+  assert.equal(posLabel("modal verb"), "modal verb (động từ khuyết thiếu)");
+  assert.equal(posLabel("proper noun"), "proper noun (danh từ riêng)");
+});
