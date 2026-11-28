@@ -540,6 +540,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="text"
+                    autoComplete="off"
                     placeholder="VD: Nguyễn Văn A"
                     value={createForm.fullName}
                     onChange={(e) =>
@@ -554,6 +555,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="email"
+                    autoComplete="off"
                     placeholder="email@example.com"
                     value={createForm.email}
                     onChange={(e) =>
@@ -569,6 +571,7 @@ export default function AdminUsersPage() {
                   <div className="relative">
                     <input
                       type={showCreatePassword ? "text" : "password"}
+                      autoComplete="new-password"
                       placeholder={`Ít nhất ${PASSWORD_MIN_LENGTH} ký tự`}
                       value={createForm.password}
                       onChange={(e) =>
@@ -602,6 +605,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="tel"
+                    autoComplete="off"
                     placeholder="0912345678"
                     value={createForm.phone}
                     onChange={(e) =>
@@ -703,6 +707,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="text"
+                    autoComplete="off"
                     value={editForm.fullName}
                     onChange={(e) =>
                       setEditForm({ ...editForm, fullName: e.target.value })
@@ -716,6 +721,7 @@ export default function AdminUsersPage() {
                   </label>
                   <input
                     type="tel"
+                    autoComplete="off"
                     value={editForm.phone}
                     onChange={(e) =>
                       setEditForm({ ...editForm, phone: e.target.value })
@@ -755,6 +761,7 @@ export default function AdminUsersPage() {
                     />{" "}
                     <input
                       type={showEditPassword ? "text" : "password"}
+                      autoComplete="new-password"
                       placeholder="Nhập mật khẩu mới..."
                       value={editForm.password}
                       onChange={(e) =>
