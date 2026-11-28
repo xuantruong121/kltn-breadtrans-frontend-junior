@@ -1,9 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  POS_LABEL_VI,
+  POS_OPTIONS,
   entryToWord,
   parseVocabPaste,
   phoneticsFromLookup,
+  posLabel,
   sharedEntryNote,
   vocabDeckChecklist,
   vocabListBlocker,
@@ -154,4 +157,21 @@ test("entryToWord gives the word form a store entry in its own shape", () => {
   assert.equal(word.meaning, "chương trình họp");
   assert.equal(word.ipaUs, "/əˈdʒendə/");
   assert.equal(word.usedInDecks, 2);
+});
+
+test("every part of speech in the list has a Vietnamese label", () => {
+  for (const pos of POS_OPTIONS) {
+    assert.equal(typeof POS_LABEL_VI[pos], "string");
+    assert.ok(POS_LABEL_VI[pos].length > 0);
+    assert.equal(posLabel(pos), `${pos} (${POS_LABEL_VI[pos]})`);
+  }
+});
+
+test("posLabel keeps the English word and shows the Vietnamese one in brackets", () => {
+  assert.equal(posLabel("noun"), "noun (danh từ)");
+  assert.equal(posLabel("phrasal verb"), "phrasal verb (cụm động từ)");
+});
+
+test("a part of speech outside the list is shown as it is", () => {
+  assert.equal(posLabel("interjection"), "interjection");
 });

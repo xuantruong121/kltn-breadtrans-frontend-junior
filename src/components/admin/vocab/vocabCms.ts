@@ -26,6 +26,27 @@ export const POS_OPTIONS = [
   "determiner",
 ] as const;
 
+/** What each part of speech is called to the admin: "noun (danh từ)". Only the label; the stored value stays English. */
+export const POS_LABEL_VI: Record<(typeof POS_OPTIONS)[number], string> = {
+  noun: "danh từ",
+  verb: "động từ",
+  adjective: "tính từ",
+  adverb: "trạng từ",
+  phrase: "cụm từ",
+  "phrasal verb": "cụm động từ",
+  idiom: "thành ngữ",
+  preposition: "giới từ",
+  conjunction: "liên từ",
+  pronoun: "đại từ",
+  determiner: "hạn định từ",
+};
+
+/** "noun" becomes "noun (danh từ)"; a part of speech outside the list (from an external dictionary) is shown as it is. */
+export function posLabel(pos: string): string {
+  const vi = (POS_LABEL_VI as Record<string, string | undefined>)[pos];
+  return vi ? `${pos} (${vi})` : pos;
+}
+
 /** The level an AI request takes: the deck's own, Cơ bản when it has none. */
 export function aiDeckLevel(level?: string | null) {
   return level && (PRACTICE_LEVELS as readonly string[]).includes(level) ? level : "BASIC";

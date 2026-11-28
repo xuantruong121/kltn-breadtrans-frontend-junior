@@ -27,6 +27,8 @@ export default function AudioClipField({
   fileName: string;
 }) {
   const [uploading, setUploading] = useState(false);
+  // The address the player failed to open (a dead link looked like a 00:00 clip).
+  const [brokenUrl, setBrokenUrl] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const recorder = useRef<MediaRecorder | null>(null);
@@ -111,7 +113,18 @@ export default function AudioClipField({
     <div className="text-sm font-medium text-slate-800">
       {label}
       {value && !recording && (
-        <audio controls src={value} className="mt-1 h-10 w-full" aria-label={label} />
+        <audio
+          controls
+          src={value}
+          onError={() => setBrokenUrl(value)}
+          className="mt-1 h-10 w-full"
+          aria-label={label}
+        />
+      )}
+      {value && !recording && brokenUrl === value && (
+        <p role="alert" className="mt-1 text-xs font-medium text-amber-800">
+          Không phát được file này. Bỏ đi hoặc ghi âm lại; để trống thì học viên nghe giọng máy của trình duyệt.
+        </p>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
         {recording ? (

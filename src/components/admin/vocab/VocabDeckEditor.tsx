@@ -751,7 +751,13 @@ function DeckBody({ deck }: { deck: Deck | null }) {
           </div>
         </section>
 
-        <aside className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+        {/* The rail scrolls on its own. Its scrollbar's room is kept even when
+            there is no scrollbar, so the width the 4-step preview fits to never
+            changes (without it the preview and the scrollbar flickered). */}
+        <aside
+          className="space-y-6 xl:sticky xl:top-6 xl:col-start-2 xl:row-span-2 xl:row-start-1 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto"
+          style={{ scrollbarGutter: "stable" }}
+        >
           {!isSystem && (
           <section
             aria-labelledby="vocab-checklist-heading"
