@@ -6,7 +6,6 @@ import {
   parseClozeQuestionSegments,
   formatSkillName,
   groupQuestionsBySection,
-  formatPlacementLevel,
   diagnosticBadgeLabel,
   resultPollInterval,
   isResultGrading,
@@ -87,52 +86,6 @@ test("groupQuestionsBySection organizes 52 questions into canonical 5 sections",
   assert.equal(groups[4].questions.length, 2);
 });
 
-test("formatPlacementLevel shows the active form's internal band without inventing CEFR", () => {
-  // The active Entry Diagnostic reports Starter / Foundation / Intermediate.
-  // Converting those to Pre-A1 / A2 / B1 claimed a CEFR classification this
-  // project has never validated, so the band is now shown as itself.
-  assert.equal(formatPlacementLevel("Starter"), "Starter – Mới bắt đầu");
-  assert.equal(formatPlacementLevel("Foundation"), "Foundation – Cơ bản");
-  assert.equal(
-    formatPlacementLevel("Intermediate"),
-    "Intermediate – Trung cấp",
-  );
-  for (const band of ["Starter", "Foundation", "Intermediate"]) {
-    assert.doesNotMatch(
-      formatPlacementLevel(band),
-      /Pre-A1|\bA1\b|\bA2\b|\bB1\b|\bB2\b|\bC1\b|\bC2\b/,
-    );
-  }
-  // An unknown band must not default into a CEFR claim either.
-  assert.equal(formatPlacementLevel(""), "Chưa xác định");
-  assert.doesNotMatch(formatPlacementLevel(""), /Pre-A1|A1|A2|B1|B2/);
-});
-
-test("formatPlacementLevel still localizes a CEFR band the backend itself reports", () => {
-  // The section/band scorer returns real CEFR bands; those are localized, not
-  // rewritten, because the claim originates in the backend result.
-  assert.equal(
-    formatPlacementLevel("Pre-A1 / Beginner foundation needed"),
-    "Pre-A1 – Cần củng cố nền tảng",
-  );
-  assert.equal(formatPlacementLevel("A1"), "A1 – Sơ cấp");
-  assert.equal(formatPlacementLevel("A2"), "A2 – Sơ trung cấp");
-  assert.equal(formatPlacementLevel("B1"), "B1 – Trung cấp");
-  assert.equal(formatPlacementLevel("B2"), "B2 – Trung cấp trên");
-  assert.equal(
-    formatPlacementLevel("A1 — đang tiến tới A2"),
-    "A1 – Đang tiến tới A2",
-  );
-  assert.equal(
-    formatPlacementLevel("A2 — đang tiến tới B1"),
-    "A2 – Đang tiến tới B1",
-  );
-  assert.equal(
-    formatPlacementLevel("B1 — đang tiến tới B2"),
-    "B1 – Đang tiến tới B2",
-  );
-});
-
 test("result polling keeps going while grading is pending and briefly after submit", () => {
   const graded = { productivePending: false, fourSkill: { state: "COMPLETE", observed: { speaking: { tasks: [{ status: "GRADED" }] }, writing: { tasks: [{ status: "GRADED" }, { status: "SKIPPED" }] } } } };
   const now = 1_000_000;
@@ -167,15 +120,21 @@ test("grading progress counts only submitted tasks and ends when none is pending
 });
 
 test("skill standing comes from the advice profile on four-skill results", () => {
-  const advice = (p: object) => ({ strengths: [], weaknesses: [], advice: { profile: { assessed: ["LISTENING", "READING", "SPEAKING", "WRITING"], strongest: [], weakest: [], balanced: false, ...p } } });
+  const advice = (p: object) => ({ advice: { profile: { assessed: ["LISTENING", "READING", "SPEAKING", "WRITING"], strongest: [], weakest: [], balanced: false, ...p } } });
   assert.deepEqual(summarizeSkillStanding(advice({ strongest: ["LISTENING"], weakest: ["SPEAKING"] })), { strong: ["LISTENING"], weak: ["SPEAKING"], balanced: false });
   assert.deepEqual(summarizeSkillStanding(advice({ balanced: true })), { strong: [], weak: [], balanced: true });
-  assert.deepEqual(summarizeSkillStanding({ strengths: ["Reading"], weaknesses: ["Grammar"] }), { strong: ["Reading"], weak: ["Grammar"], balanced: false });
+  // A result without advice has no standing to show; nothing is read from older lists.
+  assert.deepEqual(summarizeSkillStanding({}), { strong: [], weak: [], balanced: false });
+  assert.deepEqual(summarizeSkillStanding({ advice: null }), { strong: [], weak: [], balanced: false });
+  assert.deepEqual(summarizeSkillStanding(advice({ assessed: ["LISTENING"] })), { strong: [], weak: [], balanced: false });
 });
 
 test("diagnosticBadgeLabel never shows the four-skill marker as a level", () => {
   assert.equal(diagnosticBadgeLabel("FOUR_SKILL_PROFILE"), "Đã làm đánh giá đầu vào");
-  assert.equal(diagnosticBadgeLabel("Starter"), "Trình độ: Starter – Mới bắt đầu");
+  // Any other value is not a level to print: the badge is simply absent.
+  for (const stale of ["Starter", "Foundation", "Intermediate", "A2", "Pre-A1"]) {
+    assert.equal(diagnosticBadgeLabel(stale), null);
+  }
   assert.equal(diagnosticBadgeLabel(""), null);
   assert.equal(diagnosticBadgeLabel(null), null);
 });

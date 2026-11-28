@@ -139,73 +139,15 @@ export function groupQuestionsBySection(
 }
 
 /**
- * Present a placement band to the learner.
- *
- * The active Entry Diagnostic is 20 objective multiple-choice items with no
- * listening audio and no productive speaking or writing, and its backend
- * result is an internal three-band scale (Starter / Foundation /
- * Intermediate). This function used to convert those bands into CEFR labels -
- * Starter to "Pre-A1", Foundation to "A2", Intermediate to "B1" - which
- * presented the learner with a CEFR classification nothing in this project
- * has validated. The internal band is now shown faithfully instead.
- *
- * A genuine CEFR string still passes through: the section/band scorer returns
- * real CEFR bands, so when the backend itself reports one it is localized
- * rather than rewritten. No CEFR code is ever invented here.
- */
-/**
  * Dashboard badge for the latest entry diagnostic. A four-skill attempt stores
  * the marker FOUR_SKILL_PROFILE as its level, which is not a level at all: the
- * badge then only says the diagnostic was done.
+ * badge then only says the diagnostic was done. Any other value is not shown:
+ * there is no placement level to print.
  */
 export function diagnosticBadgeLabel(level?: string | null): string | null {
-  const trimmed = (level || "").trim();
-  if (!trimmed) return null;
-  if (trimmed === "FOUR_SKILL_PROFILE") return "Đã làm đánh giá đầu vào";
-  return `Trình độ: ${formatPlacementLevel(trimmed)}`;
-}
-
-export function formatPlacementLevel(level?: string | null): string {
-  const trimmed = (level || "").trim();
-  if (!trimmed) return "Chưa xác định";
-
-  // Internal bands of the active form: shown as themselves, with a short
-  // descriptor. Deliberately no CEFR code.
-  const lower = trimmed.toLowerCase();
-  if (lower.includes("starter")) return "Starter – Mới bắt đầu";
-  if (lower === "foundation") return "Foundation – Cơ bản";
-  if (lower === "intermediate") return "Intermediate – Trung cấp";
-
-  // Genuine CEFR results reported by the backend, localized as before.
-  if (
-    trimmed === "Pre-A1 / Beginner foundation needed" ||
-    trimmed === "Pre-A1"
-  ) {
-    return "Pre-A1 – Cần củng cố nền tảng";
-  }
-  if (trimmed === "A1") return "A1 – Sơ cấp";
-  if (trimmed === "A2") return "A2 – Sơ trung cấp";
-  if (trimmed === "B1") return "B1 – Trung cấp";
-  if (trimmed === "B2") return "B2 – Trung cấp trên";
-  if (
-    trimmed === "A1 — đang tiến tới A2" ||
-    trimmed === "A1 – Đang tiến tới A2"
-  ) {
-    return "A1 – Đang tiến tới A2";
-  }
-  if (
-    trimmed === "A2 — đang tiến tới B1" ||
-    trimmed === "A2 – Đang tiến tới B1"
-  ) {
-    return "A2 – Đang tiến tới B1";
-  }
-  if (
-    trimmed === "B1 — đang tiến tới B2" ||
-    trimmed === "B1 – Đang tiến tới B2"
-  ) {
-    return "B1 – Đang tiến tới B2";
-  }
-  return trimmed;
+  return (level || "").trim() === "FOUR_SKILL_PROFILE"
+    ? "Đã làm đánh giá đầu vào"
+    : null;
 }
 
 /** How often the saved result is re-read while grading may still change it. */
@@ -265,17 +207,14 @@ export function gradingProgress(result: PollableResult): { done: number; total: 
 }
 
 type SkillSummarySource = {
-  strengths?: string[];
-  weaknesses?: string[];
   advice?: {
     profile: { assessed: string[]; strongest: string[]; weakest: string[]; balanced: boolean };
   } | null;
 };
 
 /**
- * Strong and weak skills for the profile summary. Four-skill results carry
- * them in `advice.profile` (the older `strengths`/`weaknesses` lists come back
- * empty for them); older results keep their own lists.
+ * Strong and weak skills for the profile summary, read from `advice.profile`.
+ * A result without advice has no standing to show.
  */
 export function summarizeSkillStanding(result: SkillSummarySource): {
   strong: string[];
@@ -283,11 +222,9 @@ export function summarizeSkillStanding(result: SkillSummarySource): {
   balanced: boolean;
 } {
   const profile = result.advice?.profile;
-  if (profile) {
-    if (profile.assessed.length < 2) return { strong: [], weak: [], balanced: false };
-    return profile.balanced
-      ? { strong: [], weak: [], balanced: true }
-      : { strong: profile.strongest, weak: profile.weakest, balanced: false };
-  }
-  return { strong: result.strengths ?? [], weak: result.weaknesses ?? [], balanced: false };
+  if (!profile || profile.assessed.length < 2)
+    return { strong: [], weak: [], balanced: false };
+  return profile.balanced
+    ? { strong: [], weak: [], balanced: true }
+    : { strong: profile.strongest, weak: profile.weakest, balanced: false };
 }
