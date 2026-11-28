@@ -30,7 +30,7 @@ import toast from "react-hot-toast";
 import { Pagination } from "@/components/ui";
 import { useAuthStore } from "@/stores/authStore";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
-import { PASSWORD_MIN_LENGTH } from "@/lib/auth/passwordPolicy";
+import { PASSWORD_PLACEHOLDER, PASSWORD_RULE_MESSAGE } from "@/lib/auth/passwordPolicy";
 import {
   DIRECT_PASSWORD_PAYLOAD,
   directPasswordProblem,
@@ -605,7 +605,7 @@ export default function AdminUsersPage() {
                     <input
                       type={showCreatePassword ? "text" : "password"}
                       autoComplete="new-password"
-                      placeholder={`Ít nhất ${PASSWORD_MIN_LENGTH} ký tự`}
+                      placeholder={PASSWORD_PLACEHOLDER}
                       value={createForm.password}
                       onChange={(e) =>
                         setCreateForm({
@@ -805,7 +805,7 @@ export default function AdminUsersPage() {
                     </summary>
                     <div className="mt-3 space-y-2">
                       <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                        Người này sẽ bị đăng xuất khỏi mọi thiết bị. Ít nhất {PASSWORD_MIN_LENGTH} ký tự.
+                        Người này sẽ bị đăng xuất khỏi mọi thiết bị. {PASSWORD_RULE_MESSAGE}
                       </p>
                       <div className="relative">
                         <Lock
