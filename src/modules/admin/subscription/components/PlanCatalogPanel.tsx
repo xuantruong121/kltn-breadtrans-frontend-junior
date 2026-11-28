@@ -2,323 +2,227 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   adminPlanCatalogService,
   type PlanCatalogRow,
-  type PlanEntitlementRow,
-  type PlanVersionRow,
 } from "@/lib/api/services/admin-subscription.service";
+import {
+  grantedFeatureKeys,
+  pricePer30Days,
+  priceWarning,
+  readPriceInput,
+  savingPercent,
+  termRows,
+  type TermRow,
+} from "@/lib/admin/planPriceLogic";
 import { formatVnd } from "@/modules/subscription/planLogic";
 import { getApiErrorMessage } from "@/lib/utils/apiError";
 
+/** What each feature a plan grants is called to the admin. */
 const FEATURE_LABELS: Record<string, string> = {
+  PREMIUM_VOCAB: "Từ vựng",
+  PREMIUM_READING: "Đọc",
+  PREMIUM_LISTENING: "Nghe",
+  PREMIUM_SPEAKING_CONTENT: "Nói",
+  PREMIUM_WRITING_CONTENT: "Viết",
   AI_SPEAKING_ASSESSMENT: "Chấm nói bằng AI",
   AI_WRITING_REVIEW: "Chấm viết bằng AI",
   AI_TUTOR_MESSAGE: "Tin nhắn trợ lý AI",
   AI_EXPLANATION: "Giải thích bằng AI",
-  PREMIUM_VOCAB: "Từ vựng nâng cao",
-  PREMIUM_READING: "Đọc nâng cao",
-  PREMIUM_LISTENING: "Nghe nâng cao",
-  PREMIUM_SPEAKING_CONTENT: "Nói nâng cao",
-  PREMIUM_WRITING_CONTENT: "Viết nâng cao",
 };
 
-const PERIOD_LABELS: Record<string, string> = {
-  DAY: "ngày",
-  CALENDAR_MONTH: "tháng",
-  BILLING_CYCLE: "kỳ gói",
-  LIFETIME: "trọn đời",
+const dayText = (iso: string) => new Date(iso).toLocaleDateString("vi-VN");
+
+type Pending = {
+  code: string;
+  planName: string;
+  days: number;
+  from: number;
+  to: number;
+  warning: string | null;
 };
 
-const FIELD =
-  "mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
-
-const limitText = (entitlement: PlanEntitlementRow) => {
-  if (!entitlement.enabled) return "Không có";
-  if (entitlement.limitValue === null) return "Không giới hạn";
-  const period = PERIOD_LABELS[entitlement.period ?? ""];
-  return period
-    ? `${entitlement.limitValue} / ${period}`
-    : String(entitlement.limitValue);
-};
-
-const featureLabel = (key: string) => FEATURE_LABELS[key] ?? key;
-
-function useCatalogAction<T>(
-  action: (input: T) => Promise<unknown>,
-  success: string,
-) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: action,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-plan-catalog"] });
-      toast.success(success);
-    },
-    onError: (error) =>
-      toast.error(getApiErrorMessage(error, "Không thể cập nhật bảng giá.")),
-  });
-}
-
-function DraftEditor({
-  draft,
-  onPublish,
-}: {
-  draft: PlanVersionRow;
-  onPublish: () => void;
-}) {
-  const [form, setForm] = useState({
-    displayName: draft.displayName ?? "",
-    description: draft.description ?? "",
-    priceVnd: String(draft.priceVnd ?? ""),
-    durationDays: String(draft.durationDays ?? ""),
-  });
-  const save = useCatalogAction(
-    () =>
-      adminPlanCatalogService.updateDraft(draft.id, {
-        displayName: form.displayName.trim(),
-        description: form.description.trim(),
-        priceVnd: Number(form.priceVnd),
-        durationDays: Number(form.durationDays),
-      }),
-    "Đã lưu bản nháp.",
-  );
-  const entitlement = useCatalogAction(
-    (input: {
-      id: number;
-      enabled?: boolean;
-      limitValue?: number | null;
-    }) => {
-      const { id, ...change } = input;
-      return adminPlanCatalogService.updateEntitlement(draft.id, id, change);
-    },
-    "Đã cập nhật quyền lợi.",
-  );
-  const discard = useCatalogAction(
-    () => adminPlanCatalogService.retire(draft.id),
-    "Đã bỏ bản nháp.",
-  );
-  const set = (key: keyof typeof form) => (value: string) =>
-    setForm((current) => ({ ...current, [key]: value }));
-
-  return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50/40 p-4">
-      <p className="text-sm font-semibold text-slate-900">
-        Bản nháp phiên bản {draft.version}
-      </p>
-      <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        <label className="text-sm font-medium text-slate-700">
-          Tên gói
-          <input
-            value={form.displayName}
-            onChange={(event) => set("displayName")(event.target.value)}
-            className={FIELD}
-          />
-        </label>
-        <label className="text-sm font-medium text-slate-700">
-          Giá (đồng)
-          <input
-            type="number"
-            min={1}
-            value={form.priceVnd}
-            onChange={(event) => set("priceVnd")(event.target.value)}
-            className={FIELD}
-          />
-        </label>
-        <label className="text-sm font-medium text-slate-700">
-          Thời hạn (ngày)
-          <input
-            type="number"
-            min={1}
-            value={form.durationDays}
-            onChange={(event) => set("durationDays")(event.target.value)}
-            className={FIELD}
-          />
-        </label>
-        <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-          Mô tả
-          <textarea
-            rows={2}
-            value={form.description}
-            onChange={(event) => set("description")(event.target.value)}
-            className={FIELD}
-          />
-        </label>
-      </div>
-
-      <table className="mt-4 w-full text-left text-sm">
-        <thead className="text-xs text-slate-500">
-          <tr>
-            <th className="py-1.5 font-semibold">Quyền lợi</th>
-            <th className="py-1.5 font-semibold">Bật</th>
-            <th className="py-1.5 font-semibold">Giới hạn</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200">
-          {draft.entitlements.map((row) => (
-            <tr key={row.id}>
-              <td className="py-2 text-slate-800">
-                {featureLabel(row.featureKey)}
-              </td>
-              <td className="py-2">
-                <input
-                  type="checkbox"
-                  aria-label={`Bật ${featureLabel(row.featureKey)}`}
-                  checked={row.enabled}
-                  disabled={entitlement.isPending}
-                  onChange={(event) =>
-                    entitlement.mutate({
-                      id: row.id,
-                      enabled: event.target.checked,
-                    })
-                  }
-                />
-              </td>
-              <td className="py-2">
-                {row.limitValue === null ? (
-                  <span className="text-slate-500">Không giới hạn</span>
-                ) : (
-                  <input
-                    type="number"
-                    min={1}
-                    aria-label={`Giới hạn ${featureLabel(row.featureKey)}`}
-                    defaultValue={row.limitValue}
-                    onBlur={(event) => {
-                      const next = Number(event.target.value);
-                      if (next !== row.limitValue)
-                        entitlement.mutate({ id: row.id, limitValue: next });
-                    }}
-                    className="w-24 rounded-lg border border-slate-200 px-2 py-1 text-sm"
-                  />
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="mt-4 flex flex-wrap justify-end gap-2">
-        <button
-          type="button"
-          disabled={discard.isPending}
-          onClick={() => discard.mutate(undefined)}
-          className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
-        >
-          Bỏ bản nháp
-        </button>
-        <button
-          type="button"
-          disabled={save.isPending}
-          onClick={() => save.mutate(undefined)}
-          className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
-        >
-          Lưu bản nháp
-        </button>
-        <button
-          type="button"
-          onClick={onPublish}
-          className="min-h-10 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white hover:bg-slate-700"
-        >
-          Xuất bản
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function PlanCard({
+function PlanBlock({
   plan,
-  onPublish,
+  onAsk,
 }: {
   plan: PlanCatalogRow;
-  onPublish: (draft: PlanVersionRow) => void;
+  onAsk: (pending: Pending) => void;
 }) {
-  const current = plan.versions.find((version) => version.isCurrent);
-  const draft = plan.versions.find((version) => version.status === "DRAFT");
-  const create = useCatalogAction(
-    () =>
-      adminPlanCatalogService.createDraft(plan.code, {
-        priceVnd: current?.priceVnd ?? undefined,
-        durationDays: current?.durationDays ?? undefined,
-      }),
-    "Đã tạo bản nháp từ phiên bản hiện hành.",
-  );
+  const rows = termRows(plan.versions);
+  const base = rows.find((row) => row.days === 30)?.current?.priceVnd ?? null;
+  const granted = grantedFeatureKeys(plan.versions).map((key) => FEATURE_LABELS[key] ?? key);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [value, setValue] = useState("");
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const startEdit = (row: TermRow) => {
+    setEditing(row.days);
+    setValue(String(row.current?.priceVnd ?? ""));
+    setProblem(null);
+  };
+  const save = (row: TermRow) => {
+    const input = readPriceInput(value, row.current?.priceVnd ?? null);
+    if (input.problem || input.value === null) {
+      setProblem(input.problem);
+      return;
+    }
+    setProblem(null);
+    onAsk({
+      code: plan.code,
+      planName: plan.displayName,
+      days: row.days,
+      from: row.current?.priceVnd ?? 0,
+      to: input.value,
+      warning: priceWarning(rows, row.days, input.value),
+    });
+  };
+  const hasHistory = rows.some((row) => row.history.length > 1);
 
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-slate-950">
-            {current?.displayName ?? plan.displayName}
-          </h2>
-          <p className="mt-0.5 text-sm text-slate-600">
-            {current
-              ? `${formatVnd(current.priceVnd)} · ${current.durationDays} ngày · phiên bản ${current.version}`
-              : "Chưa có phiên bản hiện hành"}
-          </p>
-          {current?.description && (
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">
-              {current.description}
-            </p>
-          )}
-        </div>
-        {!draft && (
-          <button
-            type="button"
-            disabled={create.isPending}
-            onClick={() => create.mutate(undefined)}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait"
-          >
-            <Plus size={16} /> Tạo bản nháp
-          </button>
-        )}
+      <h2 className="text-base font-semibold text-slate-950">{plan.displayName}</h2>
+      {granted.length > 0 && (
+        <p className="mt-0.5 text-sm text-slate-600">Nội dung nâng cao: {granted.join(", ")}.</p>
+      )}
+
+      <div className="mt-3 overflow-x-auto">
+        <table className="w-full min-w-[34rem] text-left text-sm">
+          <thead className="text-xs text-slate-500">
+            <tr>
+              <th className="py-1.5 pr-3 font-semibold">Thời hạn</th>
+              <th className="py-1.5 pr-3 font-semibold">Giá đang bán</th>
+              <th className="py-1.5 pr-3 font-semibold">So với mua 30 ngày</th>
+              <th className="py-1.5 text-right font-semibold">
+                <span className="sr-only">Thao tác</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {rows.map((row) => {
+              const price = row.current?.priceVnd ?? 0;
+              const saving = savingPercent(price, row.days, base);
+              const isEditing = editing === row.days;
+              return (
+                <tr key={row.days} className="align-top">
+                  <td className="py-2.5 pr-3 font-medium text-slate-800">{row.days} ngày</td>
+                  <td className="py-2.5 pr-3 text-slate-900">
+                    {isEditing ? (
+                      <div>
+                        <input
+                          value={value}
+                          onChange={(event) => setValue(event.target.value)}
+                          inputMode="numeric"
+                          autoFocus
+                          aria-label={`Giá mới của ${plan.displayName} ${row.days} ngày`}
+                          aria-invalid={problem ? true : undefined}
+                          className="w-40 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") save(row);
+                            if (event.key === "Escape") setEditing(null);
+                          }}
+                        />
+                        <span className="ml-1.5 text-slate-500">₫</span>
+                        {problem && (
+                          <p role="alert" className="mt-1 text-xs text-rose-700">
+                            {problem}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      formatVnd(price)
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-3 text-slate-600">
+                    {row.days > 30 && price > 0
+                      ? `≈ ${formatVnd(pricePer30Days(price, row.days))} / 30 ngày${saving ? `, rẻ hơn ${saving}%` : ""}`
+                      : ""}
+                  </td>
+                  <td className="py-2.5 text-right">
+                    {isEditing ? (
+                      <span className="inline-flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditing(null)}
+                          className="min-h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => save(row)}
+                          className="min-h-9 rounded-lg bg-slate-900 px-3 text-sm font-semibold text-white hover:bg-slate-700"
+                        >
+                          Lưu
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => startEdit(row)}
+                        aria-label={`Sửa giá ${plan.displayName} ${row.days} ngày`}
+                        className="min-h-9 rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Sửa giá
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
-      {current && (
-        <ul className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-          {current.entitlements.map((row) => (
-            <li key={row.id} className="flex justify-between gap-3">
-              <span className="text-slate-700">
-                {featureLabel(row.featureKey)}
-              </span>
-              <span className="text-slate-500">{limitText(row)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {draft && (
-        <div className="mt-4">
-          <DraftEditor
-            key={draft.id}
-            draft={draft}
-            onPublish={() => onPublish(draft)}
-          />
-        </div>
-      )}
+      <details className="mt-3 text-sm">
+        <summary className="cursor-pointer font-semibold text-slate-700">Lịch sử giá</summary>
+        {hasHistory ? (
+          <ul className="mt-2 space-y-2 text-slate-600">
+            {rows.map((row) => (
+              <li key={row.days}>
+                <span className="font-medium text-slate-800">{row.days} ngày: </span>
+                {row.history.map((entry, index) => (
+                  <span key={entry.versionId}>
+                    {index > 0 && "; "}
+                    {formatVnd(entry.priceVnd)} từ {dayText(entry.since)}
+                    {entry.isCurrent ? " (đang bán)" : ""}
+                  </span>
+                ))}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-slate-500">Chưa đổi giá lần nào.</p>
+        )}
+      </details>
     </section>
   );
 }
 
 export function PlanCatalogPanel() {
-  const [publishing, setPublishing] = useState<PlanVersionRow | null>(null);
+  const [pending, setPending] = useState<Pending | null>(null);
+  // Each price change starts the rows afresh (closes the input that was open).
+  const [changes, setChanges] = useState(0);
   const query = useQuery({
     queryKey: ["admin-plan-catalog"],
     queryFn: adminPlanCatalogService.list,
   });
   const queryClient = useQueryClient();
-  const publish = useMutation({
-    mutationFn: (id: number) => adminPlanCatalogService.publish(id),
+  const change = useMutation({
+    mutationFn: (item: Pending) => adminPlanCatalogService.changePrice(item.code, item.days, item.to),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-plan-catalog"] });
-      setPublishing(null);
-      toast.success("Đã xuất bản bảng giá mới.");
+      setPending(null);
+      setChanges((count) => count + 1);
+      toast.success("Đã đổi giá.");
     },
-    onError: (error) =>
-      toast.error(getApiErrorMessage(error, "Không thể xuất bản bảng giá.")),
+    onError: (error) => {
+      setPending(null);
+      toast.error(getApiErrorMessage(error, "Không đổi được giá."));
+    },
   });
 
   if (query.isLoading)
@@ -334,22 +238,30 @@ export function PlanCatalogPanel() {
       </div>
     );
 
-  const plans = (query.data ?? []).filter((plan) => plan.code !== "FREE");
+  // Plus before Pro: the cheaper plan first, whatever order the rows were made in.
+  const lowestPrice = (plan: PlanCatalogRow) => termRows(plan.versions)[0]?.current?.priceVnd ?? Infinity;
+  const plans = (query.data ?? [])
+    .filter((plan) => plan.code !== "FREE")
+    .sort((a, b) => lowestPrice(a) - lowestPrice(b));
   return (
     <div className="space-y-4">
       {plans.map((plan) => (
-        <PlanCard key={plan.id} plan={plan} onPublish={setPublishing} />
+        <PlanBlock key={`${plan.id}-${changes}`} plan={plan} onAsk={setPending} />
       ))}
       <ConfirmDialog
-        open={publishing !== null}
-        title={`Xuất bản giá ${formatVnd(publishing?.priceVnd)}?`}
-        description="Học viên mua mới sẽ thấy giá này ngay. Người đã mua giữ nguyên gói và thời hạn hiện tại."
-        confirmLabel="Xuất bản"
-        isPending={publish.isPending}
+        open={pending !== null}
+        title={pending ? `Đổi giá ${pending.planName} ${pending.days} ngày?` : ""}
+        description={
+          pending
+            ? `Từ ${formatVnd(pending.from)} thành ${formatVnd(pending.to)}. Học viên mua mới thấy giá này ngay. Người đã mua và đơn đang chờ thanh toán giữ giá cũ.${pending.warning ? ` Lưu ý: ${pending.warning}` : ""}`
+            : ""
+        }
+        confirmLabel="Đổi giá"
+        isPending={change.isPending}
         onConfirm={() => {
-          if (publishing) publish.mutate(publishing.id);
+          if (pending) change.mutate(pending);
         }}
-        onCancel={() => setPublishing(null)}
+        onCancel={() => setPending(null)}
       />
     </div>
   );

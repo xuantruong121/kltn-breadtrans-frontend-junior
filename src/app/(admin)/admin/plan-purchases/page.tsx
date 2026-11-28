@@ -133,8 +133,9 @@ export default function AdminPlanPurchasesPage() {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
 
-  // Primary top-level navigation: [ Quyền học viên ] vs [ Giao dịch ]
-  const [mainTab, setMainTab] = useState<MainTab>("ENTITLEMENTS");
+  // Tabs in the order of the daily work (owner 2026-11-28): the transactions to
+  // reconcile come first and open by default, then who has a plan, then prices.
+  const [mainTab, setMainTab] = useState<MainTab>("TRANSACTIONS");
 
   // =================== STATE: ENTITLEMENTS TAB ===================
   const [entitlementStatus, setEntitlementStatus] =
@@ -232,6 +233,25 @@ export default function AdminPlanPurchasesPage() {
     enabled: selectedPurchaseId !== null,
   });
 
+  // The three numbers on top come from their own small queries, so they do not
+  // depend on the open tab or its filter (they used to read the open list).
+  const isAdmin = user?.role === "ADMIN";
+  const activeKpi = useQuery({
+    queryKey: ["admin-subscriptions", "kpi", "active"],
+    queryFn: () => adminSubscriptionService.list({ status: "ACTIVE", page: 1, limit: 1 }),
+    enabled: isAdmin,
+  });
+  const pendingKpi = useQuery({
+    queryKey: ["admin-plan-purchases", "kpi", "pending"],
+    queryFn: () => adminPlanPurchaseService.list({ status: "PENDING_PAYMENT", page: 1, limit: 1 }),
+    enabled: isAdmin,
+  });
+  const totalKpi = useQuery({
+    queryKey: ["admin-plan-purchases", "kpi", "all"],
+    queryFn: () => adminPlanPurchaseService.list({ page: 1, limit: 1 }),
+    enabled: isAdmin,
+  });
+
   const refreshPurchases = () => {
     queryClient.invalidateQueries({ queryKey: ["admin-plan-purchases"] });
   };
@@ -275,18 +295,10 @@ export default function AdminPlanPurchasesPage() {
   const purchaseRows = purchasesQuery.data?.items ?? [];
   const selectedPurchase = purchaseDetail.data;
 
-  // Compute KPI summary metrics
-  const activeEntitlementCount =
-    subscriptionsQuery.data?.total ??
-    entitlementRows.filter((r) => r.status === "ACTIVE").length;
-  const pendingTransactionsCount = purchaseRows.filter(
-    (p) =>
-      p.status === "PENDING_PAYMENT" ||
-      p.payment.status === "REPORTED" ||
-      p.payment.status === "REVIEW_REQUIRED",
-  ).length;
-  const totalTransactionsCount =
-    purchasesQuery.data?.total ?? purchaseRows.length;
+  // KPI summary metrics ("–" until they load)
+  const activeEntitlementCount = activeKpi.data?.total ?? "–";
+  const pendingTransactionsCount = pendingKpi.data?.total ?? "–";
+  const totalTransactionsCount = totalKpi.data?.total ?? "–";
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-12">
@@ -299,8 +311,8 @@ export default function AdminPlanPurchasesPage() {
             </h1>
           </div>
           <p className="mt-1 text-sm text-slate-600">
-            Quản lý gói cho học viên, cấp gói thủ công và đối soát giao dịch mua
-            gói nâng cấp.
+            Đối soát giao dịch mua gói, xem và tặng gói cho học viên, chỉnh giá
+            bán.
           </p>
         </div>
 
@@ -395,17 +407,6 @@ export default function AdminPlanPurchasesPage() {
       <div className="flex gap-6 border-b border-slate-200">
         <button
           type="button"
-          onClick={() => setMainTab("ENTITLEMENTS")}
-          className={`-mb-px border-b-2 px-1 py-3 text-sm font-bold transition-all cursor-pointer ${
-            mainTab === "ENTITLEMENTS"
-              ? "border-slate-900 text-slate-950"
-              : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
-          }`}
-        >
-          Quyền học viên
-        </button>
-        <button
-          type="button"
           onClick={() => setMainTab("TRANSACTIONS")}
           className={`-mb-px border-b-2 px-1 py-3 text-sm font-bold transition-all cursor-pointer ${
             mainTab === "TRANSACTIONS"
@@ -414,6 +415,17 @@ export default function AdminPlanPurchasesPage() {
           }`}
         >
           Giao dịch mua gói
+        </button>
+        <button
+          type="button"
+          onClick={() => setMainTab("ENTITLEMENTS")}
+          className={`-mb-px border-b-2 px-1 py-3 text-sm font-bold transition-all cursor-pointer ${
+            mainTab === "ENTITLEMENTS"
+              ? "border-slate-900 text-slate-950"
+              : "border-transparent text-slate-600 hover:text-slate-800 dark:text-slate-400"
+          }`}
+        >
+          Học viên có gói
         </button>
         <button
           type="button"
